@@ -36,7 +36,9 @@ export default ({ element, width, onDelete, ...props }: any) => {
             <XStack jc={"space-between"} ai={"start"} >
                 <XStack gap="$2" ai={"start"} >
                     <YStack>
-                        <Text fos="$8" fow="600" >{board?.get("displayName") ?? board?.get("name")}</Text>
+                        <Text fos="$8" fow="600" maw={(width ?? 474) - 100} overflow='hidden' textOverflow='ellipsis' whiteSpace='nowrap'>
+                            {board?.get("displayName") ?? board?.get("name")}
+                        </Text>
                         <Text fos="$2" fow="600" >{board?.get("name")}</Text>
                     </YStack>
                 </XStack>
