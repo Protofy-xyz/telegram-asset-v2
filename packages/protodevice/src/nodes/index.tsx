@@ -53,6 +53,7 @@ import I2c_MCP23008 from './I2c_MCP23008';
 import SEN0377 from './SEN0377';
 import AHT10 from './AHT10';
 import LD2450 from './LD2450';
+import MPU6050Interrupt from './MPU6050Interrupt';
 
 const deviceMasks = [
   Wifi,
@@ -107,7 +108,8 @@ const deviceMasks = [
   I2c_MCP23008,
   SEN0377,
   AHT10,
-  LD2450
+  LD2450,
+  MPU6050Interrupt
 ]
 
 const masksLength = deviceMasks.length
