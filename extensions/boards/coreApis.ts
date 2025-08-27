@@ -211,19 +211,24 @@ function Widget({board, state}) {
                         const html = card.html
                         const cardFilePath = BoardsDir(getRoot(req)) + key + '/' + card.name + '.js'
                         const cardHTMLFilePath = BoardsDir(getRoot(req)) + key + '/' + card.name + '_view.js'
-                        if (code) {
-                            await fs.writeFile(cardFilePath, code)
-                        } else {
-                            try { await fs.unlink(cardFilePath) } catch (e) { }
-                        }
-                        if (html) {
-                            await fs.writeFile(cardHTMLFilePath, html ? html : '')
-                        } else {
-                            try { await fs.unlink(cardHTMLFilePath) } catch (e) { }
+
+                        if (Object.prototype.hasOwnProperty.call(card, "rulesCode")) {
+                            if (code) {
+                                await fs.writeFile(cardFilePath, code)
+                            } else {
+                                try { await fs.unlink(cardFilePath) } catch (e) { }
+                            }
+                            delete card.rulesCode
                         }
 
-                        delete card.rulesCode
-                        delete card.html
+                        if (Object.prototype.hasOwnProperty.call(card, "html")) {
+                            if (html) {
+                                await fs.writeFile(cardHTMLFilePath, html)
+                            } else {
+                                try { await fs.unlink(cardHTMLFilePath) } catch (e) { }
+                            }
+                            delete card.html
+                        }
                     }
                     const actionsCards = value.cards.filter(c => c && c.type === 'action')
                     for (let i = 0; i < actionsCards.length; i++) {
