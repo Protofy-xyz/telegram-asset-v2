@@ -54,6 +54,7 @@ import SEN0377 from './SEN0377';
 import AHT10 from './AHT10';
 import LD2450 from './LD2450';
 import MPU6050Interrupt from './MPU6050Interrupt';
+import WK2168 from './WK2168';
 
 const deviceMasks = [
   Wifi,
@@ -109,7 +110,8 @@ const deviceMasks = [
   SEN0377,
   AHT10,
   LD2450,
-  MPU6050Interrupt
+  MPU6050Interrupt,
+  WK2168
 ]
 
 const masksLength = deviceMasks.length
