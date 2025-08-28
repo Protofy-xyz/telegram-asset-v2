@@ -64,11 +64,24 @@ const FirstSlide = ({ selected, setSelected }) => {
   </YStack>
 }
 
+const isNameValid = text => /^[a-z_]*$/.test(text)
+
 const SecondSlide = ({ selected, setName }) => {
+  const [error, setError] = useState('')
+  const handleChange = (text: string) => {
+    if (!isNameValid(text)) {
+      setError('Use only lowercase letters and underscores')
+    } else {
+      setError('')
+    }
+    setName(text)
+  }
+
   return <YStack minHeight={"200px"} jc="center" ai="center">
-    <XStack width="400px">
-          <Input f={1} value={selected?.name} onChangeText={setName} />
-    </XStack>
+    <YStack width="400px" gap="$2">
+      <Input f={1} value={selected?.name} onChangeText={handleChange} placeholder="Enter board name" />
+      <Text ml="$2" h={"$1"} fos="$2" color="$red8">{error}</Text>
+    </YStack>
   </YStack>
 }
 
@@ -100,6 +113,7 @@ export default {
                 onFinish={async () => {
                   console.log('val: ', data)
                   const name = data.name
+                  if (!isNameValid(name)) return 
                   const template = data.template
                   await API.post(`/api/core/v1/import/board`, { name, template })
                   router.push(`/boards/view?board=${name}`)
