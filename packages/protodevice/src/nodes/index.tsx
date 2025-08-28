@@ -55,6 +55,7 @@ import AHT10 from './AHT10';
 import LD2450 from './LD2450';
 import MPU6050Interrupt from './MPU6050Interrupt';
 import WK2168 from './WK2168';
+import GPS from './GPS';
 
 const deviceMasks = [
   Wifi,
@@ -111,7 +112,8 @@ const deviceMasks = [
   AHT10,
   LD2450,
   MPU6050Interrupt,
-  WK2168
+  WK2168,
+  GPS
 ]
 
 const masksLength = deviceMasks.length
