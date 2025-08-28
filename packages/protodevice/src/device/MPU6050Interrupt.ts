@@ -36,6 +36,7 @@ class MPU6050Interrupt {
           platform: this.platform,
           id: this.name,
           address: this.address,
+          i2c_id: this.i2cBusId,
           update_interval: this.updateInterval,
           accel_x: { name: `${this.name}_accel_x` },
           accel_y: { name: `${this.name}_accel_y` },
