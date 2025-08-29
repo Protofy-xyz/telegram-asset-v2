@@ -1,6 +1,6 @@
 import { YStack, Text } from '@my/ui';
 import { BarChart as BarChartR, Bar, XAxis, YAxis, Tooltip, Legend, Cell, ResponsiveContainer } from 'recharts';
-import { DashboardCard } from './DashboardCard';
+import { ChartTooltip } from './ChartTooltip';
 
 interface BarChartProps {
     title: string;
@@ -9,7 +9,7 @@ interface BarChartProps {
     dataKey: string;
     nameKey: string;
     colors: string[];
-    tooltipFormatter?: (value: number) => string;
+    tooltipFormatter?: (value: string) => string;
     isAnimationActive?: boolean;
     aspect?:any
 }
@@ -30,7 +30,7 @@ export const BarChart: React.FC<BarChartProps> = ({
                     <BarChartR data={data}>
                         <XAxis dataKey={nameKey} />
                         <YAxis />
-                        <Tooltip formatter={tooltipFormatter} />
+                        <Tooltip cursor={{ fill: "var(--bgContent)" }} content={(props) => <ChartTooltip {...props} tooltipFormatter={tooltipFormatter} />} />
                         <Bar
                             dataKey={dataKey}
                             isAnimationActive={isAnimationActive}

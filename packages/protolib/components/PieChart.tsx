@@ -1,6 +1,6 @@
 import { YStack, Text } from '@my/ui';
 import { PieChart as PieChartR, Pie, Tooltip, Cell, Legend, ResponsiveContainer } from "recharts";
-import { DashboardCard } from './DashboardCard';
+import { ChartTooltip } from './ChartTooltip';
 
 interface PieChartProps {
     title: string;
@@ -8,7 +8,7 @@ interface PieChartProps {
     dataKey: string;
     nameKey: string;
     colors: string[];
-    tooltipFormatter?: (value: number) => string;
+    tooltipFormatter?: (value: string) => string;
     labelFormatter?: (props: any) => React.ReactNode;
     isAnimationActive?: boolean;
     aspect?: any
@@ -50,6 +50,8 @@ export const PieChart: React.FC<PieChartProps> = ({
                     cy="50%"
                     outerRadius={150}
                     fill="#8884d8"
+                    stroke={"var(--bgPanel)"}
+                    strokeWidth={3}
                     label={labelFormatter ?? renderCustomizedLabel}
                     labelLine={false}
                     isAnimationActive={isAnimationActive}
@@ -58,8 +60,9 @@ export const PieChart: React.FC<PieChartProps> = ({
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                     ))}
                 </Pie>
-                <Tooltip formatter={tooltipFormatter} />
+                <Tooltip content={(props) => <ChartTooltip {...props} tooltipFormatter={tooltipFormatter} />} />
                 <Legend
+                    iconType='circle'
                     layout="vertical"
                     verticalAlign="middle"
                     align="right"

@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { DashboardCard } from './DashboardCard';
+import { ChartTooltip } from './ChartTooltip';
 
 interface RadarChartProps {
   title: string;
@@ -19,7 +19,7 @@ interface RadarChartProps {
   nameKey: string;
   colors: string[];
   color?: string;
-  tooltipFormatter?: (value: number) => string;
+  tooltipFormatter?: (value: string) => string;
   isAnimationActive?: boolean;
   aspect?: any;
 }
@@ -53,7 +53,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               <PolarGrid />
               <PolarAngleAxis dataKey={nameKey} />
               <PolarRadiusAxis />
-              <Tooltip formatter={tooltipFormatter} />
+              <Tooltip content={(props) => <ChartTooltip {...props} tooltipFormatter={tooltipFormatter} />} />
               {/* <Legend /> */}
           {
             dataKeys?.map((dataKey, index) => (
