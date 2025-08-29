@@ -46,76 +46,148 @@ async function uploadFileToOpenAI(filePath: string): Promise<string> {
 }
 
 export const chatGPTSession = async ({
-    apiKey = undefined,
-    done = (response, message) => { },
-    chunk = (chunk: any) => { },
-    error = (error) => { },
-    model = "gpt-4o",
-    max_tokens = 4096,
-    ...props
+  apiKey = undefined,
+  done = (response, message) => {},
+  chunk = (chunk: any) => {},
+  error = (err) => {},
+  model = "gpt-4o",
+  max_tokens = 4096,
+  ...props
 }: ChatGPTRequest) => {
-    const body: GPT4VCompletionRequest = {
+  try {
+    if (!apiKey) apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      try { apiKey = await getKey({ key: "OPENAI_API_KEY", token: getServiceToken() }); }
+      catch (err) { console.error("Error fetching key:", err); }
+    }
+    if (!apiKey) {
+      const errObj = { message: "No API Key provided", code: "invalid_api_key" };
+      error(errObj.message);
+      return { isError: true, data: { error: errObj } };
+    }
+
+    const client = new OpenAI({ apiKey });
+
+    // --- Detecta si Responses API está disponible ---
+    const hasResponsesAPI = !!(client as any).responses?.create;
+
+    // Si NO hay Responses, avisar y caer a chat.completions (sin files):
+    if (!hasResponsesAPI) {
+      // Aviso claro:
+      const msg = "OpenAI SDK too old for Responses API. Falling back to chat.completions (files will be ignored).";
+      console.warn(msg);
+      // Llamada legacy:
+      //@ts-ignore
+      const stream = await client.chat.completions.create({
+        ...(props as any),
         model,
         max_tokens,
-        ...props
-    }
+        stream: true,
+      });
 
-    if (!apiKey) {
-        apiKey = process.env.OPENAI_API_KEY;
-    }
-
-    if (!apiKey) {
-        try {
-            apiKey = await getKey({ key: "OPENAI_API_KEY", token: getServiceToken() });
-        } catch (err) {
-            console.error("Error fetching key:", err);
+      let fullResponse: string[] | undefined;
+      for await (const currentChunk of stream) {
+        if (!fullResponse) {
+          fullResponse = Array.from({ length: currentChunk.choices.length }).map(() => "");
         }
-    }
-
-    if (!apiKey) {
-        //logger.error("No API Key provided");
-        error("No API Key provided");
-        return {
-            isError: true,
-            data: {
-                error: {
-                    message: "No API Key provided",
-                    code: "invalid_api_key"
-                }
-            }
-        };
-    }
-
-    try {
-        const client = new OpenAI({ apiKey });
-        //@ts-ignore
-        const stream = await client.chat.completions.create({
-            ...body,
-            stream: true,
+        currentChunk.choices.forEach((choice, index) => {
+          if (choice.delta?.content) fullResponse![index] += choice.delta.content;
         });
-        let fullResponse
-
-        for await (const currentChunk of stream) {
-            if (!fullResponse) {
-                fullResponse = Array.from({ length: currentChunk.choices.length }).map(() => "");
-            }
-            currentChunk.choices.forEach((choice, index) => {
-                if (choice.delta.content) {
-                    fullResponse[index] += choice.delta.content
-                }
-            })
-            await chunk(currentChunk); // Procesa el fragmento actual si lo necesitas en tiempo real
-        }
-
-        done({ choices: fullResponse }); // Procesa la respuesta completa
-        return fullResponse;
-    } catch (e) {
-        logger.error({ error: e.message || e, stack: e.stack }, "Error in chatGPTSession");
-        if (error) error(e);
-        return null;
+        await chunk(currentChunk);
+      }
+      const out = fullResponse ?? [""];
+      done({ choices: out }, out[0]);
+      return out;
     }
-}
 
+    // --- Camino Responses API (con files) ---
+    type Part =
+      | string
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: string | { url: string } }
+      | { type: "file"; file: { file_id: string } };
+
+    const messages = (props as any).messages as Array<{
+      role: "system" | "user" | "assistant" | "function";
+      content: Part[] | string;
+      name?: string;
+    }>;
+
+    const attachments: Array<{ file_id: string; tools: Array<{ type: "file_search" }> }> = [];
+    const input: Array<{
+      role: "user" | "assistant" | "system" | "function";
+      content: Array<
+        | { type: "input_text"; text: string }
+        | { type: "input_image"; image_url: { url: string; detail?: "auto" | "low" | "high" } }
+      >;
+    }> = [];
+
+    const toText = (s: any) => (typeof s === "string" ? s : String(s ?? ""));
+
+    for (const msg of messages || []) {
+      const parts: Part[] = Array.isArray(msg.content) ? (msg.content as Part[]) : [toText(msg.content)];
+      const converted: any[] = [];
+      for (const p of parts) {
+        if (typeof p === "string") { if (p.trim()) converted.push({ type: "input_text", text: p }); continue; }
+        if ((p as any).type === "text") {
+          const t = (p as any).text ?? "";
+          if (t.trim()) converted.push({ type: "input_text", text: t });
+          continue;
+        }
+        if ((p as any).type === "image_url") {
+          const raw = (p as any).image_url;
+          const url = typeof raw === "string" ? raw : raw?.url;
+          if (url && url.trim()) converted.push({ type: "input_image", image_url: { url } });
+          continue;
+        }
+        if ((p as any).type === "file" && (p as any).file?.file_id) {
+          attachments.push({ file_id: (p as any).file.file_id, tools: [{ type: "file_search" }] });
+          continue; // files van en attachments, no en content
+        }
+      }
+      input.push({ role: msg.role, content: converted.length ? converted : [{ type: "input_text", text: "" }] });
+    }
+
+    const request: any = {
+      model,
+      input,
+      max_output_tokens: typeof max_tokens === "number" ? max_tokens : undefined,
+      temperature: (props as any).temperature,
+      top_p: (props as any).top_p,
+    };
+
+    if (attachments.length > 0) {
+      request.tools = [{ type: "file_search" }];
+      request.attachments = attachments;
+    }
+    if ((props as any).response_format) {
+      request.response_format = (props as any).response_format;
+    }
+
+    const res = await (client as any).responses.create(request);
+
+    const text =
+      (res as any).output_text ??
+      (() => {
+        try {
+          const chunks = ((res as any).output ?? [])
+            .flatMap((o: any) => o.content ?? [])
+            .filter((c: any) => c.type === "output_text")
+            .map((c: any) => c?.text ?? "");
+          return chunks.join("");
+        } catch { return ""; }
+      })();
+
+    const out = [text];
+    done({ choices: out }, out[0]);
+    return out;
+
+  } catch (e: any) {
+    logger.error({ error: e?.message || e, stack: e?.stack }, "Error in chatGPTSession");
+    if (error) error(e);
+    return null;
+  }
+};
 
 export const chatGPTPrompt = async ({
     message,
@@ -125,6 +197,12 @@ export const chatGPTPrompt = async ({
     ...props
 }: any & { message: string }) => {
 
+    console.log('************************************************************************ Sending prompt to ChatGPT:', {
+        message,
+        images,
+        files,
+        conversation
+    });
     const content: any[] = [
         ...conversation,
         { type: "text", text: message }
@@ -139,6 +217,7 @@ export const chatGPTPrompt = async ({
     }
 
     if (images.length > 0) {
+        console.log('Chatgpt: there are images in the request')
         const imageContent = await Promise.all(
             images.map(async (url) => {
                 try {
@@ -165,6 +244,8 @@ export const chatGPTPrompt = async ({
         const validImages = imageContent.filter(Boolean);
         content.push(...validImages);
     }
+
+    console.log('###################################### Final chatgpt content: ', content)
 
     const response = await chatGPTSession({
         messages: [
