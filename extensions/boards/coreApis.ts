@@ -116,6 +116,13 @@ const getDB = (path, req, session) => {
 
             const filePath = BoardsDir(getRoot(req)) + key + ".json"
 
+            // --- versioning: read previous version (if any) ---
+            let prevVersion = 0;
+            try {
+                const prev = JSON.parse(fsSync.readFileSync(filePath, 'utf8'));
+                prevVersion = Number(prev.version || 0);
+            } catch { /* first time, ignore */ }
+
             //check if the board automation file exists, if not, create it
             if (!fsSync.existsSync(BoardsDir(getRoot(req)) + key + '.js')) {
                 const boardFileContent = `const { boardConnect } = require('protonode')
@@ -198,6 +205,7 @@ function Widget({board, state}) {
 
             await acquireLock(filePath);
             removeActions({ group: 'boards', tag: key })
+            let shouldSnapshot = false;
             try {
                 //register actions for each card
                 console.log('cards: ', value.cards)
@@ -311,12 +319,27 @@ function Widget({board, state}) {
                     console.log('Prune orphan states error for board', key, e);
                 }
                 await fs.writeFile(filePath, JSON.stringify(value, null, 4))
+
+                // --- versioning: decide outside lock ---
+                const newVersion = Number(value.version || 0);
+                shouldSnapshot = newVersion > prevVersion; // <-- NEW (solo flag)
             } catch (error) {
                 console.error("Error creating file: " + filePath, error, error.stack)
             } finally {
                 releaseLock(filePath);
             }
+
+            // --- versioning: trigger snapshot via API when version bumped (after releasing lock) ---
+            if (shouldSnapshot) {
+                const token = getServiceToken();
+                try {
+                    await API.post(`/api/core/v1/boards/${key}/version?token=${token}`, {});
+                } catch (e) {
+                    console.log("Error creating board snapshot:", e);
+                }
+            }
         },
+
 
         async get(key) {
             // try to get the board file from the boards folder
@@ -584,16 +607,16 @@ export default async (app, context) => {
         return JSON.stringify(tree, null, 2);
     }
 
-    
+
     app.get('/api/core/v1/autopilot/getContext', requireAdmin(), async (req, res) => {
-        const {mqtt, ...cleanContext} = context;
+        const { mqtt, ...cleanContext } = context;
         const serializedContext = safeDump(cleanContext);
         res.send(serializedContext);
     })
 
     app.post('/api/core/v1/autopilot/getActionCode', requireAdmin(), async (req, res) => {
         //build a textual representation of context
-        const {mqtt, ...cleanContext} = context;
+        const { mqtt, ...cleanContext } = context;
         cleanContext.mqtt = 'points to the active mqtt connection. Use context.mqtt if you need to pass a mqtt connection handler'
         const serializedContext = safeDump(cleanContext);
 

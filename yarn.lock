@@ -3687,6 +3687,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@extensions/versions@workspace:extensions/versions":
+  version: 0.0.0-use.local
+  resolution: "@extensions/versions@workspace:extensions/versions"
+  languageName: unknown
+  linkType: soft
+
 "@extensions/vision@workspace:extensions/vision":
   version: 0.0.0-use.local
   resolution: "@extensions/vision@workspace:extensions/vision"
