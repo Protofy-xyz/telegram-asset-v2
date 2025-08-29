@@ -6,11 +6,12 @@ The user has described what the code should do, in natural language, and you nee
 </description>
 
 <code_structure>
-//available variables are: userPrams and board
+//available variables are: userPrams, board and context
 //board: state object with the current board state. 
 //userParams: user provided params
+//context: system functions to access files, run commands or interact with the system or the network
 
-//TODO: call actions with: executeAction({name: action_name, params: actionParams}) or return values from states
+//TODO: call context functions with context.xxxx or boards actions with: executeAction({name: action_name, params: actionParams}) or return values from states
 //actionParams is a key->value object, where the key is the name of the parameter and the value is the value for the parameter
 //example of valid code that just executes an action forwarding an element from the user params to the action params:
 //return executeAction({name: action_name, params: {name: userParams.name}})
@@ -47,8 +48,8 @@ actions related to the board {{{board}}}
 
 Do not use markup like ```javascript or other markers, just plain javascript, nothing else.
 IMPORTANT: anser only with javascript and nothing else.
-Try to keep it simple, write simple code as described by the rules. Most rules will just require simple calls to executeAction or directly returning
-values from states.
+Try to keep it simple, write simple code as described by the rules.
+If you need to use context functions, check the code of the function to know what parameters to use and what to expect.
 If you need to use executeAction, always use the action name to execute the actions with executeAction.
 executeAction is an async function and some actions return values. If you are interested in the return value of an action, just await for it.
 if you simply execute an action, remember to return the result of the call to await executeAction.
@@ -75,12 +76,13 @@ ALWAYS add a comment on top of the generated code explaining what the code does 
 Simulate a real comment by a professional programmer, speaking about the code does.
 </very_important>
 
-<context>
+<current_card>
 The code you are generating will be used to resolve the final value for the card: 
 {{{card}}}
 
 Take it into consideration to check if you need to adapt the values before returning them, to make it compatible with what the card is expecting.
-</context>
+The card should never call itself as an action.
+</current_card>
 
 <reset_card>
 If the rules request to reset a board state/card, it can be done with:
