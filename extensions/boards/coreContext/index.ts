@@ -3,7 +3,7 @@ import { getRoot } from "protonode";
 
 const logger = getLogger()
 
-export const getState = async(options: {
+export const getStatesByType = async(options: {
     board: any,
     type: string,
     key: string,
@@ -23,5 +23,5 @@ export const getState = async(options: {
 }
 
 export default {
-    getState
+    getStatesByType
 }

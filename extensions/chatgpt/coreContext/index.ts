@@ -16,7 +16,8 @@ export const getChatGPTApiKey = async (options?: {
     let apiKey = ""
     try {
         apiKey = await getKey({ key: "OPENAI_API_KEY", token: getServiceToken() });
-        return done(apiKey);
+        done(apiKey)
+        return apiKey
     } catch (err) {
         const errorMessage = "Error fetching key: " + err;
         console.error(errorMessage);
@@ -380,7 +381,7 @@ export const prompt = async (options: {
     return response && Array.isArray(response) ? response[0] : response;
 }
 
-export const processResponse = async ({ response, execute_action, done = async (v) => v,  error = (e) => e }) => {
+export const processResponse = async ({ response, execute_action, done = async (v) => v, error = (e) => e }) => {
     if (!response) return null;
     if (!execute_action) return null;
     const parsedResponse = JSON.parse(response);
@@ -390,10 +391,27 @@ export const processResponse = async ({ response, execute_action, done = async (
     return await done(parsedResponse.response);
 }
 
+export const getSystemPrompt = ({ prompt, done = async (prompt) => prompt, error = (e) => e }) => {
+    const result = [
+        {
+            role: "system",
+            content: [
+                {
+                    type: "text",
+                    text: prompt,
+                },
+            ],
+        },
+    ]
+    done(result)
+    return result
+}
+
 export default {
     chatGPTSession,
     chatGPTPrompt,
     prompt,
     processResponse,
-    getChatGPTApiKey
+    getChatGPTApiKey,
+    getSystemPrompt
 }
