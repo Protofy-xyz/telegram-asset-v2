@@ -15,7 +15,7 @@ interface RadarChartProps {
   title: string;
   id: string;
   data: any[];
-  dataKey: string;
+  dataKeys: string[];
   nameKey: string;
   colors: string[];
   color?: string;
@@ -28,7 +28,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
   title,
   id,
   data,
-  dataKey,
+  dataKeys,
   nameKey,
   colors,
   color = '#8884d8',
@@ -55,15 +55,21 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               <PolarRadiusAxis />
               <Tooltip formatter={tooltipFormatter} />
               {/* <Legend /> */}
-              <Radar
-                name={title}
-                dataKey={dataKey}
-                stroke={color}
-                fill={color}
-                fillOpacity={0.6}
-                isAnimationActive={isAnimationActive}
-              />
-            </RadarChartR>
+          {
+            dataKeys?.map((dataKey, index) => (
+                <Radar
+                  key={index}
+                  name={title}
+                  dataKey={dataKey}
+                  stroke={colors[index]}
+                  fill={colors[index]}
+                  fillOpacity={0.6}
+                  isAnimationActive={isAnimationActive}
+
+                />
+              ))
+            }
+          </RadarChartR>
           </ResponsiveContainer>
         ) : (
           <YStack>

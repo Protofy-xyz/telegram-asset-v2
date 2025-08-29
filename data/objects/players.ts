@@ -7,7 +7,8 @@ Protofy("features", {
 
 export const BasePlayersSchema = Schema.object(Protofy("schema", {
 	name: z.string().search(),
-	score: z.number().search()
+	score: z.number().search(),
+	time: z.number()
 }))
 
 //check if any of the fields of the schema has set the id flag

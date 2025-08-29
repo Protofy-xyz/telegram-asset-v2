@@ -17,21 +17,25 @@ const initialData = {
     "202506-181445-55040-afa0d805": {
         "name": "Protofito",
         "score": 50,
+        "time": 12.3,
         "id": "202506-181445-55040-afa0d805"
     },
     "202506-181446-00634-fddae120": {
         "name": "Virgulini",
         "score": 33,
+        "time": 9.9,
         "id": "202506-181446-00634-fddae120"
     },
     "202506-181446-46228-8b0f1c3d": {
         "name": "LCollective",
         "score": 10,
+        "time": 21.6,
         "id": "202506-181446-46228-8b0f1c3d"
     },
     "202506-181446-91822-0f1b2e4c": {
         "name": "Protofy",
         "score": 70,
+        "time": 15,
         "id": "202506-181446-91822-0f1b2e4c"
     }
 }

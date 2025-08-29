@@ -14,7 +14,7 @@ interface AreaChartProps {
     title: string;
     id: string;
     data: any[];
-    dataKey: string;
+    dataKeys: string[];
     nameKey: string;
     colors: string[];
     tooltipFormatter?: (value: number) => string;
@@ -27,7 +27,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
     title,
     id,
     data,
-    dataKey,
+    dataKeys,
     nameKey,
     colors,
     color = '#8884d8',
@@ -51,13 +51,16 @@ export const AreaChart: React.FC<AreaChartProps> = ({
                         <YAxis />
                         <Tooltip formatter={tooltipFormatter} />
                         {/* <Legend /> */}
-                        <Area
-                            type="monotone"
-                            dataKey={dataKey}
-                            stroke={color}
-                            fill={color}
-                            isAnimationActive={isAnimationActive}
-                        />
+                        {dataKeys?.map((dataKey, index) => (
+                            <Area
+                                key={index}
+                                type="monotone"
+                                dataKey={dataKey}
+                                stroke={colors[index]}
+                                fill={colors[index]}
+                                isAnimationActive={isAnimationActive}
+                            />
+                        ))}
                     </AreaChartR>
                 </ResponsiveContainer>
             ) : (

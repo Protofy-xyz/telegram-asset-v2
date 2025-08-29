@@ -15,7 +15,7 @@ interface LineChartProps {
     title: string;
     id: string;
     data: any[];
-    dataKey: string;
+    dataKeys: string[]
     nameKey: string;
     colors: string[];
     color?: string;
@@ -28,10 +28,9 @@ export const LineChart: React.FC<LineChartProps> = ({
     title,
     id,
     data,
-    dataKey,
+    dataKeys,
     nameKey,
     colors,
-    color = 'var(--color8)',
     tooltipFormatter = (value) => `${value}`,
     isAnimationActive = false,
     aspect = 1,
@@ -52,12 +51,16 @@ export const LineChart: React.FC<LineChartProps> = ({
                         <YAxis />
                         <Tooltip formatter={tooltipFormatter} />
                         {/* <Legend /> */}
-                        <Line
-                            type="monotone"
-                            dataKey={dataKey}
-                            stroke={color}
-                            isAnimationActive={isAnimationActive}
-                        />
+                        {
+                            dataKeys?.map((dataKey, index) => {
+                                return <Line
+                                    type="monotone"
+                                    dataKey={dataKey}
+                                    stroke={colors[index]}
+                                    isAnimationActive={isAnimationActive}
+                                />
+                            })
+                        }
                     </LineChartR>
                 </ResponsiveContainer>
             ) : (
