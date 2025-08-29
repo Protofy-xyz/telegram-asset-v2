@@ -57,6 +57,26 @@ return card({
         emitEvent: true
     });
 
+    addCard({
+        group: 'board',
+        tag: 'html',
+        id: 'html',
+        templateName: 'Display HTML content',
+        name: 'board_html',
+        defaults: {
+            id: 'value_html',
+            width: 1,
+            height: 4,
+            icon: "scan-text",
+            type: "value",
+            name: "html",
+            displayIcon: false,
+            rulesCode: "return `\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>title</title>\n</head>\n<body>\n  hello world\n</body>\n</html>\n`;\n",
+            html: "return iframeCard(data.value, data.domId)\n",
+            value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
+        },
+        emitEvent: true
+    })
 
     addCard({
         group: 'board',

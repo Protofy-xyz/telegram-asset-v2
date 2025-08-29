@@ -233,7 +233,7 @@ const extraCards = [
       name: 'card',
       displayResponse: true
     },
-    name: 'Action card',
+    name: 'Action',
     id: 'action'
   },
   {
@@ -260,7 +260,7 @@ const extraCards = [
       displayButtonIcon: true,
       icon: 'sparkles'
     },
-    name: 'AI card',
+    name: 'AI Action',
     id: 'aiaction',
   },
   {
@@ -268,7 +268,7 @@ const extraCards = [
       type: 'value',
       name: 'value'
     },
-    name: 'Observer card',
+    name: 'Observer',
     id: 'value'
   }
 ]
@@ -334,48 +334,48 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
     setRemountKey(uuidv4())
   }, [addOpened])
 
- return <AlertDialog
-      integratedChat
-      p="$2"
-      pt="$5"
-      pl="$5"
-      setOpen={setAddOpened}
-      open={addOpened}
-      hideAccept
-      description=""
-    >
-      <YStack f={1} jc="center" ai="center">
-        <XStack f={1} mr="$5">
-          <Slides
-            hideHeader
-            styles={{ f:1, w:"90vw", maw:1400, h:"90vh", mah:1200 }}
-            lastButtonCaption="Create"
-            onFinish={async () => {
-              try {
-                await onFinish(card)
-                setAddOpened(false)
-              } catch (e) {
-                console.error("Error creating card: ", e)
-              }
-            }}
-            slides={[
-              {
-                name: "Create new widget",
-                title: "Select the widget",
-                component: (
-                  <FirstSlide options={cards} selected={selectedCard} setSelected={setSelectedCard}
-                  />
-                ),
-              },
-              {
-                name: "Configure your widget",
-                component: card ? (
-                  <SecondSlide remountKey={remountKey} board={board} states={states} icons={icons} actions={actions} card={card} setCard={setCard} errors={errors} />
-                ) : null, 
-              },
-            ]}
-          />
-        </XStack>
-      </YStack>
-    </AlertDialog>
+  return <AlertDialog
+    integratedChat
+    p="$2"
+    pt="$5"
+    pl="$5"
+    setOpen={setAddOpened}
+    open={addOpened}
+    hideAccept
+    description=""
+  >
+    <YStack f={1} jc="center" ai="center">
+      <XStack f={1} mr="$5">
+        <Slides
+          hideHeader
+          styles={{ f: 1, w: "90vw", maw: 1400, h: "90vh", mah: 1200 }}
+          lastButtonCaption="Create"
+          onFinish={async () => {
+            try {
+              await onFinish(card)
+              setAddOpened(false)
+            } catch (e) {
+              console.error("Error creating card: ", e)
+            }
+          }}
+          slides={[
+            {
+              name: "Create new widget",
+              title: "Select the widget",
+              component: (
+                <FirstSlide options={cards} selected={selectedCard} setSelected={setSelectedCard}
+                />
+              ),
+            },
+            {
+              name: "Configure your widget",
+              component: card ? (
+                <SecondSlide remountKey={remountKey} board={board} states={states} icons={icons} actions={actions} card={card} setCard={setCard} errors={errors} />
+              ) : null,
+            },
+          ]}
+        />
+      </XStack>
+    </YStack>
+  </AlertDialog>
 }
