@@ -588,6 +588,32 @@ class ErrorBoundary extends React.Component {
     }
 }
 
+window.iframeCard = (html, rootId) => {
+    // Escapamos las comillas dobles y los & para no romper el atributo
+    const safeHtml = html
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;");
+
+    return `
+    <iframe
+      id="iframe-${rootId}"
+      name="${rootId}"
+      style="width:100%;height:100%;border:none;"
+      sandbox="allow-scripts allow-same-origin"
+      csp="
+        default-src 'self' https: blob: data:;
+        script-src 'unsafe-inline' 'unsafe-eval' https: blob: data:;
+        style-src 'unsafe-inline' https:;
+        img-src data: https: blob:;
+        connect-src https: blob: data:;
+        worker-src blob: data:;
+        object-src 'none';
+      "
+      srcdoc="${safeHtml}"
+    ></iframe>
+  `;
+};
+
 window.reactCard = (jsx, rootId, initialProps = {}) => {
     const isFrameCard = jsx.includes('//@card/reactframe') || jsx.includes('// @card/reactframe');
     console.log('debugjsx:host:enter', { rootId, isFrameCard, jsxLen: jsx?.length });
