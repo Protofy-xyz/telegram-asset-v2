@@ -7,7 +7,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { DashboardCard } from './DashboardCard';
+import { ChartTooltip } from './ChartTooltip';
 
 interface RadialBarChartProps {
   title: string;
@@ -16,7 +16,7 @@ interface RadialBarChartProps {
   dataKey: string;
   nameKey: string;
   colors: string[];
-  tooltipFormatter?: (value: number) => string;
+  tooltipFormatter?: (value: string) => string;
   isAnimationActive?: boolean;
   displayLegend?: any;
   startAngle?: any;
@@ -75,8 +75,8 @@ export const RadialBarChart: React.FC<RadialBarChartProps> = ({
               endAngle={parseFloat(endAngle)}
             >
               <RadialBar
-                {...(displayLabel && displayLabel !== 'false' ? { label: { position: 'insideStart', fill: '#fff' } } : {})}
-                background={{ fill: '#ddd' }}
+                {...(displayLabel && displayLabel !== 'false' ? { label: { position: 'insideStart', fill: 'var(--gray11)', fontWeight: 'bold' } } : {})}
+                background={{ fill: '#ffffff20' }}
                 dataKey={dataKey}
                 isAnimationActive={isAnimationActive}
               >
@@ -85,13 +85,17 @@ export const RadialBarChart: React.FC<RadialBarChartProps> = ({
                 ))}
               </RadialBar>
               {displayLegend && displayLegend !== 'false' && <Legend
+                iconType='circle'
                 iconSize={10}
                 layout="vertical"
                 verticalAlign="middle"
                 align="right"
                 wrapperStyle={legendStyle}
               />}
-              {displayTooltip && displayTooltip !== 'false' && <Tooltip formatter={tooltipFormatter} />}
+              {
+                displayTooltip && displayTooltip !== 'false' 
+                && <Tooltip content={(props) => <ChartTooltip {...props} tooltipFormatter={tooltipFormatter} />} />
+              }
             </RadialBarChartR>
           </ResponsiveContainer>
         ) : (

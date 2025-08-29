@@ -9,6 +9,7 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { DashboardCard } from './DashboardCard';
+import { ChartTooltip } from './ChartTooltip';
 
 interface AreaChartProps {
     title: string;
@@ -17,7 +18,7 @@ interface AreaChartProps {
     dataKeys: string[];
     nameKey: string;
     colors: string[];
-    tooltipFormatter?: (value: number) => string;
+    tooltipFormatter?: (value: string) => string;
     isAnimationActive?: boolean;
     aspect?: any;
     color?: string;
@@ -31,7 +32,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
     nameKey,
     colors,
     color = '#8884d8',
-    tooltipFormatter = (value) => `${value} MB`,
+    tooltipFormatter = (value) => `${value}`,
     isAnimationActive = false,
     aspect = 1,
 }) => {
@@ -49,7 +50,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
                     <AreaChartR data={data}>
                         <XAxis dataKey={nameKey} />
                         <YAxis />
-                        <Tooltip formatter={tooltipFormatter} />
+                        <Tooltip content={(props) => <ChartTooltip {...props} tooltipFormatter={tooltipFormatter} />} />
                         {/* <Legend /> */}
                         {dataKeys?.map((dataKey, index) => (
                             <Area
