@@ -106,6 +106,7 @@ export const DisplayEditor = ({
                         </Checkbox>
                         <Label>API access</Label>
                     </XStack>
+                    {renderCheckbox('Allow public read', 'publicRead', cardData.publicRead ? true : false)}
                     {card.type === 'action' && renderCheckbox('Keep value permanently', 'persistValue', cardData.persistValue ? true : false)}
                     {renderCheckbox('Display title', 'displayTitle')}
                     {renderCheckbox('Display icon', 'displayIcon')}

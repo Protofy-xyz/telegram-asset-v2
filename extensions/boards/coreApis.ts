@@ -743,16 +743,7 @@ export default async (app, context) => {
         handleBoardAction(context, Manager, req.params.boardId, req.params.action, res, req.query)
     })
 
-    const hasAccessToken = async (tokenType, session, cardId, boardId, token) => {
-        const board = await getBoard(boardId);
-        if (!board.cards || !Array.isArray(board.cards)) {
-            return false
-        }
-        const card = board.cards.find(c => c.name === cardId);
-        if (!card) {
-            return false;
-        }
-
+    const hasAccessToken = async (tokenType, session, card, token) => {
         if (card.tokens && card.tokens[tokenType]) {
             const cardToken = card.tokens[tokenType];
             if (cardToken === token || (session && session.user.admin)) {
@@ -766,9 +757,22 @@ export default async (app, context) => {
         return false;
     }
 
+    const getCard = async (boardId, cardId) => {
+        const board = await getBoard(boardId);
+        if (!board.cards || !Array.isArray(board.cards)) {
+            return false
+        }
+        const card = board.cards.find(c => c.name === cardId);
+        if (!card) {
+            return false;
+        }
+        return card;
+    }
+
     app.get('/api/core/v1/boards/:boardId/cards/:cardId', handler(async (req, res, session, next) => {
+        const card = await getCard(req.params.boardId, req.params.cardId);
         //get read token from card
-        if (!(await hasAccessToken('read', session, req.params.cardId, req.params.boardId, req.query.token))) {
+        if (!card?.publicRead &&!(await hasAccessToken('read', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
             const value = ProtoMemDB('states').get('boards', req.params.boardId, req.params.cardId);
@@ -777,8 +781,9 @@ export default async (app, context) => {
     }))
 
     app.get('/api/core/v1/boards/:boardId/cards/:cardId/run', handler(async (req, res, session, next) => {
+        const card = await getCard(req.params.boardId, req.params.cardId);
         //get read token from card
-        if (!(await hasAccessToken('run', session, req.params.cardId, req.params.boardId, req.query.token))) {
+        if (!(await hasAccessToken('run', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
             handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query);
