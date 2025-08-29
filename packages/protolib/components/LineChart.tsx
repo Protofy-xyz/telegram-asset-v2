@@ -10,6 +10,7 @@ import {
     Cell,
 } from 'recharts';
 import { DashboardCard } from './DashboardCard';
+import { ChartTooltip } from './ChartTooltip';
 
 interface LineChartProps {
     title: string;
@@ -19,7 +20,7 @@ interface LineChartProps {
     nameKey: string;
     colors: string[];
     color?: string;
-    tooltipFormatter?: (value: number) => string;
+    tooltipFormatter?: (value: string) => string;
     isAnimationActive?: boolean;
     aspect?: any;
 }
@@ -49,7 +50,7 @@ export const LineChart: React.FC<LineChartProps> = ({
                     <LineChartR data={data}>
                         <XAxis dataKey={nameKey} />
                         <YAxis />
-                        <Tooltip formatter={tooltipFormatter} />
+                        <Tooltip content={(props) => <ChartTooltip {...props} tooltipFormatter={tooltipFormatter} />} />
                         {/* <Legend /> */}
                         {
                             dataKeys?.map((dataKey, index) => {
