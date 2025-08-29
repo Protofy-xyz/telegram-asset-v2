@@ -1,7 +1,8 @@
 import boardPrompt from './boardPrompt'
-import getChatGPTAPIKey from './getChatGPTAPIKey'
-
+import getChatGPTAPIKey from './getChatGPTApiKey'
+import processResponse from './processResponse'
 export default [
     boardPrompt,
-    getChatGPTAPIKey
+    getChatGPTAPIKey,
+    processResponse
 ]

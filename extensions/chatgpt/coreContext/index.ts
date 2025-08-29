@@ -8,11 +8,11 @@ import { getRoot } from "protonode";
 
 const logger = getLogger()
 
-export const getChatGPTApiKey = async(options?: {
+export const getChatGPTApiKey = async (options?: {
     done?: (result) => {},
     error?: (err) => {}
 }) => {
-    const { done = (apiKey) => apiKey, error = () => {} } = options ?? {};
+    const { done = (apiKey) => apiKey, error = () => { } } = options ?? {};
     let apiKey = ""
     try {
         apiKey = await getKey({ key: "OPENAI_API_KEY", token: getServiceToken() });
@@ -46,147 +46,166 @@ async function uploadFileToOpenAI(filePath: string): Promise<string> {
 }
 
 export const chatGPTSession = async ({
-  apiKey = undefined,
-  done = (response, message) => {},
-  chunk = (chunk: any) => {},
-  error = (err) => {},
-  model = "gpt-4o",
-  max_tokens = 4096,
-  ...props
+    apiKey = undefined,
+    done = (response, message) => { },
+    chunk = (chunk: any) => { },
+    error = (err) => { },
+    model = "gpt-4o",
+    max_tokens = 4096,
+    ...props
 }: ChatGPTRequest) => {
-  try {
-    if (!apiKey) apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      try { apiKey = await getKey({ key: "OPENAI_API_KEY", token: getServiceToken() }); }
-      catch (err) { console.error("Error fetching key:", err); }
-    }
-    if (!apiKey) {
-      const errObj = { message: "No API Key provided", code: "invalid_api_key" };
-      error(errObj.message);
-      return { isError: true, data: { error: errObj } };
-    }
-
-    const client = new OpenAI({ apiKey });
-
-    // --- Detecta si Responses API está disponible ---
-    const hasResponsesAPI = !!(client as any).responses?.create;
-
-    // Si NO hay Responses, avisar y caer a chat.completions (sin files):
-    if (!hasResponsesAPI) {
-      // Aviso claro:
-      const msg = "OpenAI SDK too old for Responses API. Falling back to chat.completions (files will be ignored).";
-      console.warn(msg);
-      // Llamada legacy:
-      //@ts-ignore
-      const stream = await client.chat.completions.create({
-        ...(props as any),
-        model,
-        max_tokens,
-        stream: true,
-      });
-
-      let fullResponse: string[] | undefined;
-      for await (const currentChunk of stream) {
-        if (!fullResponse) {
-          fullResponse = Array.from({ length: currentChunk.choices.length }).map(() => "");
+    try {
+        // --- API key ---
+        if (!apiKey) apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+            try {
+                apiKey = await getKey({ key: "OPENAI_API_KEY", token: getServiceToken() });
+            } catch (err) {
+                console.error("Error fetching key:", err);
+            }
         }
-        currentChunk.choices.forEach((choice, index) => {
-          if (choice.delta?.content) fullResponse![index] += choice.delta.content;
-        });
-        await chunk(currentChunk);
-      }
-      const out = fullResponse ?? [""];
-      done({ choices: out }, out[0]);
-      return out;
-    }
-
-    // --- Camino Responses API (con files) ---
-    type Part =
-      | string
-      | { type: "text"; text: string }
-      | { type: "image_url"; image_url: string | { url: string } }
-      | { type: "file"; file: { file_id: string } };
-
-    const messages = (props as any).messages as Array<{
-      role: "system" | "user" | "assistant" | "function";
-      content: Part[] | string;
-      name?: string;
-    }>;
-
-    const attachments: Array<{ file_id: string; tools: Array<{ type: "file_search" }> }> = [];
-    const input: Array<{
-      role: "user" | "assistant" | "system" | "function";
-      content: Array<
-        | { type: "input_text"; text: string }
-        | { type: "input_image"; image_url: { url: string; detail?: "auto" | "low" | "high" } }
-      >;
-    }> = [];
-
-    const toText = (s: any) => (typeof s === "string" ? s : String(s ?? ""));
-
-    for (const msg of messages || []) {
-      const parts: Part[] = Array.isArray(msg.content) ? (msg.content as Part[]) : [toText(msg.content)];
-      const converted: any[] = [];
-      for (const p of parts) {
-        if (typeof p === "string") { if (p.trim()) converted.push({ type: "input_text", text: p }); continue; }
-        if ((p as any).type === "text") {
-          const t = (p as any).text ?? "";
-          if (t.trim()) converted.push({ type: "input_text", text: t });
-          continue;
+        if (!apiKey) {
+            const errObj = { message: "No API Key provided", code: "invalid_api_key" };
+            error(errObj.message);
+            return { isError: true, data: { error: errObj } };
         }
-        if ((p as any).type === "image_url") {
-          const raw = (p as any).image_url;
-          const url = typeof raw === "string" ? raw : raw?.url;
-          if (url && url.trim()) converted.push({ type: "input_image", image_url: { url } });
-          continue;
+
+        const client = new OpenAI({ apiKey });
+
+        // --- ¿Responses API disponible? ---
+        const hasResponsesAPI = !!(client as any).responses?.create;
+
+        // Fallback a chat.completions si no hay Responses (los files se ignorarán)
+        if (!hasResponsesAPI) {
+            console.warn("SDK/driver sin Responses API; fallback a chat.completions (files ignorados).");
+            // @ts-ignore
+            const stream = await client.chat.completions.create({
+                ...(props as any),
+                model,
+                max_tokens,
+                stream: true,
+            });
+
+            let fullResponse: string[] | undefined;
+            for await (const currentChunk of stream) {
+                if (!fullResponse) {
+                    fullResponse = Array.from({ length: currentChunk.choices.length }).map(() => "");
+                }
+                currentChunk.choices.forEach((choice, index) => {
+                    if (choice.delta?.content) fullResponse![index] += choice.delta.content;
+                });
+                await chunk(currentChunk);
+            }
+            const out = fullResponse ?? [""];
+            done({ choices: out }, out[0]);
+            return out;
         }
-        if ((p as any).type === "file" && (p as any).file?.file_id) {
-          attachments.push({ file_id: (p as any).file.file_id, tools: [{ type: "file_search" }] });
-          continue; // files van en attachments, no en content
+
+        // --- Camino Responses API (con files) ---
+        type Part =
+            | string
+            | { type: "text"; text: string }
+            | { type: "image_url"; image_url: string | { url: string } }
+            | { type: "file"; file: { file_id: string } };
+
+        const messages = (props as any).messages as Array<{
+            role: "system" | "user" | "assistant" | "function";
+            content: Part[] | string;
+            name?: string;
+        }>;
+
+        const attachments: Array<{ file_id: string; tools: Array<{ type: "file_search" }> }> = [];
+
+        // En v5 el contenido de Responses debe ser:
+        // { type: "input_text", text: string } | { type: "input_image", image_url: string }
+        const input: Array<{
+            role: "user" | "assistant" | "system" | "function";
+            content: Array<
+                | { type: "input_text"; text: string }
+                | { type: "input_image"; image_url: string }
+            >;
+        }> = [];
+
+        const toText = (s: any) => (typeof s === "string" ? s : String(s ?? ""));
+
+        for (const msg of messages || []) {
+            const parts: Part[] = Array.isArray(msg.content) ? (msg.content as Part[]) : [toText(msg.content)];
+            const converted: Array<{ type: "input_text"; text: string } | { type: "input_image"; image_url: string }> = [];
+
+            for (const p of parts) {
+                if (typeof p === "string") {
+                    if (p.trim()) converted.push({ type: "input_text", text: p });
+                    continue;
+                }
+                if ((p as any).type === "text") {
+                    const t = (p as any).text ?? "";
+                    if (t.trim()) converted.push({ type: "input_text", text: t });
+                    continue;
+                }
+                if ((p as any).type === "image_url") {
+                    const raw = (p as any).image_url;
+                    const url = typeof raw === "string" ? raw : raw?.url;
+                    // ✅ v5: image_url DEBE ser string (data URI o URL)
+                    if (url && typeof url === "string" && url.trim()) {
+                        converted.push({ type: "input_image", image_url: url });
+                    }
+                    continue;
+                }
+                if ((p as any).type === "file" && (p as any).file?.file_id) {
+                    attachments.push({ file_id: (p as any).file.file_id, tools: [{ type: "file_search" }] });
+                    // los files NO van en content; solo en attachments
+                    continue;
+                }
+            }
+
+            input.push({
+                role: msg.role,
+                content: converted.length ? converted : [{ type: "input_text", text: "" }],
+            });
         }
-      }
-      input.push({ role: msg.role, content: converted.length ? converted : [{ type: "input_text", text: "" }] });
+
+        const request: any = {
+            model,
+            input,
+            max_output_tokens: typeof max_tokens === "number" ? max_tokens : undefined,
+            temperature: (props as any).temperature,
+            top_p: (props as any).top_p,
+        };
+
+        if (attachments.length > 0) {
+            request.tools = [{ type: "file_search" }];
+            request.attachments = attachments;
+        }
+        if ((props as any).response_format) {
+            request.response_format = (props as any).response_format;
+        }
+
+        const res = await (client as any).responses.create(request);
+
+        // Extraer texto de Responses v5
+        const text =
+            (res as any).output_text ??
+            (() => {
+                try {
+                    const chunks = ((res as any).output ?? [])
+                        .flatMap((o: any) => o.content ?? [])
+                        .filter((c: any) => c.type === "output_text")
+                        .map((c: any) => c?.text ?? "");
+                    return chunks.join("");
+                } catch {
+                    return "";
+                }
+            })();
+
+        const out = [text];
+        done({ choices: out }, out[0]);
+        return out;
+
+    } catch (e: any) {
+        logger.error({ error: e?.message || e, stack: e?.stack }, "Error in chatGPTSession");
+        if (error) error(e);
+        return null;
     }
-
-    const request: any = {
-      model,
-      input,
-      max_output_tokens: typeof max_tokens === "number" ? max_tokens : undefined,
-      temperature: (props as any).temperature,
-      top_p: (props as any).top_p,
-    };
-
-    if (attachments.length > 0) {
-      request.tools = [{ type: "file_search" }];
-      request.attachments = attachments;
-    }
-    if ((props as any).response_format) {
-      request.response_format = (props as any).response_format;
-    }
-
-    const res = await (client as any).responses.create(request);
-
-    const text =
-      (res as any).output_text ??
-      (() => {
-        try {
-          const chunks = ((res as any).output ?? [])
-            .flatMap((o: any) => o.content ?? [])
-            .filter((c: any) => c.type === "output_text")
-            .map((c: any) => c?.text ?? "");
-          return chunks.join("");
-        } catch { return ""; }
-      })();
-
-    const out = [text];
-    done({ choices: out }, out[0]);
-    return out;
-
-  } catch (e: any) {
-    logger.error({ error: e?.message || e, stack: e?.stack }, "Error in chatGPTSession");
-    if (error) error(e);
-    return null;
-  }
 };
 
 export const chatGPTPrompt = async ({
@@ -197,78 +216,97 @@ export const chatGPTPrompt = async ({
     ...props
 }: any & { message: string }) => {
 
-    console.log('************************************************************************ Sending prompt to ChatGPT:', {
-        message,
-        images,
-        files,
-        conversation
-    });
-    const content: any[] = [
-        ...conversation,
-        { type: "text", text: message }
-    ];
+    console.log("************************************************************************ Sending prompt to ChatGPT:");
+    console.dir({ message, images, files, conversation }, { depth: 5 });
 
+    // --- helper: normaliza data URIs para garantizar ;base64, ---
+    const normalizeDataUrl = (s: string): string => {
+        if (!s.startsWith("data:")) return s;
+        const comma = s.indexOf(",");
+        if (comma === -1) return s; // raro, pero no rompemos
+        const header = s.slice(0, comma);
+        // si ya tiene ;base64 justo antes de la coma, OK
+        if (/;base64$/i.test(header)) return s;
+        // inserta ;base64 antes de la coma
+        return `${header};base64${s.slice(comma)}`;
+    };
+
+    // Contenido principal del usuario
+    const content: any[] = [{ type: "text", text: message }];
+
+    // Files -> subir y añadir como { type:"file" }
     for (const file of files) {
         const file_id = await uploadFileToOpenAI(file);
-        content.push({
-            type: "file",
-            file: { file_id }  // <- ¡CORRECTO!
-        });
+        console.log("✔ Uploaded file to OpenAI:", { file, file_id });
+        content.push({ type: "file", file: { file_id } });
     }
 
+    // Images -> SIEMPRE data URL accesible por OpenAI (nada de localhost)
     if (images.length > 0) {
-        console.log('Chatgpt: there are images in the request')
-        const imageContent = await Promise.all(
-            images.map(async (url) => {
+        console.log("📸 Chatgpt: there are images in the request:", images);
+        const imageParts = await Promise.all(
+            images.map(async (url: string, idx: number) => {
                 try {
-                    const response = await axios.get(url, {
-                        responseType: "text", // Ya es base64 como texto plano
-                    });
+                    console.log(`➡️ Processing image[${idx}]`, url);
 
-                    const base64 = response.data?.trim?.();
-                    if (!base64) return null;
+                    // 1) Si ya es data URI
+                    if (typeof url === "string" && url.startsWith("data:")) {
+                        const norm = normalizeDataUrl(url.trim());
+                        console.log(`   data: URI detected, normalized:`, norm.slice(0, 100) + "...");
+                        return { type: "image_url", image_url: norm };
+                    }
 
-                    return {
-                        type: "image_url",
-                        image_url: {
-                            url: base64
-                        }
-                    };
+                    // 2) Si es una URL (p.ej. tu localhost)
+                    const resp = await axios.get(url, { responseType: "text" });
+                    const raw = (resp?.data ?? "").toString().trim();
+                    console.log(`   axios.get(${url}) -> length:`, raw?.length, "sample:", raw?.slice(0, 80));
+
+                    if (!raw) return null;
+
+                    const dataUrl = raw.startsWith("data:")
+                        ? normalizeDataUrl(raw)
+                        : `data:image/jpeg;base64,${raw}`;
+
+                    console.log(`   final dataUrl[${idx}]:`, dataUrl.slice(0, 100) + "...");
+                    return { type: "image_url", image_url: dataUrl };
                 } catch (err) {
-                    console.warn(`Error fetching image from ${url}:`, err);
+                    console.warn(`⚠️ Error fetching image from ${url}:`, err);
                     return null;
                 }
             })
         );
 
-        const validImages = imageContent.filter(Boolean);
-        content.push(...validImages);
+        console.log("✔ Image parts built:", imageParts);
+        content.push(...(imageParts.filter(Boolean) as any[]));
     }
 
-    console.log('###################################### Final chatgpt content: ', content)
+    // Mensajes finales
+    const messages = [
+        ...(Array.isArray(conversation) ? conversation : []),
+        { role: "user", content }
+    ];
+
+    console.log("###################################### Final chatgpt messages: ");
+    console.dir(messages, { depth: 10 });
 
     const response = await chatGPTSession({
-        messages: [
-            {
-                role: "user",
-                content
-            }
-        ],
+        messages,
         ...props,
         done: (response) => {
             let msg = "";
             if (response.choices && response.choices.length) {
-                msg = response.choices[0];
+                msg = response.choices[0] ?? "";
             }
+            console.log("✅ Done callback fired. First msg:", msg?.slice(0, 200));
             if (props.done) props.done(response, msg);
         },
         error: (err) => {
-            if (props.error) {
-                props.error(err.message);
-            }
+            console.error("❌ Error callback fired:", err);
+            if (props.error) props.error(err.message);
         }
     });
 
+    console.log("📤 Final response from chatGPTSession:", response);
     return response;
 };
 
@@ -312,7 +350,7 @@ type MessageContent =
 
 
 
-export const singlePrompt = async(options: {
+export const prompt = async (options: {
     message: string,
     images?: any[],
     files?: any[],
@@ -320,13 +358,13 @@ export const singlePrompt = async(options: {
     done?: (result) => {},
     error?: (err) => {}
 }) => {
-    const { 
-        message, 
-        images = [], 
-        files = [], 
-        conversation = [], 
-        done = () => {}, 
-        error = () => {} 
+    const {
+        message,
+        images = [],
+        files = [],
+        conversation = [],
+        done = () => { },
+        error = () => { }
     } = options;
 
     const response = await chatGPTPrompt({
@@ -342,9 +380,20 @@ export const singlePrompt = async(options: {
     return response && Array.isArray(response) ? response[0] : response;
 }
 
+export const processResponse = async ({ response, execute_action, done = async (v) => v,  error = (e) => e }) => {
+    if (!response) return null;
+    if (!execute_action) return null;
+    const parsedResponse = JSON.parse(response);
+    parsedResponse.actions.forEach((action) => {
+        execute_action(action.name, action.params);
+    });
+    return await done(parsedResponse.response);
+}
+
 export default {
     chatGPTSession,
     chatGPTPrompt,
-    singlePrompt,
+    prompt,
+    processResponse,
     getChatGPTApiKey
 }
