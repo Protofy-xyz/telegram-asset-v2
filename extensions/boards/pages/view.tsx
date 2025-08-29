@@ -47,8 +47,15 @@ class ValidationError extends Error {
   }
 }
 
-const saveBoard = async (boardId, data) => {
+const saveBoard = async (boardId, data, opts = { bumpVersion: true }) => {
   try {
+    if (opts.bumpVersion) {
+      if(!data.version) {
+        data.version = 1
+      } else {
+        data.version += 1
+      }
+    }
     await API.post(`/api/core/v1/boards/${boardId}`, data);
   } catch (error) {
     console.error("Error saving board:", error);
@@ -566,9 +573,9 @@ const Board = ({ board, icons }) => {
       const newCard = { ...card, key: uniqueKey }
       const newItems = [...prevItems, newCard].filter(item => item.key !== 'addwidget');
       boardRef.current.cards = newItems;
-      saveBoard(board.name, boardRef.current);
       return newItems;
     });
+    saveBoard(board.name, boardRef.current);
   };
 
   const setCardContent = (key, content) => {
@@ -580,9 +587,9 @@ const Board = ({ board, icons }) => {
         return item;
       });
       boardRef.current.cards = newItems;
-      saveBoard(board.name, boardRef.current);
       return newItems;
     });
+    saveBoard(board.name, boardRef.current);
   }
 
   const onEditBoard = async () => {
@@ -645,9 +652,9 @@ const Board = ({ board, icons }) => {
             setItems(prevItems => {
               const newItems = [...prevItems, newCard].filter(i => i.key !== 'addwidget');
               boardRef.current.cards = newItems;
-              saveBoard(board.name, boardRef.current);
               return newItems;
             });
+            saveBoard(board.name, boardRef.current);
           }}
           onDelete={() => {
             setIsDeleting(true);
@@ -913,7 +920,7 @@ const Board = ({ board, icons }) => {
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
                     console.log('New layout: ', layout)
                     boardRef.current.layouts[breakpointRef.current] = layout
-                    saveBoard(board.name, boardRef.current)
+                    saveBoard(board.name, boardRef.current, { bumpVersion: false })
                   }, 100)
                 }}
                 onBreakpointChange={(bp) => {
