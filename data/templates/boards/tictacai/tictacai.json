@@ -1,5 +1,6 @@
 {
     "name": "{{{name}}}",
+    "icon": "grid-3x3",
     "cards": [
         {
             "key": "action_1754155173070",

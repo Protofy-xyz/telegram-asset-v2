@@ -34,10 +34,7 @@ const FirstSlide = ({ selected, setSelected }) => {
     const templates = await API.get(`/api/core/v2/templates/boards`);
     let templatesData = templates.data || [];
     templatesData = templatesData.map((tpl) => {
-      return {
-        ...tpl, 
-        icon: LayoutDashboard
-      }
+      return tpl
     })
     setBoardTemplates(templatesData);
   };

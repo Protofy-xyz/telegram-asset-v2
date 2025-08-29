@@ -461,7 +461,9 @@ export default async (app, context) => {
 
     app.get('/api/core/v2/templates/boards', requireAdmin(), async (req, res) => {
         const templates = fsSync.readdirSync(TemplatesDir(getRoot())).filter(file => fsSync.statSync(TemplatesDir(getRoot()) + '/' + file).isDirectory()).map(dir => {
-            return { id: dir, name: dir, description: fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/README.md', 'utf-8') || '' };
+            const description = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/README.md', 'utf-8') || ''
+            const json = JSON.parse(fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/' + dir + '.json', 'utf-8'));
+            return { id: dir, name: dir, description, icon: json.icon };
         });
         res.send(templates);
     });
