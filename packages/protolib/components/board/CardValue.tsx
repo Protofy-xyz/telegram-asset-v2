@@ -19,7 +19,7 @@ export const CardValue = ({ value, style = {}, id = undefined, mode = undefined 
     value = typeof value === 'string' ? value : String(value)
 
     if (typeof value === 'string' && value.length > 20 || value.includes("\n")) {
-        return <XStack mt="20px" width="calc(100% - 20px)" f={1}><textarea
+        return <XStack mt="20px" mb="10px" width="calc(100% - 20px)" f={1}><textarea
             className="no-drag"
             style={{
                 color: "var(--color9)",
