@@ -4,20 +4,24 @@ import { getKey } from "@extensions/keys/coreContext";
 import OpenAI from 'openai';
 import axios from "axios";
 import * as fs from "fs";
+import { getRoot } from "protonode";
 
 const logger = getLogger()
 
-export const getChatGPTApiKey = async () => {
+export const getChatGPTApiKey = async(options?: {
+    done?: (result) => {},
+    error?: (err) => {}
+}) => {
+    const { done = (apiKey) => apiKey, error = () => {} } = options ?? {};
     let apiKey = ""
     try {
         apiKey = await getKey({ key: "OPENAI_API_KEY", token: getServiceToken() });
+        return done(apiKey);
     } catch (err) {
         const errorMessage = "Error fetching key: " + err;
         console.error(errorMessage);
-        throw new Error(errorMessage);
+        error(errorMessage);
     }
-    return apiKey;
-
 }
 
 async function uploadFileToOpenAI(filePath: string): Promise<string> {
@@ -117,10 +121,12 @@ export const chatGPTPrompt = async ({
     message,
     images = [],
     files = [],
+    conversation = [],
     ...props
 }: any & { message: string }) => {
 
     const content: any[] = [
+        ...conversation,
         { type: "text", text: message }
     ];
 
@@ -224,7 +230,40 @@ type MessageContent =
     | (string | { type: "image_url"; image_url: string })[]; // Image asset 
 
 
+
+export const singlePrompt = async(options: {
+    message: string,
+    images?: any[],
+    files?: any[],
+    conversation?: any[],
+    done?: (result) => {},
+    error?: (err) => {}
+}) => {
+    const { 
+        message, 
+        images = [], 
+        files = [], 
+        conversation = [], 
+        done = () => {}, 
+        error = () => {} 
+    } = options;
+
+    const response = await chatGPTPrompt({
+        images: images || [],
+        files: (files || []).map(file => getRoot() + file),
+        message: message, done: (response, msg) => {
+            done(response);
+        }, error: (err) => {
+            error(err);
+        },
+        conversation
+    })
+    return response && Array.isArray(response) ? response[0] : response;
+}
+
 export default {
     chatGPTSession,
-    chatGPTPrompt
+    chatGPTPrompt,
+    singlePrompt,
+    getChatGPTApiKey
 }
