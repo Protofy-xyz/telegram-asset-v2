@@ -47,6 +47,14 @@ class ValidationError extends Error {
   }
 }
 
+const saveBoard = async (boardId, data) => {
+  try {
+    await API.post(`/api/core/v1/boards/${boardId}`, data);
+  } catch (error) {
+    console.error("Error saving board:", error);
+  }
+};
+
 const checkCard = async (cards, newCard) => {
   const errors = []
   console.log("cards: ", cards)
@@ -500,7 +508,7 @@ const Board = ({ board, icons }) => {
         });
         setItems(newItems);
         board.cards = newItems;
-        API.post(`/api/core/v1/boards/${board.name}`, board);
+        saveBoard(board.name, board);
       } else {
         console.error('Card not found:', cardId);
       }
@@ -518,7 +526,7 @@ const Board = ({ board, icons }) => {
     // if (newItems.length == 0) newItems.push(addCard) // non necessary
     setItems(newItems)
     boardRef.current.cards = newItems
-    await API.post(`/api/core/v1/boards/${board.name}`, boardRef.current)
+    await saveBoard(board.name, boardRef.current)
     setIsDeleting(false)
     setCurrentCard(null)
   }
@@ -558,7 +566,7 @@ const Board = ({ board, icons }) => {
       const newCard = { ...card, key: uniqueKey }
       const newItems = [...prevItems, newCard].filter(item => item.key !== 'addwidget');
       boardRef.current.cards = newItems;
-      API.post(`/api/core/v1/boards/${board.name}`, boardRef.current);
+      saveBoard(board.name, boardRef.current);
       return newItems;
     });
   };
@@ -572,14 +580,14 @@ const Board = ({ board, icons }) => {
         return item;
       });
       boardRef.current.cards = newItems;
-      API.post(`/api/core/v1/boards/${board.name}`, boardRef.current);
+      saveBoard(board.name, boardRef.current);
       return newItems;
     });
   }
 
   const onEditBoard = async () => {
     try {
-      await API.post(`/api/core/v1/boards/${board.name}`, boardRef.current)
+      await saveBoard(board.name, boardRef.current)
     } catch (err) {
       alert('Error editing board')
     }
@@ -637,7 +645,7 @@ const Board = ({ board, icons }) => {
             setItems(prevItems => {
               const newItems = [...prevItems, newCard].filter(i => i.key !== 'addwidget');
               boardRef.current.cards = newItems;
-              API.post(`/api/core/v1/boards/${board.name}`, boardRef.current);
+              saveBoard(board.name, boardRef.current);
               return newItems;
             });
           }}
@@ -817,7 +825,7 @@ const Board = ({ board, icons }) => {
                   }
                   setItems(newItems)
                   boardRef.current.cards = newItems
-                  await API.post(`/api/core/v1/boards/${board.name}`, boardRef.current)
+                  await saveBoard(board.name, boardRef.current)
                   setCurrentCard(null)
                   setIsEditing(false)
                 }}>
@@ -905,7 +913,7 @@ const Board = ({ board, icons }) => {
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
                     console.log('New layout: ', layout)
                     boardRef.current.layouts[breakpointRef.current] = layout
-                    API.post(`/api/core/v1/boards/${board.name}`, boardRef.current)
+                    saveBoard(board.name, boardRef.current)
                   }, 100)
                 }}
                 onBreakpointChange={(bp) => {
