@@ -44,7 +44,7 @@ async function createBackupFolderIfNeeded(backupPath) {
   }
 }
 
-const customGetDB = (path, req, session) => {
+const customGetDB = (path, req, session, context?) => {
   const db = {
     async *iterator() {
       const databases = await getDatabases()
@@ -79,7 +79,7 @@ const customGetDB = (path, req, session) => {
 
     async *get(key) {
       const dbPath = fspath.join(dbDir(req), fspath.basename(key))
-      const db = getDB(dbPath, req, session)
+      const db = getDB(dbPath, req, session, context)
       yield* db.iterator()
     }
   }

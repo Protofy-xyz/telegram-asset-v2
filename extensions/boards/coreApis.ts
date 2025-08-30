@@ -36,9 +36,68 @@ class HttpError extends Error {
     }
 }
 
+const processCards = async (boardId, cards, context, regenerate?) => {
+    if (regenerate) {
+        const newCardNames = cards.map(card => card.name);
+        cleanObsoleteCardFiles(boardId, newCardNames);
+        for (let i = 0; i < cards.length; i++) {
+            //create a file for each card, in the board folder
+            const card = cards[i];
+            const code = card.rulesCode
+            const html = card.html
+            const cardFilePath = BoardsDir(getRoot()) + boardId + '/' + card.name + '.js'
+            const cardHTMLFilePath = BoardsDir(getRoot()) + boardId + '/' + card.name + '_view.js'
 
+            if (Object.prototype.hasOwnProperty.call(card, "rulesCode")) {
+                if (code) {
+                    await fs.writeFile(cardFilePath, code)
+                } else {
+                    try { await fs.unlink(cardFilePath) } catch (e) { }
+                }
+                delete card.rulesCode
+            }
 
-const getDB = (path, req, session) => {
+            if (Object.prototype.hasOwnProperty.call(card, "html")) {
+                if (html) {
+                    await fs.writeFile(cardHTMLFilePath, html)
+                } else {
+                    try { await fs.unlink(cardHTMLFilePath) } catch (e) { }
+                }
+                delete card.html
+            }
+        }
+    }
+    const actionsCards = cards.filter(c => c && c.type === 'action')
+    for (let i = 0; i < actionsCards.length; i++) {
+
+        const card = actionsCards[i];
+        console.log("Adding action: ", JSON.stringify(card, null, 4))
+        addAction({
+            method: card.method || 'get',
+            group: 'boards',
+            name: card.name,
+            url: "/api/core/v1/boards/" + boardId + "/actions/" + card.name,
+            tag: boardId,
+            description: card.description ?? "",
+            params: card.params ?? {},
+            ...(card.configParams && { configParams: card.configParams }),
+            emitEvent: i === actionsCards.length - 1,
+            persistValue: card.persistValue ?? false
+        })
+        if (!regenerate && card.persistValue) {
+            // if persistValue is true, save the board state
+            const db = dbProvider.getDB('board_' + boardId);
+            try {
+                const content = await db.get(card.name);
+                await context.state.set({ group: 'boards', tag: boardId, name: card.name, value: JSON.parse(content), emitEvent: true });
+            } catch (error) {
+                logger.info("No previous value in DB found for card: ", card.name);
+            }
+        }
+    }
+}
+
+const getDB = (path, req, session, context?) => {
     const db = {
         async *iterator() {
             // console.log("Iterator")
@@ -210,51 +269,7 @@ function Widget({board, state}) {
                 //register actions for each card
                 console.log('cards: ', value.cards)
                 if (value.cards && Array.isArray(value.cards)) {
-                    const newCardNames = value.cards.map(card => card.name);
-                    cleanObsoleteCardFiles(key, newCardNames, req);
-                    for (let i = 0; i < value.cards.length; i++) {
-                        //create a file for each card, in the board folder
-                        const card = value.cards[i];
-                        const code = card.rulesCode
-                        const html = card.html
-                        const cardFilePath = BoardsDir(getRoot(req)) + key + '/' + card.name + '.js'
-                        const cardHTMLFilePath = BoardsDir(getRoot(req)) + key + '/' + card.name + '_view.js'
-
-                        if (Object.prototype.hasOwnProperty.call(card, "rulesCode")) {
-                            if (code) {
-                                await fs.writeFile(cardFilePath, code)
-                            } else {
-                                try { await fs.unlink(cardFilePath) } catch (e) { }
-                            }
-                            delete card.rulesCode
-                        }
-
-                        if (Object.prototype.hasOwnProperty.call(card, "html")) {
-                            if (html) {
-                                await fs.writeFile(cardHTMLFilePath, html)
-                            } else {
-                                try { await fs.unlink(cardHTMLFilePath) } catch (e) { }
-                            }
-                            delete card.html
-                        }
-                    }
-                    const actionsCards = value.cards.filter(c => c && c.type === 'action')
-                    for (let i = 0; i < actionsCards.length; i++) {
-
-                        const card = actionsCards[i];
-                        console.log("Adding action: ", JSON.stringify(card, null, 4))
-                        addAction({
-                            method: card.method || 'get',
-                            group: 'boards',
-                            name: card.name,
-                            url: "/api/core/v1/boards/" + key + "/actions/" + card.name,
-                            tag: key,
-                            description: card.description ?? "",
-                            params: card.params ?? {},
-                            ...(card.configParams && { configParams: card.configParams }),
-                            emitEvent: i === actionsCards.length - 1
-                        })
-                    }
+                    await processCards(key, value.cards, context, true)
                 }
                 const statesDB = ProtoMemDB('states');
                 const group = 'boards';
@@ -772,7 +787,7 @@ export default async (app, context) => {
     app.get('/api/core/v1/boards/:boardId/cards/:cardId', handler(async (req, res, session, next) => {
         const card = await getCard(req.params.boardId, req.params.cardId);
         //get read token from card
-        if (!card?.publicRead &&!(await hasAccessToken('read', session, card, req.query.token))) {
+        if (!card?.publicRead && !(await hasAccessToken('read', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
             const value = ProtoMemDB('states').get('boards', req.params.boardId, req.params.cardId);
@@ -976,32 +991,7 @@ export default async (app, context) => {
         for (const board of boards) {
             const boardContent = await getBoard(board)
             if (boardContent.cards && Array.isArray(boardContent.cards)) {
-                const actionsCards = boardContent.cards.filter(c => c.type === 'action')
-                for (let i = 0; i < actionsCards.length; i++) {
-                    const card = actionsCards[i];
-                    addAction({
-                        group: 'boards',
-                        name: card.name,
-                        url: "/api/core/v1/boards/" + board + "/actions/" + card.name,
-                        tag: board,
-                        description: card.description ?? "",
-                        params: card.params ?? {},
-                        configParams: card.configParams ?? undefined,
-                        emitEvent: i === actionsCards.length - 1,
-                        persistValue: card.persistValue ?? false,
-                        method: card.method ?? 'get'
-                    })
-                    if (card.persistValue) {
-                        // if persistValue is true, save the board state
-                        const db = dbProvider.getDB('board_' + board);
-                        try {
-                            const content = await db.get(card.name);
-                            await context.state.set({ group: 'boards', tag: board, name: card.name, value: JSON.parse(content), emitEvent: true });
-                        } catch (error) {
-                            logger.info("No previous value in DB found for card: ", card.name);
-                        }
-                    }
-                }
+                await processCards(boardContent.name, boardContent.cards, context)
             }
         }
     }

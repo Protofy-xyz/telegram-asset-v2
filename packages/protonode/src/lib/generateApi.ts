@@ -192,7 +192,7 @@ export const AutoAPI = ({
             return
         }
 
-        const db = getDB(getDBPath("list", req), req, session);
+        const db = getDB(getDBPath("list", req), req, session, context);
 
         if(req.query.group) {
             let options = []
@@ -324,7 +324,7 @@ export const AutoAPI = ({
                 res.status(400).send({ error: "No ids provided" })
                 return
             }
-            const db = getDB(getDBPath("read", req), req, session)
+            const db = getDB(getDBPath("read", req), req, session, context)
             const allResults: any[] = []
             for(const id of ids) {
                 try {
@@ -357,7 +357,7 @@ export const AutoAPI = ({
             }
 
             for (const path of dbPath) {
-                const db = getDB(path, req, session)
+                const db = getDB(path, req, session, context)
                 try {
                     if(allowUpsert) throw new Error("Upsert enabled, inserting new document")
                     await db.get(entityModel.getId())
@@ -393,7 +393,7 @@ export const AutoAPI = ({
             return
         }
 
-        const db = getDB(getDBPath("read", req), req, session)
+        const db = getDB(getDBPath("read", req), req, session, context)
 
         try {
             if (paginatedRead) {
@@ -431,7 +431,7 @@ export const AutoAPI = ({
         }
 
         const requestModel = modelType.load(await onBeforeUpdate(req.body, req, session), session)
-        const db = getDB(getDBPath("update", req, requestModel), req, session)
+        const db = getDB(getDBPath("update", req, requestModel), req, session, context)
         const modelData = (await recoverLinks([JSON.parse(await db.get(req.params.key))]))[0]
         const entityModel = await (modelType.load(modelData, session).updateTransformed(requestModel, transformers))
         const isPatch = req?.query?.patch === 'true'
@@ -460,8 +460,8 @@ export const AutoAPI = ({
             res.status(401).send({ error: "Unauthorized" })
             return
         }
-        
-        const db = getDB(getDBPath("delete", req), req, session)
+
+        const db = getDB(getDBPath("delete", req), req, session, context)
         const rawEntityData = await db.get(req.params.key)
         
         if (!paginatedRead) {

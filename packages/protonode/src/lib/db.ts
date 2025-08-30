@@ -10,7 +10,7 @@ export const connectDB = (dbPath: string, initialData?: Object, options?) => {
     return provider.initDB(dbPath, initialData, options);
 }
 
-export const getDB = (dbPath: string, req?, session?) => {
+export const getDB = (dbPath: string, req?, session?, context?) => {
     return provider.connect(dbPath);
 }
 
