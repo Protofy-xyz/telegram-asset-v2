@@ -1,5 +1,4 @@
-import React, { use } from 'react'
-import { Cable, Copy, Plus, Trash2, Settings, MoreVertical, X, ArrowLeft, Book, FileJson, ClipboardList, Code, Activity, Bot, Presentation } from '@tamagui/lucide-icons'
+import { Cable, Copy, Plus, Trash2, Settings, MoreVertical, X, ArrowLeft, Book, FileJson, ClipboardList, Code, Activity, Bot, Presentation, FileCode, Sliders } from '@tamagui/lucide-icons'
 import { API, getPendingResult } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
@@ -50,7 +49,7 @@ class ValidationError extends Error {
 const saveBoard = async (boardId, data, opts = { bumpVersion: true }) => {
   try {
     if (opts.bumpVersion) {
-      if(!data.version) {
+      if (!data.version) {
         data.version = 1
       } else {
         data.version += 1
@@ -94,6 +93,7 @@ const { useParams } = createParam()
 const ActionRunner = dynamic(() => import('protolib/components/ActionRunner').then(mod => mod.ActionRunner), { ssr: false })
 const RulesSideMenu = dynamic(() => import('protolib/components/autopilot/RulesSideMenu').then(mod => mod.RulesSideMenu), { ssr: false })
 const UISideMenu = dynamic(() => import('protolib/components/autopilot/UISideMenu').then(mod => mod.UISideMenu), { ssr: false })
+
 const CardIcon = ({ Icon, onPress, ...props }) => {
   return <Tinted>
     <XStack {...props} right={-10} hoverStyle={{ bg: '$backgroundFocus' }} pressStyle={{ bg: '$backgroundPress' }} borderRadius="$5" alignItems="center" justifyContent="center" cursor="pointer" p="$2" onPress={onPress}>
@@ -134,7 +134,10 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
           <Tinted>
             <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"} onPress={(e) => e.stopPropagation()}>
               <YStack>
-                <MenuButton text="Settings" Icon={Settings} onPress={() => onEdit()} />
+                <MenuButton text="Settings" Icon={Settings} onPress={() => onEdit("config")} />
+                <MenuButton text="Edit Rules" Icon={ClipboardList} onPress={() => onEdit("rules")} />
+                <MenuButton text="Edit Params" Icon={Sliders} onPress={() => onEdit("params")} />
+                <MenuButton text="Edit UI" Icon={FileCode} onPress={() => onEdit("view")} />
                 <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
                 <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />
                 <MenuButton text="Delete" Icon={Trash2} onPress={() => onDelete()} />
@@ -161,7 +164,7 @@ const ActionCard = ({
   onRun = (name, params) => { },
   onEditCode = () => { },
   onDelete = () => { },
-  onEdit = () => { },
+  onEdit = (tab) => { },
   onDetails = () => { },
   onCopy = () => { },
   data = {} as any,
@@ -431,6 +434,8 @@ const Board = ({ board, icons }) => {
   const isJSONView = query.json == 'true'
   const [appState, setAppState] = useAtom(AppState)
 
+  const [tab, setTab] = useState('config')
+
   const [addKey, setAddKey] = useState(0)
 
   const { resolvedTheme } = useThemeSetting()
@@ -526,7 +531,7 @@ const Board = ({ board, icons }) => {
     reloadBoard()
   })
 
-  const boardRef = React.useRef(board)
+  const boardRef = useRef(board)
 
   const deleteCard = async (card) => {
     const newItems = items.filter(item => item.key != card.key)
@@ -660,7 +665,8 @@ const Board = ({ board, icons }) => {
             setIsDeleting(true);
             setCurrentCard(item);
           }}
-          onEdit={() => {
+          onEdit={(tab) => {
+            setTab(tab)
             setIsEditing(true);
             setCurrentCard(item);
             setEditedCard(item);
@@ -809,7 +815,7 @@ const Board = ({ board, icons }) => {
               h={"95vh"}
               maw={1600}
             >
-              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} onEdit={(data) => {
+              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} tab={tab} onEdit={(data) => {
                 setEditedCard(data)
               }} errors={errors} />
 

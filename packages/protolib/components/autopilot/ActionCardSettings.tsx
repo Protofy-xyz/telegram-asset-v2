@@ -1,10 +1,9 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, Info, HelpingHand, X, FileQuestion } from '@tamagui/lucide-icons'
-import { Text, YStack, XStack, ToggleGroup, Paragraph, Input, Button, Label } from '@my/ui'
-import { useEffect, useState, useRef } from 'react'
+import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion } from '@tamagui/lucide-icons'
+import { Text, YStack, Paragraph } from '@my/ui'
+import { useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
 import { RuleEditor } from './RuleEditor'
 import { ParamsEditor } from './ParamsEditor'
-import { HTMLEditor } from './HTMLEditor'
 import { useThemeSetting } from '@tamagui/next-theme';
 import { Monaco } from '../Monaco'
 import { Markdown } from '../Markdown'
@@ -16,14 +15,14 @@ import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
 
-export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, errors, mode = "edit" }) => {
+export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, errors, mode = "edit", tab = "rules" }) => {
 
   const [cardData, setCardData] = useState(card);
   const originalNameRef = useRef(card?.name ?? null)
 
   const isCreateMode = mode === "create";
 
-  const [selectedTab, setSelectedTab] = useState(isCreateMode ? "config" : "rules");
+  const [selectedTab, setSelectedTab] = useState(isCreateMode ? "config" : tab);
 
   const { resolvedTheme } = useThemeSetting();
 
@@ -46,8 +45,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
   }
 
   const tabs = [
-    {
-      id: 'info',
+    { id: 'info',
       label: 'Readme',
       icon: <FileQuestion size={"$1"} />,
       content: <YStack f={1} gap="$4">
@@ -89,8 +87,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
         </YStack>
       </YStack>
     },
-    {
-      id: 'rules',
+    { id: 'rules',
       label: 'Rules',
       icon: <ClipboardList size={"$1"} />,
       content: <RuleEditor
@@ -106,8 +103,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
         setCardData={setCardData}
       />
     },
-    {
-      id: 'params',
+    { id: 'params',
       label: 'Params',
       icon: <Sliders size={"$1"} />,
       content: <ParamsEditor
@@ -129,20 +125,17 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
         }}
       />
     },
-    {
-      id: 'config',
-      label: 'Config',
+    { id: 'config',
+      label: 'Settings',
       icon: <Cog size={"$1"} />,
       content: <DisplayEditor icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
     },
-    {
-      id: 'view',
+    { id: 'view',
       label: 'View',
       icon: <FileCode size={"$1"} />,
       content: <ViewEditor cardData={cardData} setHTMLCode={setHTMLCode} />
     },
-    {
-      id: 'raw',
+    { id: 'raw',
       label: 'Raw',
       icon: <Braces size={"$1"} />,
       content: <SettingsEditor cardData={cardData} setCardData={setCardData} resolvedTheme={resolvedTheme} />
@@ -172,9 +165,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
                 )
               ))
             }
-
           </Tinted>
-
         </YStack>
       </Tinted >
       {errors?.length > 0 ?
