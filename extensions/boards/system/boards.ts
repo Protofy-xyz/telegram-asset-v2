@@ -71,8 +71,8 @@ export const getBoard = async (boardId) => {
     return fileContent;
 }
 
-export const cleanObsoleteCardFiles = (boardId, newCardNames, req) => {
-    const boardFolder = BoardsDir(getRoot(req)) + boardId + '/';
+export const cleanObsoleteCardFiles = (boardId, newCardNames) => {
+    const boardFolder = BoardsDir(getRoot()) + boardId + '/';
     if (!fsSync.existsSync(boardFolder)) return;
 
     const files = fsSync.readdirSync(boardFolder);

@@ -3498,6 +3498,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@extensions/html@workspace:extensions/html":
+  version: 0.0.0-use.local
+  resolution: "@extensions/html@workspace:extensions/html"
+  languageName: unknown
+  linkType: soft
+
 "@extensions/icons@workspace:extensions/icons":
   version: 0.0.0-use.local
   resolution: "@extensions/icons@workspace:extensions/icons"

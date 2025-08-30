@@ -15,9 +15,8 @@ data/assets/*.zip
 !data/objects
 !data/boards
 !data/themes
-data/public/*
-!data/public/fonts/
-!data/public/fonts/**
+!data/public
+data/public/images
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases

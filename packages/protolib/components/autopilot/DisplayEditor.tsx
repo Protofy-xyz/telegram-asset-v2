@@ -145,7 +145,7 @@ export const DisplayEditor = ({
                     )}
                 </XStack>
                 {renderCheckbox('Allow public read', 'publicRead', cardData.publicRead ? true : false)}
-                {renderCheckbox('Custom path', 'enableCustomPath', cardData.enableCustomPath ? true : false)}
+                {renderCheckbox('Custom read path', 'enableCustomPath', cardData.enableCustomPath ? true : false)}
                 {cardData.enableCustomPath ? <YStack ai="flex-start" ml="$6" ac="flex-start">
                     <Input
                         outlineColor="$colorTransparent"
@@ -155,6 +155,22 @@ export const DisplayEditor = ({
                         value={cardData.customPath ?? '/workspace/cards/'+cardData.name}
                         onChangeText={(value) => {
                             setCardData({ ...cardData, customPath: value })
+                        }}
+                        className="no-drag"
+                    />
+                </YStack> : <></>}
+
+                {renderCheckbox('Allow public run', 'publicRun', cardData.publicRun ? true : false)}
+                {renderCheckbox('Custom run path', 'enableCustomRunPath', cardData.enableCustomRunPath ? true : false)}
+                {cardData.enableCustomRunPath ? <YStack ai="flex-start" ml="$6" ac="flex-start">
+                    <Input
+                        outlineColor="$colorTransparent"
+                        id="button-text-input"
+                        size="$4"
+                        placeholder="Path to card"
+                        value={cardData.customRunPath ?? '/workspace/cards/'+cardData.name+'/run'}
+                        onChangeText={(value) => {
+                            setCardData({ ...cardData, customRunPath: value })
                         }}
                         className="no-drag"
                     />

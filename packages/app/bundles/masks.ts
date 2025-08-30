@@ -31,6 +31,8 @@ import boardMasks from '@extensions/boards/boardMasks'
 import boardCardMasks from '@extensions/boards/cardMasks'
 import boardRulesMasks from '@extensions/boards/rulesMasks'
 
+import htmlMasks from '@extensions/html/cardMasks'
+
 export const getFlowsCustomComponents = (path: string, queryParams: {}) => {
     const pathParts = path.split('/')
     const segment = pathParts[pathParts.length - 1]
@@ -68,7 +70,8 @@ export const getFlowsCustomComponents = (path: string, queryParams: {}) => {
         // ...playwrightMasks,
         ...networkMasks,
         ...stateMachineMasks,
-        ...stateMasks
+        ...stateMasks,
+        ...htmlMasks
     ]
 
     if(paths.rules.includes(segment)) return [
@@ -95,7 +98,8 @@ export const getFlowsCustomComponents = (path: string, queryParams: {}) => {
         ...stateMachineMasks,
         ...stateMasks,
         ...boardRulesMasks,
-        ...boardCardMasks
+        ...boardCardMasks,
+        ...htmlMasks
     ]
 
     if( paths.boards.includes(segment) ) return [

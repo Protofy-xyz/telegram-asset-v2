@@ -598,7 +598,7 @@ window.iframeCard = (html, rootId) => {
     <iframe
       id="iframe-${rootId}"
       name="${rootId}"
-      style="width:100%;height:100%;border:none;"
+      style="width:calc(100% - 10px);height:calc(100% - 10px);border:none;margin-left:5px;margin-top:5px;"
       sandbox="allow-scripts allow-same-origin"
       csp="
         default-src 'self' https: blob: data:;
