@@ -71,7 +71,49 @@ return card({
             type: "value",
             name: "html",
             displayIcon: false,
-            rulesCode: "return `\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>title</title>\n</head>\n<body>\n  hello world\n</body>\n</html>\n`;\n",
+            rulesCode: "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta name=\"color-scheme\" content=\"light dark\">\n    <title>Vento</title>\n    <meta name=\"description\" content=\"Agent Platform\">\n    <link\n      rel=\"stylesheet\"\n      href=\"/public/pico/css/pico.classless.min.css\"\n    >\n  </head>\n\n  <body>\n    <header>\n      <hgroup>\n        <h1>Vento</h1>\n        <p>Agent Plataform</p>\n      </hgroup>\n    </header>\n    <main>\n      <section id=\"typography\">\n        <h2>Typography</h2>\n        <p>\n          Aliquam lobortis vitae nibh nec rhoncus. Morbi mattis neque eget efficitur feugiat.\n          Vivamus porta nunc a erat mattis, mattis feugiat turpis pretium. Quisque sed tristique\n          felis.\n        </p>\n\n        <blockquote>\n          \"Maecenas vehicula metus tellus, vitae congue turpis hendrerit non. Nam at dui sit amet\n          ipsum cursus ornare.\"\n          <footer>\n            <cite>- Phasellus eget lacinia</cite>\n          </footer>\n        </blockquote>\n\n        <h3>Lists</h3>\n        <ul>\n          <li>Aliquam lobortis lacus eu libero ornare facilisis.</li>\n          <li>Nam et magna at libero scelerisque egestas.</li>\n          <li>Suspendisse id nisl ut leo finibus vehicula quis eu ex.</li>\n          <li>Proin ultricies turpis et volutpat vehicula.</li>\n        </ul>\n      </section>\n    </main>\n    <footer>\n      <small>\n        Built with <a href=\"https://protofy.xyz/vento\">Vento</a>\n        <a href=\"https://github.com/Protofy-xyz/Vento\">Github</a>\n      </small>\n    </footer>\n    <script src=\"/public/pico/js/minimal-theme-switcher.js\"></script>\n  </body>\n</html>",
+            html: "return iframeCard(data.value, data.domId)\n",
+            value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
+        },
+        emitEvent: true
+    })
+
+    addCard({
+        group: 'board',
+        tag: 'html',
+        id: 'html_action',
+        templateName: 'Action with HTML output',
+        name: 'board_html_action',
+        defaults: {
+            id: 'action_html',
+            width: 1,
+            height: 4,
+            icon: "scan-text",
+            type: "action",
+            name: "html",
+            displayIcon: false,
+            rulesCode: "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta name=\"color-scheme\" content=\"light dark\">\n    <title>Vento</title>\n    <meta name=\"description\" content=\"Agent Platform\">\n    <link\n      rel=\"stylesheet\"\n      href=\"/public/pico/css/pico.classless.min.css\"\n    >\n  </head>\n\n  <body>\n    <header>\n      <hgroup>\n        <h1>Vento</h1>\n        <p>Agent Plataform</p>\n      </hgroup>\n    </header>\n    <main>\n      <section id=\"typography\">\n        <h2>Typography</h2>\n        <p>\n          Aliquam lobortis vitae nibh nec rhoncus. Morbi mattis neque eget efficitur feugiat.\n          Vivamus porta nunc a erat mattis, mattis feugiat turpis pretium. Quisque sed tristique\n          felis.\n        </p>\n\n        <blockquote>\n          \"Maecenas vehicula metus tellus, vitae congue turpis hendrerit non. Nam at dui sit amet\n          ipsum cursus ornare.\"\n          <footer>\n            <cite>- Phasellus eget lacinia</cite>\n          </footer>\n        </blockquote>\n\n        <h3>Lists</h3>\n        <ul>\n          <li>Aliquam lobortis lacus eu libero ornare facilisis.</li>\n          <li>Nam et magna at libero scelerisque egestas.</li>\n          <li>Suspendisse id nisl ut leo finibus vehicula quis eu ex.</li>\n          <li>Proin ultricies turpis et volutpat vehicula.</li>\n        </ul>\n      </section>\n    </main>\n    <footer>\n      <small>\n        Built with <a href=\"https://protofy.xyz/vento\">Vento</a>\n        <a href=\"https://github.com/Protofy-xyz/Vento\">Github</a>\n      </small>\n    </footer>\n    <script src=\"/public/pico/js/minimal-theme-switcher.js\"></script>\n  </body>\n</html>",
+            html: "return iframeCard(data.value, data.domId)\n",
+            value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
+        },
+        emitEvent: true
+    })
+
+    addCard({
+        group: 'board',
+        tag: 'html',
+        id: 'html_action_low',
+        templateName: 'Action with Low Code HTML output',
+        name: 'board_html_low_code_action',
+        defaults: {
+            id: 'action_html',
+            width: 1,
+            height: 4,
+            icon: "scan-text",
+            type: "action",
+            name: "html",
+            displayIcon: false,
+            rulesCode: "return await context.html.html({\n  content: [\n    await context.html.head({\n      content: [\n        await context.html.title({\n          content: \"Vento\",\n        }),\n      ],\n    }),\n    await context.html.body({\n      content: [\n        await context.html.header({\n          content: await context.html.hgroup({\n            content: [\n              await context.html.h1({\n                content: \"Vento\",\n              }),\n              await context.html.p({\n                content: \"Agent Platform\",\n              }),\n            ],\n          }),\n        }),\n        await context.html.main({\n          content: await context.html.section({\n            content: [\n              await context.html.h4({\n                content: \"lorem ipsum\",\n              }),\n              await context.html.p({\n                content: \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur non varius tortor, hendrerit ullamcorper tellus. Nulla sit amet purus ac ex condimentum laoreet finibus pulvinar urna. Quisque mattis leo sodales, dapibus odio sed, sollicitudin sapien. Donec eget diam et libero egestas ultrices sit amet vel sapien. Maecenas eu neque diam. Fusce bibendum euismod neque non accumsan. Nam quis sodales felis. Donec sem nisi, maximus non aliquam vitae, sollicitudin cursus elit.\",\n              }),\n            ],\n          }),\n        }),\n      ],\n    }),\n  ],\n});\n",
             html: "return iframeCard(data.value, data.domId)\n",
             value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
         },

@@ -80,6 +80,14 @@ const processCards = async (boardId, cards, context, regenerate?) => {
                 target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name
             });
         }
+
+        if(card.enableCustomRunPath && card.customRunPath) {
+            const customRunPath = card.customRunPath;
+            proxyDB.set('boards', boardId, card.name, {
+                alias: customRunPath,
+                target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name + '/run/raw'
+            });
+        }
     }
 
     const actionsCards = cards.filter(c => c && c.type === 'action')
@@ -424,7 +432,6 @@ export default async (app, context) => {
                 continue;
             }
 
-
             try {
                 if (card.type == 'value') {
                     if (!card.rulesCode) {
@@ -438,7 +445,10 @@ export default async (app, context) => {
                     }
 
                     let rulesCode = card.rulesCode.trim();
-                    if (rulesCode.split("\n").length == 1 && !rulesCode.startsWith('return ')) {
+                    
+                    if(rulesCode.startsWith('<')) {
+                        rulesCode = 'return `' + rulesCode.replace(/`/g, '\\`') + '`';
+                    } else if (rulesCode.split("\n").length == 1 && !rulesCode.startsWith('return ')) {
                         rulesCode = 'return ' + rulesCode;
                     }
                     const wrapper = new AsyncFunction('states', 'board', 'data', 'memory', `
@@ -813,10 +823,20 @@ export default async (app, context) => {
     app.get('/api/core/v1/boards/:boardId/cards/:cardId/run', handler(async (req, res, session, next) => {
         const card = await getCard(req.params.boardId, req.params.cardId);
         //get read token from card
-        if (!(await hasAccessToken('run', session, card, req.query.token))) {
+        if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
             handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query);
+        }
+    }))
+
+    app.get('/api/core/v1/boards/:boardId/cards/:cardId/run/raw', handler(async (req, res, session, next) => {
+        const card = await getCard(req.params.boardId, req.params.cardId);
+        //get read token from card
+        if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
+            res.status(403).send({ error: "Forbidden: Invalid token" });
+        } else {
+            handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query, true);
         }
     }))
 

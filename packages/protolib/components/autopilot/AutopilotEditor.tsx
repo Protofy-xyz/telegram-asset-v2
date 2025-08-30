@@ -261,6 +261,8 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
     const [selectedActionTab, setSelectedActionTab] = useState('board')
     const [selectedStateTab, setSelectedStateTab] = useState('board')
 
+    const isPlainHTML = rulesCode?.trim().startsWith('<')
+
     const flows = useMemo(() => {
         return <CodeView
             rulesWithFlows={true}
@@ -269,7 +271,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
                 return await setRules(rules)
             }}
             disableAIPanels={!isAIEnabled}
-            defaultMode={isAIEnabled ? 'rules' : 'code'}
+            defaultMode={isAIEnabled && !isPlainHTML ? 'rules' : 'code'}
             rules={rules}
             viewPort={{ x: 20, y: window.innerHeight / 8, zoom: 0.8 }}
             onFlowChange={(code) => {
@@ -280,7 +282,8 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
                 editedCode.current = code
                 setRulesCode(code)
             }}
-            path={cardData.name + '.ts'}
+            disableFlowMode={isPlainHTML}
+            path={cardData.name + (rulesCode && rulesCode.trim && rulesCode.trim().startsWith('<') ? '.html' : '.ts')}
             flowsPath={cardData.name}
             sourceCode={editedCode}
             monacoOnMount={(editor, monaco) => {

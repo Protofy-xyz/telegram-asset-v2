@@ -61,7 +61,7 @@ const castValueToType = (value, type) => {
     }
 }
 
-export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams) => {
+export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse=false) => {
     const actions = await getBoardActions(boardId);
     const action = actions.find(a => a.name === action_or_card_id);
     const { _stackTrace, ...params } = rawParams;
@@ -135,6 +135,10 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
     const states = await context.state.getStateTree();
     let rulesCode = action.rulesCode.trim();
 
+    if(rulesCode.startsWith('<')) {
+        rulesCode = 'return `' + rulesCode.replace(/`/g, '\\`') + '`';
+    }
+
     const wrapper = new AsyncFunction('boardName', 'name', 'states', 'boardActions', 'board', 'userParams', 'params', 'token', 'context', 'API', 'fetch', 'logger', 'stackTrace', `
         ${getExecuteAction(await getActions(context), boardId)}
         ${rulesCode}
@@ -179,7 +183,11 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
             Manager.update(`../../data/boards/${boardId}.js`, 'states', action.name, response);
         }
 
-        res.json(response);
+        if(rawResponse) {
+            res.send(response);
+        } else {
+            res.json(response);
+        }
 
         await generateEvent({
             path: `actions/boards/${boardId}/${action_or_card_id}/done`,
