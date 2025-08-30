@@ -106,7 +106,6 @@ export const DisplayEditor = ({
                         </Checkbox>
                         <Label>API access</Label>
                     </XStack>
-                    {renderCheckbox('Allow public read', 'publicRead', cardData.publicRead ? true : false)}
                     {card.type === 'action' && renderCheckbox('Keep value permanently', 'persistValue', cardData.persistValue ? true : false)}
                     {renderCheckbox('Display title', 'displayTitle')}
                     {renderCheckbox('Display icon', 'displayIcon')}
@@ -145,6 +144,21 @@ export const DisplayEditor = ({
                         </YStack>
                     )}
                 </XStack>
+                {renderCheckbox('Allow public read', 'publicRead', cardData.publicRead ? true : false)}
+                {renderCheckbox('Custom path', 'enableCustomPath', cardData.enableCustomPath ? true : false)}
+                {cardData.enableCustomPath ? <YStack ai="flex-start" ml="$6" ac="flex-start">
+                    <Input
+                        outlineColor="$colorTransparent"
+                        id="button-text-input"
+                        size="$4"
+                        placeholder="Path to card"
+                        value={cardData.customPath ?? '/workspace/cards/'+cardData.name}
+                        onChangeText={(value) => {
+                            setCardData({ ...cardData, customPath: value })
+                        }}
+                        className="no-drag"
+                    />
+                </YStack> : <></>}
             </YStack>
         </YStack>
     )

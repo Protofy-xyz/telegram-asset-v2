@@ -61,6 +61,8 @@ function serve404(res) {
 
 // ─── Core HTTP handler ──────────────────────────────────────────────────────
 function handleHttp(name, req, res, fallback, proxy, logger) {
+  const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
+  let pathname = urlObj.pathname
   // 1) public files
   if (req.url.startsWith('/public/')) {
     let rel = decodeURIComponent(req.path.replace(/\.\.\//g, ''))
@@ -73,6 +75,28 @@ function handleHttp(name, req, res, fallback, proxy, logger) {
       serveStream(fp, res)
     }
     return true
+  }
+
+  // 2) aliases
+  const aliases = protobose.ProtoMemDB('proxy').getState();
+
+  //aliases is an object with the levels: x.y.z, and inside the last level, the alias url
+  const aliasTable = {}
+  for (const [level, entries] of Object.entries(aliases)) {
+    for (const [tag, entry] of Object.entries(entries)) {
+      for (const [name, alias] of Object.entries(entry)) {
+        aliasTable[alias.alias] = alias.target
+      }
+    }
+  }
+  const newPath = aliasTable[pathname]
+  if (newPath) {
+    // reescribe req.url completamente (mantén querystring)
+    urlObj.pathname = newPath
+    req.url = urlObj.pathname + urlObj.search
+    // Para Express: fuerza reprocesado de la URL
+    req._parsedUrl = undefined
+    pathname = newPath
   }
 
   const resolver = findResolver(name, req)
@@ -119,8 +143,8 @@ function handleHttp(name, req, res, fallback, proxy, logger) {
     //check if the path is a directory
     if (fs.existsSync(htmlFile) && fs.statSync(htmlFile).isDirectory()) {
       //check if there is a file named htmlFile plus html
-      if (!fs.existsSync(htmlFile+'.html') && fs.existsSync(path.join(htmlFile, 'index.html'))) {
-          htmlFile = path.join(htmlFile, 'index.html')
+      if (!fs.existsSync(htmlFile + '.html') && fs.existsSync(path.join(htmlFile, 'index.html'))) {
+        htmlFile = path.join(htmlFile, 'index.html')
       }
     }
 
@@ -135,7 +159,7 @@ function handleHttp(name, req, res, fallback, proxy, logger) {
       return true
     } else {
       logger.warn({ url: req.url, file: htmlFile }, 'File not found, serving 404')
-      if(p == '/') {
+      if (p == '/') {
         //if the request is for the root, serve the index.html file
         htmlFile = path.join(__dirname, '../../data/pages/workspace/index.html')
         if (fs.existsSync(htmlFile) && fs.statSync(htmlFile).isFile()) {
@@ -147,7 +171,7 @@ function handleHttp(name, req, res, fallback, proxy, logger) {
       return true
     }
   }
-  
+
   //fallback to app logic
   fallback(req, res)
   return true
@@ -160,13 +184,13 @@ function setupProxyHandler(name, subscribe, handle, server) {
   server.on('upgrade', (req, socket, head) => {
     const resolver = findResolver(name, req)
     if (!resolver || resolver.name === name) {
-        if(resolver.name === name && req.url.endsWith('/webpack-hmr')) {
-            //let nextjs handle its own websocket
-            return
-        }
-        console.log('No resolver found for WebSocket request: ' + req.url);
-        socket.destroy();
-        return;
+      if (resolver.name === name && req.url.endsWith('/webpack-hmr')) {
+        //let nextjs handle its own websocket
+        return
+      }
+      console.log('No resolver found for WebSocket request: ' + req.url);
+      socket.destroy();
+      return;
     }
     proxy.ws(req, socket, head, { target: resolver.route(req) })
   })

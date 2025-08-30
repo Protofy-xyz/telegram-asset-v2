@@ -37,6 +37,7 @@ class HttpError extends Error {
 }
 
 const processCards = async (boardId, cards, context, regenerate?) => {
+    const proxyDB = ProtoMemDB('proxy');
     if (regenerate) {
         const newCardNames = cards.map(card => card.name);
         cleanObsoleteCardFiles(boardId, newCardNames);
@@ -66,7 +67,21 @@ const processCards = async (boardId, cards, context, regenerate?) => {
                 delete card.html
             }
         }
+        proxyDB.clear('boards', boardId)
     }
+
+    //iterate over cards
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        if(card.enableCustomPath && card.customPath) {
+            const customPath = card.customPath;
+            proxyDB.set('boards', boardId, card.name, {
+                alias: customPath,
+                target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name
+            });
+        }
+    }
+
     const actionsCards = cards.filter(c => c && c.type === 'action')
     for (let i = 0; i < actionsCards.length; i++) {
 
