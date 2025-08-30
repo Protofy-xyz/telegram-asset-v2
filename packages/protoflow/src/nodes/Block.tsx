@@ -33,7 +33,7 @@ const Block = (node) => {
     const primaryColor = usePrimaryColor()
     const nodeData = useFlowsStore(state => state.nodeData[id] ?? {})
     const metaData = useFlowsStore(state => state.nodeData[id] && state.nodeData[id]['_metadata'] ? state.nodeData[id]['_metadata'] : { childWidth: 0, childHeight: 0, childHeights: [] })
-    console.log('metadata: ', metaData)
+    // console.log('metadata: ', metaData)
     const setNodeData = useFlowsStore(state => state.setNodeData)
     const currentPath = useFlowsStore(state => state.currentPath)
 
