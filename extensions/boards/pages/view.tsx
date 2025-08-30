@@ -769,6 +769,29 @@ const Board = ({ board, icons }) => {
     </Stack>
   );
 
+  const saveCard = async () => {
+    const newItems = items.map(item =>
+      item.key === currentCard.key ? editedCard : item
+    );
+
+    try {
+      await checkCard(newItems, editedCard);
+      setErrors([]);
+      setItems(newItems);
+      boardRef.current.cards = newItems;
+      await saveBoard(board.name, boardRef.current);
+      setCurrentCard(null);
+      setIsEditing(false);
+    } catch (e) {
+      if (e instanceof ValidationError) {
+        setErrors(e.errors);
+      } else {
+        console.error('Error checking card:', e);
+        setErrors(['An unexpected error occurred while checking the card.']);
+      }
+    }
+  }
+
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
 
@@ -815,42 +838,11 @@ const Board = ({ board, icons }) => {
               h={"95vh"}
               maw={1600}
             >
-              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} tab={tab} onEdit={(data) => {
-                setEditedCard(data)
-              }} errors={errors} />
-
-
-              <Dialog.Close displayWhenAdapted asChild>
-                <Tinted><TamaButton m="$4" mt="$0" onPress={async () => {
-                  const newItems = items.map(item => item.key == currentCard.key ? editedCard : item)
-
-                  try {
-                    await checkCard(newItems, editedCard)
-                    setErrors([]); // Clear errors if validation passes
-                  } catch (e) {
-                    if (e instanceof ValidationError) {
-                      setErrors(e.errors);
-                    } else {
-                      console.error('Error checking card:', e);
-                      setErrors(['An unexpected error occurred while checking the card.']);
-                    }
-                    return
-                  }
-                  setItems(newItems)
-                  boardRef.current.cards = newItems
-                  await saveBoard(board.name, boardRef.current)
-                  setCurrentCard(null)
-                  setIsEditing(false)
-                }}>
-                  Save
-                </TamaButton></Tinted>
-              </Dialog.Close>
+              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} tab={tab} onSave={saveCard} onEdit={(data) => { setEditedCard(data) }} errors={errors} />
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog>
       </Theme>
-
-
 
       <Theme reset>
         <Dialog modal open={editCode} onOpenChange={setEditCode}>
