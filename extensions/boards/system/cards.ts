@@ -85,6 +85,7 @@ return card({
         templateName: 'Action with HTML output',
         name: 'board_html_action',
         defaults: {
+            autorun: true,
             id: 'action_html',
             width: 1,
             height: 4,
@@ -106,6 +107,7 @@ return card({
         templateName: 'Action with Low Code HTML output',
         name: 'board_html_low_code_action',
         defaults: {
+            autorun: true,
             id: 'action_html',
             width: 1,
             height: 4,

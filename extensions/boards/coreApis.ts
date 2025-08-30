@@ -95,7 +95,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
 
         const card = actionsCards[i];
         console.log("Adding action: ", JSON.stringify(card, null, 4))
-        addAction({
+        await addAction({
             method: card.method || 'get',
             group: 'boards',
             name: card.name,
@@ -107,7 +107,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             emitEvent: i === actionsCards.length - 1,
             persistValue: card.persistValue ?? false
         })
-        if (!regenerate && card.persistValue) {
+        if (!regenerate && card.persistValue && !card.autorun) {
             // if persistValue is true, save the board state
             const db = dbProvider.getDB('board_' + boardId);
             try {
@@ -116,6 +116,12 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             } catch (error) {
                 logger.info("No previous value in DB found for card: ", card.name);
             }
+        }
+
+        if(card.autorun) {
+            setTimeout(async () => {
+                await API.get('/api/core/v1/boards/' + boardId + '/actions/' + card.name+'?token='+getServiceToken())
+            }, regenerate ? 1 : 1000)
         }
     }
 }

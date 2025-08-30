@@ -589,11 +589,6 @@ class ErrorBoundary extends React.Component {
 }
 
 window.iframeCard = (html, rootId) => {
-    // Escapamos las comillas dobles y los & para no romper el atributo
-    const safeHtml = html
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;");
-
     return `
     <iframe
       id="iframe-${rootId}"
@@ -609,7 +604,34 @@ window.iframeCard = (html, rootId) => {
         worker-src blob: data:;
         object-src 'none';
       "
-      srcdoc="${safeHtml}"
+      srcdoc="${html ? html.replace(/&/g, "&amp;").replace(/"/g, "&quot;") : `
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Vento</title>
+    <meta name="description" content="Agent Platform">
+    <link
+      rel="stylesheet"
+      href="/public/pico/css/pico.classless.min.css"
+    >
+  </head>
+
+  <body>
+    <main>
+      <section id="typography">
+        <h2>Empty card</h2>
+        <p>
+            Run card to generate content
+        </p>
+      </section>
+    </main>
+    <script src="/public/pico/js/minimal-theme-switcher.js"></script>
+  </body>
+</html>
+      `.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"
     ></iframe>
   `;
 };
