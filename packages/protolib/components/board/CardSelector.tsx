@@ -108,7 +108,8 @@ const FirstSlide = ({ selected, setSelected, options }) => {
               <SelectGrid>
                 {options.map((option) => (
                   <XStack
-                    w={420}
+                    width={200}
+                    height={70}
                     key={option.id}
                     gap={"$2"}
                     p={"$2"}
@@ -140,7 +141,7 @@ const FirstSlide = ({ selected, setSelected, options }) => {
                         <ScanEye />
                       )}
                     </YStack>
-                    <Text fow={selected?.id === option.id && "600"}>{option.name}</Text>
+                    <Text fow={selected?.id === option.id && "600"} ml="$2" fontSize="$4">{option.name}</Text>
                   </XStack>
                 ))}
               </SelectGrid>
