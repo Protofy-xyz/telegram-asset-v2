@@ -1,10 +1,9 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, Info, HelpingHand, X } from '@tamagui/lucide-icons'
+import { Braces, Cog, ClipboardList, Sliders, FileCode, Info, HelpingHand, X, FileQuestion } from '@tamagui/lucide-icons'
 import { Text, YStack, XStack, ToggleGroup, Paragraph, Input, Button, Label } from '@my/ui'
 import { useEffect, useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
 import { RuleEditor } from './RuleEditor'
 import { ParamsEditor } from './ParamsEditor'
-import { CardSettings, SettingsTitle } from './CardSettings'
 import { HTMLEditor } from './HTMLEditor'
 import { useThemeSetting } from '@tamagui/next-theme';
 import { Monaco } from '../Monaco'
@@ -13,7 +12,7 @@ import { Panel, PanelGroup } from "react-resizable-panels";
 import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
 import { SettingsEditor } from './SettingsEditor'
 import { ViewEditor } from './ViewEditor'
-import { DisplayEditor } from './DisplayEditor'
+import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
 
@@ -24,7 +23,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
 
   const isCreateMode = mode === "create";
 
-  const [selectedTab, setSelectedTab] = useState(isCreateMode ? "info" : "rules");
+  const [selectedTab, setSelectedTab] = useState(isCreateMode ? "config" : "rules");
 
   const { resolvedTheme } = useThemeSetting();
 
@@ -49,10 +48,9 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
   const tabs = [
     {
       id: 'info',
-      label: 'Info',
-      icon: <Info size={"$1"} />,
+      label: 'Readme',
+      icon: <FileQuestion size={"$1"} />,
       content: <YStack f={1} gap="$4">
-        <CardSettings cardData={cardData} setCardData={setCardData} />
         <YStack f={1} gap="$2">
           <SettingsTitle>Description</SettingsTitle>
           <PanelGroup direction="horizontal">

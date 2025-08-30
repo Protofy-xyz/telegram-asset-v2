@@ -1,9 +1,18 @@
-import { YStack, XStack, Label, Input, Checkbox } from '@my/ui'
+import { YStack, XStack, Label, Input, Checkbox, Text } from '@my/ui'
 import { Check } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid';
-import { SettingsTitle } from './CardSettings';
 import { IconSelect } from '../IconSelect';
 import { InputColor } from '../InputColor';
+import { useState } from 'react'
+
+export const SettingsTitle = ({ children, error = "" }) => {
+    return <XStack ai={"center"}>
+        <Label ml={"$3"} h={"$3.5"} color="$gray9" size="$5">
+            {children}
+        </Label>
+        {error ? <Text color={"$red9"} fontSize={"$1"} ml={"$3"}>{error}</Text> : <></>}
+    </XStack>
+}
 
 export const DisplayEditor = ({
     card,
@@ -41,10 +50,33 @@ export const DisplayEditor = ({
             <Label>{label}</Label>
         </XStack>
     )
-
+    const [error, setError] = useState(null)
     return (
         <YStack f={1} gap="$4">
             <XStack space="$4" flexWrap='wrap'>
+                <YStack flex={1} maw={400} >
+                    <SettingsTitle error={error}>
+                        Name <Text color={"$color8"}>*</Text>
+                    </SettingsTitle>
+                    <Input
+                        br={"8px"}
+                        value={cardData.name}
+                        color={error ? '$red9' : null}
+                        onChangeText={(t) => {
+                            const regex = /^[a-zA-Z0-9-_ ]*$/;
+                            if (regex.test(t)) {
+                                setError(null);
+                            } else {
+                                //setError("Invalid input, only letters, numbers, spaces, - and _ are allowed.");
+                            }
+                            setCardData({
+                                ...cardData,
+                                name: t,
+                            })
+                        }
+                        }
+                    />
+                </YStack>
                 <YStack w={400}>
                     <SettingsTitle>
                         Icon
@@ -152,7 +184,7 @@ export const DisplayEditor = ({
                         id="button-text-input"
                         size="$4"
                         placeholder="Path to card"
-                        value={cardData.customPath ?? '/workspace/cards/'+cardData.name}
+                        value={cardData.customPath ?? '/workspace/cards/' + cardData.name}
                         onChangeText={(value) => {
                             setCardData({ ...cardData, customPath: value })
                         }}
