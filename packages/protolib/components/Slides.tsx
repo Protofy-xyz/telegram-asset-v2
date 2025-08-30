@@ -27,7 +27,7 @@ export const Slides = ({ slides, lastButtonCaption, onFinish, id = "pages", styl
 
       <Tinted>
         <Stack>
-          <Text fontWeight={"500"} fontSize={30} color="$color">{slides[step].title}</Text>
+          {slides[step].title && <Text fontWeight={"500"} fontSize={30} color="$color">{slides[step].title}</Text>}
         </Stack>
       </Tinted>
 

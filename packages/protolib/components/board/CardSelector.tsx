@@ -348,7 +348,7 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
     <YStack f={1} jc="center" ai="center">
       <XStack f={1} mr="$5">
         <Slides
-          hideHeader
+          hideHeader={true}
           styles={{ f: 1, w: "90vw", maw: 1400, h: "90vh", mah: 1200 }}
           lastButtonCaption="Create"
           onFinish={async () => {
@@ -361,15 +361,14 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
           }}
           slides={[
             {
-              name: "Create new widget",
-              title: "Select the widget",
+              name: "Create new card",
               component: (
                 <FirstSlide options={cards} selected={selectedCard} setSelected={setSelectedCard}
                 />
               ),
             },
             {
-              name: "Configure your widget",
+              name: "Configure your card",
               component: card ? (
                 <SecondSlide remountKey={remountKey} board={board} states={states} icons={icons} actions={actions} card={card} setCard={setCard} errors={errors} />
               ) : null,
