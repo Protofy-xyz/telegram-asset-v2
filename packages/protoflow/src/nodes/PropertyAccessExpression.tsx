@@ -21,9 +21,10 @@ PropertyAccessExpression.getData = (node, data, nodesData, edges) => {
     //connect all children in a line
     const name = node.getNameNode()
     const expression = node.getExpression()
+    const questionDotToken = node.getChildren().find(c => c.getKindName() === "QuestionDotToken")
 
-    if(data[getId(expression)].type == 'data' && data[getId(name)].type == 'data') {
-        return { type: 'data', value: data[getId(expression)].value+'.'+data[getId(name)].value}
+    if (data[getId(expression)].type == 'data' && data[getId(name)].type == 'data') {
+        return { type: 'data', value: data[getId(expression)].value + `${questionDotToken ? '?' : ''}.` + data[getId(name)].value }
     } else {
         return {
             name: connectItem(name, 'output', node, 'name', data, nodesData, edges, 'name'),
