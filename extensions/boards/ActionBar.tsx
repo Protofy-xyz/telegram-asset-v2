@@ -1,4 +1,4 @@
-import { X, Save, Plus, Pause, Play, ClipboardList, Activity, Eye, Settings, Presentation, LayoutDashboard, Book, Code } from 'lucide-react';
+import { X, Save, Plus, Pause, Play, ClipboardList, Activity, Eye, Settings, Presentation, LayoutDashboard, Book, Code, UserPen } from 'lucide-react';
 import { useBoardControls } from './BoardControlsContext';
 import { ActionBarButton } from 'protolib/components/ActionBarWidget';
 import { Separator } from '@my/ui';
@@ -37,6 +37,7 @@ const getActionBar = (generateEvent) => {
     ],
     'uiView': [
       <ActionBarButton tooltipText="Code" selected={tabVisible == "uicode"} Icon={Code} onPress={() => generateEvent({ type: "toggle-uicode" })} />,
+      <ActionBarButton tooltipText={"Visual UI (Beta)"} selected={tabVisible == "visualui"} Icon={UserPen} onPress={() => generateEvent({ type: "toggle-visualui" })} />,
       <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
       <>

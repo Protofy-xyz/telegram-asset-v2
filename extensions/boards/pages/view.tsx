@@ -33,6 +33,7 @@ import { useAtom } from 'protolib/lib/Atom'
 import { AppState } from 'protolib/components/AdminPanel'
 import { useLog } from '@extensions/logs/hooks/useLog'
 import { isHighlightedCard } from '@extensions/boards/store/boardStore'
+import { useBoardVisualUI } from '../useBoardVisualUI'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -346,63 +347,65 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
       return newBuffer
     })
   })
+
+    const tabs = {
+    "states": {
+      "label": "States",
+      "icon": Book,
+      "content": <BoardStateView board={board} />
+    },
+    "rules": {
+      "label": "Automation",
+      "icon": Bot,
+      "content": <>
+        {automationInfo && <RulesSideMenu
+          automationInfo={automationInfo}
+          boardRef={boardRef}
+          board={board}
+          actions={actions}
+          states={states}
+        />}
+      </>
+    },
+    "uicode": {
+      "label": "Presentation",
+      "icon": Presentation,
+      "content": <>
+        {uicodeInfo && <UISideMenu
+          onChange={(code) => {
+            setUICodeInfo({ code });
+          }}
+          uiCode={uicodeInfo}
+          boardRef={boardRef}
+          board={board}
+          actions={actions}
+          states={states}
+        />}
+      </>
+    },
+    "logs": {
+      "label": "Logs (" + logs.length + ")",
+      "icon": Activity,
+      "content": <LogPanel AppState={AppState} logs={logs} setLogs={setLogs} />
+    },
+    "board-settings": {
+      "label": "Settings",
+      "icon": Settings,
+      "content": <BoardSettingsEditor
+        settings={board.settings}
+        onSave={sttngs => {
+          boardRef.current.settings = sttngs
+          onEditBoard()
+        }}
+      />
+    }
+  }
+
   return <FloatingWindow
-    visible={tabVisible}
+    visible={Object.keys(tabs).includes(tabVisible)}
     selectedTab={tabVisible}
     onChangeTab={setTabVisible}
-    tabs={{
-      "states": {
-        "label": "States",
-        "icon": Book,
-        "content": <BoardStateView board={board} />
-      },
-
-      "rules": {
-        "label": "Automation",
-        "icon": Bot,
-        "content": <>
-          {automationInfo && <RulesSideMenu
-            automationInfo={automationInfo}
-            boardRef={boardRef}
-            board={board}
-            actions={actions}
-            states={states}
-          />}
-        </>
-      },
-      "uicode": {
-        "label": "Presentation",
-        "icon": Presentation,
-        "content": <>
-          {uicodeInfo && <UISideMenu
-            onChange={(code) => {
-              setUICodeInfo({ code });
-            }}
-            uiCode={uicodeInfo}
-            boardRef={boardRef}
-            board={board}
-            actions={actions}
-            states={states}
-          />}
-        </>
-      },
-      "logs": {
-        "label": "Logs (" + logs.length + ")",
-        "icon": Activity,
-        "content": <LogPanel AppState={AppState} logs={logs} setLogs={setLogs} />
-      },
-      "board-settings": {
-        "label": "Settings",
-        "icon": Settings,
-        "content": <BoardSettingsEditor
-          settings={board.settings}
-          onSave={sttngs => {
-            boardRef.current.settings = sttngs
-            onEditBoard()
-          }}
-        />
-      }
-    }}
+    tabs={tabs}
   />
 }
 
@@ -439,6 +442,15 @@ const Board = ({ board, icons }) => {
   const [addKey, setAddKey] = useState(0)
 
   const { resolvedTheme } = useThemeSetting()
+
+  const visualui = useBoardVisualUI({
+    boardID: tabVisible == "visualui" ? board.name : null,
+    onDismiss: () => setTabVisible(""),
+    onAfterSave: ({ code }) => {
+      setUICodeInfo({ code })
+      setTabVisible("")
+    },
+  })
 
   const states = useProtoStates({}, 'states/boards/' + board.name + '/#', 'states')
 
@@ -943,6 +955,15 @@ const Board = ({ board, icons }) => {
             console.log('wtf set data from board', data)
           }} />
         <FloatingArea tabVisible={tabVisible} setTabVisible={setTabVisible} board={board} automationInfo={automationInfo} boardRef={boardRef} actions={actions} states={states} uicodeInfo={uicodeInfo} setUICodeInfo={setUICodeInfo} onEditBoard={onEditBoard} />
+        <YStack
+          position={"fixed" as any}
+          left={0}
+          height="100vh"
+          width="100vw"
+          display={tabVisible === 'visualui' ? 'flex' : 'none'}
+        >
+          {visualui}
+        </YStack>
       </XStack>
     </YStack>
   )
@@ -986,6 +1007,9 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     if (event.type === 'toggle-uicode') {
       setTabVisible(tabVisible === 'uicode' ? "" : 'uicode');
     }
+    if (event.type === 'toggle-visualui') {
+      setTabVisible(tabVisible === 'visualui' ? "" : 'visualui');
+    }
     if (event.type === 'toggle-json') {
       toggleJson();
     }
@@ -1007,6 +1031,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     workspace={workspace}
     pageSession={pageSession}
     onActionBarEvent={onFloatingBarEvent}
+    actionBar={{ visible: tabVisible != 'visualui' }}
   >
     {boardData.status == 'error' && <ErrorMessage
       msg="Error loading board"
