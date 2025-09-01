@@ -376,7 +376,8 @@ function UIEditor({ isActive = true, sourceCode = "", sendMessage, currentPage =
                             chromeless: false, color: 'white', backgroundColor: useUITheme('interactiveColor'), paddingHorizontal: "$4",
                             hoverStyle: { backgroundColor: useUITheme('interactiveHoverColorDarken') }
                         },
-                        onPress: () => publish("savenodes", { value: 'visual-ui' })
+                        // onPress: () => publish("savenodes", { value: 'visual-ui' })
+                        onPress: () => onEditorSave(codeRef.current, flowsData.current)
                     },
                     {
                         icon: PanelRight,
