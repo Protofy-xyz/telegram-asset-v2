@@ -85,18 +85,54 @@ function handleHttp(name, req, res, fallback, proxy, logger) {
   for (const [level, entries] of Object.entries(aliases)) {
     for (const [tag, entry] of Object.entries(entries)) {
       for (const [name, alias] of Object.entries(entry)) {
-        aliasTable[alias.alias] = alias.target
+        aliasTable[alias.alias] = alias
       }
     }
   }
-  const newPath = aliasTable[pathname]
-  if (newPath) {
-    // reescribe req.url completamente (mantén querystring)
-    urlObj.pathname = newPath
-    req.url = urlObj.pathname + urlObj.search
-    // Para Express: fuerza reprocesado de la URL
-    req._parsedUrl = undefined
-    pathname = newPath
+  const alias = aliasTable[pathname]
+
+  if (alias) {
+    const origUrl = req.url;                         // p.ej. "/go"
+    const [origPath, origSearch = ""] = origUrl.split("?");
+
+    const [targetPath, targetSearch = ""] = String(alias.target || "").split("?");
+
+    const aliasQs =
+      typeof alias.query === "string"
+        ? alias.query.replace(/^\?/, "")
+        : new URLSearchParams(alias.query || {}).toString();
+
+    const hasAliasQuery = !!(targetSearch || aliasQs);
+    const hasOrigQuery = !!origSearch;
+
+    if (hasAliasQuery && !hasOrigQuery && (req.method === 'GET' || req.method === 'HEAD')) {
+      // ⇢ Redirige al browser para que haga la request "limpia" con la query del alias
+      const parts = [];
+      if (targetSearch) parts.push(targetSearch);
+      if (aliasQs) parts.push(aliasQs);
+      const newSearch = parts.join("&");
+
+      const host = req.headers.host || 'localhost';
+      const proto = (req.headers['x-forwarded-proto'] || (req.socket?.encrypted ? 'https' : 'http'));
+
+      const location = `${proto}://${host}${origPath}${newSearch ? `?${newSearch}` : ""}`;
+
+      res.writeHead(302, { Location: location, 'Cache-Control': 'no-store' });
+      res.end();
+      return true;
+    }
+
+    // Si NO redirigimos (p.ej. ya hay query o método no-GET), reescribe req.url y sigue
+    const parts = [];
+    // conserva la query original si existe
+    if (origSearch) parts.push(origSearch);
+    if (targetSearch) parts.push(targetSearch);
+    if (aliasQs) parts.push(aliasQs);
+    const merged = parts.filter(Boolean).join("&");
+
+    req.url = targetPath + (merged ? `?${merged}` : "");
+    if (req._parsedUrl) req._parsedUrl = undefined; // fuerza reparseo en Express
+    pathname = targetPath;
   }
 
   const resolver = findResolver(name, req)

@@ -73,7 +73,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
     //iterate over cards
     for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
-        if(card.enableCustomPath && card.customPath) {
+        if (card.enableCustomPath && card.customPath) {
             const customPath = card.customPath;
             proxyDB.set('boards', boardId, card.name, {
                 alias: customPath,
@@ -81,11 +81,26 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             });
         }
 
-        if(card.enableCustomRunPath && card.customRunPath) {
+        if (card.enableCustomRunPath && card.customRunPath) {
             const customRunPath = card.customRunPath;
             proxyDB.set('boards', boardId, card.name, {
                 alias: customRunPath,
                 target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name + '/run/raw'
+            });
+        }
+
+        if(card.customCardViewPath) {
+            proxyDB.set('boards', boardId, card.name+'_view', {
+                alias: card.customCardViewPath,
+                target: '/workspace/card',
+                query: 'card='+encodeURIComponent(card.name)+'&board='+encodeURIComponent(boardId)
+            });
+        }
+
+        if(card.customCardRunViewPath) {
+            proxyDB.set('boards', boardId, card.name+'_viewRun', {
+                alias: card.customCardRunViewPath,
+                query: 'card='+encodeURIComponent(card.name)+'&board='+encodeURIComponent(boardId)+'&mode=run'
             });
         }
     }
@@ -118,9 +133,9 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             }
         }
 
-        if(card.autorun) {
+        if (card.autorun) {
             setTimeout(async () => {
-                await API.get('/api/core/v1/boards/' + boardId + '/actions/' + card.name+'?token='+getServiceToken())
+                await API.get('/api/core/v1/boards/' + boardId + '/actions/' + card.name + '?token=' + getServiceToken())
             }, regenerate ? 1 : 1000)
         }
     }
@@ -451,8 +466,8 @@ export default async (app, context) => {
                     }
 
                     let rulesCode = card.rulesCode.trim();
-                    
-                    if(rulesCode.startsWith('<')) {
+
+                    if (rulesCode.startsWith('<')) {
                         rulesCode = 'return `' + rulesCode.replace(/`/g, '\\`') + '`';
                     } else if (rulesCode.split("\n").length == 1 && !rulesCode.startsWith('return ')) {
                         rulesCode = 'return ' + rulesCode;
@@ -824,6 +839,64 @@ export default async (app, context) => {
             const value = ProtoMemDB('states').get('boards', req.params.boardId, req.params.cardId);
             res.send(value || null);
         }
+    }))
+
+    //get limited card info, get the last stored value
+    app.get('/api/core/v1/boards/:boardId/cards/:cardId/info', handler(async (req, res, session, next) => {
+        const card = await getCard(req.params.boardId, req.params.cardId);
+        if (!card?.publicRead && !(await hasAccessToken('read', session, card, req.query.token))) {
+            res.status(403).send({ error: "Forbidden: Invalid token" });
+            return
+        }
+        const value = ProtoMemDB('states').get('boards', req.params.boardId, req.params.cardId);
+
+        res.json({
+            key: card.key,
+            displayResponse: card.displayResponse,
+            name: card.name,
+            description: card.description,
+            params: card.params,
+            icon: card.icon,
+            color: card.color,
+            html: card.html,
+            value: value,
+            displayIcon: card.displayIcon,
+            displayButton: card.displayButton,
+            displayButtonIcon: card.displayButtonIcon,
+            buttonMode: card.buttonMode,
+            buttonLabel: card.buttonLabel,
+            type: card.type
+        })
+    }))
+
+    //get limited card info, but run the card to get the last value
+    app.get('/api/core/v1/boards/:boardId/cards/:cardId/info/run', handler(async (req, res, session, next) => {
+        const card = await getCard(req.params.boardId, req.params.cardId);
+
+        if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
+            res.status(403).send({ error: "Forbidden: Invalid token" });
+            return
+        }
+
+        handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query, false, (value) => {
+            res.json({
+                key: card.key,
+                displayResponse: card.displayResponse,
+                name: card.name,
+                description: card.description,
+                params: card.params,
+                icon: card.icon,
+                color: card.color,
+                html: card.html,
+                value: value,
+                displayIcon: card.displayIcon,
+                displayButton: card.displayButton,
+                displayButtonIcon: card.displayButtonIcon,
+                buttonMode: card.buttonMode,
+                buttonLabel: card.buttonLabel,
+                type: card.type
+            })
+        });
     }))
 
     app.get('/api/core/v1/boards/:boardId/cards/:cardId/run', handler(async (req, res, session, next) => {

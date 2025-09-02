@@ -17,6 +17,7 @@ import { AlertDialog } from 'protolib/components/AlertDialog'
 import { useEffect, useState } from 'react'
 import { Slides } from 'protolib/components/Slides';
 import { TemplateCard } from '../../apis/TemplateCard';
+import { CardView } from './card'
 
 const { useParams } = createParam()
 
@@ -184,5 +185,10 @@ export default {
         icons: (await API.get(`/api/core/v1/icons?token=${session?.token}`))?.data?.icons ?? []
       }
     }))
+  },
+  card: {
+    component: ({ board, card, mode }) => {
+      return <CardView board={board} card={card} mode={mode} />
+    }
   }
 }

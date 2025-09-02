@@ -61,7 +61,7 @@ const castValueToType = (value, type) => {
     }
 }
 
-export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse=false) => {
+export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
     const actions = await getBoardActions(boardId);
     const action = actions.find(a => a.name === action_or_card_id);
     const { _stackTrace, ...params } = rawParams;
@@ -75,24 +75,24 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
         stackTrace = [];
     }
     if (stackTrace.find((item) => item.name === action.name && item.board === boardId)) {
-            await generateEvent({
-                path: `actions/boards/${boardId}/${action_or_card_id}/code/error`,
-                from: 'system',
-                user: 'system',
-                ephemeral: true,
-                payload: {
-                    status: 'code_error',
-                    action: action_or_card_id,
-                    boardId: boardId,
-                    params,
-                    msg: "Recursive action call detected",
-                    stackTrace
-                },
-            }, getServiceToken());
+        await generateEvent({
+            path: `actions/boards/${boardId}/${action_or_card_id}/code/error`,
+            from: 'system',
+            user: 'system',
+            ephemeral: true,
+            payload: {
+                status: 'code_error',
+                action: action_or_card_id,
+                boardId: boardId,
+                params,
+                msg: "Recursive action call detected",
+                stackTrace
+            },
+        }, getServiceToken());
 
-            getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: "Recursive action call detected" }, "Error executing card: ");
-            res.status(500).send({ _err: "e_code", error: "Error executing action code", message: "Recursive action call detected" });
-            return;
+        getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: "Recursive action call detected" }, "Error executing card: ");
+        res.status(500).send({ _err: "e_code", error: "Error executing action code", message: "Recursive action call detected" });
+        return;
     } else {
         stackTrace = [{ name: action.name, board: boardId }, ...stackTrace];
     }
@@ -135,7 +135,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
     const states = await context.state.getStateTree();
     let rulesCode = action.rulesCode.trim();
 
-    if(rulesCode.startsWith('<')) {
+    if (rulesCode.startsWith('<')) {
         rulesCode = 'return `' + rulesCode.replace(/`/g, '\\`') + '`';
     }
 
@@ -183,11 +183,16 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
             Manager.update(`../../data/boards/${boardId}.js`, 'states', action.name, response);
         }
 
-        if(rawResponse) {
-            res.send(response);
+        if (responseCb) {
+            responseCb(response);
         } else {
-            res.json(response);
+            if (rawResponse) {
+                res.send(response);
+            } else {
+                res.json(response);
+            }
         }
+
 
         await generateEvent({
             path: `actions/boards/${boardId}/${action_or_card_id}/done`,

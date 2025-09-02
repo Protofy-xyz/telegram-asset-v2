@@ -1,4 +1,4 @@
-import { YStack, XStack, Label, Input, Checkbox, Text } from '@my/ui'
+import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView } from '@my/ui'
 import { Check } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid';
 import { IconSelect } from '../IconSelect';
@@ -18,12 +18,14 @@ export const DisplayEditor = ({
     card,
     cardData,
     setCardData,
-    icons
+    icons,
+    board
 }: {
     card: any
     cardData: any
     icons: any
-    setCardData: (data: any) => void
+    setCardData: (data: any) => void,
+    board: any
 }) => {
     const cellWidth = 400
     const cellHeight = 50
@@ -106,11 +108,11 @@ export const DisplayEditor = ({
                     />
                 </YStack>
             </XStack>
-            <YStack>
-                <SettingsTitle>
-                    Config
-                </SettingsTitle>
-                <XStack space="$2" flexWrap='wrap'>
+            <SettingsTitle>
+                Config
+            </SettingsTitle>
+            <ScrollView flexWrap="wrap" gap="$4">
+                <XStack flexWrap='wrap'>
                     <XStack ai="center" gap="$2" w={cellWidth} h={cellHeight}>
                         <Checkbox
                             w="$2"
@@ -143,72 +145,106 @@ export const DisplayEditor = ({
                     {renderCheckbox('Display title', 'displayTitle')}
                     {renderCheckbox('Display icon', 'displayIcon')}
                     {renderCheckbox('Display frame', 'displayFrame')}
+
                     {renderCheckbox('Markdown display', 'markdownDisplay', cardData.markdownDisplay ? true : false)}
+                    {renderCheckbox('Allow public read', 'publicRead', cardData.publicRead ? true : false)}
+                    {renderCheckbox('Custom read path', 'enableCustomPath', cardData.enableCustomPath ? true : false)}
+                    {cardData.enableCustomPath ? <YStack ai="flex-start" ml="$6" ac="flex-start">
+                        <Input
+                            outlineColor="$colorTransparent"
+                            id="button-text-input"
+                            size="$4"
+                            placeholder="Path to card"
+                            value={cardData.customPath ?? '/workspace/cards/' + cardData.name}
+                            onChangeText={(value) => {
+                                setCardData({ ...cardData, customPath: value })
+                            }}
+                            className="no-drag"
+                        />
+                    </YStack> : <></>}
+
+                    {renderCheckbox('Allow public run', 'publicRun', cardData.publicRun ? true : false)}
+                    <YStack>
+                        {renderCheckbox('Custom run path', 'enableCustomRunPath', cardData.enableCustomRunPath ? true : false)}
+                        {cardData.enableCustomRunPath ? <Input
+                            outlineColor="$colorTransparent"
+                            id="button-text-input"
+                            size="$4"
+                            placeholder="Path to card"
+                            value={cardData.customRunPath ?? '/workspace/cards/' + cardData.name + '/run'}
+                            onChangeText={(value) => {
+                                setCardData({ ...cardData, customRunPath: value })
+                            }}
+                            className="no-drag"
+                        />
+                            : <></>}
+                    </YStack>
+
+
                     {card.type === 'action' && (
-                        <YStack>
-                            {renderCheckbox('Display value', 'displayResponse')}
-                            {renderCheckbox('Display button', 'displayButton')}
+                        <>
+                            <YStack>
+                                {renderCheckbox('Display value', 'displayResponse')}
+                                <YStack>
+                                    {renderCheckbox('Display button', 'displayButton')}
 
-                            {getChecked('displayButton') && (
-                                <YStack ai="flex-start" ml="$6" ac="flex-start">
-                                    <Input
-                                        outlineColor="$colorTransparent"
-                                        id="button-text-input"
-                                        size="$4"
-                                        placeholder="Button text"
-                                        value={cardData.buttonLabel ?? 'Run'}
-                                        onChangeText={(value) => {
-                                            setCardData({ ...cardData, buttonLabel: value })
-                                        }}
-                                        className="no-drag"
-                                    />
-                                    {renderCheckbox('Button Full', 'buttonMode', cardData.buttonMode === 'full', (checked: boolean) => {
-                                        let newData = { ...cardData }
-                                        if (checked) {
-                                            newData.buttonMode = 'full'
-                                        } else {
-                                            delete newData.buttonMode
-                                        }
-                                        setCardData({ ...newData })
-                                    })}
-                                    {renderCheckbox('Display icon', 'displayButtonIcon', cardData.displayButtonIcon === true)}
+                                    {getChecked('displayButton') && (
+                                        <YStack ai="flex-start" ml="$6" ac="flex-start">
+                                            <Input
+                                                outlineColor="$colorTransparent"
+                                                id="button-text-input"
+                                                size="$4"
+                                                placeholder="Button text"
+                                                value={cardData.buttonLabel ?? 'Run'}
+                                                onChangeText={(value) => {
+                                                    setCardData({ ...cardData, buttonLabel: value })
+                                                }}
+                                                className="no-drag"
+                                            />
+                                            {renderCheckbox('Button Full', 'buttonMode', cardData.buttonMode === 'full', (checked: boolean) => {
+                                                let newData = { ...cardData }
+                                                if (checked) {
+                                                    newData.buttonMode = 'full'
+                                                } else {
+                                                    delete newData.buttonMode
+                                                }
+                                                setCardData({ ...newData })
+                                            })}
+                                            {renderCheckbox('Display icon', 'displayButtonIcon', cardData.displayButtonIcon === true)}
+                                        </YStack>
+                                    )}
                                 </YStack>
-                            )}
-                        </YStack>
+                            </YStack>
+                        </>
                     )}
+                    <YStack w={cellWidth} h={cellHeight * 3}>
+                        <Paragraph>Card Page Path</Paragraph>
+                        <Input
+                            outlineColor="$colorTransparent"
+                            id="button-text-input"
+                            size="$4"
+                            placeholder={"Path to card. Ex: /" + cardData.name}
+                            value={cardData.customCardViewPath}
+                            onChangeText={(value) => {
+                                setCardData({ ...cardData, customCardViewPath: value })
+                            }}
+                            className="no-drag"
+                        />
+                        <Paragraph>Run Card Page Path</Paragraph>
+                        <Input
+                            outlineColor="$colorTransparent"
+                            id="button-text-input"
+                            size="$4"
+                            placeholder={"Path to card. Ex: /" + cardData.name}
+                            value={cardData.customCardRunViewPath}
+                            onChangeText={(value) => {
+                                setCardData({ ...cardData, customCardRunViewPath: value })
+                            }}
+                            className="no-drag"
+                        />
+                    </YStack>
                 </XStack>
-                {renderCheckbox('Allow public read', 'publicRead', cardData.publicRead ? true : false)}
-                {renderCheckbox('Custom read path', 'enableCustomPath', cardData.enableCustomPath ? true : false)}
-                {cardData.enableCustomPath ? <YStack ai="flex-start" ml="$6" ac="flex-start">
-                    <Input
-                        outlineColor="$colorTransparent"
-                        id="button-text-input"
-                        size="$4"
-                        placeholder="Path to card"
-                        value={cardData.customPath ?? '/workspace/cards/' + cardData.name}
-                        onChangeText={(value) => {
-                            setCardData({ ...cardData, customPath: value })
-                        }}
-                        className="no-drag"
-                    />
-                </YStack> : <></>}
-
-                {renderCheckbox('Allow public run', 'publicRun', cardData.publicRun ? true : false)}
-                {renderCheckbox('Custom run path', 'enableCustomRunPath', cardData.enableCustomRunPath ? true : false)}
-                {cardData.enableCustomRunPath ? <YStack ai="flex-start" ml="$6" ac="flex-start">
-                    <Input
-                        outlineColor="$colorTransparent"
-                        id="button-text-input"
-                        size="$4"
-                        placeholder="Path to card"
-                        value={cardData.customRunPath ?? '/workspace/cards/'+cardData.name+'/run'}
-                        onChangeText={(value) => {
-                            setCardData({ ...cardData, customRunPath: value })
-                        }}
-                        className="no-drag"
-                    />
-                </YStack> : <></>}
-            </YStack>
+            </ScrollView>
         </YStack>
     )
 }
