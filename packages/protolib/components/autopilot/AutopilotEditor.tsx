@@ -212,7 +212,7 @@ export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'staes']
 
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
-            <JSONView collapsed={3} style={{ backgroundColor: 'var(--gray3)' }} src={filteredStateData} enableClipboard={(copy) => {
+            <JSONView collapsed={1} style={{ backgroundColor: 'var(--gray3)' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
                 const path = 'board' + copy.namespace
                     .filter(v => v)
                     .map(k => `?.[${JSON.stringify(k)}]`)
