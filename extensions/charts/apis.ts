@@ -123,7 +123,7 @@ reactCard(\`
           title={"players score"}
           id={"areachart"}
           data={props.value}
-          dataKey={props.params.dataKey}
+          dataKeys={props.params.dataKeys}
           nameKey={props.params.nameKey}
           isAnimationActive={false}
           aspect={aspect}
@@ -135,9 +135,9 @@ reactCard(\`
     `,
                 params: {
                     nameKey: 'name',
-                    dataKey: 'value'
+                    dataKeys: ['value', 'time']
                 },
-                rulesCode: "return [{\r\n    \"name\": \"john\",\r\n    \"value\": 33\r\n}, {\r\n    \"name\": \"mike\",\r\n    \"value\": 20\r\n}, {\r\n    \"name\": \"susan\",\r\n    \"value\": 10\r\n}, {\r\n    \"name\": \"ton\",\r\n    \"value\": 30\r\n}]"
+                rulesCode: "return [{\r\n    \"name\": \"john\",\r\n    \"value\": 33,\r\n    \"time\": 5\r\n}, {\r\n    \"name\": \"mike\",\r\n    \"value\": 20,\r\n    \"time\": 10\r\n}, {\r\n    \"name\": \"susan\",\r\n    \"value\": 10,\r\n    \"time\": 15\r\n}, {\r\n    \"name\": \"ton\",\r\n    \"value\": 30,\r\n    \"time\": 20\r\n}]"
             },
             emitEvent: true,
             token: getServiceToken()
@@ -275,7 +275,7 @@ reactCard(\`
           title={"players score"}
           id={"linechart"}
           data={props.value}
-          dataKey={props.params.dataKey}
+          dataKeys={props.params.dataKeys}
           nameKey={props.params.nameKey}
           isAnimationActive={false}
           aspect={aspect}
@@ -288,9 +288,9 @@ reactCard(\`
         `,
             params: {
                 nameKey: 'name',
-                dataKey: 'value'
+                dataKeys: ['value', 'time']
             },
-            rulesCode: "return [{\r\n    \"name\": \"john\",\r\n    \"value\": 33\r\n}, {\r\n    \"name\": \"mike\",\r\n    \"value\": 20\r\n}, {\r\n    \"name\": \"susan\",\r\n    \"value\": 10\r\n}, {\r\n    \"name\": \"ton\",\r\n    \"value\": 30\r\n}]"
+            rulesCode: "return [{\r\n    \"name\": \"john\",\r\n    \"value\": 33,\r\n    \"time\": 5\r\n}, {\r\n    \"name\": \"mike\",\r\n    \"value\": 20,\r\n    \"time\": 10\r\n}, {\r\n    \"name\": \"susan\",\r\n    \"value\": 10,\r\n    \"time\": 15\r\n}, {\r\n    \"name\": \"ton\",\r\n    \"value\": 30,\r\n    \"time\": 20\r\n}]"
         },
         emitEvent: true,
         token: getServiceToken()
