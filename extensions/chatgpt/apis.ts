@@ -52,7 +52,7 @@ export default (app, context) => {
             name: "send_message",
             defaults: {
                 width: 2,
-                height: 8,
+                height: 10,
                 name: "chatGPT_message_send",
                 icon: "openai",
                 color: "#74AA9C",
@@ -64,17 +64,17 @@ export default (app, context) => {
                     "preprompt": {
                         "visible": false,
                         "defaultValue": "",
-                        "type": "string"
+                        "type": "text"
                     },
                     "prompt": {
                         "visible": true,
                         "defaultValue": "",
-                        "type": "string"
+                        "type": "text"
                     },
                     "postprompt": {
                         "visible": false,
                         "defaultValue": "",
-                        "type": "string"
+                        "type": "text"
                     }
                 }
             },
