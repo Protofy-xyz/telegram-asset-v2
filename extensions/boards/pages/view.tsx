@@ -586,27 +586,24 @@ const Board = ({ board, icons }) => {
       throw new Error(e)
     }
 
-    setItems(prevItems => {
-      const uniqueKey = card.type + '_' + Date.now();
-      const newCard = { ...card, key: uniqueKey }
-      const newItems = [...prevItems, newCard].filter(item => item.key !== 'addwidget');
-      boardRef.current.cards = newItems;
-      return newItems;
-    });
-    saveBoard(board.name, boardRef.current);
+    const uniqueKey = card.type + '_' + Date.now();
+    const newCard = { ...card, key: uniqueKey }
+    const newItems = [...items, newCard].filter(item => item.key !== 'addwidget');
+    setItems(newItems)
+    boardRef.current.cards = newItems;
+    await saveBoard(board.name, boardRef.current);
   };
 
   const setCardContent = (key, content) => {
-    setItems(prevItems => {
-      const newItems = prevItems.map(item => {
-        if (item.key === key) {
-          return { ...item, ...content };
-        }
-        return item;
-      });
-      boardRef.current.cards = newItems;
-      return newItems;
+    const newItems = items.map(item => {
+      if (item.key === key) {
+        return { ...item, ...content };
+      }
+      return item;
     });
+
+    setItems(newItems)
+    boardRef.current.cards = newItems
     saveBoard(board.name, boardRef.current);
   }
 
