@@ -5,6 +5,7 @@ import { InteractiveIcon } from '../InteractiveIcon'
 import { nanoid } from 'nanoid'
 import { useUpdateEffect } from 'usehooks-ts'
 import { SelectList } from '../SelectList'
+import { TextEditDialog } from '../TextEditDialog'
 
 export const ParamsEditor = ({
   params = {},
@@ -127,7 +128,23 @@ export const ParamsEditor = ({
             <XStack width="150px">
               <SelectList title="Select type" elements={types} value={type ?? "string"} setValue={(value) => handleChangeType(rowId, value)} />
             </XStack>
-            {mode == 'action' && <Input placeholder="Default Value" flex={4} value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />}
+            {
+              mode == 'action' && (
+                type === 'text'
+                  ? <TextEditDialog f={1}>
+                    <TextEditDialog.Trigger  >
+                      <Input placeholder="Default Value" flex={4} value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                    </TextEditDialog.Trigger>
+                    <TextEditDialog.Editor
+                      placeholder={paramKey}
+                      value={defaultValue}
+                      readValue={() => defaultValue}
+                      onChange={(value) => handleChangeDefaultValue(rowId, value)}
+                    />
+                  </TextEditDialog>
+                  : <Input placeholder="Default Value" flex={1} value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+              )
+            }
 
             <InteractiveIcon Icon={Trash} IconColor="var(--red10)" onPress={() => handleRemoveParam(rowId)} />
           </XStack>

@@ -1,11 +1,9 @@
 import { useRef, useState } from "react";
-import { CardValue } from "./CardValue";
 import { XStack, YStack, Text, Switch } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
-import { selectContextMenuTriggerFile } from "chonky";
-import { min } from "moment";
 import { Tinted } from "../Tinted";
+import { TextEditDialog } from "../TextEditDialog";
 
 export const Icon = ({ name, size, color, style }) => {
     return (
@@ -34,6 +32,7 @@ export const ParamsForm = ({ data, children }) => {
 
     const { resolvedTheme } = useThemeSetting()
     const contentRef = useRef({});
+    const inputRefs = useRef({});
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -99,25 +98,45 @@ export const ParamsForm = ({ data, children }) => {
                                 }}
                             >
                                 <Text ml="20px" mb="$2">{key}</Text>
-                                {type == 'text' && <textarea
-                                    className="no-drag"
-                                    name={key}
-                                    style={{
-                                        backgroundColor: "var(--gray1)",
-                                        flex: 1,
-                                        padding: "5px 10px",
-                                        border: "0.5px solid var(--gray7)",
-                                        borderRadius: "8px",
-                                        boxSizing: "border-box",
-                                        minWidth: "100px",
-                                        marginLeft: "10px",
-                                        marginRight: "10px",
-                                        resize: "none", // o "none" si no quieres que pueda cambiar el tamaño
-                                    }}
-                                    defaultValue={defaultValue}
-                                    placeholder={placeholder}
-                                    rows={6} // Número de filas iniciales
-                                />}
+                                {type == 'text' &&
+                                    <TextEditDialog f={1}>
+                                        <TextEditDialog.Trigger  >
+                                            <textarea
+                                                className="no-drag"
+                                                name={key}
+                                                style={{
+                                                    backgroundColor: "var(--gray1)",
+                                                    flex: 1,
+                                                    padding: "5px 10px",
+                                                    border: "0.5px solid var(--gray7)",
+                                                    borderRadius: "8px",
+                                                    boxSizing: "border-box",
+                                                    minWidth: "100px",
+                                                    marginLeft: "10px",
+                                                    marginRight: "10px",
+                                                    resize: "none",
+                                                }}
+                                                ref={(el) => inputRefs.current[key] = el}
+                                                defaultValue={contentRef.current[key]}
+                                                onChange={(e) => {
+                                                    contentRef.current[key] = e.target.value;
+                                                }}
+                                                placeholder={placeholder}
+                                                rows={6}
+                                            />
+                                        </TextEditDialog.Trigger>
+                                        <TextEditDialog.Editor
+                                            placeholder={key}
+                                            value={contentRef.current[key] ?? ""}
+                                            readValue={() => contentRef.current[key] ?? ""}
+                                            onChange={(val) => {
+                                                contentRef.current[key] = val ?? "";
+                                                const el = inputRefs.current[key];
+                                                if (el) el.value = val ?? "";
+                                            }}
+                                        />
+                                    </TextEditDialog>
+                                }
 
                                 {type == 'json' || type == 'array' && <XStack mx="10px" f={1} height={200}><Monaco
                                     language='json'
