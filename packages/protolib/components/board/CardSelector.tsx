@@ -307,6 +307,27 @@ const makeDefaultCard = (tpl) => ({
   ...tpl?.defaults,
 })
 
+function generateVersionatedName(name, existing) {
+  const set = existing instanceof Set ? existing : new Set(existing);
+  if (!set.has(name)) return name; // if doesn't exist, keep it
+
+  // separate extension (doesn't count .env as extension)
+  const i = name.lastIndexOf('.');
+  const ext = i > 0 ? name.slice(i) : '';
+  const base0 = i > 0 ? name.slice(0, i) : name;
+
+  // only " base NUM" format at the end
+  const m = /^(.*?)(?: (\d+))?$/.exec(base0);
+  const base = m[1];
+  let n = m[2] ? +m[2] : 1; // if no number -> start at 1 so first ++ is 2
+
+  let candidate;
+  do candidate = `${base} ${++n}${ext}`;
+  while (set.has(candidate));
+
+  return candidate;
+}
+
 export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, onFinish, states, icons, actions, errors }) => {
   const cards = useCards(extraCards)
 
@@ -353,6 +374,8 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
           lastButtonCaption="Create"
           onFinish={async () => {
             try {
+              const existingNames = board?.cards.map(c => c.name) ?? []
+              card["name"] = generateVersionatedName(card.name, existingNames)
               await onFinish(card)
               setAddOpened(false)
             } catch (e) {
@@ -367,12 +390,12 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
                 />
               ),
             },
-            {
-              name: "Configure your card",
-              component: card ? (
-                <SecondSlide remountKey={remountKey} board={board} states={states} icons={icons} actions={actions} card={card} setCard={setCard} errors={errors} />
-              ) : null,
-            },
+            // {
+            //   name: "Configure your card",
+            //   component: card ? (
+            //     <SecondSlide remountKey={remountKey} board={board} states={states} icons={icons} actions={actions} card={card} setCard={setCard} errors={errors} />
+            //   ) : null,
+            // },
           ]}
         />
       </XStack>
