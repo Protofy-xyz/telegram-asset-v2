@@ -1,4 +1,4 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save } from '@tamagui/lucide-icons'
+import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings } from '@tamagui/lucide-icons'
 import { Text, YStack, Paragraph, XStack } from '@my/ui'
 import { useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
@@ -131,7 +131,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
     {
       id: 'config',
       label: 'Settings',
-      icon: <Cog size={"$1"} />,
+      icon: <Settings size={"$1"} />,
       content: <DisplayEditor board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
     },
     {

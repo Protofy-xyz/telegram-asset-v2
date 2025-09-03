@@ -226,6 +226,7 @@ const ActionCard = ({
       title={title}
       id={id}
       containerProps={containerProps}
+      onHeaderDoubleClick={() => onEdit("config")}
       cardActions={
         <CardActions
           id={id}
@@ -348,7 +349,7 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
     })
   })
 
-    const tabs = {
+  const tabs = {
     "states": {
       "label": "States",
       "icon": Book,
