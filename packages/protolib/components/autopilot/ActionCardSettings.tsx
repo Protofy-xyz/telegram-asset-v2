@@ -132,7 +132,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'config',
       label: 'Settings',
       icon: <Cog size={"$1"} />,
-      content: <DisplayEditor icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
+      content: <DisplayEditor board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
     },
     {
       id: 'view',

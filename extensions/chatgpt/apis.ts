@@ -57,9 +57,26 @@ export default (app, context) => {
                 icon: "openai",
                 color: "#74AA9C",
                 description: "send a message to chatGPT",
-                rulesCode: `return execute_action("/api/v1/chatgpt/send/prompt", { message: userParams.message});`,
-                params: { message: "message", },
-                type: 'action'
+                rulesCode: `return execute_action("/api/v1/chatgpt/send/prompt", { message: (userParams.preprompt ?? "") + " " + (userParams.prompt ?? "") + " " + (userParams.postprompt ?? "")});`,
+                params: { preprompt: "preprompt", prompt: "prompt", postprompt: "postprompt" },
+                type: 'action',
+                configParams: {
+                    "preprompt": {
+                        "visible": false,
+                        "defaultValue": "",
+                        "type": "string"
+                    },
+                    "prompt": {
+                        "visible": true,
+                        "defaultValue": "",
+                        "type": "string"
+                    },
+                    "postprompt": {
+                        "visible": false,
+                        "defaultValue": "",
+                        "type": "string"
+                    }
+                }
             },
             emitEvent: true,
             token: await getServiceToken()
