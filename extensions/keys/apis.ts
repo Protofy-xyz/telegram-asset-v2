@@ -62,7 +62,7 @@ reactCard(\`
             configParams:{
               nameKey: {
                 "visible": true,
-                "defaultValue": ""
+                "defaultValue": "key_name"
               }
             }
         },
