@@ -226,7 +226,6 @@ const ActionCard = ({
       title={title}
       id={id}
       containerProps={containerProps}
-      onHeaderDoubleClick={() => onEdit("config")}
       cardActions={
         <CardActions
           id={id}

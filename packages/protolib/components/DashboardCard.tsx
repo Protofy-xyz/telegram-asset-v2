@@ -13,7 +13,6 @@ interface DashboardCardProps {
     containerProps?: StackProps;
     cardActions?: ReactNode;
     highlighted?: boolean;
-    onHeaderDoubleClick?: () => void;
 }
 
 export const DashboardCard = ({
@@ -27,7 +26,6 @@ export const DashboardCard = ({
     titleProps = {},
     containerProps = {},
     highlighted = false,
-    onHeaderDoubleClick = () => {}
 }: DashboardCardProps) => {
     const [hovered, setHovered] = useState(false);
     const [showRunning, setShowRunning] = useState(false);
@@ -160,13 +158,9 @@ export const DashboardCard = ({
                         right={0}
                         className="no-drag"
                         pr="$3.5"
-                        jc="flex-end"
                         opacity={hovered ? 0.75 : 0}
                         pressStyle={{ opacity: 0.9 }}
                         zi={999}
-                        w="100%"
-                        //@ts-ignore
-                        onDoubleClick={onHeaderDoubleClick}
                     >
                         {cardActions}
                     </XStack>
