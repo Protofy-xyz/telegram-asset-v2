@@ -16,11 +16,11 @@ import chokidar from 'chokidar';
 const { handleUpgrade } = require('app/proxy.js')
 
 const isProduction = process.env.NODE_ENV === 'production';
-const serviceName = isProduction?'api':'api-dev'
+const serviceName = isProduction ? 'api' : 'api-dev'
 
 const PORT = 3001
 const waitForCore = true
-const coreAddr = process.env.CORE_URL || 'http://localhost:8000/api/core/v1/boards?token='+getServiceToken()
+const coreAddr = process.env.CORE_URL || 'http://localhost:8000/api/core/v1/boards?token=' + getServiceToken()
 
 
 const start = async () => {
@@ -38,14 +38,14 @@ const start = async () => {
     logger.debug({ service: { protocol: "http", port: PORT } }, "Service started: HTTP")
   });
   generateEvent({
-    path: 'services/'+serviceName+'/start', //event type: / separated event category: files/create/file, files/create/dir, devices/device/online
+    path: 'services/' + serviceName + '/start', //event type: / separated event category: files/create/file, files/create/dir, devices/device/online
     from: serviceName, // system entity where the event was generated (next, api, cmd...)
     user: 'system', // the original user that generates the action, 'system' if the event originated in the system itself
     payload: {}, // event payload, event-specific data
   }, getServiceToken())
 }
 
-if(waitForCore) {
+if (waitForCore) {
   //loop until core is up, 1s interval, 60s timeout
   let retries = 0
   const maxRetries = 60
@@ -53,12 +53,12 @@ if(waitForCore) {
   const checkCore = async () => {
     try {
       const response = await axios.get(coreAddr)
-      if(response.status !== 200) {
+      if (response.status !== 200) {
         throw new Error('Core not available')
       }
       start()
     } catch (error) {
-      if(retries < maxRetries) {
+      if (retries < maxRetries) {
         console.log('Core not available, retrying...')
         retries++
         setTimeout(checkCore, interval)
@@ -69,7 +69,7 @@ if(waitForCore) {
     }
   }
   checkCore()
-} else{
+} else {
   start()
 }
 
@@ -90,29 +90,32 @@ if (process.env.NODE_ENV != 'production') {
 
   const watcher = chokidar.watch(pathsToWatch, {
     ignored: /^([.][^.\/\\])|([\/\\]+[.][^.])/,
+    ignoreInitial: true,
+    awaitWriteFinish: { stabilityThreshold: 800, pollInterval: 100 }, // ← evita ráfagas
     persistent: true
   });
 
-  var restarting = false
-  var restartTimer = null
-  watcher.on('change', async (path) => {
-    
-    if (restarting) {
-      clearTimeout(restartTimer)
-    } else {
-      console.log(`File ${path} has been changed, restarting...`);
-      restarting = true
-    }
+  const scheduleRestart = (() => {
+    let timer, announced = false;
+    return () => {
+      clearTimeout(timer);
+      if (!announced) { 
+        announced = true; 
+        console.log('Detected changes, restarting service...'); 
+      }
+      timer = setTimeout(async () => {
+        await generateEvent({ path: `services/${serviceName}/stop`, from: serviceName, user: 'system', payload: {} }, getServiceToken());
+        process.exit(0);
+      }, 1000);
+    };
+  })();
 
+  let armed = false;
+  watcher.on('ready', () => { armed = true; });
 
-    restartTimer = setTimeout(async () => {
-      await generateEvent({
-        path: 'services/' + serviceName + '/stop', //event type: / separated event category: files/create/file, files/create/dir, devices/device/online
-        from: serviceName, // system entity where the event was generated (next, api, cmd...)
-        user: 'system', // the original user that generates the action, 'system' if the event originated in the system itself
-        payload: {}, // event payload, event-specific data
-      }, getServiceToken())
-      process.exit(0)
-    }, 1000);
-  })
-}  
+  const TRIGGER_EVENTS = new Set(['change', 'add']); //, 'change', 'unlink', 'addDir', 'unlinkDir'
+  watcher.on('all', (event) => {
+    if (!armed) return; // ← don't react until ready
+    if (TRIGGER_EVENTS.has(event)) scheduleRestart();
+  });
+}
