@@ -126,6 +126,7 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
   return <Tinted>
     <XStack pt={"$2"}>
       {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
+      <CardIcon Icon={Settings} onPress={() => onEdit("config")} />
 
       <Popover onOpenChange={setMenuOpened} open={menuOpened} allowFlip>
         <Popover.Trigger>
