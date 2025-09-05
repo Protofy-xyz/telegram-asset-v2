@@ -100,7 +100,7 @@ export default async (app, context) => {
             height: 9,
             type: "action",
             icon: 'download',
-            name: 'files_download',
+            name: 'files_url_download',
             description: 'Download a file from a URL',
             configParams: {
                 "path": {
