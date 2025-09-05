@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
-import { XStack, YStack, Text, Switch } from "@my/ui";
+import { XStack, YStack, Text, Switch, Input, TextArea } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
+import { FilePicker } from "../FilePicker";
+import { Uploader } from "../../adminpanel/next/components/Uploader";
 
 export const Icon = ({ name, size, color, style }) => {
     return (
@@ -100,26 +102,16 @@ export const ParamsForm = ({ data, children }) => {
                                 <Text ml="20px" mb="$2">{key}</Text>
                                 {type == 'text' &&
                                     <TextEditDialog f={1}>
-                                        <TextEditDialog.Trigger  >
-                                            <textarea
+                                        <TextEditDialog.Trigger>
+                                            <TextArea
                                                 className="no-drag"
                                                 name={key}
-                                                style={{
-                                                    backgroundColor: "var(--gray1)",
-                                                    flex: 1,
-                                                    padding: "5px 10px",
-                                                    border: "0.5px solid var(--gray7)",
-                                                    borderRadius: "8px",
-                                                    boxSizing: "border-box",
-                                                    minWidth: "100px",
-                                                    marginLeft: "10px",
-                                                    marginRight: "10px",
-                                                    resize: "none",
-                                                }}
+                                                f={1}
+                                                mx="10px"
                                                 ref={(el) => inputRefs.current[key] = el}
                                                 defaultValue={contentRef.current[key]}
-                                                onChange={(e) => {
-                                                    contentRef.current[key] = e.target.value;
+                                                onChangeText={(val) => {
+                                                    contentRef.current[key] = val;
                                                 }}
                                                 placeholder={placeholder}
                                                 rows={6}
@@ -155,7 +147,7 @@ export const ParamsForm = ({ data, children }) => {
                                     ml="12px"
                                     id="autopilot-switch"
                                     size="$4"
-                                    defaultChecked={contentRef.current[key] ? contentRef.current[key] === "true": defaultValue === "true"}
+                                    defaultChecked={contentRef.current[key] ? contentRef.current[key] === "true" : defaultValue === "true"}
                                     onCheckedChange={(value) => {
                                         contentRef.current[key] = value ? "true" : "false";
                                     }}
@@ -164,24 +156,30 @@ export const ParamsForm = ({ data, children }) => {
                                     <Switch.Thumb className="no-drag" animation="quick" />
                                 </Switch></Tinted>}
 
-                                {type !== 'text' && type !== 'json' && type !== 'array' && type !== 'boolean' && <input
-                                    className="no-drag"
-                                    type="text"
-                                    name={key}
-                                    style={{
-                                        backgroundColor: "var(--gray1)",
-                                        flex: 1,
-                                        padding: "5px 10px",
-                                        border: "0.5px solid var(--gray7)",
-                                        borderRadius: "8px",
-                                        boxSizing: "border-box",
-                                        minWidth: "100px",
-                                        marginLeft: "10px",
-                                        marginRight: "10px",
-                                    }}
-                                    defaultValue={defaultValue}
-                                    placeholder={placeholder}
-                                />}
+                                {!['text', 'json', 'array', 'boolean', 'path'].includes(type)
+                                  &&  <Input
+                                        className="no-drag"
+                                        name={key}
+                                        defaultValue={defaultValue}
+                                        placeholder={placeholder}
+                                        minWidth={100}
+                                        mx="10px"
+                                        onChangeText={(val) => {
+                                            contentRef.current[key] = val;
+                                        }}
+                                        ref={(el) => inputRefs.current[key] = el}
+                                    />
+                                }
+
+                                {type == 'path'
+                                    && <FilePicker
+                                        mx="10px"
+                                        initialPath={"/data/public"}
+                                        onFileChange={filePath => {
+                                            contentRef.current[key] = filePath;
+                                        }}
+                                    />
+                                }
                             </YStack>
                         );
                     })}
