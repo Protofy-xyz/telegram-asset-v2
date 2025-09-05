@@ -15,49 +15,51 @@ import convert from 'color-convert';
 // });
 
 function toHex(colorStr) {
-  // Hex directo
-  if (/^#([0-9a-f]{3,8})$/i.test(colorStr)) {
-    // normalizamos a #RRGGBB
-    const hex = colorStr.replace(/^#/, "");
-    if (hex.length === 3) {
-      return (
-        "#" +
-        hex
-          .split("")
-          .map((c) => c + c)
-          .join("")
-          .toUpperCase()
-      );
+    // Hex directo
+    if (/^#([0-9a-f]{3,8})$/i.test(colorStr)) {
+        // normalizamos a #RRGGBB
+        const hex = colorStr.replace(/^#/, "");
+        if (hex.length === 3) {
+            return (
+                "#" +
+                hex
+                    .split("")
+                    .map((c) => c + c)
+                    .join("")
+                    .toUpperCase()
+            );
+        }
+        return "#" + hex.slice(0, 6).toUpperCase();
     }
-    return "#" + hex.slice(0, 6).toUpperCase();
-  }
 
-  // RGB(a)
-  let m = colorStr.match(
-    /^rgba?\(([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*[\d.]+)?\)$/i
-  );
-  if (m) {
-    const [r, g, b] = m.slice(1, 4).map(Number);
-    return "#" + convert.rgb.hex(r, g, b);
-  }
+    // RGB(a)
+    let m = colorStr.match(
+        /^rgba?\(([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*[\d.]+)?\)$/i
+    );
+    if (m) {
+        const [r, g, b] = m.slice(1, 4).map(Number);
+        return "#" + convert.rgb.hex(r, g, b);
+    }
 
-  // HSL(a)
-  m = colorStr.match(
-    /^hsla?\(([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%(?:\s*,\s*[\d.]+)?\)$/i
-  );
-  if (m) {
-    const [h, s, l] = m.slice(1, 4).map(Number);
-    return "#" + convert.hsl.hex(h, s, l);
-  }
+    // HSL(a)
+    m = colorStr.match(
+        /^hsla?\(([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%(?:\s*,\s*[\d.]+)?\)$/i
+    );
+    if (m) {
+        const [h, s, l] = m.slice(1, 4).map(Number);
+        return "#" + convert.hsl.hex(h, s, l);
+    }
 
-  throw new Error("Formato de color no reconocido: " + colorStr);
+    throw new Error("Formato de color no reconocido: " + colorStr);
 }
 
 type Props = {
     darkMode?: boolean,
+    autofocus?: boolean,
     sourceCode: string,
     onChange?: any,
     onSave?: any,
+    onBlur?: any,
     onEscape?: any,
     path?: string,
     bgColorDark?: string,
@@ -110,7 +112,9 @@ export const Monaco = ({
     onChange = () => { },
     onSave = () => { },
     onEscape = () => { },
+    onBlur = () => { },
     colors = {},
+    autofocus = false,
     ...props
 }: Props & EditorProps) => {
     const { resolvedTheme } = useThemeSetting();
@@ -142,7 +146,7 @@ export const Monaco = ({
             }
         });
 
-        monaco.editor.setTheme(customThemeName); 
+        monaco.editor.setTheme(customThemeName);
 
         // Solo registrar si no se ha hecho ya
         if (!monaco.languages.getLanguages().some(lang => lang.id === 'gherkin')) {
@@ -172,6 +176,15 @@ export const Monaco = ({
             noSemanticValidation: true,
             noSyntaxValidation: true
         });
+
+        editor.onDidBlurEditorText(() => onBlur());
+
+        if (autofocus) {
+            requestAnimationFrame(() => {
+                editor.layout();
+                editor.focus();
+            });
+        }
     };
     if (onSave) {
         useKeypress(['s', 'S'], (event) => {
