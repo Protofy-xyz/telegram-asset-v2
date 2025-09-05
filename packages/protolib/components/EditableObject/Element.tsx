@@ -11,7 +11,8 @@ import { ArrayComp } from "./ArrayComponent";
 import { UnionsArrayComp } from "./UnionsArrayComponent";
 import { RecordComp } from "./RecordComponent";
 import { FilePicker } from "../FilePicker";
-import { XCircle, Circle } from 'lucide-react'
+import { Circle } from 'lucide-react'
+import { useRouter, useSearchParams, usePathname } from 'solito/navigation';
 
 export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields = {}, path = [], inArray = false, arrayName = "", URLTransform = (url) => url }) => {
     let elementDef = {
@@ -270,6 +271,13 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
     }
 
     if (elementType == "ZodString" && elementDef.file) {
+        const router = useRouter()
+        const searchParams = useSearchParams();
+        const pathname = usePathname();
+        const file = getFormData(ele.name)
+        const fileIsUrl = file?.startsWith('http')
+        const query = Object.fromEntries(searchParams.entries());
+
         const extensions = elementDef.extensions
         const fileFilter = f => {
             const isValidExtension = extensions.some(ext => f.name.endsWith(ext) || ext == "*")
@@ -283,6 +291,14 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
                     file={getFormData(ele.name)}
                     initialPath={elementDef.initialPath}
                     onFileChange={filePath => setFormData(ele.name, filePath)}
+                    onPressOpen={() => {
+                        if (!fileIsUrl) {
+                            const dirPath = file ? file.split('/').slice(0, -1).join('/') : elementDef.initialPath
+                            const newQuery = { ...query, path: dirPath };
+                            const newSearchParams = new URLSearchParams(newQuery).toString();
+                            router.replace(pathname + '?' + newSearchParams);
+                        }
+                    }}
                 />
             </Stack>
         </FormElement>
