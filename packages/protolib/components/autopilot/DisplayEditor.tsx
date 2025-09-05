@@ -163,6 +163,7 @@ export const DisplayEditor = ({
                         />
                     </YStack> : <></>}
 
+                    {renderCheckbox('Always report value', 'alwaysReportValue', cardData.alwaysReportValue ? true : false)}
                     {renderCheckbox('Allow public run', 'publicRun', cardData.publicRun ? true : false)}
                     <YStack>
                         {renderCheckbox('Custom run path', 'enableCustomRunPath', cardData.enableCustomRunPath ? true : false)}
