@@ -1,5 +1,5 @@
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react'
-import { TextArea } from '@my/ui'
+import { TextArea, TooltipSimple } from '@my/ui'
 import { XStack, YStack, Button, Spinner } from '@my/ui'
 import { Trash, Plus, RotateCcw } from '@tamagui/lucide-icons'
 import dynamic from 'next/dynamic';
@@ -9,9 +9,9 @@ const AutoHeightTextArea = dynamic(() =>
   { ssr: false }
 );
 
-export const RuleItem = ({ value, loading, onDelete, onEdit }) => {
+export const RuleItem = ({ value, loading, onDelete, onEdit, ...props }) => {
   return (
-    <XStack ai="center" gap="$2" mb="$2" width="100%">
+    <XStack ai="center" gap="$2" mb="$2" width="100%" {...props}>
       <AutoHeightTextArea
         speechRecognition={true}
         readOnly={!onEdit}
@@ -35,10 +35,10 @@ export const RuleItem = ({ value, loading, onDelete, onEdit }) => {
   )
 }
 
-export const Rules = ({ rules, loading=false, onAddRule, onDeleteRule, onEditRule, loadingIndex, onReloadRules = async (rules) => {}}) => {
+export const Rules = ({ rules, loading = false, onAddRule, onDeleteRule, onEditRule, loadingIndex, onReloadRules = async (rules) => { } }) => {
   const [newRule, setNewRule] = useState('')
   const [generating, setGenerating] = useState(false)
-  
+
   const addRule = async (e) => {
     if (newRule.trim().length < 3) return
     setGenerating(true)
@@ -65,6 +65,8 @@ export const Rules = ({ rules, loading=false, onAddRule, onDeleteRule, onEditRul
   }
 
   const isDisabled = loadingIndex === rules.length || (newRule.trim().length < 3 && newRule.trim().length > 0) || generating
+  const isLoadingOrGenerating = loadingIndex === rules.length || generating || loading
+
   return (
     <YStack height="100%" f={1} w="100%">
 
@@ -80,6 +82,7 @@ export const Rules = ({ rules, loading=false, onAddRule, onDeleteRule, onEditRul
               setGenerating(false)
             }}
             onEdit={onEditRule ? (r) => onEditRule(i, r) : null}
+            opacity={isLoadingOrGenerating ? 0.5 : 1}
           />
         ))}
       </YStack>
@@ -88,22 +91,25 @@ export const Rules = ({ rules, loading=false, onAddRule, onDeleteRule, onEditRul
       <XStack ai="center" gap="$2" mb="$2" mt="$4" width="100%">
         <AutoHeightTextArea
           speechRecognition={true}
-          placeholder="Add new rule..."
+          placeholder={isLoadingOrGenerating ? "Generating rules..." : "Add new rule..."}
           value={newRule}
           onChange={handleNewRuleChange}
           style={{ width: '100%' }}
+          disabled={isLoadingOrGenerating}
         />
-        <Button
-          disabled={isDisabled}
-          onMouseDown={(e) => e.stopPropagation()}
-          bg={newRule.trim().length > 2 || !newRule.trim().length ? '$color8' : '$gray6'}
-          color={newRule.trim().length > 2 || !newRule.trim().length ? '$background' : '$gray9'}
-          hoverStyle={{ backgroundColor: '$blue10' }}
-          circular
-          icon={loadingIndex === rules.length || generating || loading ? Spinner : (newRule.trim().length > 1 ? Plus : RotateCcw)}
-          scaleIcon={1.4}
-          onPress={newRule.trim().length > 1 ? addRule : reloadRules}
-        />
+        <TooltipSimple label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"} delay={{ open: 500, close: 0 }} restMs={0}>
+          <Button
+            disabled={isDisabled}
+            onMouseDown={(e) => e.stopPropagation()}
+            bg={newRule.trim().length || !newRule.trim().length ? '$color8' : '$gray6'}
+            color={newRule.trim().length || !newRule.trim().length ? '$background' : '$gray9'}
+            hoverStyle={{ backgroundColor: '$blue10' }}
+            circular
+            icon={isLoadingOrGenerating ? Spinner : (newRule.trim().length ? Plus : RotateCcw)}
+            scaleIcon={1.4}
+            onPress={newRule.trim().length > 1 ? addRule : reloadRules}
+          />
+        </TooltipSimple>
       </XStack>
     </YStack>
   )

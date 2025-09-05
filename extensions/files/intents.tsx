@@ -321,8 +321,8 @@ export const CodeView = ({ rulesWithFlows = false, pathname = undefined, disable
               }}
               onAddRule={async (e, rule) => {
                 const newRules = [...(savedRules ?? []), rule]
-                setSavedRules(newRules)
                 await onApplyRules(newRules)
+                setSavedRules(newRules)
               }}
               onDeleteRule={async (index) => {
                 setSavedRules(savedRules.filter((_, i) => i != index))

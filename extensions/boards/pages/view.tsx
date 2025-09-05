@@ -257,23 +257,6 @@ const ActionCard = ({
   )
 }
 
-const FloatingButton = ({ Icon, beating = false, ...props }) => {
-  const size = 34
-  return <YStack
-    jc="center"
-    ai="center"
-    br="$4"
-    cursor='pointer'
-    scaleIcon={1.8}
-    w={size}
-    h={size}
-    hoverStyle={{ bg: '$gray2' }}
-    {...props}
-  >
-    <Icon size={20} fill={props.fill ? "var(--color)" : "transparent"} {...props.iconProps} />
-  </YStack>
-}
-
 const getExecuteAction = (board, rawActions) => {
   const actions = []
   const flatten = (obj, path) => {
@@ -324,7 +307,6 @@ const getExecuteAction = (board, rawActions) => {
   }
 }
 
-
 const BoardStateView = ({ board }) => {
   const states = useProtoStates({}, 'states/boards/' + board.name + '/#', 'states')
   const data = states?.boards?.[board.name]
@@ -358,7 +340,7 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
     "rules": {
       "label": "Automation",
       "icon": Bot,
-      "content": <>
+      "content": <XStack flex={1} padding={"$3"}>
         {automationInfo && <RulesSideMenu
           automationInfo={automationInfo}
           boardRef={boardRef}
@@ -366,7 +348,7 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
           actions={actions}
           states={states}
         />}
-      </>
+      </XStack>
     },
     "uicode": {
       "label": "Presentation",
