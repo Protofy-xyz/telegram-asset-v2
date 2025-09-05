@@ -1,6 +1,5 @@
 import { addAction } from '@extensions/actions/coreContext/addAction';
 import { addCard } from '@extensions/cards/coreContext/addCard';
-import { getServiceToken } from 'protobase';
 
 export default async (app, context) => {
     addAction({
@@ -64,6 +63,13 @@ export default async (app, context) => {
             params: {
                 path: "Path to the file or directory to read",
             },
+            configParams: {
+                "path": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "path"
+                },
+            },
             rulesCode: `return await execute_action("/api/core/v1/files", userParams)`,
             displayResponse: true
         },
@@ -88,7 +94,7 @@ export default async (app, context) => {
         tag: 'actions',
         id: 'download',
         templateName: 'Download File from URL',
-        name: 'files_download',
+        name: 'files_url_download',
         defaults: {
             width: 2,
             height: 9,
@@ -96,6 +102,18 @@ export default async (app, context) => {
             icon: 'download',
             name: 'files_download',
             description: 'Download a file from a URL',
+            configParams: {
+                "path": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "path"
+                },
+                "url": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
             params: {
                 path: "Path to the file to download",
                 url: "URL to download the file from"
@@ -111,15 +129,15 @@ export default async (app, context) => {
     addCard({
         group: 'files',
         tag: 'board',
-        id: 'file_board',
-        templateName: 'Add a file to the board',
+        id: 'file_board_context',
+        templateName: 'Add a file to the board context',
         name: 'append',
         defaults: {
             width: 2,
             height: 12,
             "icon": "file",
             "type": "action",
-            "name": "file",
+            "name": "file_board_context",
             "displayResponse": true,
             "params": {
                 "path": "path to the file"
@@ -128,7 +146,7 @@ export default async (app, context) => {
                 "path": {
                     "visible": true,
                     "defaultValue": "",
-                    "type": "string"
+                    "type": "path"
                 }
             },
             "rulesCode": "return {\n    type: 'file',\n    path: params.path\n}",
