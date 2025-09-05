@@ -19,10 +19,13 @@ export function Markdown({ data, readOnly = false, setData = undefined }) {
     }
   }, [data]);
 
+  const updateData = () => {
+    if (setData) setData(code.current);
+  };
 
   useKeypress(['Escape'], (event) => {
     if (editing) {
-      if (setData) setData(code.current);
+      if (setData) updateData();
       setEditing(false);
       event.preventDefault();
     }
@@ -48,6 +51,7 @@ export function Markdown({ data, readOnly = false, setData = undefined }) {
         }}
         onBlur={() => {
           setEditing(false);
+          updateData();
         }}
         autofocus={true}
         options={{
