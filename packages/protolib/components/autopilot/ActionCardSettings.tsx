@@ -53,33 +53,16 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
         <YStack f={1} gap="$2">
           <SettingsTitle>Description</SettingsTitle>
           <PanelGroup direction="horizontal">
-            {!isCreateMode && <Panel defaultSize={50}>
-              <YStack
-                flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
-                <Markdown data={cardData.description} />
-              </YStack>
-            </Panel>}
-            <CustomPanelResizeHandle direction="vertical" />
             <Panel defaultSize={50}>
               <YStack
-                flex={1} height="100%" alignItems="center" justifyContent="center" backgroundColor="$gray3" borderRadius="$3" p="$2" >
-
-                <Monaco
-                  path={cardData.name + '_description.md'}
-                  darkMode={resolvedTheme === 'dark'}
-                  sourceCode={cardData.description}
-                  onChange={(newCode) => {
+                flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
+                <Markdown
+                  data={cardData.description}
+                  setData={(newCode) => {
                     setCardData({
                       ...cardData,
                       description: newCode
                     })
-                  }}
-                  options={{
-                    folding: false,
-                    lineDecorationsWidth: 15,
-                    lineNumbersMinChars: 0,
-                    lineNumbers: true,
-                    minimap: { enabled: false }
                   }}
                 />
               </YStack>

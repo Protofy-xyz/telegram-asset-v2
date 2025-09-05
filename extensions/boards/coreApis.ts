@@ -677,19 +677,24 @@ export default async (app, context) => {
 
     app.post('/api/core/v1/autopilot/getActionCode', requireAdmin(), async (req, res) => {
         //build a textual representation of context
-        const { mqtt, ...cleanContext } = context;
-        cleanContext.mqtt = 'points to the active mqtt connection. Use context.mqtt if you need to pass a mqtt connection handler'
-        const serializedContext = safeDump(cleanContext);
-
-        delete req.body.actions[req.body.card.name]
-        const prompt = await context.autopilot.getPromptFromTemplate({ board: req.body.board, context: serializedContext, templateName: "actionRules", card: JSON.stringify(req.body.card, null, 4), states: JSON.stringify(req.body.states, null, 4), rules: JSON.stringify(req.body.rules, null, 4), actions: JSON.stringify(req.body.actions, null, 4), userParams: JSON.stringify(req.body.userParams, null, 4) });
-        if (req.query.debug) {
-            console.log("Prompt: ", prompt)
+        try {
+            const { mqtt, ...cleanContext } = context;
+            cleanContext.mqtt = 'points to the active mqtt connection. Use context.mqtt if you need to pass a mqtt connection handler'
+            const serializedContext = safeDump(cleanContext);
+            
+            delete req.body.actions[req.body.card.name]
+            const prompt = await context.autopilot.getPromptFromTemplate({ board: req.body.board, context: serializedContext, templateName: "actionRules", card: JSON.stringify(req.body.card, null, 4), states: JSON.stringify(req.body.states, null, 4), rules: JSON.stringify(req.body.rules, null, 4), actions: JSON.stringify(req.body.actions, null, 4), userParams: JSON.stringify(req.body.userParams, null, 4) });
+            if (req.query.debug) {
+                console.log("Prompt: ", prompt)
+            }
+            let reply = await callModel(prompt, context, defaultAIProvider)
+            console.log('REPLY: ', reply)
+            const jsCode = reply.choices[0].message.content
+            res.send({ jsCode: cleanCode(jsCode) })
+        } catch (e) {
+            console.error('Error getting action code: ', e)
+            res.status(500).send({ error: 'Internal Server Error', raw: e.message })
         }
-        let reply = await callModel(prompt, context, defaultAIProvider)
-        console.log('REPLY: ', reply)
-        const jsCode = reply.choices[0].message.content
-        res.send({ jsCode: cleanCode(jsCode) })
     })
 
     app.post('/api/core/v1/autopilot/getBoardCode', requireAdmin(), async (req, res) => {

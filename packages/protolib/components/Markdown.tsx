@@ -6,7 +6,7 @@ import { Monaco } from "./Monaco";
 import { useThemeSetting } from '@tamagui/next-theme'
 import useKeypress from 'react-use-keypress';
 
-export function Markdown({ data, readOnly = false, setData=undefined }) {
+export function Markdown({ data, readOnly = false, setData = undefined }) {
   const text = data ? (typeof data === 'string' ? data : String(data)) : '';
   const [editing, setEditing] = useState(false);
   const { resolvedTheme } = useThemeSetting();
@@ -19,14 +19,18 @@ export function Markdown({ data, readOnly = false, setData=undefined }) {
     }
   }, [data]);
 
+  const updateData = () => {
+    if (setData) setData(code.current);
+  };
 
   useKeypress(['Escape'], (event) => {
     if (editing) {
-      if(setData) setData(code.current);
+      if (setData) updateData();
       setEditing(false);
       event.preventDefault();
     }
   })
+
   return (
     <div onClick={() => { !readOnly && !editing && setEditing(!editing) }} className="no-drag markdown-body" style={{
       height: "100%",
@@ -45,6 +49,11 @@ export function Markdown({ data, readOnly = false, setData=undefined }) {
         onChange={(newCode) => {
           code.current = newCode;
         }}
+        onBlur={() => {
+          setEditing(false);
+          updateData();
+        }}
+        autofocus={true}
         options={{
           folding: false,
           lineDecorationsWidth: 0,

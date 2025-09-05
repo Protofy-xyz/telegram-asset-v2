@@ -1,10 +1,9 @@
 import { useState } from "react"
-import { Button, Input, XStack, Spinner, Dialog, Text, InputProps } from "@my/ui"
+import { Button, Input, XStack, Spinner, Dialog, Text, StackProps } from "@my/ui"
 import { Folder } from '@tamagui/lucide-icons'
 import { Tinted, } from './Tinted'
 import { Center } from './Center'
 import dynamic from 'next/dynamic'
-import { useRouter, useSearchParams, usePathname } from 'solito/navigation';
 
 const FileBrowser = dynamic<any>(() =>
     import('../adminpanel/next/components/FileBrowser').then(module => module.FileBrowser),
@@ -18,34 +17,26 @@ type FilePickerProps = {
     initialPath?: string
     fileFilter?: Function,
     disabled?: boolean
+    onPressOpen?: Function
 }
 
 
-export function FilePicker({ onFileChange, file, placeholder, initialPath = "", fileFilter, disabled }: FilePickerProps) {
-    const router = useRouter()
-    const searchParams = useSearchParams();
-    const pathname = usePathname();
+export function FilePicker({ onFileChange, file, placeholder, initialPath = "", fileFilter, disabled, onPressOpen = () => { }, ...props }: FilePickerProps & StackProps) {
 
-    const query = Object.fromEntries(searchParams.entries());
 
     const [open, setOpen] = useState(false)
-    const [value, setValue] = useState(file ?? initialPath)
+    const [value, setValue] = useState(file ?? "")
+    const [tmpFile, setTmpFile] = useState(file ?? "")
 
-    const [tmpFile, setTmpFile] = useState(file ?? initialPath)
-
-    const fileIsUrl = file?.startsWith('http')
 
     const onChange = (val) => {
-        if (onFileChange) {
-            onFileChange(val)
-        } else {
-            setValue(val)
-        }
+        setValue(val)
+        if (onFileChange) onFileChange(val)
     }
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <XStack>
+            <XStack {...props}>
                 <Input
                     placeholder={placeholder ?? "Path or URL"}
                     value={file ?? value}
@@ -63,13 +54,10 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
                         borderBottomLeftRadius={"$0"}
                         disabled={disabled}
                         right={"$0"}
-                        onPress={() => {
-                            if (!fileIsUrl) {
-                                const dirPath = file ? file.split('/').slice(0, -1).join('/') : initialPath
-                                const newQuery = { ...query, path: dirPath };
-                                const newSearchParams = new URLSearchParams(newQuery).toString();
-                                router.replace(pathname + '?' + newSearchParams);
-                            }
+                        onPress={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onPressOpen()
                             setOpen(!open)
                         }}
                         icon={<Folder fillOpacity={0} color="gray" size={15} />}>
@@ -83,6 +71,7 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
                         <Text marginBottom="$4"> Selected file: <Text color={"$color7"} fontStyle="italic">{tmpFile}</Text></Text>
                     </Tinted>
                     <FileBrowser
+                        initialPath={initialPath}
                         onOpenFile={(file) => {
                             setOpen(false)
                             onChange(file.path)
