@@ -689,8 +689,12 @@ export default async (app, context) => {
             }
             let reply = await callModel(prompt, context, defaultAIProvider)
             console.log('REPLY: ', reply)
-            const jsCode = reply.choices[0].message.content
-            res.send({ jsCode: cleanCode(jsCode) })
+            if (!reply || !reply.choices || reply.choices.length === 0) {
+                res.status(500).send({ error: 'No response from AI model', raw: reply })
+            } else {
+                const jsCode = reply.choices[0].message.content
+                res.send({ jsCode: cleanCode(jsCode) })
+            }
         } catch (e) {
             console.error('Error getting action code: ', e)
             res.status(500).send({ error: 'Internal Server Error', raw: e.message })
