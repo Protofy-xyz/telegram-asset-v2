@@ -84,6 +84,16 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
                     savedCode.current = rulesCode.data.jsCode
                     editedCode.current = rulesCode.data.jsCode
                     await API.post(`/api/core/v1/boards/${board.name}`, boardRef.current)
+
+                    // save generated code on apply rules
+                    const sourceFile = toSourceFile(automationInfo.code)
+                    const definition = getDefinition(sourceFile, '"code"').getBody()
+                    definition.replaceWithText("{\n" + editedCode.current + "\n}");
+                    await API.post(`/api/core/v1/boards/${board.name}/automation`, { code: sourceFile.getFullText() })
+                    
+                    automationInfo.code = sourceFile.getFullText()
+
+                    toast.show(`Rules applied successfully!`)
                 } catch (e) {
                     toast.show(`Error generating board code: ${e.message}`)
                     console.error(e)
@@ -115,10 +125,10 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
             </XStack>}
             viewPort={{ x: 20, y: window.innerHeight / 8, zoom: 0.8 }}
             onFlowChange={(code) => {
-                editedCode.current = code
+                // editedCode.current = code
             }}
             onCodeChange={(code) => {
-                editedCode.current = code
+                // editedCode.current = code
             }}
             path={board.name + '.ts'}
             sourceCode={editedCode}

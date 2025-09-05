@@ -83,7 +83,7 @@ const Editor = ({ value, readValue, onChange, placeholder = "", textAreaProps }:
             <AlertDialog
                 open={open}
                 hideAccept={true}
-                setOpen={setOpen}
+                setOpen={handleSave}
                 overlayProps={{ o: 0.2 }}
                 p={0}
             >

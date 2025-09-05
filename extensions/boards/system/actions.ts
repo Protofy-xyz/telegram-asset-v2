@@ -178,7 +178,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
         }
 
         const prevValue = await context.state.get({ group: 'boards', tag: boardId, name: action.name });
-        if (JSON.stringify(response) !== JSON.stringify(prevValue)) {
+        if (action?.alwaysReportValue || JSON.stringify(response) !== JSON.stringify(prevValue)) {
             await context.state.set({ group: 'boards', tag: boardId, name: action.name, value: response, emitEvent: true });
             Manager.update(`../../data/boards/${boardId}.js`, 'states', action.name, response);
         }
