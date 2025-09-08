@@ -5,6 +5,7 @@ export const callModel = async (prompt, context, provider='chatgpt') => {
             message: prompt
         })
 
+        let raw = reply
         let content = reply?.[0]
 
         if (reply?.isError) {
@@ -20,6 +21,11 @@ export const callModel = async (prompt, context, provider='chatgpt') => {
                 }
             ]
         }
+
+        if (!content) {
+            reply["raw"] = raw
+        }
+
     } else {
         reply = await context.lmstudio.chatWithModel(prompt, 'qwen2.5-coder-32b-instruct')
     }
