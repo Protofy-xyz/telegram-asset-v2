@@ -131,8 +131,8 @@ export default (app, context) => {
         handleSendPrompt(req.query.message, req.query.images, req.query.files, res)
 
     }))
-    registerActions(context);
-    registerCards(context);
+    //registerActions(context);
+    //registerCards(context);
 
 }
 

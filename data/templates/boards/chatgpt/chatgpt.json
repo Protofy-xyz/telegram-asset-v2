@@ -5,26 +5,6 @@
     "layouts": {
         "lg": [
             {
-                "w": 36,
-                "h": 10,
-                "x": 0,
-                "y": 0,
-                "i": "action_1750256774576",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 36,
-                "h": 21,
-                "x": 0,
-                "y": 6,
-                "i": "value_1750256790295",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
                 "w": 41,
                 "h": 4,
                 "x": 36,
@@ -43,29 +23,19 @@
                 "moved": false,
                 "static": false,
                 "isResizable": true
+            },
+            {
+                "w": 36,
+                "h": 27,
+                "x": 0,
+                "y": 0,
+                "i": "action_1757089062959",
+                "moved": false,
+                "static": false,
+                "isResizable": true
             }
         ],
         "md": [
-            {
-                "w": 26,
-                "h": 10,
-                "x": 37,
-                "y": 4,
-                "i": "action_1750256774576",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 26,
-                "h": 14,
-                "x": 37,
-                "y": 10,
-                "i": "value_1750256790295",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
             {
                 "w": 26,
                 "h": 4,
@@ -85,27 +55,17 @@
                 "moved": false,
                 "static": false,
                 "isResizable": true
+            },
+            {
+                "i": "action_1757089062959",
+                "x": 37,
+                "y": 23,
+                "w": 23,
+                "h": 14,
+                "isResizable": true
             }
         ],
         "sm": [
-            {
-                "w": 2,
-                "h": 10,
-                "x": 0,
-                "y": 19,
-                "i": "action_1750256774576",
-                "moved": false,
-                "static": false
-            },
-            {
-                "w": 2,
-                "h": 17,
-                "x": 0,
-                "y": 24,
-                "i": "value_1750256790295",
-                "moved": false,
-                "static": false
-            },
             {
                 "w": 2,
                 "h": 5,
@@ -123,6 +83,14 @@
                 "i": "value_1752225293068",
                 "moved": false,
                 "static": false,
+                "isResizable": true
+            },
+            {
+                "i": "action_1757089062959",
+                "x": 0,
+                "y": 19,
+                "w": 2,
+                "h": 14,
                 "isResizable": true
             }
         ],
@@ -131,24 +99,6 @@
                 "w": 1,
                 "h": 5,
                 "x": 0,
-                "y": 19,
-                "i": "action_1750256774576",
-                "moved": false,
-                "static": false
-            },
-            {
-                "w": 1,
-                "h": 17,
-                "x": 0,
-                "y": 24,
-                "i": "value_1750256790295",
-                "moved": false,
-                "static": false
-            },
-            {
-                "w": 1,
-                "h": 5,
-                "x": 0,
                 "y": 14,
                 "i": "value_1750261498829",
                 "moved": false,
@@ -163,59 +113,18 @@
                 "moved": false,
                 "static": false,
                 "isResizable": true
+            },
+            {
+                "i": "action_1757089062959",
+                "x": 0,
+                "y": 19,
+                "w": 1,
+                "h": 14,
+                "isResizable": true
             }
         ]
     },
     "cards": [
-        {
-            "key": "action_1750256774576",
-            "width": 2,
-            "height": 10,
-            "icon": "openai",
-            "name": "Send message",
-            "color": "#74AA9C",
-            "description": "send a message to chatGPT",
-            "params": {
-                "preprompt": "preprompt",
-                "prompt": "prompt",
-                "postprompt": "postprompt"
-            },
-            "type": "action",
-            "displayResponse": false,
-            "buttonLabel": "Send",
-            "configParams": {
-                "preprompt": {
-                    "visible": false,
-                    "defaultValue": "",
-                    "type": "text"
-                },
-                "prompt": {
-                    "visible": true,
-                    "defaultValue": "",
-                    "type": "text"
-                },
-                "postprompt": {
-                    "visible": false,
-                    "defaultValue": "",
-                    "type": "text"
-                }
-            },
-            "rulesCode": "execute_action(\"/api/v1/chatgpt/send/prompt\", { message: (userParams.preprompt ?? \"\") + \" \" + (userParams.prompt ?? \"\") + \" \" + (userParams.postprompt ?? \"\") });",
-            "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}",
-            "displayIcon": false
-        },
-        {
-            "key": "value_1750256790295",
-            "width": 2,
-            "height": 6,
-            "icon": "openai",
-            "name": "Message response",
-            "color": "#74AA9C",
-            "description": "chatGPT last chat response",
-            "type": "value",
-            "rulesCode": "return states?.chatGPT?.conversation?.chatResponse",
-            "html": "//@react\nreturn markdown(data)"
-        },
         {
             "key": "value_1750261498829",
             "width": 4,
@@ -250,8 +159,34 @@
             "displayFrame": true,
             "rulesCode": "return `# 🧠 ChatGPT Interaction Board\n\nThis board lets you chat with ChatGPT using the OpenAI API.Follow these simple steps to get started:\n\n## 🔑 Step 1: Get Your API Key\n\n1. Go to[OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n2. Log in and click ** \"Create new secret key\" **.\n3. Copy and save your key securely — it won't be shown again.\n\n    > ⚠️ ** Keep it secret! ** Your API key is private and usage - based.\n\n## 🔑 Step 2: Set Your API Key\n\n1. Add your key on Key Setter card and click \"+\" to add. \n\n## 💬 Step 3: Chat with ChatGPT\n\n- Enter your message in the ** input box **.\n- Click the ** \"Send\" ** button to interact.\n- You’ll receive a response from ChatGPT below.\n\nStart chatting now and build your own AI assistant! 🚀\n`",
             "html": "//@react\nreturn markdown(data)"
+        },
+        {
+            "key": "action_1757089062959",
+            "width": 3,
+            "height": 12,
+            "icon": "sparkles",
+            "type": "action",
+            "name": "AI card",
+            "displayResponse": true,
+            "params": {
+                "prompt": ""
+            },
+            "configParams": {
+                "prompt": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "text"
+                }
+            },
+            "displayIcon": false,
+            "displayButton": true,
+            "displayButtonIcon": true,
+            "rulesCode": "const response = await context.chatgpt.prompt({\n  message: `\n<instructions>You are integrated into a board system.\nThe board is composed of states and actions.\nYou will receive a user message and your mission is to generate a json response.\nOnly respond with a JSON in the following format:\n\n{\n    \"response\": \"whatever you want to say\",\n    \"actions\": [\n        {\n            \"name\": \"action_1\",\n            \"params\": {\n                \"example_param\": \"example_value\"\n            } \n        }\n    ]\n}\n\nThe key response will be shown to the user as a response to the user prompt.\nThe actions array can be empty if the user prompt requires no actions to be executed.\nWhen executing an action, always use the action name. Never use the action id to execute actions, just the name. \n\n</instructions>\n<board_actions>\n${JSON.stringify(boardActions)}\n</board_action>\n<board_states>\n${JSON.stringify(board)}\n</board_states>\n\nThe user prompt is:\n\n${params.prompt}\n`,\n  conversation: await context.chatgpt.getSystemPrompt({\n    prompt: `You can analyze images provided in the same user turn. \nDo NOT claim you cannot see images. \nAnswer following the JSON contract only (no code fences).`,\n  }),\n  images: await context.boards.getStatesByType({\n    board: board,\n    type: \"frame\",\n    key: \"frame\",\n  }),\n  files: await context.boards.getStatesByType({\n    board: board,\n    type: \"file\",\n    key: \"path\",\n  }),\n});\n\nreturn context.chatgpt.processResponse({\n  response: response,\n  execute_action: execute_action,\n});\n",
+            "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
         }
     ],
     "autopilot": false,
-    "rules": []
+    "rules": [],
+    "version": 3,
+    "displayName": "chat gpt"
 }
