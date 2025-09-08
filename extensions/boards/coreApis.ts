@@ -89,18 +89,18 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             });
         }
 
-        if(card.customCardViewPath) {
-            proxyDB.set('boards', boardId, card.name+'_view', {
+        if (card.customCardViewPath) {
+            proxyDB.set('boards', boardId, card.name + '_view', {
                 alias: card.customCardViewPath,
                 target: '/workspace/card',
-                query: 'card='+encodeURIComponent(card.name)+'&board='+encodeURIComponent(boardId)
+                query: 'card=' + encodeURIComponent(card.name) + '&board=' + encodeURIComponent(boardId)
             });
         }
 
-        if(card.customCardRunViewPath) {
-            proxyDB.set('boards', boardId, card.name+'_viewRun', {
+        if (card.customCardRunViewPath) {
+            proxyDB.set('boards', boardId, card.name + '_viewRun', {
                 alias: card.customCardRunViewPath,
-                query: 'card='+encodeURIComponent(card.name)+'&board='+encodeURIComponent(boardId)+'&mode=run'
+                query: 'card=' + encodeURIComponent(card.name) + '&board=' + encodeURIComponent(boardId) + '&mode=run'
             });
         }
     }
@@ -677,27 +677,32 @@ export default async (app, context) => {
 
     app.post('/api/core/v1/autopilot/getActionCode', requireAdmin(), async (req, res) => {
         //build a textual representation of context
+        let feedbackResData = {};
         try {
             const { mqtt, ...cleanContext } = context;
             cleanContext.mqtt = 'points to the active mqtt connection. Use context.mqtt if you need to pass a mqtt connection handler'
             const serializedContext = safeDump(cleanContext);
-            
+            feedbackResData["serializedContext"] = true;
+
             delete req.body.actions[req.body.card.name]
             const prompt = await context.autopilot.getPromptFromTemplate({ board: req.body.board, context: serializedContext, templateName: "actionRules", card: JSON.stringify(req.body.card, null, 4), states: JSON.stringify(req.body.states, null, 4), rules: JSON.stringify(req.body.rules, null, 4), actions: JSON.stringify(req.body.actions, null, 4), userParams: JSON.stringify(req.body.userParams, null, 4) });
+            feedbackResData["prompt"] = prompt;
+            
             if (req.query.debug) {
                 console.log("Prompt: ", prompt)
             }
             let reply = await callModel(prompt, context, defaultAIProvider)
+            feedbackResData["reply"] = reply;
             console.log('REPLY: ', reply)
             if (!reply || !reply.choices || reply.choices.length === 0) {
-                res.status(500).send({ error: 'No response from AI model', raw: reply })
+                res.status(500).send({ ...feedbackResData, error: 'No response from AI model', raw: reply })
             } else {
                 const jsCode = reply.choices[0].message.content
-                res.send({ jsCode: cleanCode(jsCode) })
+                res.send({ ...feedbackResData, jsCode: cleanCode(jsCode) })
             }
         } catch (e) {
             console.error('Error getting action code: ', e)
-            res.status(500).send({ error: 'Internal Server Error', raw: e.message })
+            res.status(500).send({ ...feedbackResData, error: 'Internal Server Error', raw: e.message })
         }
     })
 
