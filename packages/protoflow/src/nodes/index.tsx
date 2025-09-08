@@ -41,6 +41,7 @@ import SpreadAssignment from './SpreadAssignment';
 import ExpressionStatement from './ExpressionStatement';
 import VisualGroup from './VisualGroup'
 import Layer from './Layer'
+import ThrowStatement from './ThrowStatement'
 
 const UINodeTypes = {
     Block: Block,
@@ -92,6 +93,7 @@ const UINodeTypes = {
     DeleteExpression: DeleteExpression,
     SpreadAssignment: SpreadAssignment,
     CaseClause: Block,
+    ThrowStatement: ThrowStatement,
 }
 export const NodeTypes = {
     ...UINodeTypes,

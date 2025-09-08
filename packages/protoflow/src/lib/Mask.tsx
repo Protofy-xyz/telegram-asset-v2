@@ -49,7 +49,7 @@ export const filterObject = ({ port = 'param-1', keys, skipArrow = true }) => {
 
             })
         }
-        return childScope.filter(child => child?.id != id && !toRemove.includes(child.id))
+        return childScope.filter(child => child?.id != id && !toRemove.includes(child?.id))
     }
 }
 
