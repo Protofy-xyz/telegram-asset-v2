@@ -5,7 +5,6 @@ import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
-import { Uploader } from "../../adminpanel/next/components/Uploader";
 
 export const Icon = ({ name, size, color, style }) => {
     return (
@@ -75,6 +74,10 @@ export const ParamsForm = ({ data, children }) => {
                     {allKeys.map((key) => {
                         const cfg = data.configParams?.[key] || {};
                         const { visible = true, defaultValue = "", type = 'string' } = cfg;
+                        // Ensure params with default values are available on content Ref
+                        if (contentRef.current[key] === undefined && defaultValue !== "") {
+                            contentRef.current[key] = defaultValue;
+                        }
                         const placeholder = data.params[key] ?? "";
 
                         if (!visible) {
@@ -157,7 +160,7 @@ export const ParamsForm = ({ data, children }) => {
                                 </Switch></Tinted>}
 
                                 {!['text', 'json', 'array', 'boolean', 'path'].includes(type)
-                                  &&  <Input
+                                    && <Input
                                         className="no-drag"
                                         name={key}
                                         defaultValue={defaultValue}
