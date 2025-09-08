@@ -1,11 +1,10 @@
-import { Boxes, Hash, Info, List, ListOrdered, Loader, PackageOpen, Phone, TestTube, X } from '@tamagui/lucide-icons'
+import { Info, X } from '@tamagui/lucide-icons'
 import { useEffect, useState } from 'react'
-import type { ColorTokens } from 'tamagui'
-import { Avatar, Button, Circle, H1, H5, Paragraph, ScrollView, Separator, SizableText, Text, View, XStack, YGroup, YStack } from 'tamagui'
+import { Button, Paragraph, ScrollView, SizableText, View, XStack, YStack } from 'tamagui'
 import { FlatList } from 'react-native'
 import { InteractiveIcon } from './InteractiveIcon'
-import { useUpdateEffect } from 'usehooks-ts'
 import { Input } from '@my/ui'
+import { Tinted } from './Tinted'
 
 
 export function ViewList({ items, onDeleteItem = (item, index) => { }, onClear = (items) => { }, onPush = (item) => { } }) {
@@ -44,7 +43,7 @@ export function ViewList({ items, onDeleteItem = (item, index) => { }, onClear =
         <Paragraph mt={"$4"} fontSize={"$8"} fontWeight="600" color="$color">Empty queue</Paragraph>
       </YStack>}
 
-      <XStack m={"$2"}>
+      <XStack m={"10px"}>
         <YStack f={1}>
           <Input
             value={addText}
@@ -54,18 +53,22 @@ export function ViewList({ items, onDeleteItem = (item, index) => { }, onClear =
               console.log('onChangeText', text)
               setAddText(text)
             }} />
+          <Tinted>
             <Button
               mt={"$2"}
               mb={"$2"}
               width="100%"
               disabled={!addText}
+              bc={"$color6"}
+              disabledStyle={{ bc: "$gray6" }}
               onPress={() => {
                 if (addText) {
                   onPush(addText)
                   setAddText('')
                 }
-              }}><SizableText>Add</SizableText>
+              }}><SizableText color={!addText && "$gray10"}>Add</SizableText>
             </Button>
+          </Tinted>
         </YStack>
       </XStack>
 
@@ -77,15 +80,18 @@ export function ViewList({ items, onDeleteItem = (item, index) => { }, onClear =
 
 
 function ViewListItem({ item, index, onDeleteItem }) {
+
+  const [isHover, setIsHover] = useState(false)
+
   return (
     <View
       p={"$2"}
       pl={"$3"}
       paddingVertical="$3"
       m={"$1"}
-      marginHorizontal="$2"
+      marginHorizontal="10px"
       borderRadius="$5"
-      backgroundColor="$background"
+      backgroundColor="$color6"
       flexDirection="row"
       // paddingVertical="$2"
       // gap="$4"
@@ -93,6 +99,8 @@ function ViewListItem({ item, index, onDeleteItem }) {
       //   padding: '$4',
       //   gap: '$4',  
       // }}
+      onHoverIn={() => setIsHover(true)}
+      onHoverOut={() => setIsHover(false)}
       alignItems="center"
     >
       <View f={1} flexDirection="column" flexShrink={1} justifyContent="center">
@@ -101,9 +109,18 @@ function ViewListItem({ item, index, onDeleteItem }) {
           {item.status.status}
         </Text> */}
       </View>
-      <View opacity={0} hoverStyle={{ opacity: 1 }} pressStyle={{ opacity: 0.8 }} onPress={() => onDeleteItem(item, index)} >
-        <X color="$red10" />
-      </View>
+      <Button
+        circular
+        theme="red"
+        bc="transparent"
+        opacity={isHover ? 1 : 0}
+        size={"$3"}
+        pressStyle={{ opacity: 0.8 }}
+        onPress={() => onDeleteItem(item, index)}
+        icon={X}
+        scaleIcon={1.8}
+        color={"$red10"}
+      />
     </View>
   )
 }
