@@ -5,9 +5,9 @@ export const callModel = async (prompt, context, provider='chatgpt') => {
             message: prompt
         })
 
-        let content = reply[0]
+        let content = reply?.[0]
 
-        if (reply.isError) {
+        if (reply?.isError) {
             content = "// Error: " + reply.data.error.message
         }
 
