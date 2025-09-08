@@ -103,14 +103,14 @@ export const ParamsForm = ({ data, children }) => {
                                 }}
                             >
                                 <Text ml="20px" mb="$2">{key}</Text>
-                                {type == 'text' &&
-                                    <TextEditDialog f={1}>
-                                        <TextEditDialog.Trigger>
-                                            <TextArea
+                                {(type == 'text' || !['json', 'array', 'boolean', 'path'].includes(type)) &&
+                                    <TextEditDialog mx="10px" f={1}>
+                                        {type == 'text'
+                                            ? <TextArea
                                                 className="no-drag"
                                                 name={key}
                                                 f={1}
-                                                mx="10px"
+                                                focusStyle={{ outlineWidth: "1px" }}
                                                 ref={(el) => inputRefs.current[key] = el}
                                                 defaultValue={contentRef.current[key]}
                                                 onChangeText={(val) => {
@@ -119,6 +119,20 @@ export const ParamsForm = ({ data, children }) => {
                                                 placeholder={placeholder}
                                                 rows={6}
                                             />
+                                            : <Input
+                                                className="no-drag"
+                                                name={key}
+                                                defaultValue={defaultValue}
+                                                placeholder={placeholder}
+                                                minWidth={100}
+                                                onChangeText={(val) => {
+                                                    contentRef.current[key] = val;
+                                                }}
+                                                ref={(el) => inputRefs.current[key] = el}
+                                            />
+                                        }
+                                        <TextEditDialog.Trigger style={{ position: "absolute", right: "10px", bottom: "10px" }}>
+                                            <Icon name="square-arrow-up-right" size={20} color={"#a3a3a3"} style={{}} />
                                         </TextEditDialog.Trigger>
                                         <TextEditDialog.Editor
                                             placeholder={key}
@@ -159,20 +173,7 @@ export const ParamsForm = ({ data, children }) => {
                                     <Switch.Thumb className="no-drag" animation="quick" />
                                 </Switch></Tinted>}
 
-                                {!['text', 'json', 'array', 'boolean', 'path'].includes(type)
-                                    && <Input
-                                        className="no-drag"
-                                        name={key}
-                                        defaultValue={defaultValue}
-                                        placeholder={placeholder}
-                                        minWidth={100}
-                                        mx="10px"
-                                        onChangeText={(val) => {
-                                            contentRef.current[key] = val;
-                                        }}
-                                        ref={(el) => inputRefs.current[key] = el}
-                                    />
-                                }
+
 
                                 {type == 'path'
                                     && <FilePicker
