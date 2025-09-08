@@ -129,6 +129,11 @@ const Editor = ({ value, readValue, onChange, placeholder = "", textAreaProps }:
                                 handleClose();
                             }
                         }}
+                        autoFocus
+                        selection={{
+                            start: tempValue.length,
+                            end: tempValue.length
+                        }}
                         {...textAreaProps}
                     />
                 </YStack>
