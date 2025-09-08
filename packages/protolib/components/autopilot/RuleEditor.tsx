@@ -16,6 +16,7 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
       if (cardData.type == 'value') delete boardStates[cardData.name]
       setHasCode(false)
       const code = await API.post('/api/core/v1/autopilot/' + compiler + '?debug=true', { board: board.name, states: boardStates, rules: rules, card: cardData, ...extraCompilerData })
+      if (code?.error) return { error: code.error?.error || 'Error generating rules code', message: code?.error?.message || '' }
       if (!code?.data?.jsCode) return {}
       setHasCode(true)
       return {
@@ -53,9 +54,13 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
     rules={cardData.rules ?? []}
     value={value}
     setRules={async (rules) => {
+      const rulesRes = await getRulesCode(rules)
+      if (rulesRes.error) {
+        throw new Error(rulesRes.error)
+      }
       const newData = {
         ...cardData,
-        ...(await getRulesCode(rules)),
+        ...(rulesRes),
         rules
       }
       setKey(prev => prev + 1)

@@ -684,13 +684,14 @@ export default async (app, context) => {
 
             delete req.body.actions[req.body.card.name]
             const prompt = await context.autopilot.getPromptFromTemplate({ board: req.body.board, context: serializedContext, templateName: "actionRules", card: JSON.stringify(req.body.card, null, 4), states: JSON.stringify(req.body.states, null, 4), rules: JSON.stringify(req.body.rules, null, 4), actions: JSON.stringify(req.body.actions, null, 4), userParams: JSON.stringify(req.body.userParams, null, 4) });
-            
+
             if (req.query.debug) {
                 console.log("Prompt: ", prompt)
             }
             let reply = await callModel(prompt, context, defaultAIProvider)
             console.log('REPLY: ', reply)
             if (!reply || !reply.choices || reply.choices.length === 0) {
+                logger.error('No response from AI model or empty choices array', { reply });
                 res.status(500).send({ error: 'No response from AI model', message: reply?.error })
             } else {
                 const jsCode = reply.choices[0].message.content
@@ -698,6 +699,7 @@ export default async (app, context) => {
             }
         } catch (e) {
             console.error('Error getting action code: ', e)
+            logger.error('Error getting action code', e);
             res.status(500).send({ error: 'Internal Server Error', message: e.message })
         }
     })
