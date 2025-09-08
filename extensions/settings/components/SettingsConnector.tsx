@@ -1,11 +1,10 @@
 import { useEffect } from 'react';
-import { useSetAtom } from 'jotai';
-import { settingsAtom } from '../hooks';
+import { useSettings } from '../hooks';
 import { useSubscription } from 'protolib/lib/mqtt';
 import { setTintByName } from 'protolib/lib/Tints';
 
 export const SettingsConnector = ({ children }) => {
-    const setSettings = useSetAtom(settingsAtom);
+    const [settings, setSettings] = useSettings()
     const { onMessage } = useSubscription('notifications/setting/#');
 
     useEffect(() => {
@@ -39,6 +38,12 @@ export const SettingsConnector = ({ children }) => {
             } catch { }
         });
     }, [onMessage, setSettings]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            window.ventoSettings = settings;
+        }
+    }, [settings]);
 
     return children;
 };
