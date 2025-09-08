@@ -114,11 +114,12 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
                     <Sparkles size="$1" color="var(--color)" />
                 </XStack> */}
                 {icons}
-                <XStack p="$2" pr="$3" cursor='pointer' onPress={() => {
+                <XStack p="$2" pr="$3" cursor='pointer' onPress={async () => {
                     const sourceFile = toSourceFile(automationInfo.code)
                     const definition = getDefinition(sourceFile, '"code"').getBody()
                     definition.replaceWithText("{\n" + editedCode.current + "\n}");
-                    API.post(`/api/core/v1/boards/${board.name}/automation`, { code: sourceFile.getFullText() })
+                    await API.post(`/api/core/v1/boards/${board.name}/automation`, { code: sourceFile.getFullText() })
+                    toast.show('Automation saved')
                 }} o={0.8} pressStyle={{ opacity: 0.8 }} ml="$5" hoverStyle={{ opacity: 1 }}>
                     <Save size="$1" color="var(--color)" />
                 </XStack>
