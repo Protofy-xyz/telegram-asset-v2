@@ -1,5 +1,5 @@
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react'
-import { TextArea, TooltipSimple } from '@my/ui'
+import { Text, TooltipSimple } from '@my/ui'
 import { XStack, YStack, Button, Spinner } from '@my/ui'
 import { Trash, Plus, RotateCcw } from '@tamagui/lucide-icons'
 import dynamic from 'next/dynamic';
@@ -35,20 +35,47 @@ export const RuleItem = ({ value, loading, onDelete, onEdit, ...props }) => {
   )
 }
 
-export const Rules = ({ rules, loading = false, onAddRule, onDeleteRule, onEditRule, loadingIndex, onReloadRules = async (rules) => { } }) => {
+async function normalizeAdd(onAddRule, ...args) {
+  try {
+    await onAddRule(...args);
+
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: e?.message || 'Error adding rule.' };
+  }
+}
+
+export const Rules = ({
+  rules,
+  loading = false,
+  onAddRule,
+  onDeleteRule,
+  onEditRule,
+  loadingIndex,
+  onReloadRules = async (_rules) => { }
+}) => {
   const [newRule, setNewRule] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [errorMsg, setErrorMsg] = useState(null)
 
   const addRule = async (e) => {
     if (newRule.trim().length < 3) return
     setGenerating(true)
-    await onAddRule(e, newRule)
+    setErrorMsg(null)
+
+    const res = await normalizeAdd(onAddRule, e, newRule)
+
     setGenerating(false)
-    setNewRule('')
+    if (res.ok) {
+      setNewRule('')
+    } else {
+      setErrorMsg(res.message || 'No se pudo añadir la regla.')
+    }
   }
 
   const handleNewRuleChange = (e) => {
     const val = e.target.value
+    setErrorMsg(null)
     const newlineCount = (val.match(/\n/g) || []).length
     if (val.endsWith("\n") && newlineCount === 1) {
       addRule(e)
@@ -60,16 +87,16 @@ export const Rules = ({ rules, loading = false, onAddRule, onDeleteRule, onEditR
   const reloadRules = async (e) => {
     e.stopPropagation()
     setGenerating(true)
+    setErrorMsg(null)
     await onReloadRules(rules)
     setGenerating(false)
   }
 
-  const isDisabled = loadingIndex === rules.length || (newRule.trim().length < 3 && newRule.trim().length > 0) || generating
+  const isDisabled = loadingIndex === rules.length || generating
   const isLoadingOrGenerating = loadingIndex === rules.length || generating || loading
 
   return (
     <YStack height="100%" f={1} w="100%">
-
       <YStack style={{ overflowY: 'auto', flex: 1, width: '100%', padding: "2px" }}>
         {rules.map((rule, i) => (
           <RuleItem
@@ -78,6 +105,7 @@ export const Rules = ({ rules, loading = false, onAddRule, onDeleteRule, onEditR
             loading={loadingIndex === i}
             onDelete={async () => {
               setGenerating(true)
+              setErrorMsg(null)
               await onDeleteRule(i)
               setGenerating(false)
             }}
@@ -97,7 +125,11 @@ export const Rules = ({ rules, loading = false, onAddRule, onDeleteRule, onEditR
           style={{ width: '100%' }}
           disabled={isLoadingOrGenerating}
         />
-        <TooltipSimple label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"} delay={{ open: 500, close: 0 }} restMs={0}>
+        <TooltipSimple
+          label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"}
+          delay={{ open: 500, close: 0 }}
+          restMs={0}
+        >
           <Button
             disabled={isDisabled}
             onMouseDown={(e) => e.stopPropagation()}
@@ -111,6 +143,14 @@ export const Rules = ({ rules, loading = false, onAddRule, onDeleteRule, onEditR
           />
         </TooltipSimple>
       </XStack>
+
+      {errorMsg && (
+        <YStack mt="$1" mb="$2" px="$1">
+          <Text color="$red9" fontSize="$2">
+            {errorMsg}
+          </Text>
+        </YStack>
+      )}
     </YStack>
   )
 }
