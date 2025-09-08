@@ -205,7 +205,8 @@ export const chatGPTSession = async ({
     } catch (e: any) {
         logger.error({ error: e?.message || e, stack: e?.stack }, "Error in chatGPTSession");
         if (error) error(e);
-        return null;
+        // return null;
+        return { error: e?.message || e, stack: e?.stack };
     }
 };
 
