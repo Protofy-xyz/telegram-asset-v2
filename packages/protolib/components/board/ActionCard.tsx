@@ -131,8 +131,8 @@ export const ParamsForm = ({ data, children }) => {
                                                 ref={(el) => inputRefs.current[key] = el}
                                             />
                                         }
-                                        <TextEditDialog.Trigger style={{ position: "absolute", right: "10px", bottom: "10px" }}>
-                                            <Icon name="square-arrow-up-right" size={20} color={"#a3a3a3"} style={{}} />
+                                        <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={0} m="$3" bottom={0}>
+                                            <Icon name="square-arrow-out-up-right" size={20} color={"var(--gray8)"} style={{}} />
                                         </TextEditDialog.Trigger>
                                         <TextEditDialog.Editor
                                             placeholder={key}
@@ -147,18 +147,31 @@ export const ParamsForm = ({ data, children }) => {
                                     </TextEditDialog>
                                 }
 
-                                {type == 'json' || type == 'array' && <XStack mx="10px" f={1} height={200}><Monaco
-                                    language='json'
-                                    darkMode={resolvedTheme === 'dark'}
-                                    sourceCode={defaultValue}
-                                    onChange={(code) => contentRef.current[key] = code}
-                                    options={{
-                                        formatOnPaste: true,
-                                        formatOnType: true,
-                                        minimap: { enabled: false },
-                                        lineNumbers: "off"
-                                    }}
-                                /></XStack>}
+                                {(type == 'json' || type == 'array')
+                                    && <XStack
+                                        p="$3"
+                                        bc="$gray1"
+                                        borderColor="$gray8"
+                                        bw={1}
+                                        br="$4"
+                                        overflow="hidden"
+                                        mx="10px"
+                                        f={1}
+                                        height={200}
+                                    >
+                                        <Monaco
+                                            language='json'
+                                            darkMode={resolvedTheme === 'dark'}
+                                            sourceCode={defaultValue}
+                                            onChange={(code) => contentRef.current[key] = code}
+                                            options={{
+                                                formatOnPaste: true,
+                                                formatOnType: true,
+                                                minimap: { enabled: false },
+                                                lineNumbers: "off"
+                                            }}
+                                        />
+                                    </XStack>}
 
                                 {type == 'boolean' && <Tinted><Switch
                                     ml="12px"
