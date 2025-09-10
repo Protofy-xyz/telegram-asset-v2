@@ -96,6 +96,11 @@ export const Manager = {
         }
     },
 
+    isRunning: (file) => {
+        const child = processes.get(file);
+        return !!child && !child.killed;
+    },
+
     update: (file, chunk, key?, value?) => {
         const child = processes.get(file);
         if (child) {
