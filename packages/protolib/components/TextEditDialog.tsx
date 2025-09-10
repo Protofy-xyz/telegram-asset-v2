@@ -130,10 +130,10 @@ const Editor = ({ value, readValue, onChange, placeholder = "", textAreaProps }:
                             }
                         }}
                         autoFocus
-                        selection={{
-                            start: tempValue.length,
-                            end: tempValue.length
-                        }}
+                        // selection={{
+                        //     start: tempValue.length,
+                        //     end: tempValue.length
+                        // }}
                         {...textAreaProps}
                     />
                 </YStack>
