@@ -69,7 +69,7 @@ const castValueToType = (value, type, boardStates) => {
         case 'text':
             return value; // Assuming markdown is a string
         case "state":
-            return getByPath(boardStates, value)
+            return JSON.stringify(getByPath(boardStates, value))
         default:
             return value; // Default case, return as is
     }
