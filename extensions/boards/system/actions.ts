@@ -6,7 +6,7 @@ import { getExecuteAction } from "./getExecuteAction";
 import fetch from 'node-fetch';
 import { getLogger } from 'protobase';
 
-const getBoardActions = async (boardId) => {
+const getBoardCardActions = async (boardId) => {
     const board = await getBoard(boardId);
     if (!board.cards || !Array.isArray(board.cards)) {
         return [];
@@ -32,7 +32,19 @@ export const getActions = async (context) => {
     return flatActions
 }
 
-const castValueToType = (value, type) => {
+function toPath(path) {
+    return path
+        .replace(/\?\./g, ".")           // remove optional chaining
+        .replace(/\[(["']?)(.*?)\1\]/g, ".$2") // convert [x] or ["x"] into .x
+        .split(".")
+        .filter(Boolean);
+}
+
+function getByPath(obj, path, def?) {
+    return toPath(path).reduce((acc, key) => acc?.[key], obj) ?? def;
+}
+
+const castValueToType = (value, type, boardStates) => {
     switch (type) {
         case 'string':
             return String(value);
@@ -56,13 +68,15 @@ const castValueToType = (value, type) => {
             return value; // Assuming card is a string identifier
         case 'text':
             return value; // Assuming markdown is a string
+        case "state":
+            return getByPath(boardStates, value)
         default:
             return value; // Default case, return as is
     }
 }
 
 export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
-    const actions = await getBoardActions(boardId);
+    const actions = await getBoardCardActions(boardId);
     const action = actions.find(a => a.name === action_or_card_id);
     const { _stackTrace, ...params } = rawParams;
     let stackTrace
@@ -113,7 +127,9 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
         if (action.configParams && action.configParams[param]) {
             const type = action.configParams[param]?.type;
             if (type) {
-                params[param] = castValueToType(params[param], type);
+                const states = await context.state.getStateTree();
+                const boardsStates = { board: states?.boards?.[boardId] ?? {} };
+                params[param] = castValueToType(params[param], type, boardsStates);
             }
         }
     }
