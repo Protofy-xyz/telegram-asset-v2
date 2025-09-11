@@ -593,7 +593,7 @@ window.iframeCard = (html, rootId) => {
     <iframe
       id="iframe-${rootId}"
       name="${rootId}"
-      style="width:calc(100% - 10px);height:calc(100% - 10px);border:none;margin-left:5px;margin-top:5px;"
+      style="width:calc(100% - 10px);height:calc(100% - 10px);border:none;margin-left:5px;margin-top:5px;background-color:white;"
       sandbox="allow-scripts allow-same-origin"
       csp="
         default-src 'self' https: blob: data:;
@@ -619,7 +619,7 @@ window.iframeCard = (html, rootId) => {
     >
   </head>
 
-  <body>
+  <body style='background-color:white;'>
     <main>
       <section id="typography">
         <h2>Empty card</h2>
