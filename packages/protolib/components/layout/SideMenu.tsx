@@ -34,7 +34,6 @@ export const SideMenu = ({ sideBarColor = '$background', children, themeSwitcher
             flex={1}
             overflow={"hidden"}
             $sm={{
-                position: 'absolute',
                 zIndex: 100,
                 height: '100%',
                 backgroundColor: "$backgroundStrong",
@@ -42,13 +41,15 @@ export const SideMenu = ({ sideBarColor = '$background', children, themeSwitcher
             }}
             style={{ overflowY: 'auto' }}
         >
-            {props.logo && <YStack l="$5" t="$5" pos="absolute" display={props.collapsedLogo && collapsed ? 'none' : 'flex'}>
-                {props.logo}
-            </YStack>}
-            {props.collapsedLogo && <YStack l="$5" t="$5" pos="absolute" display={collapsed && props.collapsedLogo ? 'flex' : 'none'}>
-                {props.collapsedLogo}
-            </YStack>}
-            {React.cloneElement(children, { ...children.props, collapsed })}
+            <YStack px="$5" pt="$8" pb="$5" jc="flex-end" ai="start" height={"fit-content"}>
+                {/* do not use ternary, use `display` to have both images loaded and only play 
+                with visibility */}
+                <YStack display={collapsed ? "none" : "flex"}>{props.logo}</YStack>
+                <YStack display={collapsed ? "flex" : "none"}>{props.collapsedLogo}</YStack>
+            </YStack>
+            <YStack pos='relative'>
+                {React.cloneElement(children, { ...children.props, collapsed })}
+            </YStack>
         </YStack>
         <XStack jc={collapsed ? "center" : "space-between"} m="$4" ai="center">
             {(tintSwitcher || themeSwitcher) &&
