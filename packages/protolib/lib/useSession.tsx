@@ -1,28 +1,86 @@
 import { atom, useAtom } from 'jotai'
-import { atomWithStorage, useHydrateAtoms } from 'jotai/utils'
-import { getLogger, createSession } from "protobase"
+import { atomWithStorage, createJSONStorage, useHydrateAtoms } from 'jotai/utils'
+import { createSession } from "protobase"
 const initialContext = { state: "pending", group: { workspaces: [] } }
 export const SessionContext = atom(initialContext)
 export const UserSettingsAtom = atomWithStorage("userSettings", {} as any)
-import {API } from 'protobase'
+import { API } from 'protobase'
+import { useEffect } from 'react'
 
-export const SessionData = atomWithStorage("session", createSession(), undefined, {
+const ABSOLUTE_DAYS = 60 //absolute limit since first login
+const SLIDING_DAYS = 14 //maximum sliding window
+
+const readCookie = (name: string) => {
+    if (typeof document === 'undefined') return null
+    const match = document.cookie
+        .split(';')
+        .map((c) => c.trim())
+        .find((c) => c.startsWith(name + '='))
+    return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null
+}
+
+const cookieJSONStorage = createJSONStorage(() => ({
+    getItem: (key: string) => {
+        return readCookie(key) // string | null
+    },
+    setItem: (key: string, value: string) => {
+        const DAY = 24 * 3600 * 1000
+        if (typeof document === 'undefined') return
+
+        try {
+            const obj = JSON.parse(value || '{}') || {}
+            const now = Date.now()
+
+            // If there is no token -> logout (delete cookie)
+            if (!obj.token) {
+                document.cookie = `${key}=;path=/;max-age=0;Secure;SameSite=Lax`
+                return
+            }
+
+            // Ensure issuedAt is set once and calculate hybrid expiration
+            obj.issuedAt = obj.issuedAt ?? now
+
+            const absRemainingMs = (obj.issuedAt + ABSOLUTE_DAYS * DAY) - now
+            const slidingMs = SLIDING_DAYS * DAY
+            // Take the minimum between absolute remaining and sliding window
+            // (if absolute is smaller than sliding, it means we are close to absolute expiration)
+            const maxAgeSeconds = Math.max(0, Math.floor(Math.min(absRemainingMs, slidingMs) / 1000))
+
+            if (maxAgeSeconds > 0) {
+                // Update cookie with new sliding expiration
+                document.cookie = `${key}=${encodeURIComponent(JSON.stringify(obj))};path=/;max-age=${maxAgeSeconds};Secure;SameSite=Lax`
+            } else {
+                // Absolute timeout reached, delete cookie
+                document.cookie = `${key}=;path=/;max-age=0;Secure;SameSite=Lax`
+            }
+        } catch {
+            // Defensive fallback: session cookie without explicit expiration
+            document.cookie = `${key}=${encodeURIComponent(value ?? '')};path=/;Secure;SameSite=Lax`
+        }
+    },
+    removeItem: (key: string) => {
+        if (typeof document !== 'undefined') {
+            document.cookie = `${key}=;path=/;max-age=0;Secure;SameSite=Lax`
+        }
+    },
+}))
+
+// atomWithStorage uses cookie as storage
+export const SessionData = atomWithStorage("session", createSession(), cookieJSONStorage, {
     unstable_getOnInit: true
 })
 
+
+// - Only proxies to SessionData; storage handles the cookie.
 export const Session = atom(
     (get) => get(SessionData),
     (get, set, data: SessionDataType) => {
-        if (typeof window !== 'undefined') {
-            //store a cookie
-            document.cookie = "session=" + encodeURIComponent(JSON.stringify(data) ?? '') + ";path=/";
-        }
         set(SessionData, data);
     }
 );
 
 export const getSessionContext = async (type) => {
-    return { state: 'resolved', group: type ? (await API.get('/api/core/v1/groups/'+type)).data : {} }
+    return { state: 'resolved', group: type ? (await API.get('/api/core/v1/groups/' + type)).data : {} }
 }
 
 export const initSession = (pageSession) => {
@@ -36,9 +94,22 @@ export const initSession = (pageSession) => {
 
 export const useSession = (pageSession?) => {
     initSession(pageSession)
-    return useAtom(Session)
-}
+    const [session, setSession] = useAtom(Session)
 
+    // if there is no cookie but you are "loggedIn", reset to a clean session.
+    useEffect(() => {
+        if (typeof document !== 'undefined') {
+            const hasCookie = document.cookie
+                .split(';')
+                .some((c) => c.trim().startsWith('session='))
+            if (!hasCookie && session.loggedIn) {
+                setSession(createSession())
+            }
+        }
+    }, [session.loggedIn, setSession])
+
+    return [session, setSession]
+}
 
 export const useSessionContext = () => {
     return useAtom(SessionContext)
