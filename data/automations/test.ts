@@ -45,7 +45,17 @@ export default Protofy("code", async (app: Application, context) => {
         responseMode: 'manual',
         app: app,
         sourceFile: '/data/automations/test.ts',
+        automationParams: {
+            exampleParam: "This is your example parameter description"
+        },
         onRun: async (params, res, name) => {
+            await context.logs.log({
+                message: "Running automation test with params: ",
+                data: params,
+                level: "info",
+                from: origin,
+                name: name,
+            });
             context.apis.automationResponse(res, "ok");
         },
     })
