@@ -11,7 +11,8 @@ const SiteConfig = {
     assistant: true,
     projectName: 'Vento',
     ui: {
-        defaultTint: 'green', // 'gray', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'
+        // 'gray', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'
+        defaultTint: 'green', // LEGACY: working on a selection of tints based on themes
         tintSwitcher: true,
         themeSwitcher: true,
         forcedTheme: undefined, // 'light', 'dark'
