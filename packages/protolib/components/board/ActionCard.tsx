@@ -33,6 +33,7 @@ export const ParamsForm = ({ data, children }) => {
 
     const { resolvedTheme } = useThemeSetting()
     const contentRef = useRef({});
+    const defaultRef = useRef({});
     const inputRefs = useRef({});
 
     const handleSubmit = async (e) => {
@@ -41,11 +42,18 @@ export const ParamsForm = ({ data, children }) => {
         try {
             const formData = new FormData(e.target);
             const params = Object.fromEntries(formData['entries']());
-
+            const defaults = defaultRef.current || {};
             const cleanedParams = contentRef.current || {};
-            for (const key in params) {
+
+                for (const key in params) {
                 if (params[key] || params[key] === "0") {
                     cleanedParams[key] = params[key];
+                }
+            }
+            
+            for (const key in defaults) {
+                if ((cleanedParams[key] === undefined || cleanedParams[key] === "") && (defaults[key] || defaults[key] === "0")) {
+                    cleanedParams[key] = defaults[key];
                 }
             }
 
@@ -77,6 +85,9 @@ export const ParamsForm = ({ data, children }) => {
                         // Ensure params with default values are available on content Ref
                         if (contentRef.current[key] === undefined && defaultValue !== "") {
                             contentRef.current[key] = defaultValue;
+                        }
+                        if (defaultRef.current[key] === undefined || defaultRef.current[key] != defaultValue) {
+                            defaultRef.current[key] = defaultValue;
                         }
                         const placeholder = data.params[key] ?? "";
 
