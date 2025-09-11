@@ -6,6 +6,7 @@ const ReactJsonView = dynamic(() => import('@microlink/react-json-view'), { ssr:
 
 const overrideCss = `
   .string-value { color: var(--color9) !important; }
+  .object-key { color: var(--color) !important; }
 `
 
 export const JSONView = ({ src, onSelectKey=(key) => {}, ...props }) => {
