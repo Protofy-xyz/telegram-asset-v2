@@ -163,15 +163,13 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
           <Tinted>
             {
               tabs.map((tabItem) => (
-                tabItem.id === (selectedTab ?? "rules") && (
-                  <YStack key={tabItem.id} f={1} gap="$4" p="$4">
-                    {tabItem.content || (
-                      <YStack f={1} ai="center" jc="center">
-                        <Text color="$gray11">No content available for this tab</Text>
-                      </YStack>
-                    )}
-                  </YStack>
-                )
+                <YStack display={tabItem.id === (selectedTab ?? "rules") ? "flex" : "none"} key={tabItem.id} f={1} gap="$4" p="$4">
+                  {tabItem.content || (
+                    <YStack f={1} ai="center" jc="center">
+                      <Text color="$gray11">No content available for this tab</Text>
+                    </YStack>
+                  )}
+                </YStack>
               ))
             }
           </Tinted>

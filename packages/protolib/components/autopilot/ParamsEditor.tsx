@@ -108,7 +108,7 @@ export const ParamsEditor = ({
     )
   }, [])
 
-  const types = ["string", "number", "boolean", "json", "array", "card", "text", "path"]
+  const types = ["string", "number", "boolean", "json", "array", "card", "text", "path", "state"]
 
   return (
     <YStack flex={1} height="100%" borderRadius="$3" p="$3" backgroundColor="$gray3" overflow="hidden" >

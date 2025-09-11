@@ -24,7 +24,6 @@ const BOARD_REFRESH_INTERVAL = 100 //in miliseconds
 const defaultAIProvider = 'chatgpt'
 const logger = getLogger()
 const processTable = {}
-const autopilotState = {}
 const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
 const memory = {}
 let alreadyStarted = false
@@ -267,7 +266,7 @@ function Widget({board, state}) {
             {
                 Object.keys(cards).map(card => {
                     return <XStack ai="center" height="60px" gap={"$4"}>
-                        <div>{state?.[card]}</div>
+                        <div>{JSON.stringify(state?.[card])}</div>
                     </XStack>
                 })
             }
@@ -952,8 +951,9 @@ export default async (app, context) => {
                     card.value = values[key];
                 }
             }
-            const autopilot = autopilotState[req.params.boardId] ?? false;
-            board.autopilot = autopilot
+            const filePath = '../../data/boards/' + req.params.boardId + '.js'
+            const running = Manager.isRunning(filePath)
+            board.autopilot = running
             res.send(board)
         } catch (error) {
             if (error instanceof HttpError) {
@@ -972,12 +972,9 @@ export default async (app, context) => {
                 states: states.boards && states.boards[boardId] ? states.boards[boardId] : {},
                 actions: await context.state.get({ group: 'boards', tag: boardId, chunk: 'actions', defaultValue: {} })
             }
-        }, () => {
-            autopilotState[boardId] = false;
-        })
+        }, () => {})
 
         if (started) {
-            autopilotState[boardId] = true;
             logger.info(`Autopilot started for board: ${boardId}`);
             if (res) res.send({ result: 'started', message: "Board started", board: boardId });
 
