@@ -24,7 +24,7 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
         rulesExplained: code.data?.explanation
       }
     }
-    return {rulesCode: '//empty rules', rulesExplained: 'The rules are empty'}
+    return { rulesCode: '//empty rules', rulesExplained: 'The rules are empty' }
   }
 
   useEffect(() => {
@@ -43,10 +43,7 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
     board={board}
     panels={cardData.type == 'value' ? ['states'] : ['actions', 'states']}
     setRulesCode={(rulesCode) => {
-      setCardData({
-        ...cardData,
-        rulesCode
-      })
+      setCardData(prev => ({ ...prev, rulesCode }))
     }}
     rulesCode={cardData.rulesCode}
     actions={actions}
@@ -55,16 +52,14 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
     value={value}
     setRules={async (rules) => {
       const rulesRes = await getRulesCode(rules)
-      if (rulesRes.error) {
-        throw new Error(rulesRes.error)
-      }
-      const newData = {
-        ...cardData,
-        ...(rulesRes),
-        rules
-      }
-      setKey(prev => prev + 1)
-      setCardData(newData)
+      if (rulesRes.error) throw new Error(rulesRes.error)
+
+      setKey(k => k + 1)
+
+      setCardData(prev => {
+        const next = { ...prev, ...rulesRes, rules }
+        return next
+      })
     }}
     valueReady={hasCode} />
 }
