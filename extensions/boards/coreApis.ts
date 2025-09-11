@@ -266,7 +266,7 @@ function Widget({board, state}) {
             {
                 Object.keys(cards).map(card => {
                     return <XStack ai="center" height="60px" gap={"$4"}>
-                        <div>{state?.[card]}</div>
+                        <div>{JSON.stringify(state?.[card])}</div>
                     </XStack>
                 })
             }
