@@ -20,6 +20,7 @@ export function SelectList({
   setValue: (v: string) => void;
   triggerProps?: SelectTriggerProps;
   valueProps?: any;
+  placeholder?: string;
 }) {
   const opts = useMemo(
     () => elements.map(el => typeof el === 'string'
