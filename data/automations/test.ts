@@ -45,7 +45,34 @@ export default Protofy("code", async (app: Application, context) => {
         responseMode: 'manual',
         app: app,
         sourceFile: '/data/automations/test.ts',
+        cardConfigParams: {
+            exampleParamString: {
+                "visible": true,
+                "description": "my example string description",
+                "defaultValue": "default",
+                "type": "string"
+            },
+            exampleParamNumber: {
+                "visible": true,
+                "description": "my example number description",
+                "defaultValue": 42,
+                "type": "number"
+            },
+            exampleParamBoolean: {
+                "visible": true,
+                "description": "my example boolean description",
+                "defaultValue": true,
+                "type": "boolean"
+            }
+        },
         onRun: async (params, res, name) => {
+            await context.logs.log({
+                message: "Running automation test with params: ",
+                data: params,
+                level: "info",
+                from: origin,
+                name: name,
+            });
             context.apis.automationResponse(res, "ok");
         },
     })

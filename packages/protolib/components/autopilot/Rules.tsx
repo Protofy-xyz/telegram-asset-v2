@@ -1,4 +1,4 @@
-import React, { useRef, useState, useLayoutEffect, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Text, TooltipSimple } from '@my/ui'
 import { XStack, YStack, Button, Spinner } from '@my/ui'
 import { Trash, Plus, RotateCcw } from '@tamagui/lucide-icons'
@@ -9,20 +9,21 @@ const AutoHeightTextArea = dynamic(() =>
   { ssr: false }
 );
 
-export const RuleItem = ({ value, loading, onDelete, onEdit, ...props }) => {
+export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur, ...props }) => {
   return (
     <XStack ai="center" gap="$2" mb="$2" width="100%" {...props}>
       <AutoHeightTextArea
         speechRecognition={true}
         readOnly={!onEdit}
         value={value}
-        onChange={(e) => onEdit(e.target.value)}
+        onChange={(e) => onEdit?.(e.target.value)}
+        onBlur={onBlur}
         placeholder="Rule Value..."
         style={{ width: '100%' }}
       />
       <Button
         disabled={loading}
-        onMouseDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
         theme="red"
         bg="transparent"
         color="$red9"
@@ -38,7 +39,6 @@ export const RuleItem = ({ value, loading, onDelete, onEdit, ...props }) => {
 async function normalizeAdd(onAddRule, ...args) {
   try {
     await onAddRule(...args);
-
     return { ok: true };
   } catch (e) {
     return { ok: false, message: e?.message || 'Error adding rule.' };
@@ -54,23 +54,41 @@ export const Rules = ({
   loadingIndex,
   onReloadRules = async (_rules) => { }
 }) => {
+  const [draftRules, setDraftRules] = useState(rules ?? [])
   const [newRule, setNewRule] = useState('')
   const [generating, setGenerating] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+
+  const setDraftAt = (i, text) =>
+    setDraftRules(prev => {
+      const next = [...prev]
+      next[i] = text
+      return next
+    })
+
+  const commitIfChanged = async (i) => {
+    const next = draftRules[i] ?? ''
+    const prev = rules[i] ?? ''
+    if (next === prev) return
+
+    setGenerating(true)
+    setErrorMsg(null)
+    try {
+      await onEditRule?.(i, next)
+      await onReloadRules(draftRules)
+    } finally {
+      setGenerating(false)
+    }
+  }
 
   const addRule = async (e) => {
     if (newRule.trim().length < 3) return
     setGenerating(true)
     setErrorMsg(null)
-
     const res = await normalizeAdd(onAddRule, e, newRule)
-
     setGenerating(false)
-    if (res.ok) {
-      setNewRule('')
-    } else {
-      setErrorMsg(res.message || 'No se pudo añadir la regla.')
-    }
+    if (res.ok) setNewRule('')
+    else setErrorMsg(res.message || 'No se pudo añadir la regla.')
   }
 
   const handleNewRuleChange = (e) => {
@@ -95,21 +113,26 @@ export const Rules = ({
   const isDisabled = loadingIndex === rules.length || generating
   const isLoadingOrGenerating = loadingIndex === rules.length || generating || loading
 
+  useEffect(() => {
+    setDraftRules(rules ?? [])
+  }, [rules])
+
   return (
     <YStack height="100%" f={1} w="100%">
       <YStack style={{ overflowY: 'auto', flex: 1, width: '100%', padding: "2px" }}>
-        {rules.map((rule, i) => (
+        {draftRules.map((rule, i) => (
           <RuleItem
             key={i}
             value={rule}
             loading={loadingIndex === i}
+            onEdit={(text) => setDraftAt(i, text)}
+            onBlur={() => commitIfChanged(i)}
             onDelete={async () => {
               setGenerating(true)
               setErrorMsg(null)
               await onDeleteRule(i)
               setGenerating(false)
             }}
-            onEdit={onEditRule ? (r) => onEditRule(i, r) : null}
             opacity={isLoadingOrGenerating ? 0.5 : 1}
           />
         ))}
@@ -133,9 +156,9 @@ export const Rules = ({
           <Button
             disabled={isDisabled}
             onMouseDown={(e) => e.stopPropagation()}
-            bg={newRule.trim().length || !newRule.trim().length ? '$color8' : '$gray6'}
-            color={newRule.trim().length || !newRule.trim().length ? '$background' : '$gray9'}
-            hoverStyle={{ backgroundColor: '$blue10' }}
+            bg='$color8'
+            color='$background'
+            hoverStyle={{ backgroundColor: '$color9' }}
             circular
             icon={isLoadingOrGenerating ? Spinner : (newRule.trim().length ? Plus : RotateCcw)}
             scaleIcon={1.4}
