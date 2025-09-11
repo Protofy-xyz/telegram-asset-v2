@@ -4,7 +4,7 @@ import { useThemeSetting } from '@tamagui/next-theme'
 import { setChonkyDefaults } from 'chonky';
 import { ChonkyIconFA } from 'chonky-icon-fontawesome';
 import { FileNavbar, FileBrowser, FileToolbar, FileList, ChonkyActions } from 'chonky';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { Dialog, Paragraph, useTheme, Text, SizableText, Stack, XStack } from '@my/ui';
 import { Uploader } from './Uploader';
 import { Download } from '@tamagui/lucide-icons'
@@ -40,8 +40,15 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
     const selectedFiles = selection && findSelected() ? [findSelected()] : selected
     const setSelectedFiles = onChangeSelection ?? setSelected
 
+    const refreshFiles = useCallback(async () => {
+        const ts = Date.now();
+        const fetchPath = (normalizedCurrentPath || '/').replace(/^\/+/, '');
+        const res = (await API.get('/api/core/v1/files/' + fetchPath + '?ts=' + ts)) ?? { data: [] };
+        setFiles(res);
+    }, [normalizedCurrentPath, setFiles]);
+
     const onUploadFiles = async () => {
-        setFiles(await API.get('/api/core/v1/files/' + normalizedCurrentPath) ?? { data: [] })
+        await refreshFiles()
     }
     const onScroll = () => { }
     const myFileActions = [
@@ -121,6 +128,24 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
         }
     }, [files])
 
+    useEffect(() => {
+        const ssePath = (normalizedCurrentPath || '/').replace(/^\/+/, '');
+        const url = `/api/core/v1/files/events?path=${encodeURIComponent(ssePath)}&depth=0`;
+        const es = new EventSource(url);
+
+        es.onmessage = (e) => {
+            try {
+                const evt = JSON.parse(e.data);
+                if (evt.path === ssePath) {
+                    refreshFiles();
+                }
+            } catch { }
+        };
+
+        return () => es.close();
+    }, [normalizedCurrentPath, refreshFiles]);
+
+
     return (
         <Dropzone
             onDragEnter={() => setShowUploadDialog(true)}
@@ -165,7 +190,7 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
                         onAccept={async (seter) => {
                             const itemsToDelete = selectedFiles
                             await API.post('/api/core/v1/deleteItems/' + currentPath, itemsToDelete);
-                            setFiles(await API.get('/api/core/v1/files/' + currentPath) ?? { data: [] })
+                            refreshFiles()
                         }}
                         acceptTint="red"
                         title={<Text color="$red9">Delete{(selectedFiles.length > 1 ? ' ' + selectedFiles.length + ' files?' : '?')}</Text>}
@@ -187,7 +212,12 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
                         description={customAction?.description}
                     >
                         <YStack minWidth={customAction?.size?.width} h={customAction?.size?.height} f={1}>
-                            {customAction && customAction.getComponent && customAction.getComponent(selectedFiles, normalizedCurrentPath, setCustomAction, async () => setFiles(await API.get('/api/core/v1/files/' + currentPath) ?? { data: [] }))}
+                            {customAction && customAction.getComponent && customAction.getComponent(
+                                selectedFiles,
+                                normalizedCurrentPath,
+                                setCustomAction,
+                                async () => await refreshFiles()
+                            )}                        
                         </YStack>
 
                     </AlertDialog>
