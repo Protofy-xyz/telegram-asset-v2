@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getRoot, handler, requireAdmin } from 'protonode';
 import { getLogger, API } from 'protobase';
 import archiver from 'archiver';
+import chokidar from 'chokidar';
+
 const { createExpressProxy } = require('app/proxy.js')
 
 const logger = getLogger()
@@ -251,6 +253,58 @@ const handleRenameRequest = async (req, res, session) => {
     }
 };
 
+const filesEventsSseHandler = (req, res) => {
+  const relPath = String(req.query.path || '').replace(/^\/+/, '');
+  const depth = Number(req.query.depth ?? 0);
+  const absPath = path.join(getRoot(req), relPath);
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  // @ts-ignore
+  res.flushHeaders?.();
+
+  const send = (payload: any) => {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  };
+
+  const keepAlive = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 25000);
+
+  const watcher = chokidar.watch(absPath, {
+    ignoreInitial: true,
+    depth,
+    awaitWriteFinish: { stabilityThreshold: 250, pollInterval: 100 },
+    // usePolling: true, interval: 1000, // si usas Docker y no llegan eventos FS
+  });
+
+  let timer: NodeJS.Timeout | null = null;
+  const poke = (type: string, fullPath?: string) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      const file = fullPath ? path.relative(absPath, fullPath) : undefined;
+      send({ type, path: relPath, file });
+    }, 120);
+  };
+
+  watcher
+    .on('add', p => poke('add', p))
+    .on('addDir', p => poke('addDir', p))
+    .on('unlink', p => poke('unlink', p))
+    .on('unlinkDir', p => poke('unlinkDir', p))
+    .on('change', p => poke('change', p))
+    .on('error', err => send({ type: 'error', message: String(err) }));
+
+  const cleanup = () => {
+    clearInterval(keepAlive);
+    watcher.close().catch(() => {});
+  };
+
+  req.on('close', cleanup);
+  res.on?.('close', cleanup);
+};
+
 //Route to delete files and directories
 app.post('/api/core/v1/deleteItems/:path(*)', requireAdmin(), handler(handleDeleteRequest));
 
@@ -264,6 +318,8 @@ app.get('/api/core/v1/download', requireAdmin(), handler(handleFilesDownloadRequ
 app.post('/api/core/v1/directories', requireAdmin(), handler(handleDirectoryCreateRequest));
 // Route to create directories in /api/core/v1/directories/*
 app.post('/api/core/v1/directories/:path(*)', requireAdmin(), handler(handleDirectoryCreateRequest));
+
+app.get('/api/core/v1/files/events', requireAdmin(), filesEventsSseHandler);
 
 app.get('/api/core/v1/files/:path(*)?', requireAdmin(), handler(handleFilesRequest));
 
