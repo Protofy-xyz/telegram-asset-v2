@@ -1,28 +1,44 @@
+import { useMemo, useState, useCallback } from 'react'
 import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView } from '@my/ui'
 import { Check } from 'lucide-react'
-import { v4 as uuidv4 } from 'uuid';
-import { IconSelect } from '../IconSelect';
-import { InputColor } from '../InputColor';
-import { useState } from 'react'
+import { v4 as uuidv4 } from 'uuid'
+import { IconSelect } from '../IconSelect'
+import { InputColor } from '../InputColor'
 
 export const SettingsTitle = ({ children, error = "", ...props }) => {
-    return <XStack ai={"center"}>
-        <Label ml={"$3"} h={"$3.5"} color="$gray9" size="$5" {...props}>
-            {children}
-        </Label>
-        {error ? <Text color={"$red9"} fontSize={"$1"} ml={"$3"}>{error}</Text> : <></>}
-    </XStack>
+    return (
+        <XStack ai={"center"}>
+            <Label ml={"$3"} h={"$3.5"} color="$gray9" size="$5" {...props}>
+                {children}
+            </Label>
+            {error ? (
+                <Text color={"$red9"} fontSize={"$1"} ml={"$3"}>
+                    {error}
+                </Text>
+            ) : null}
+        </XStack>
+    )
 }
 
 const SettingsSection = ({ children, title, ...props }) => {
     return (
-        <YStack f={1} borderRadius="$3" p="$3" bc="$gray3" >
+        <YStack f={1} borderRadius="$3" p="$3" bc="$gray3">
             <SettingsTitle color="$color">{title}</SettingsTitle>
-            <YStack {...props}>
-                {children}
-            </YStack>
+            <YStack {...props}>{children}</YStack>
         </YStack>
     )
+}
+
+type Setting = {
+    key: string
+    label: string
+    section: string
+    type: 'checkbox' | 'text'
+    indent?: number
+    visible?: (ctx: { card: any; cardData: any }) => boolean
+    // get/set custom for especial cases (tokens, buttonMode...)
+    get?: (cardData: any, card: any) => any
+    set?: (cardData: any, value: any) => any // returns new cardData
 }
 
 export const DisplayEditor = ({
@@ -30,234 +46,223 @@ export const DisplayEditor = ({
     cardData,
     setCardData,
     icons,
-    board
+    board,
 }: {
     card: any
     cardData: any
     icons: any
-    setCardData: (data: any) => void,
+    setCardData: (data: any) => void
     board: any
 }) => {
-    const cellWidth = 350
-    const cellHeight = 50
-    const getChecked = (key: string) => cardData[key] !== false
+    const [error, setError] = useState<string | null>(null)
 
-    const handleCheckboxChange = (key: string) => (checked: boolean) => {
-        setCardData({ ...cardData, [key]: checked })
+    const getCheckedDefault = useCallback((cd: any, key: string) => cd?.[key] !== false, [])
+
+    const settings: Setting[] = [
+        // ----- General -----
+        { label: 'Keep value permanently', key: 'persistValue', type: 'checkbox', section: 'General', visible: ({ card }) => card.type === 'action' },
+        { label: 'Autorun on start', key: 'autorun', type: 'checkbox', section: 'General', visible: ({ card }) => card.type === 'action' },
+        { label: 'Always report value', key: 'alwaysReportValue', type: 'checkbox', section: 'General' },
+
+        // ----- Display -----
+        { label: 'Display title', key: 'displayTitle', type: 'checkbox', section: 'Display' },
+        { label: 'Display icon', key: 'displayIcon', type: 'checkbox', section: 'Display' },
+        { label: 'Display frame', key: 'displayFrame', type: 'checkbox', section: 'Display' },
+        { label: 'Markdown display', key: 'markdownDisplay', type: 'checkbox', section: 'Display' },
+        { label: 'Display value', key: 'displayResponse', type: 'checkbox', section: 'Display', visible: ({ card }) => card.type === 'action' },
+        { label: 'Display button', key: 'displayButton', type: 'checkbox', section: 'Display', visible: ({ card }) => card.type === 'action' },
+        { label: 'Button text', key: 'buttonLabel', type: 'text', section: 'Display', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton') },
+        {
+            label: 'Button Full',
+            key: 'buttonMode',
+            type: 'checkbox',
+            section: 'Display',
+            indent: 1,
+            visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton'),
+            get: (cd) => cd.buttonMode === 'full',
+            set: (cd, checked) => {
+                if (checked) return { ...cd, buttonMode: 'full' }
+                const { buttonMode, ...rest } = cd
+                return rest
+            },
+        },
+        {
+            label: 'Display icon',
+            key: 'displayButtonIcon',
+            type: 'checkbox',
+            section: 'Display',
+            indent: 1,
+            visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton'),
+            get: (cd) => cd.displayButtonIcon === true,
+            set: (cd, checked) => ({ ...cd, displayButtonIcon: !!checked }),
+        },
+
+        // ----- Paths and Permissions -----
+        {
+            label: 'API access',
+            key: 'apiAccess',
+            type: 'checkbox',
+            section: 'Paths and Permissions',
+            get: (cd) => Object.keys(cd.tokens ?? {}).length > 0,
+            set: (cd, checked) => {
+                if (checked) return { ...cd, tokens: { read: uuidv4(), run: uuidv4() } }
+                const { tokens, ...rest } = cd
+                return rest
+            },
+        },
+        { label: 'User access', key: 'userAccess', type: 'checkbox', section: 'Paths and Permissions' },
+        { label: 'Admin access', key: 'adminAccess', type: 'checkbox', section: 'Paths and Permissions' },
+
+        { label: 'Allow public read', key: 'publicRead', type: 'checkbox', section: 'Paths and Permissions' },
+        { label: 'Custom read path', key: 'enableCustomPath', type: 'checkbox', section: 'Paths and Permissions' },
+        {
+            label: 'Path to card',
+            key: 'customPath',
+            type: 'text',
+            section: 'Paths and Permissions',
+            indent: 1,
+            visible: ({ cardData }) => !!cardData.enableCustomPath,
+            get: (cd) => cd.customPath ?? `/workspace/cards/${cd.name}`,
+        },
+
+        { label: 'Allow public run', key: 'publicRun', type: 'checkbox', section: 'Paths and Permissions' },
+        { label: 'Custom run path', key: 'enableCustomRunPath', type: 'checkbox', section: 'Paths and Permissions' },
+        {
+            label: 'Path to card run',
+            key: 'customRunPath',
+            type: 'text',
+            section: 'Paths and Permissions',
+            indent: 1,
+            visible: ({ cardData }) => !!cardData.enableCustomRunPath,
+            get: (cd) => cd.customRunPath ?? `/workspace/cards/${cd.name}/run`,
+        },
+
+        { label: 'Card Page Path', key: 'customCardViewPath', type: 'text', section: 'Paths and Permissions' },
+        { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', section: 'Paths and Permissions' },
+    ]
+
+    // Group settings by section and filter by visible
+    const settingsBySection = useMemo(() => {
+        const acc: Record<string, Setting[]> = {}
+        const ctx = { card, cardData }
+        for (const s of settings) {
+            if (s.visible && !s.visible(ctx)) continue
+            if (!acc[s.section]) acc[s.section] = []
+            acc[s.section].push(s)
+        }
+        return acc
+    }, [settings, card, cardData])
+
+    const renderSetting = (s: Setting) => {
+        const indentMl = s.indent ? `$${s.indent * 4}` : undefined
+
+        if (s.type === 'checkbox') {
+            const checked = s.get ? !!s.get(cardData, card) : getCheckedDefault(cardData, s.key)
+            const onCheckedChange = (checkedVal: boolean) => {
+                if (s.set) {
+                    setCardData(s.set(cardData, checkedVal))
+                } else {
+                    setCardData({ ...cardData, [s.key]: checkedVal })
+                }
+            }
+
+            return (
+                <XStack key={s.key} ai="center" gap="$2" ml={indentMl}>
+                    <Checkbox
+                        w="$2"
+                        h="$2"
+                        focusStyle={{ outlineWidth: 0 }}
+                        checked={checked}
+                        onCheckedChange={onCheckedChange}
+                        className="no-drag"
+                    >
+                        <Checkbox.Indicator>
+                            <Check size={16} />
+                        </Checkbox.Indicator>
+                    </Checkbox>
+                    <Label>{s.label}</Label>
+                </XStack>
+            )
+        }
+
+        if (s.type === 'text') {
+            const value = s.get ? s.get(cardData, card) : cardData?.[s.key] ?? ''
+            return (
+                <YStack key={s.key} ml={indentMl} w={400}>
+                    <SettingsTitle>{s.label}</SettingsTitle>
+                    <Input
+                        br={"8px"}
+                        value={value}
+                        placeholder={s.label}
+                        onChangeText={(t) => {
+                            if (s.set) setCardData(s.set(cardData, t))
+                            else setCardData({ ...cardData, [s.key]: t })
+                        }}
+                    />
+                </YStack>
+            )
+        }
+
+        return null
     }
 
-    const renderCheckbox = (label: string, key: string, checked?, onCheckedChange?) => (
-        <XStack ai="center" gap="$2">
-            <Checkbox
-                w="$2"
-                h="$2"
-                focusStyle={{ outlineWidth: 0 }}
-                checked={checked ?? getChecked(key)}
-                onCheckedChange={onCheckedChange ?? handleCheckboxChange(key)}
-                className="no-drag"
-            >
-                <Checkbox.Indicator>
-                    <Check size={16} />
-                </Checkbox.Indicator>
-            </Checkbox>
-            <Label>{label}</Label>
-        </XStack>
-    )
-    const [error, setError] = useState(null)
     return (
         <YStack f={1} gap="$4">
-            <XStack space="$4" flexWrap='wrap'>
-                <YStack flex={1} maw={400} >
-                    <SettingsTitle error={error}>
+            <XStack space="$4" flexWrap="wrap">
+                <YStack flex={1} maw={400}>
+                    <SettingsTitle error={error ?? ''}>
                         Name <Text color={"$color8"}>*</Text>
                     </SettingsTitle>
                     <Input
                         br={"8px"}
                         value={cardData.name}
-                        color={error ? '$red9' : null}
+                        color={error ? '$red9' : undefined}
                         onChangeText={(t) => {
-                            const regex = /^[a-zA-Z0-9-_ ]*$/;
-                            if (regex.test(t)) {
-                                setError(null);
-                            } else {
-                                //setError("Invalid input, only letters, numbers, spaces, - and _ are allowed.");
-                            }
-                            setCardData({
-                                ...cardData,
-                                name: t,
-                            })
-                        }
-                        }
+                            const regex = /^[a-zA-Z0-9-_ ]*$/
+                            if (regex.test(t)) setError(null)
+                            // else setError("Invalid input, only letters, numbers, spaces, - and _ are allowed.")
+                            setCardData({ ...cardData, name: t })
+                        }}
                     />
                 </YStack>
+
                 <YStack w={400}>
-                    <SettingsTitle>
-                        Icon
-                    </SettingsTitle>
+                    <SettingsTitle>Icon</SettingsTitle>
                     <IconSelect
                         br={"8px"}
                         icons={icons}
-                        onSelect={(icon) => {
-                            setCardData({
-                                ...cardData,
-                                icon,
-                            });
-                        }}
+                        onSelect={(icon) => setCardData({ ...cardData, icon })}
                         selected={cardData.icon}
                     />
                 </YStack>
+
                 <YStack w={400}>
-                    <SettingsTitle>
-                        Color
-                    </SettingsTitle>
+                    <SettingsTitle>Color</SettingsTitle>
                     <InputColor
                         br={"8px"}
                         color={cardData.color}
-                        onChange={(e) =>
-                            setCardData({ ...cardData, color: e.hex })
-                        }
+                        onChange={(e) => setCardData({ ...cardData, color: e.hex })}
                     />
                 </YStack>
             </XStack>
-            <ScrollView flexWrap="wrap" space="$2">
-                <SettingsSection title="General" flexDirection="row" flexWrap="wrap" gap="$6">
-                    {card.type === 'action' && renderCheckbox('Keep value permanently', 'persistValue', cardData.persistValue ? true : false)}
-                    {card.type === 'action' && renderCheckbox('Autorun on start', 'autorun', cardData.autorun ? true : false)}
-                    {renderCheckbox('Always report value', 'alwaysReportValue', cardData.alwaysReportValue ? true : false)}
-                </SettingsSection>
-                <XStack flexWrap='wrap' space="$2">
-                    <SettingsSection title="Display">
-                        {renderCheckbox('Display title', 'displayTitle')}
-                        {renderCheckbox('Display icon', 'displayIcon')}
-                        {renderCheckbox('Display frame', 'displayFrame')}
-                        {renderCheckbox('Markdown display', 'markdownDisplay', cardData.markdownDisplay ? true : false)}
-                        {card.type === 'action' && (
-                            <>
-                                <YStack>
-                                    {renderCheckbox('Display value', 'displayResponse')}
-                                    <YStack>
-                                        {renderCheckbox('Display button', 'displayButton')}
 
-                                        {getChecked('displayButton') && (
-                                            <YStack ai="flex-start" ml="$6" ac="flex-start">
-                                                <Input
-                                                    outlineColor="$colorTransparent"
-                                                    id="button-text-input"
-                                                    size="$4"
-                                                    placeholder="Button text"
-                                                    value={cardData.buttonLabel ?? 'Run'}
-                                                    onChangeText={(value) => {
-                                                        setCardData({ ...cardData, buttonLabel: value })
-                                                    }}
-                                                    className="no-drag"
-                                                />
-                                                {renderCheckbox('Button Full', 'buttonMode', cardData.buttonMode === 'full', (checked: boolean) => {
-                                                    let newData = { ...cardData }
-                                                    if (checked) {
-                                                        newData.buttonMode = 'full'
-                                                    } else {
-                                                        delete newData.buttonMode
-                                                    }
-                                                    setCardData({ ...newData })
-                                                })}
-                                                {renderCheckbox('Display icon', 'displayButtonIcon', cardData.displayButtonIcon === true)}
-                                            </YStack>
-                                        )}
-                                    </YStack>
+            <ScrollView>
+                <YStack>
+                    <YStack display="grid" gap="$2" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                        {Object.entries(settingsBySection).map(([section, items]) => {
+                            const layout = section == "General" ? 'full' : 'half'
+                            const gridColumn = layout === 'full' ? '1 / -1' : 'auto'
+                            return (
+                                // @ts-ignore
+                                <YStack key={section} gridColumn='1 / -1' $gtMd={{ gridColumn }} >
+                                    <SettingsSection title={section} flexDirection={layout === 'full' ? 'row' : 'column'} gap="$3">
+                                        {items.map(renderSetting)}
+                                    </SettingsSection>
                                 </YStack>
-                            </>
-                        )}
-                    </SettingsSection>
-                    <SettingsSection title="Paths and Permissions">
-                        <XStack ai="center" gap="$2">
-                            <Checkbox
-                                w="$2"
-                                h="$2"
-                                focusStyle={{ outlineWidth: 0 }}
-                                checked={Object.keys(cardData.tokens ?? {}).length > 0}
-                                onCheckedChange={(checked) => {
-                                    if (checked) {
-                                        setCardData({
-                                            ...cardData, tokens: {
-                                                'read': uuidv4(),
-                                                'run': uuidv4()
-                                            }
-                                        })
-                                    } else {
-                                        const { tokens, ...rest } = cardData
-                                        setCardData(rest)
-                                    }
-                                }}
-                                className="no-drag"
-                            >
-                                <Checkbox.Indicator>
-                                    <Check size={16} />
-                                </Checkbox.Indicator>
-                            </Checkbox>
-                            <Label>API access</Label>
-                        </XStack>
-                        {renderCheckbox('Allow public read', 'publicRead', cardData.publicRead ? true : false)}
-                        {renderCheckbox('Custom read path', 'enableCustomPath', cardData.enableCustomPath ? true : false)}
-                        {cardData.enableCustomPath ? <YStack ai="flex-start" ml="$6" ac="flex-start">
-                            <Input
-                                outlineColor="$colorTransparent"
-                                id="button-text-input"
-                                size="$4"
-                                placeholder="Path to card"
-                                value={cardData.customPath ?? '/workspace/cards/' + cardData.name}
-                                onChangeText={(value) => {
-                                    setCardData({ ...cardData, customPath: value })
-                                }}
-                                className="no-drag"
-                            />
-                        </YStack> : <></>}
-
-                        {renderCheckbox('Allow public run', 'publicRun', cardData.publicRun ? true : false)}
-                        <YStack>
-                            {renderCheckbox('Custom run path', 'enableCustomRunPath', cardData.enableCustomRunPath ? true : false)}
-                            {cardData.enableCustomRunPath ? <Input
-                                outlineColor="$colorTransparent"
-                                id="button-text-input"
-                                size="$4"
-                                placeholder="Path to card"
-                                value={cardData.customRunPath ?? '/workspace/cards/' + cardData.name + '/run'}
-                                onChangeText={(value) => {
-                                    setCardData({ ...cardData, customRunPath: value })
-                                }}
-                                className="no-drag"
-                            />
-                                : <></>}
-                        </YStack>
-
-                        <YStack w={cellWidth} h={cellHeight * 3}>
-                            <Paragraph>Card Page Path</Paragraph>
-                            <Input
-                                outlineColor="$colorTransparent"
-                                id="button-text-input"
-                                size="$4"
-                                placeholder={"Path to card. Ex: /" + cardData.name}
-                                value={cardData.customCardViewPath}
-                                onChangeText={(value) => {
-                                    setCardData({ ...cardData, customCardViewPath: value })
-                                }}
-                                className="no-drag"
-                            />
-                            <Paragraph>Run Card Page Path</Paragraph>
-                            <Input
-                                outlineColor="$colorTransparent"
-                                id="button-text-input"
-                                size="$4"
-                                placeholder={"Path to card. Ex: /" + cardData.name}
-                                value={cardData.customCardRunViewPath}
-                                onChangeText={(value) => {
-                                    setCardData({ ...cardData, customCardRunViewPath: value })
-                                }}
-                                className="no-drag"
-                            />
-                        </YStack>
-
-                    </SettingsSection>
-                </XStack>
+                            )
+                        })}
+                    </YStack>
+                </YStack>
             </ScrollView>
         </YStack>
     )
