@@ -303,7 +303,16 @@ export const chatGPTPrompt = async ({
             if (props.done) props.done(response, msg);
         },
         error: (err) => {
-            console.error("❌ Error callback fired:", err);
+            //check if err has error property
+            let errorMessage = "Unknown ChatGpt error";
+            if(err?.error?.message){
+                errorMessage = err.error.message;
+            }else{
+                errorMessage = err;
+            }
+            
+            logger.error("❌ Error callback fired: "+  errorMessage);
+            console.error("❌ Error callback fired log:", err);
             if (props.error) props.error(err.message);
         }
     });
