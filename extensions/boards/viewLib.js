@@ -258,7 +258,7 @@ const boardImage = ({ src, alt = '', style = '' }) => {
     return `<img src="${src}" alt="${alt}" style="width: 100%; height: 100%; object-fit: contain; ${style}" />`;
 };
 
-const markdown = (card) => {
+const markdown = (card, readOnly = false) => {
 
     reactCard(`
 
@@ -271,7 +271,7 @@ const markdown = (card) => {
     return (
         <View className="no-drag" height="100%">
             <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>
-                <Markdown data={text} setData={(newtext) => setCardData('${card.key}', 'rulesCode', 'return \`'+escapeMarkdownForTemplate(newtext)+'\`')} />
+                <Markdown readOnly={${readOnly}} data={text} setData={(newtext) => setCardData('${card.key}', 'rulesCode', 'return \`'+escapeMarkdownForTemplate(newtext)+'\`')} />
             </ProtoThemeProvider>
         </View>
     );

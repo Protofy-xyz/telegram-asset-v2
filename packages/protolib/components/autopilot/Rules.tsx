@@ -52,6 +52,7 @@ export const Rules = ({
   onDeleteRule,
   onEditRule,
   loadingIndex,
+  disabledConfig = {},
   onReloadRules = async (_rules) => { }
 }) => {
   const [draftRules, setDraftRules] = useState(rules ?? [])
@@ -110,7 +111,6 @@ export const Rules = ({
     setGenerating(false)
   }
 
-  const isDisabled = loadingIndex === rules.length || generating
   const isLoadingOrGenerating = loadingIndex === rules.length || generating || loading
 
   useEffect(() => {
@@ -119,61 +119,63 @@ export const Rules = ({
 
   return (
     <YStack height="100%" f={1} w="100%">
-      <YStack style={{ overflowY: 'auto', flex: 1, width: '100%', padding: "2px" }}>
-        {draftRules.map((rule, i) => (
-          <RuleItem
-            key={i}
-            value={rule}
-            loading={loadingIndex === i}
-            onEdit={(text) => setDraftAt(i, text)}
-            onBlur={() => commitIfChanged(i)}
-            onDelete={async () => {
-              setGenerating(true)
-              setErrorMsg(null)
-              await onDeleteRule(i)
-              setGenerating(false)
-            }}
-            opacity={isLoadingOrGenerating ? 0.5 : 1}
-          />
-        ))}
-      </YStack>
-
-      {/* Input para nueva regla */}
-      <XStack ai="center" gap="$2" mb="$2" mt="$4" width="100%">
-        <AutoHeightTextArea
-          speechRecognition={true}
-          placeholder={isLoadingOrGenerating ? "Generating rules..." : "Add new rule..."}
-          value={newRule}
-          onChange={handleNewRuleChange}
-          style={{ width: '100%' }}
-          disabled={isLoadingOrGenerating}
-        />
-        <TooltipSimple
-          label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"}
-          delay={{ open: 500, close: 0 }}
-          restMs={0}
-        >
-          <Button
-            disabled={isDisabled}
-            onMouseDown={(e) => e.stopPropagation()}
-            bg='$color8'
-            color='$background'
-            hoverStyle={{ backgroundColor: '$color9' }}
-            circular
-            icon={isLoadingOrGenerating ? Spinner : (newRule.trim().length ? Plus : RotateCcw)}
-            scaleIcon={1.4}
-            onPress={newRule.trim().length > 1 ? addRule : reloadRules}
-          />
-        </TooltipSimple>
-      </XStack>
-
-      {errorMsg && (
-        <YStack mt="$1" mb="$2" px="$1">
-          <Text color="$red9" fontSize="$2">
-            {errorMsg}
-          </Text>
+      {!(disabledConfig["enabled"] === false) ? <>
+        <YStack style={{ overflowY: 'auto', flex: 1, width: '100%', padding: "2px" }}>
+          {draftRules.map((rule, i) => (
+            <RuleItem
+              key={i}
+              value={rule}
+              loading={loadingIndex === i}
+              onEdit={(text) => setDraftAt(i, text)}
+              onBlur={() => commitIfChanged(i)}
+              onDelete={async () => {
+                setGenerating(true)
+                setErrorMsg(null)
+                await onDeleteRule(i)
+                setGenerating(false)
+              }}
+              opacity={isLoadingOrGenerating ? 0.5 : 1}
+            />
+          ))}
         </YStack>
-      )}
+
+        {/* Input para nueva regla */}
+        <XStack ai="center" gap="$2" mb="$2" mt="$4" width="100%">
+          <AutoHeightTextArea
+            speechRecognition={true}
+            placeholder={isLoadingOrGenerating ? "Generating rules..." : "Add new rule..."}
+            value={newRule}
+            onChange={handleNewRuleChange}
+            style={{ width: '100%' }}
+            disabled={isLoadingOrGenerating}
+          />
+          <TooltipSimple
+            label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"}
+            delay={{ open: 500, close: 0 }}
+            restMs={0}
+          >
+            <Button
+              disabled={isLoadingOrGenerating}
+              onMouseDown={(e) => e.stopPropagation()}
+              bg='$color8'
+              color='$background'
+              hoverStyle={{ backgroundColor: '$color9' }}
+              circular
+              icon={isLoadingOrGenerating ? Spinner : (newRule.trim().length ? Plus : RotateCcw)}
+              scaleIcon={1.4}
+              onPress={newRule.trim().length > 1 ? addRule : reloadRules}
+            />
+          </TooltipSimple>
+        </XStack>
+
+        {errorMsg && (
+          <YStack mt="$1" mb="$2" px="$1">
+            <Text color="$red9" fontSize="$2">
+              {errorMsg}
+            </Text>
+          </YStack>
+        )}
+      </> : disabledConfig?.["disabledView"]?.()}
     </YStack>
   )
 }
