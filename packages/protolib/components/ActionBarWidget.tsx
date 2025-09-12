@@ -2,7 +2,7 @@ import { TooltipSimple, XStack, YStack } from "@my/ui"
 import { processActionBar } from "app/bundles/actionBar"
 import { useRouter } from 'next/router'
 import { useState } from "react"
-import { ArrowDown, ArrowUp, ChevronUp } from "@tamagui/lucide-icons"
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp } from "@tamagui/lucide-icons"
 
 export const ActionBarButton = ({ Icon, selected = false, ...props }) => {
   const size = 34
@@ -26,6 +26,7 @@ export const ActionBarButton = ({ Icon, selected = false, ...props }) => {
 export const useActionBar = (actionBar?, onActionBarEvent?) => {
   const router = useRouter()
   const [hidden, setHidden] = useState(false)
+  const [hiddenHover, setHiddenHover] = useState(false)
 
   let currentBar
 
@@ -47,9 +48,11 @@ export const useActionBar = (actionBar?, onActionBarEvent?) => {
       animation="quick"
       bc="var(--bgPanel)"
       zi={99999}
-      b={currentBar.visible === false || hidden ? -200 : 16}
+      b={currentBar.visible === false || hidden ? -200 : (hiddenHover ? 20 : 16)}
       gap="$2.5"
       br="var(--radius-5)"
+      opacity={hiddenHover ? 0.7 : 1}
+      scale={hiddenHover ? 0.94 : 1}
       enterStyle={{ b: -200 }}
     >
       {
@@ -57,25 +60,29 @@ export const useActionBar = (actionBar?, onActionBarEvent?) => {
           return item
         })
       }
-      {!(currentBar.hideable == false) && <ActionBarButton
+      {/* {!(currentBar.hideable == false) && <ActionBarButton
         tooltipText="Hide Action Bar"
         Icon={ArrowDown}
         onPress={() => setHidden(!hidden)}
-      />}
+      />} */}
     </XStack>
-    {hidden && <YStack
+    <YStack
       cursor="pointer"
       onPress={() => setHidden(!hidden)}
-      pos="fixed"
+      pos="absolute"
       jc="center"
       als="center"
-      b={5}
+      b={hidden ? 5 : 0}
+      w={300}
+      ai="center"
       zi={99999}
-      br="100px"
-      hoverStyle={{ transform: 'scale(1.1)' }}
       enterStyle={{ b: -20 }}
+      minHeight="18px"
+      onHoverIn={() => setHiddenHover(true)}
+      onHoverOut={() => setHiddenHover(false)}
     >
-      <ChevronUp color="var(--gray12)" />
-    </YStack>}
+      <ChevronUp color="var(--gray12)" display={hidden ? 'block' : 'none'} />
+      <ChevronDown size={20} color="var(--gray8)" display={!hidden && hiddenHover ? 'block' : 'none'} />
+    </YStack>
   </>
 }   
