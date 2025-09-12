@@ -1,4 +1,4 @@
-import { X, Save, Plus, Pause, Play, ClipboardList, Activity, Eye, Settings, Presentation, LayoutDashboard, Book, Code, UserPen } from 'lucide-react';
+import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot } from 'lucide-react';
 import { useBoardControls } from './BoardControlsContext';
 import { ActionBarButton } from 'protolib/components/ActionBarWidget';
 import { Separator } from '@my/ui';
@@ -25,7 +25,7 @@ const getActionBar = (generateEvent) => {
     ],
     'BoardView': [
       <ActionBarButton tooltipText="Add Card" Icon={Plus} onPress={() => generateEvent({ type: "open-add" })} />,
-      <ActionBarButton tooltipText={tabVisible == "rules" ? "Close Rules" : "Open Rules"} selected={tabVisible == "rules"} Icon={ClipboardList} onPress={() => generateEvent({ type: "toggle-rules" })} />,
+      <ActionBarButton tooltipText={tabVisible == "rules" ? "Close Automations" : "Open Automations"} selected={tabVisible == "rules"} Icon={Bot} onPress={() => generateEvent({ type: "toggle-rules" })} />,
       <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
       <ActionBarButton tooltipText="Logs" selected={tabVisible == "logs"} Icon={Activity} onPress={() => generateEvent({ type: "toggle-logs" })} />,

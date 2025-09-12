@@ -23,6 +23,14 @@ export const automation = async (options: {
     const onRun = options.onRun || (() => {})
     const onError = options.onError
 
+    const getParams = (params) => {
+        let actionParams = {}
+        for(const key in params) {
+            actionParams[key] = params[key].description || ''
+        }
+        return actionParams
+    }
+
     if(!name) {
         logger.error({}, "Automation name is required");
         return
@@ -69,7 +77,8 @@ export const automation = async (options: {
                 name: name.split('/').join('_'),
                 description: options.description ?? "",
                 rulesCode: `return execute_action("/api/v1/automations/${name}", userParams)`,
-                params: options.automationParams ?? {},
+                params: getParams(options?.cardConfigParams ?? {}),
+                configParams: options?.cardConfigParams ?? {},
                 displayResponse: true,
                 responseKey: 'result',
                 ...(options.sourceFile?{sourceFile: options.sourceFile}:{}),

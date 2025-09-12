@@ -14,18 +14,15 @@ export const SideMenu = (props) => {
             height={30}
             resizeMode='contain'
         />}
-        collapsedLogo={
-            <YStack>
-                <Image
-                    key={themeName}
-                    style={{ filter: themeName?.startsWith("dark") ? "invert(70%) brightness(10)" : "invert(5%)" }}
-                    src={"/public/vento-square.png"}
-                    alt="Logo"
-                    width={22}
-                    height={30}
-                    resizeMode='contain'
-                />
-            </YStack>
+        collapsedLogo={<Image
+            key={themeName}
+            style={{ filter: themeName?.startsWith("dark") ? "invert(70%) brightness(10)" : "invert(5%)" }}
+            src={"/public/vento-square.png"}
+            alt="Logo"
+            width={22}
+            height={30}
+            resizeMode='contain'
+        />
         }
         {...props}
     />

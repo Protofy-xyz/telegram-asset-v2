@@ -82,9 +82,6 @@ export default (app, context) => {
 
         const {yaml} = req.body
 
-        //registerActions()
-        API.get('/api/core/v1/devices/registerActions?token='+getServiceToken())
-
         if(!fs.existsSync(devicesPath)) fs.mkdirSync(devicesPath)
         const devicePath = path.join(devicesPath, req.params.device)
         if(!fs.existsSync(devicePath)) fs.mkdirSync(devicePath)

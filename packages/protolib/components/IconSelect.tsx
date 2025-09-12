@@ -110,8 +110,8 @@ export const IconSelect = ({ icons, onSelect, selected }) => {
         styles={{
           control: (provided, state) => ({
             ...provided,
-            backgroundColor: "var(--color2)",
-            borderColor: "var(--color6)",
+            backgroundColor: "transparent",
+            borderColor: "var(--gray6)",
             height: "44px",
             borderRadius: "9px",
             boxShadow: state.isFocused ? "0 0 3px var(--color6)" : "none",
@@ -128,7 +128,7 @@ export const IconSelect = ({ icons, onSelect, selected }) => {
           }),
           menu: (provided) => ({
             ...provided,
-            backgroundColor: "var(--color2)",
+            backgroundColor: "var(--gray2)",
             borderRadius: "9px",
             zIndex: 99999,
             overflow: "hidden",
@@ -139,7 +139,7 @@ export const IconSelect = ({ icons, onSelect, selected }) => {
             display: "flex",
             flexWrap: "wrap", // Activamos el wrap horizontal
             gap: "8px",      // Espacio entre elementos
-            backgroundColor: "var(--color2)",
+            backgroundColor: "var(--gray2)",
           }),
           option: (provided, state) => ({
             ...provided,
@@ -147,7 +147,7 @@ export const IconSelect = ({ icons, onSelect, selected }) => {
               ? "var(--color6)"
               : state.isFocused
                 ? "var(--color5)"
-                : "var(--color2)",
+                : "var(--gray2)",
             color: "var(--color)",
             cursor: "pointer",
             borderRadius: "6px",

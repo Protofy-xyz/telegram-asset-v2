@@ -5,10 +5,11 @@ import { Input } from "./Input";
 type Props = {
     color: string,
     onChange: (color: any) => void,
-    placeholder?: string
+    placeholder?: string,
+    inputProps?: any
 }
 
-export const InputColor = ({ color, onChange, placeholder }: Props) => {
+export const InputColor = ({ color, onChange, placeholder, inputProps }: Props) => {
     const theme = useTheme()
 
     return <Popover
@@ -19,6 +20,7 @@ export const InputColor = ({ color, onChange, placeholder }: Props) => {
                 f={1}
                 value={color}
                 placeholder={placeholder ?? "#000000"}
+                {...inputProps}
             />
             <Square
                 size="$2"
