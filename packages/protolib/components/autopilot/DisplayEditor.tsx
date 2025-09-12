@@ -23,7 +23,7 @@ export const SettingsTitle = ({ children, error = "", ...props }) => {
 const SettingsSection = ({ children, title, ...props }) => {
     return (
         <YStack f={1} borderRadius="$3" p="$3" bc="$gray3">
-            <SettingsTitle color="$color">{title}</SettingsTitle>
+            <SettingsTitle>{title}</SettingsTitle>
             <YStack {...props}>{children}</YStack>
         </YStack>
     )
@@ -35,6 +35,7 @@ type Setting = {
     section: string
     type: 'checkbox' | 'text'
     indent?: number
+    placeholder?: string
     visible?: (ctx: { card: any; cardData: any }) => boolean
     // get/set custom for especial cases (tokens, buttonMode...)
     get?: (cardData: any, card: any) => any
@@ -137,8 +138,8 @@ export const DisplayEditor = ({
             get: (cd) => cd.customRunPath ?? `/workspace/cards/${cd.name}/run`,
         },
 
-        { label: 'Card Page Path', key: 'customCardViewPath', type: 'text', section: 'Paths and Permissions' },
-        { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', section: 'Paths and Permissions' },
+        { label: 'Card Page Path', key: 'customCardViewPath', type: 'text', placeholder: "Path to card (Ex: /card)", section: 'Paths and Permissions' },
+        { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', placeholder: "Path to card run (Ex: /card/run)", section: 'Paths and Permissions' },
     ]
 
     // Group settings by section and filter by visible
@@ -175,9 +176,11 @@ export const DisplayEditor = ({
                         checked={checked}
                         onCheckedChange={onCheckedChange}
                         className="no-drag"
+                        bc={"$gray1"}
+                        boc="$gray6"
                     >
                         <Checkbox.Indicator>
-                            <Check size={16} />
+                            <Check size={16} color='var(--color8)'/>
                         </Checkbox.Indicator>
                     </Checkbox>
                     <Label>{s.label}</Label>
@@ -189,15 +192,18 @@ export const DisplayEditor = ({
             const value = s.get ? s.get(cardData, card) : cardData?.[s.key] ?? ''
             return (
                 <YStack key={s.key} ml={indentMl} w={400}>
-                    <SettingsTitle>{s.label}</SettingsTitle>
+                    <Label pl="$4">{s.label}</Label>
                     <Input
                         br={"8px"}
                         value={value}
-                        placeholder={s.label}
+                        placeholder={s["placeholder"] ?? s.label}
                         onChangeText={(t) => {
                             if (s.set) setCardData(s.set(cardData, t))
                             else setCardData({ ...cardData, [s.key]: t })
                         }}
+                        bc="$gray1"
+                        placeholderTextColor="$gray9"
+                        boc="$gray6"
                     />
                 </YStack>
             )
@@ -216,6 +222,8 @@ export const DisplayEditor = ({
                     <Input
                         br={"8px"}
                         value={cardData.name}
+                        bc="transparent"
+                        boc="$gray6"
                         color={error ? '$red9' : undefined}
                         onChangeText={(t) => {
                             const regex = /^[a-zA-Z0-9-_ ]*$/
@@ -242,6 +250,7 @@ export const DisplayEditor = ({
                         br={"8px"}
                         color={cardData.color}
                         onChange={(e) => setCardData({ ...cardData, color: e.hex })}
+                        inputProps={{ backgroundColor: 'transparent', borderColor: error ? '$red9' : '$gray6' }}
                     />
                 </YStack>
             </XStack>
