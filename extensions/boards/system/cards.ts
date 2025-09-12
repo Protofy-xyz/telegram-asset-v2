@@ -150,6 +150,30 @@ return card({
         emitEvent: true
     });
 
+
+
+    addCard({
+        group: 'board',
+        tag: 'markdown',
+        id: 'board_markdown_editor',
+        templateName: 'Markdown text editor',
+        name: 'board_markdown_editor',
+        defaults: {
+            width: 3,
+            height: 12,
+            name: 'Markdown Editor',
+            icon: 'file-text',
+            description: 'Render and edit formatted markdown using ReactMarkdown',
+            type: 'value',
+            html: "//@react\nreturn markdown(data)",
+            rulesCode: "return `# h1 Heading 8-)\n## h2 Heading\n### h3 Heading\n#### h4 Heading\n##### h5 Heading\n###### h6 Heading\n\n## Tables\n\n| Option | Description |\n| ------ | ----------- |\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |\n\nRight aligned columns\n\n| Option | Description |\n| ------:| -----------:|\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |`",
+            editorOptions: {
+                defaultTab: "value"
+            },
+        },
+        emitEvent: true
+    });
+
     addCard({
         group: 'board',
         tag: 'markdown',
@@ -163,7 +187,7 @@ return card({
             icon: 'file-text',
             description: 'Render formatted markdown using ReactMarkdown',
             type: 'value',
-            html: "//@react\nreturn markdown(data)",
+            html: "//@react\nreturn markdown(data, true)",
             rulesCode: "return `# h1 Heading 8-)\n## h2 Heading\n### h3 Heading\n#### h4 Heading\n##### h5 Heading\n###### h6 Heading\n\n## Tables\n\n| Option | Description |\n| ------ | ----------- |\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |\n\nRight aligned columns\n\n| Option | Description |\n| ------:| -----------:|\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |`",
             editorOptions: {
                 defaultTab: "value"
