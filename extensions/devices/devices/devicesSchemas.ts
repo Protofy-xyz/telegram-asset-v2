@@ -234,6 +234,7 @@ export class DevicesModel extends ProtoModel<DevicesModel> {
     }
     deviceObject.data.subsystem = subsystems
     API.post("/api/core/v1/devices/" + this.data.name, deviceObject.data)
+    API.get('/api/core/v1/devices/registerActions');
   }
   
   async getManifestUrl(compileSessionId){
