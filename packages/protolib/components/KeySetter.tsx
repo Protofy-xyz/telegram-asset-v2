@@ -13,10 +13,45 @@ import { Tinted } from './Tinted';
 
 interface KeySetterProps {
     nameKey: string;
-    validate?: (value: string) => Promise<string| true>;
+    validate?: (value: string) => Promise<string | true>;
     placeholderValue?: string;
     onAdd?: (value: string) => void;
     onRemove?: (value: string) => void;
+}
+
+
+export const useKeyState = (nameKey: string) => {
+    const [keyValue, setKeyValue] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    const hasKey = !!(!loading && keyValue && keyValue.trim() !== "")
+
+    const updateKey = async (newKey) => {
+        setLoading(true)
+        let res = await API.post("/api/core/v1/keys/" + nameKey, { name: nameKey, value: newKey });
+        if (res.isError && !res.data) { // If the key does not exist, create it
+            res = await API.post("/api/core/v1/keys", { name: nameKey, value: newKey });
+        }
+        
+        if (res?.data) {
+            setKeyValue(res?.data.value);
+        }
+        setLoading(false);
+    }
+
+    useEffect(() => {
+        const checkKey = async () => {
+            setLoading(true)
+            const key = await getKey({
+                key: nameKey
+            })
+            setKeyValue(key)
+            setLoading(false)
+        }
+        checkKey()
+    }, [])
+
+    return { keyValue, loading, updateKey, hasKey };
 }
 
 export const KeySetter: React.FC<KeySetterProps> = ({
@@ -47,13 +82,13 @@ export const KeySetter: React.FC<KeySetterProps> = ({
     }
 
     const onEditKey = async (keyVal) => {
-        if(keyVal !== placeholderValue)  {
+        if (keyVal !== placeholderValue) {
             const validationResult = await validate(keyVal);
             if (validationResult !== true) {
                 toast.show(validationResult, { duration: 2000, tint: "red" });
                 return;
-            }  
-        } 
+            }
+        }
 
         const keyData = { name: nameKey, value: keyVal }
 
@@ -65,7 +100,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
 
         if (res?.data) {
             setCurrKey(res?.data.value);
-            if(keyVal !== placeholderValue) {
+            if (keyVal !== placeholderValue) {
                 onAdd(keyVal)
             } else {
                 onRemove(keyVal);

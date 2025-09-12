@@ -178,7 +178,7 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
   </AsyncView>
 }
 
-export const CodeView = ({ rulesWithFlows = false, pathname = undefined, disableAIPanels = false, extraPanels = [], leftIcons = <></>, icons = <></>, disableFlowMode = false, masksPath = undefined, defaultMode = 'flow', monacoOnMount = (editor, monaco) => { }, monacoInstance = null, monacoProps = {}, monacoOptions = {}, onCodeChange = (code) => { }, onFlowChange = (code) => { }, fileContent = null, path, flowsPath = undefined, rules = [], onApplyRules = async (rules) => { }, sourceCode, isModified = false, setIsModified = (x) => { }, query = {}, children = <></>, viewPort = undefined }) => {
+export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPanels = false, extraPanels = [], leftIcons = <></>, icons = <></>, disableFlowMode = false, masksPath = undefined, defaultMode = 'flow', monacoOnMount = (editor, monaco) => { }, monacoInstance = null, monacoProps = {}, monacoOptions = {}, onCodeChange = (code) => { }, onFlowChange = (code) => { }, fileContent = null, path, flowsPath = undefined, rules = [], onApplyRules = async (rules) => { }, sourceCode, isModified = false, setIsModified = (x) => { }, query = {}, children = <></>, viewPort = undefined }) => {
   pathname = pathname ?? usePathname();
   const theme = useTheme()
   const tint = useTint().tint
@@ -334,6 +334,7 @@ export const CodeView = ({ rulesWithFlows = false, pathname = undefined, disable
                 setSavedRules(newRules)
               }}
               loadingIndex={-1}
+              disabledConfig={rulesConfig}
             />
             <YStack mt="auto" pt="$3">
 
