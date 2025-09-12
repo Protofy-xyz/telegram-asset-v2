@@ -56,8 +56,8 @@ export function SelectList({
         <Select.Viewport minWidth={200}>
           <Select.Group>
             <Select.Label>{title}</Select.Label>
-            {opts.map((item) => (
-              <Select.Item key={item.value} value={item.value}
+            {opts.map((item, index) => (
+              <Select.Item key={item.value} index={index} value={item.value}
                 style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                 <Select.ItemText>{item.caption}</Select.ItemText>
                 <Select.ItemIndicator marginLeft="auto"><Check size={16} /></Select.ItemIndicator>
