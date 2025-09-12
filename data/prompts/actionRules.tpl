@@ -96,6 +96,7 @@ YOU CAN'T USE await executeAction({name: "reset", ...}) instead of executeAction
 You can check the previous value by checking: board[name], since 'name' is your own name. If the user asks for values relative to the previous value, use board[name].
 </previous_value>
 
+{{#if context}}
 <context>
 {{{context}}}
 </context>
@@ -107,3 +108,4 @@ In your scope, you have access to 'context' (described in <context></context>), 
 file management, system event subscription, etc.
 You can use the functions inside context object if you need them.
 </using_context>
+{{/if}}
