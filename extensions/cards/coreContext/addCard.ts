@@ -6,6 +6,7 @@ export const addCard = async (options: {
     group?: string,
     tag: string,
     name: string,
+    readme?: string,
     templateName: string,
     id: string,
     defaults: any,
@@ -14,6 +15,7 @@ export const addCard = async (options: {
 }) => {
     const group = options.group || 'system'
     const name = options.name
+    const readme = options.readme
     const tag = options.tag
     const id = options.id
     const defaults = options.defaults
@@ -46,6 +48,7 @@ export const addCard = async (options: {
 
     const content = {
         defaults: defaults,
+        readme: readme,
         name: templateName,
         id: id
     }

@@ -9,6 +9,7 @@ import { Tinted } from '../Tinted';
 import { getIconUrl } from '../IconSelect';
 import { useThemeSetting } from '@tamagui/next-theme'
 import { v4 as uuidv4 } from 'uuid';
+import { Markdown } from '../../components/Markdown';
 
 const SelectGrid = ({ children }) => {
   return <XStack jc="flex-start" ai="center" gap={25} flexWrap='wrap'>
@@ -95,59 +96,79 @@ const FirstSlide = ({ selected, setSelected, options }) => {
           })}
         </XStack>
 
-        <ScrollView>
-          {Object.entries(groupedOptions).map(([group, options]) => (
-            <YStack key={group} mb="$3">
-              {group !== "__no_group__" && (
-                <>
-                  <Text fontSize="$5" fontWeight="600" mb="$2">{group}</Text>
-                  <YStack height="1px" bg="$gray6" mb="$3" />
-                </>
-              )}
+        <XStack flex={1} gap="$3">
+          <ScrollView>
+            {Object.entries(groupedOptions).map(([group, options]) => (
+              <YStack key={group} mb="$3">
+                {group !== "__no_group__" && (
+                  <>
+                    <Text fontSize="$5" fontWeight="600" mb="$2">{group}</Text>
+                    <YStack height="1px" bg="$gray6" mb="$3" />
+                  </>
+                )}
 
-              <SelectGrid>
-                {options.map((option) => (
-                  <XStack
-                    width={200}
-                    height={70}
-                    key={option.id}
-                    gap={"$2"}
-                    p={"$2"}
-                    cursor="pointer"
-                    onPress={() => setSelected(option)}
-                    borderRadius={"$3"}
-                    ai="center"
-                    bc={selected?.id === option.id ? "$color4" : "$gray3"}
-                    bw={"1px"}
-                    boc={selected?.id === option.id ? "$color7" : "$gray5"}
-                    hoverStyle={{ bc: "$color4", boc: "$color7" }}
-                  >
-                    <YStack
-                      br={isAction(option) ? "$10" : "$2"}
+                <SelectGrid>
+                  {options.map((option) => (
+                    <XStack
+                      width={200}
+                      height={70}
+                      key={option.id}
+                      gap={"$2"}
                       p={"$2"}
-                      bc={
-                        option?.defaults?.color
-                          ? option?.defaults?.color
-                          : isAction(option)
-                            ? "$yellow7"
-                            : "$blue7"
-                      }
+                      cursor="pointer"
+                      onPress={() => setSelected(option)}
+                      borderRadius={"$3"}
+                      ai="center"
+                      bc={selected?.id === option.id ? "$color4" : "$gray3"}
+                      bw={"1px"}
+                      boc={selected?.id === option.id ? "$color7" : "$gray5"}
+                      hoverStyle={{ bc: "$color4", boc: "$color7" }}
                     >
-                      {option?.defaults?.icon ? (
-                        <img src={getIconUrl(option.defaults.icon)} width={20} height={20} style={darkMode ? { filter: 'brightness(0) saturate(100%) invert(1)' } : {}} />
-                      ) : isAction(option) ? (
-                        <Rocket />
-                      ) : (
-                        <ScanEye />
-                      )}
-                    </YStack>
-                    <Text fow={selected?.id === option.id && "600"} ml="$2" fontSize="$4">{option.name}</Text>
-                  </XStack>
-                ))}
-              </SelectGrid>
+                      <YStack
+                        br={isAction(option) ? "$10" : "$2"}
+                        p={"$2"}
+                        bc={
+                          option?.defaults?.color
+                            ? option?.defaults?.color
+                            : isAction(option)
+                              ? "$yellow7"
+                              : "$blue7"
+                        }
+                      >
+                        {option?.defaults?.icon ? (
+                          <img src={getIconUrl(option.defaults.icon)} width={20} height={20} style={darkMode ? { filter: 'brightness(0) saturate(100%) invert(1)' } : {}} />
+                        ) : isAction(option) ? (
+                          <Rocket />
+                        ) : (
+                          <ScanEye />
+                        )}
+                      </YStack>
+                      <Text fow={selected?.id === option.id && "600"} ml="$2" fontSize="$4">{option.name}</Text>
+                    </XStack>
+                  ))}
+                </SelectGrid>
+              </YStack>
+            ))}
+          </ScrollView>
+          {selected?.readme && <YStack
+            width={600}
+            height={"100%"}
+            cursor="pointer"
+            borderRadius={"$3"}
+            ai="center"
+            jc="flex-start"
+            blw={"1px"}
+            gap="$3"
+            pl="$3"
+          >
+            <YStack flex={1} w="100%" h="100%" jc="flex-start" ai="center" gap="$3" overflow='scroll'>
+              <Text fontSize="$8" fontWeight="600" mb="$2" textAlign='center'>{selected.name}</Text>
+              <YStack w="100%">
+                <Markdown readOnly={true} data={selected.readme} />
+              </YStack>
             </YStack>
-          ))}
-        </ScrollView>
+          </YStack>}
+        </XStack>
         <Spacer marginBottom="$1" />
       </Tinted>
     </YStack>
