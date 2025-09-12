@@ -667,10 +667,24 @@ export default async (app, context) => {
         return JSON.stringify(tree, null, 2);
     }
 
+    const filterContext = async (obj) => {
+        // console.log("Filtering context")
+        const settings = await API.get('/api/core/v1/settings?token=' + getServiceToken())
+        // as html key it's very large remove it from context
+        if (obj.html) {
+            delete obj.html
+        }
+        return obj
+    }
 
     app.get('/api/core/v1/autopilot/getContext', requireAdmin(), async (req, res) => {
         const { mqtt, ...cleanContext } = context;
-        const serializedContext = safeDump(cleanContext);
+        let serializedContext = safeDump(cleanContext);
+        try{
+            serializedContext = safeDump(await filterContext(JSON.parse(serializedContext)));
+        }catch(e){
+            console.error("Error filtering context: ", e)
+        }
         res.send(serializedContext);
     })
 
