@@ -171,7 +171,7 @@ const generateParamsDeclaration = (cardData) => {
     return `declare const params: {\n${params}\n};`;
 }
 
-export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'staes'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules }) => {
+export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'staes'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {} }) => {
     const { resolvedTheme } = useThemeSetting()
     const [inputMode, setInputMode] = useState<"json" | "formatted">("formatted")
     const [search, setSearch] = useState('')
@@ -286,6 +286,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
             path={cardData.name + (rulesCode && rulesCode.trim && rulesCode.trim().startsWith('<') ? '.html' : '.ts')}
             flowsPath={cardData.name}
             sourceCode={editedCode}
+            rulesConfig={rulesConfig}
             monacoOnMount={(editor, monaco) => {
                 monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions?.({
                     // noSemanticValidation: false,
@@ -321,7 +322,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
                 minimap: { enabled: false }
             }}
         />
-    }, [resolvedTheme, board.name, theme, isAIEnabled]);
+    }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"]]);
 
     const actionsTab = [
         { id: 'board', label: 'Board', icon: <LayoutDashboard size={"$1"} />, content: actionsPanel },
