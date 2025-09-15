@@ -92,7 +92,7 @@ export const UISideMenu = ({ leftIcons = <></>, icons = <></>, uiCode, boardRef,
                 </Panel>
                 <CustomPanelResizeHandle direction="vertical" />
                 {isAIEnabled
-                    ? <Panel defaultSize={25} minSize={33} style={{paddingTop: "32px"}}>
+                    ? <Panel defaultSize={30} minSize={25} style={{paddingTop: "32px"}}>
                         <ComponentCodeGeneration
                             setHTMLCode={c => {
                                 if (editorRef.current) {
