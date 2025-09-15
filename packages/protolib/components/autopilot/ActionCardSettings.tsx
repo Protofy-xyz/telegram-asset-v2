@@ -5,10 +5,8 @@ import { Tinted } from '../Tinted'
 import { RuleEditor } from './RuleEditor'
 import { ParamsEditor } from './ParamsEditor'
 import { useThemeSetting } from '@tamagui/next-theme';
-import { Monaco } from '../Monaco'
 import { Markdown } from '../Markdown'
 import { Panel, PanelGroup } from "react-resizable-panels";
-import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
 import { SettingsEditor } from './SettingsEditor'
 import { ViewEditor } from './ViewEditor'
 import { DisplayEditor, SettingsTitle } from './DisplayEditor'
@@ -109,6 +107,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
             configParams: newConfigParams,
           }))
         }}
+        availableStates={Object.keys(states?.boards?.[board.name] ?? {}).filter(s => s !== cardData.name)}
       />
     },
     {

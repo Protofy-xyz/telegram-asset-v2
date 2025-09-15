@@ -451,6 +451,8 @@ const Board = ({ board, icons }) => {
 
   //@ts-ignore store the states in the window object to be used in the cards htmls
   window['protoStates'] = states
+  //@ts-ignore emit an event to notify the states have changed
+  window.dispatchEvent(new CustomEvent('protoStates:update', { detail: { board: board.name } }))
 
   //@ts-ignore store the actions in the window object to be used in the cards htmls
   const actions = useProtoStates({}, 'actions/boards/' + board.name + '/#', 'actions')

@@ -12,7 +12,8 @@ export const ParamsEditor = ({
   setParams,
   configParams = {},
   setConfigParams = (x) => { },
-  mode = 'action'
+  mode = 'action',
+  availableStates = [],
 }) => {
   const [rows, setRows] = useState(() => {
     const allKeys = new Set([...Object.keys(params), ...Object.keys(configParams)])
@@ -109,7 +110,8 @@ export const ParamsEditor = ({
   }, [])
 
   const types = ["string", "number", "boolean", "json", "array", "card", "text", "path", "state"]
-  const inputDefProps = { backgroundColor: "$gray1", borderColor: "$gray6", placeholderTextColor: "$gray9" }
+  const inputDefProps = { backgroundColor: "$gray1", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
+  const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
   return (
     <YStack flex={1} height="100%" borderRadius="$3" p="$3" backgroundColor="$gray3" overflow="hidden" >
@@ -126,7 +128,7 @@ export const ParamsEditor = ({
 
             <Input {...inputDefProps} placeholder={mode == 'action' ? "Description" : "value"} flex={2} value={description} onChange={(e) => handleChangeDescription(rowId, e.target.value)} />
             <XStack width="150px">
-              <SelectList triggerProps={inputDefProps} title="Select type" elements={types} value={type ?? "string"} setValue={(value) => handleChangeType(rowId, value)} />
+              <SelectList triggerProps={selectTriggerDefProps} title="Select type" elements={types} value={type ?? "string"} setValue={(value) => handleChangeType(rowId, value)} />
             </XStack>
             {
               mode == 'action' && (
@@ -142,7 +144,16 @@ export const ParamsEditor = ({
                       onChange={(value) => handleChangeDefaultValue(rowId, value)}
                     />
                   </TextEditDialog>
-                  : <Input {...inputDefProps} placeholder="Default Value" flex={1} value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                  : type === 'state'
+                    ? <SelectList
+                      title="Select state"
+                      elements={(availableStates && availableStates.length > 0) ? availableStates.map(s => "board." + s) : []}
+                      value={defaultValue}
+                      setValue={(value) => handleChangeDefaultValue(rowId, value)}
+                      triggerProps={selectTriggerDefProps}
+                      placeholder="Select state"
+                    />
+                    : <Input {...inputDefProps} placeholder="Default Value" flex={1} value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
               )
             }
 
