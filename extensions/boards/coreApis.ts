@@ -703,11 +703,17 @@ export default async (app, context) => {
             }
             let reply = await callModel(prompt, context, defaultAIProvider)
             console.log('REPLY: ', reply)
+            if(reply?.raw?.error){
+                logger.error( { error: reply.raw.error }, "Error from AI model");
+                res.send({ error: 'Error from AI model', message: reply.raw.error });
+                return
+            }
             if (!reply || !reply.choices || reply.choices.length === 0) {
                 logger.error('No response from AI model or empty choices array', { reply });
                 res.status(500).send({ error: 'No response from AI model', message: reply?.error })
             } else {
                 const jsCode = reply.choices[0].message.content
+                console.log("JS CODE: ", jsCode)
                 res.send({ jsCode: cleanCode(jsCode) })
             }
         } catch (e) {
