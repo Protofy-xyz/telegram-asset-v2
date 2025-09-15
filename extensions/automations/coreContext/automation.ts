@@ -9,6 +9,7 @@ export const automation = async (options: {
     name: string,
     responseMode?: 'instant' | 'wait' | 'manual',
     automationParams?: any,
+    cardConfigParams?: any,
     tags?: string[],
     sourceFile?: string,
     displayName?: string,
@@ -49,6 +50,7 @@ export const automation = async (options: {
             displayName: options.displayName ?? name,
             responseMode: responseMode,
             automationParams: options.automationParams ?? {},
+            cardConfigParams: options.cardConfigParams ?? {},
             description: options.description ?? "",
             tags: options.tags ?? []
         })

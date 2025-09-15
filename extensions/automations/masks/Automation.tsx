@@ -17,6 +17,7 @@ const AutomationNode = ({ node = {}, nodeData = {}, children }: any) => {
                 { label: 'Name', field: 'mask-name', type: 'input' },
                 { label: 'Description', field: 'mask-description', type: 'input' },
                 { label: 'Params', field: 'mask-automationParams', type: 'input' },
+                { label: 'Card Params', field: 'mask-cardConfigParams', type: 'input' },
                 { label: 'Tags', field: 'mask-tags', type: 'input' },
                 { label: 'Response', field: 'mask-responseMode', type: 'select', data: ['instant', 'wait', 'manual'], static: true },
             ]} />
@@ -116,6 +117,10 @@ export default {
                 kind: "Identifier"
             },
             "mask-automationParams": {
+                value: "null",
+                kind: "Identifier"
+            },
+            "mask-cardConfigParams": {
                 value: "null",
                 kind: "Identifier"
             },
