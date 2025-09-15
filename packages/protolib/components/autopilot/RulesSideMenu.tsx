@@ -10,6 +10,10 @@ import { CodeView } from '@extensions/files/intents';
 import { Save } from '@tamagui/lucide-icons'
 import { useKeyState } from '../KeySetter'
 import { RulesKeySetter } from './RulesKeySetter'
+import { Panel, PanelGroup } from "react-resizable-panels";
+import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
+import { ActionsAndStatesPanel } from './AutopilotEditor';
+
 
 function generateStateDeclarations(obj) {
     const recurse = (o) => {
@@ -39,6 +43,9 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
     const boardStatesDeclarations = useMemo(() => {
         return generateStateDeclarations(boardStates)
     }, [boardStates]);
+
+    console.log("Board States Declarations:", boardStatesDeclarations);
+    console.log("Board Actions:", boardActions);
 
     const boardDeclaration = useMemo(() => {
         const possibleNames = Object.keys(boardActions ?? {}).map(name => `"${name}"`).join(' | ')
@@ -152,11 +159,26 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
             }}
         />
     }, [resolvedTheme, board.name, theme, editedCode.current, isAIEnabled, hasKey]);
-    return <YStack w="100%" backgroundColor="transparent" backdropFilter='blur(5px)'>
-        <Tinted>
-            <YStack flex={1} alignItems="center" justifyContent="center">
-                {flows}
-            </YStack>
-        </Tinted>
+    return <PanelGroup direction="horizontal" style={{ height: '100%' }}>
+  {/* Izquierda: tu contenido actual */}
+  <ActionsAndStatesPanel
+    board={board}
+    panels={['actions', 'states']}
+    actions={{ [board.name]: boardActions }}
+    states={{ [board.name]: boardStates }}
+  />
+  <CustomPanelResizeHandle direction="vertical" />
+
+  <Panel defaultSize={70} minSize={20}>
+    <YStack w="100%" backgroundColor="transparent" backdropFilter="blur(5px)" height="100%">
+      <Tinted>
+        <YStack flex={1} alignItems="center" justifyContent="center">
+          {flows}
+        </YStack>
+      </Tinted>
     </YStack>
+  </Panel>
+
+
+</PanelGroup>
 }
