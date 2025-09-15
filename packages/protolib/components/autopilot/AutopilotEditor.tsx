@@ -171,11 +171,13 @@ const generateParamsDeclaration = (cardData) => {
     return `declare const params: {\n${params}\n};`;
 }
 
-export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'staes'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {} }) => {
-    const { resolvedTheme } = useThemeSetting()
+export const ActionsAndStatesPanel = ({board, panels=["actions","states"], actions, states}) => {
+
     const [inputMode, setInputMode] = useState<"json" | "formatted">("formatted")
     const [search, setSearch] = useState('')
     const [stateSearch, setStateSearch] = useState('')
+    const [selectedActionTab, setSelectedActionTab] = useState('board')
+    const [selectedStateTab, setSelectedStateTab] = useState('board')
 
     // Show/hide action and state tabs
     const showActionsTabs = false
@@ -195,8 +197,6 @@ export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'staes']
         }
         return cleaned;
     }, [actions]);
-
-    const isAIEnabled = useSettingValue('ai.enabled', false);
 
     const filteredData = useMemo(() => {
         const filtered = filterObjectBySearch(cleanedActions?.[board.name] ?? {}, search)
@@ -247,6 +247,139 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
     }, [filteredData, actionData, inputMode, board?.name]);
 
 
+    const actionsTab = [
+        { id: 'board', label: 'Board', icon: <LayoutDashboard size={"$1"} />, content: actionsPanel },
+        { id: 'global', label: 'Global', icon: <Globe size={"$1"} />, content: <h1>Global actions panel (todo)</h1> },
+        { id: 'system', label: 'System', icon: <Settings size={"$1"} />, content: <h1>System actions panel (todo)</h1> }
+    ]
+
+    const statesTab = [
+        { id: 'board', label: 'Board', icon: <LayoutDashboard size={"$1"} />, content: statesPanel },
+        { id: 'global', label: 'Global', icon: <Globe size={"$1"} />, content: <h1>Global states panel (todo)</h1> },
+        { id: 'system', label: 'System', icon: <Settings size={"$1"} />, content: <h1>System states panel (todo)</h1> }
+    ]
+
+    const selectedAction = useMemo(
+        () => actionsTab.find(t => t.id === selectedActionTab),
+        [actionsTab, selectedActionTab]
+    );
+
+    const selectedState = useMemo(
+        () => statesTab.find(t => t.id === selectedStateTab),
+        [statesTab, selectedStateTab]
+    );
+
+
+    return <Panel defaultSize={30}>
+        <PanelGroup direction="vertical">
+            {panels && panels?.includes('actions') && <Panel defaultSize={50} minSize={20} maxSize={80}>
+                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor="$gray3" overflow="hidden" >
+                    <XStack pb={8}>
+                        <Search pos="absolute" left="$3" top={14} size={16} />
+                        <Input
+                            bg="$gray1"
+                            color="$gray12"
+                            paddingLeft="$7"
+                            bw={0}
+                            h="47px"
+                            boc="$gray6"
+                            // br={100}
+                            w="100%"
+                            placeholder="search..."
+                            placeholderTextColor="$gray9"
+                            outlineColor={"$gray8"}
+                            value={search}
+                            onChangeText={setSearch}
+                        />
+                    </XStack>
+                    <XStack jc="space-between" width="100%">
+                        <p>Actions</p>
+                        <XStack gap="$2">
+                            <Button
+                                icon={AlignLeft}
+                                bc={inputMode === "formatted" ? "$color5" : "$gray4"}
+                                scaleIcon={1.6}
+                                size="$2"
+                                onPress={() => setInputMode("formatted")}
+                            />
+                            <Button
+                                icon={Braces}
+                                bc={inputMode === "json" ? "$color5" : "$gray4"}
+                                scaleIcon={1.6}
+                                size="$2"
+                                onPress={() => setInputMode("json")}
+                            />
+                        </XStack>
+                    </XStack>
+                    <ScrollView flex={1} width="100%" height="100%" overflow="auto">
+                        {showActionsTabs ? (
+                            <>
+                                <TabBar
+                                    tabs={actionsTab}
+                                    selectedId={selectedActionTab}
+                                    onSelect={setSelectedActionTab}
+                                />
+                                <XStack mt="$2">
+                                    {selectedAction?.content ?? null}
+                                </XStack>
+                            </>
+                        ) : (
+                            actionsPanel
+                        )}
+                    </ScrollView>
+                </YStack>
+            </Panel>}
+            <CustomPanelResizeHandle direction="horizontal" />
+            <Panel defaultSize={50} minSize={20} maxSize={80}>
+                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor="$gray3" overflow="hidden" >
+                    <XStack pb={8}>
+                        <Search pos="absolute" left="$3" top={14} size={16} />
+                        <Input
+                            bg="$gray1"
+                            color="$gray12"
+                            paddingLeft="$7"
+                            bw={0}
+                            h="47px"
+                            boc="$gray6"
+                            // br={100}
+                            w="100%"
+                            placeholder="search..."
+                            placeholderTextColor="$gray9"
+                            outlineColor={"$gray8"}
+                            value={stateSearch}
+                            onChangeText={setStateSearch}
+                        />
+                    </XStack>
+                    <XStack jc="space-between" width="100%">
+                        <p>State</p>
+                    </XStack>
+                    <ScrollView flex={1} width="100%" height="100%" overflow="auto" >
+                        {showStatesTabs ? (
+                            <>
+                                <TabBar
+                                    tabs={statesTab}
+                                    selectedId={selectedStateTab}
+                                    onSelect={setSelectedStateTab}
+                                />
+                                <XStack mt="$2">
+                                    {selectedState?.content ?? null}
+                                </XStack>
+                            </>
+                        ) : (
+                            statesPanel
+                        )}
+                    </ScrollView>
+
+                </YStack>
+            </Panel>
+        </PanelGroup>
+    </Panel>
+}
+
+export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'states'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {} }) => {
+    const { resolvedTheme } = useThemeSetting()
+    const isAIEnabled = useSettingValue('ai.enabled', false);
+
     const declarations = useMemo(() => {
         const decl = generateStatesDeclaration('states', { board: states });
         return `
@@ -258,8 +391,6 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
     const theme = useTheme()
     const editedCode = useRef(rulesCode ?? 'return;')
-    const [selectedActionTab, setSelectedActionTab] = useState('board')
-    const [selectedStateTab, setSelectedStateTab] = useState('board')
 
     const isPlainHTML = rulesCode?.trim().startsWith('<')
 
@@ -324,134 +455,9 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
         />
     }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"]]);
 
-    const actionsTab = [
-        { id: 'board', label: 'Board', icon: <LayoutDashboard size={"$1"} />, content: actionsPanel },
-        { id: 'global', label: 'Global', icon: <Globe size={"$1"} />, content: <h1>Global actions panel (todo)</h1> },
-        { id: 'system', label: 'System', icon: <Settings size={"$1"} />, content: <h1>System actions panel (todo)</h1> }
-    ]
-
-    const statesTab = [
-        { id: 'board', label: 'Board', icon: <LayoutDashboard size={"$1"} />, content: statesPanel },
-        { id: 'global', label: 'Global', icon: <Globe size={"$1"} />, content: <h1>Global states panel (todo)</h1> },
-        { id: 'system', label: 'System', icon: <Settings size={"$1"} />, content: <h1>System states panel (todo)</h1> }
-    ]
-
-    const selectedAction = useMemo(
-        () => actionsTab.find(t => t.id === selectedActionTab),
-        [actionsTab, selectedActionTab]
-    );
-
-    const selectedState = useMemo(
-        () => statesTab.find(t => t.id === selectedStateTab),
-        [statesTab, selectedStateTab]
-    );
-
     return (
         <PanelGroup direction="horizontal">
-            <Panel defaultSize={30}>
-                <PanelGroup direction="vertical">
-                    {panels.includes('actions') && <Panel defaultSize={50} minSize={20} maxSize={80}>
-                        <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor="$gray3" overflow="hidden" >
-                            <XStack pb={8}>
-                                <Search pos="absolute" left="$3" top={14} size={16} />
-                                <Input
-                                    bg="$gray1"
-                                    color="$gray12"
-                                    paddingLeft="$7"
-                                    bw={0}
-                                    h="47px"
-                                    boc="$gray6"
-                                    // br={100}
-                                    w="100%"
-                                    placeholder="search..."
-                                    placeholderTextColor="$gray9"
-                                    outlineColor={"$gray8"}
-                                    value={search}
-                                    onChangeText={setSearch}
-                                />
-                            </XStack>
-                            <XStack jc="space-between" width="100%">
-                                <p>Actions</p>
-                                <XStack gap="$2">
-                                    <Button
-                                        icon={AlignLeft}
-                                        bc={inputMode === "formatted" ? "$color5" : "$gray4"}
-                                        scaleIcon={1.6}
-                                        size="$2"
-                                        onPress={() => setInputMode("formatted")}
-                                    />
-                                    <Button
-                                        icon={Braces}
-                                        bc={inputMode === "json" ? "$color5" : "$gray4"}
-                                        scaleIcon={1.6}
-                                        size="$2"
-                                        onPress={() => setInputMode("json")}
-                                    />
-                                </XStack>
-                            </XStack>
-                            <ScrollView flex={1} width="100%" height="100%" overflow="auto">
-                                {showActionsTabs ? (
-                                    <>
-                                        <TabBar
-                                            tabs={actionsTab}
-                                            selectedId={selectedActionTab}
-                                            onSelect={setSelectedActionTab}
-                                        />
-                                        <XStack mt="$2">
-                                            {selectedAction?.content ?? null}
-                                        </XStack>
-                                    </>
-                                ) : (
-                                    actionsPanel
-                                )}
-                            </ScrollView>
-                        </YStack>
-                    </Panel>}
-                    <CustomPanelResizeHandle direction="horizontal" />
-                    <Panel defaultSize={50} minSize={20} maxSize={80}>
-                        <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor="$gray3" overflow="hidden" >
-                            <XStack pb={8}>
-                                <Search pos="absolute" left="$3" top={14} size={16} />
-                                <Input
-                                    bg="$gray1"
-                                    color="$gray12"
-                                    paddingLeft="$7"
-                                    bw={0}
-                                    h="47px"
-                                    boc="$gray6"
-                                    // br={100}
-                                    w="100%"
-                                    placeholder="search..."
-                                    placeholderTextColor="$gray9"
-                                    outlineColor={"$gray8"}
-                                    value={stateSearch}
-                                    onChangeText={setStateSearch}
-                                />
-                            </XStack>
-                            <XStack jc="space-between" width="100%">
-                                <p>State</p>
-                            </XStack>
-                            <ScrollView flex={1} width="100%" height="100%" overflow="auto" >
-                                {showStatesTabs ? (
-                                    <>
-                                        <TabBar
-                                            tabs={statesTab}
-                                            selectedId={selectedStateTab}
-                                            onSelect={setSelectedStateTab}
-                                        />
-                                        <XStack mt="$2">
-                                            {selectedState?.content ?? null}
-                                        </XStack>
-                                    </>
-                                ) : (
-                                    statesPanel
-                                )}
-                            </ScrollView>
-
-                        </YStack>
-                    </Panel>
-                </PanelGroup>
-            </Panel>
+            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} />
 
             <CustomPanelResizeHandle direction="vertical" />
 
