@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { XStack, YStack, Text, Switch, Input, TextArea } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
+import { SelectList } from "../SelectList";
 
 export const Icon = ({ name, size, color, style }) => {
     return (
@@ -30,11 +31,37 @@ export const Icon = ({ name, size, color, style }) => {
 export const ParamsForm = ({ data, children }) => {
     const allKeys = Object.keys(data.params || {});
     const [loading, setLoading] = useState(false);
+    const [boardStates, setBoardStates] = useState<string[]>([]);
 
     const { resolvedTheme } = useThemeSetting()
     const contentRef = useRef({});
     const defaultRef = useRef({});
     const inputRefs = useRef({});
+    const stateOptions = boardStates.filter(s => s !== data.name).map(s => `board.${s}`);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+
+        const getBoardStates = () => {
+            const proto = (window as any).protoStates;
+            const boards = proto?.boards || {};
+
+            const params = new URLSearchParams(window.location.search);
+            const boardParam = params.get("board");
+            const boardName = boardParam ? decodeURIComponent(boardParam) : undefined;
+
+            if (!boardName || !boards[boardName]) {
+                setBoardStates([]);
+                return;
+            }
+
+            setBoardStates(Object.keys(boards[boardName]));
+        };
+
+        getBoardStates();
+        window.addEventListener("protoStates:update", () => getBoardStates());
+        return () => window.removeEventListener("protoStates:update", () => getBoardStates());
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -114,7 +141,7 @@ export const ParamsForm = ({ data, children }) => {
                                 }}
                             >
                                 <Text ml="20px" mb="$2">{key}</Text>
-                                {(type == 'text' || !['json', 'array', 'boolean', 'path'].includes(type)) &&
+                                {(type == 'text' || !['json', 'array', 'boolean', 'path', 'state'].includes(type)) &&
                                     <TextEditDialog mx="10px" f={1}>
                                         {type == 'text'
                                             ? <TextArea
@@ -157,6 +184,19 @@ export const ParamsForm = ({ data, children }) => {
                                         />
                                     </TextEditDialog>
                                 }
+                                {type == 'state' && (
+                                    <XStack mx={"$3"} f={1}>
+                                        <SelectList
+                                            title="Select state"
+                                            elements={(stateOptions && stateOptions?.length > 0) ? stateOptions : []}
+                                            value={contentRef.current[key] ?? defaultValue ?? ''}
+                                            setValue={(v) => { contentRef.current[key] = v }}
+                                            triggerProps={{ f: 1, bc: "$gray1", boc: "$gray6", hoverStyle: { bc: "$gray1", boc: "$gray7" } }}
+                                            placeholder="Select state"
+
+                                        />
+                                    </XStack>
+                                )}
 
                                 {(type == 'json' || type == 'array')
                                     && <XStack
