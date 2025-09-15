@@ -57,7 +57,7 @@ export const DisplayEditor = ({
 }) => {
     const [error, setError] = useState<string | null>(null)
 
-    const getCheckedDefault = useCallback((cd: any, key: string) => cd?.[key] !== false, [])
+    const getCheckedDefault = useCallback((cd: any, key: string) => !!(cd?.[key]), [])
 
     const settings: Setting[] = [
         // ----- General -----
@@ -66,12 +66,12 @@ export const DisplayEditor = ({
         { label: 'Always report value', key: 'alwaysReportValue', type: 'checkbox', section: 'General' },
 
         // ----- Display -----
-        { label: 'Display title', key: 'displayTitle', type: 'checkbox', section: 'Display' },
-        { label: 'Display icon', key: 'displayIcon', type: 'checkbox', section: 'Display' },
-        { label: 'Display frame', key: 'displayFrame', type: 'checkbox', section: 'Display' },
+        { label: 'Display title', key: 'displayTitle', type: 'checkbox', section: 'Display', get: (cd) => cd.displayTitle !== false },
+        { label: 'Display icon', key: 'displayIcon', type: 'checkbox', section: 'Display', get: (cd) => cd.displayIcon !== false },
+        { label: 'Display frame', key: 'displayFrame', type: 'checkbox', section: 'Display', get: (cd) => cd.displayFrame !== false },
         { label: 'Markdown display', key: 'markdownDisplay', type: 'checkbox', section: 'Display' },
-        { label: 'Display value', key: 'displayResponse', type: 'checkbox', section: 'Display', visible: ({ card }) => card.type === 'action' },
-        { label: 'Display button', key: 'displayButton', type: 'checkbox', section: 'Display', visible: ({ card }) => card.type === 'action' },
+        { label: 'Display value', key: 'displayResponse', type: 'checkbox', section: 'Display', get: (cd) => cd.displayResponse !== false, visible: ({ card }) => card.type === 'action' },
+        { label: 'Display button', key: 'displayButton', type: 'checkbox', section: 'Display', get: (cd) => cd.displayButton !== false, visible: ({ card }) => card.type === 'action' },
         { label: 'Button text', key: 'buttonLabel', type: 'text', section: 'Display', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton') },
         {
             label: 'Button Full',

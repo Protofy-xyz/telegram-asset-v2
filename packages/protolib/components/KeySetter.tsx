@@ -1,15 +1,10 @@
 import { YStack, Text, Button, Input, XStack, useToastController } from '@my/ui';
-import { DashboardCard } from './DashboardCard';
 import { useEffect, useState } from 'react';
 import { getKey } from "@extensions/keys/coreContext";
-import { KeyModel } from "@extensions/keys/keysSchemas";
 import { API } from 'protobase';
-import { useRemoteStateList } from '../lib/useRemoteState';
-import { usePendingEffect } from '../lib/usePendingEffect';
-import { useSubscription } from '../lib/mqtt';
 import { Check, RefreshCcw, Trash2, Plus } from '@tamagui/lucide-icons';
 import { Tinted } from './Tinted';
-// import { getServiceToken } from '@extensions/apis/coreContext';
+import { useEventEffect } from '@extensions/events/hooks/useEventEffect';
 
 interface KeySetterProps {
     nameKey: string;
@@ -32,7 +27,7 @@ export const useKeyState = (nameKey: string) => {
         if (res.isError && !res.data) { // If the key does not exist, create it
             res = await API.post("/api/core/v1/keys", { name: nameKey, value: newKey });
         }
-        
+
         if (res?.data) {
             setKeyValue(res?.data.value);
         }
@@ -50,6 +45,20 @@ export const useKeyState = (nameKey: string) => {
         }
         checkKey()
     }, [])
+
+    const onKeyValueChange = (payload, msg) => {
+        try {
+            const parsedMessage = JSON.parse(msg.message)
+            const payload = parsedMessage.payload
+            const newKey = payload?.data?.value
+            setKeyValue(newKey)
+        } catch (e) {
+            console.error(e)
+        }
+    }
+
+    useEventEffect(onKeyValueChange, { path: "keys/update/OPENAI_API_KEY" })
+    useEventEffect(onKeyValueChange, { path: "keys/create/OPENAI_API_KEY" })
 
     return { keyValue, loading, updateKey, hasKey };
 }
@@ -124,7 +133,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
                     </XStack>
                     <XStack gap="$2" ai="center">
                         <Tinted tint="red">
-                            <Button circular icon={Trash2} onPress={() => onEditKey(placeholderValue)}></Button>
+                            <Button circular icon={Trash2} onPress={() => onEditKey("")}></Button>
                         </Tinted>
                         <Button bc="transparent" circular icon={RefreshCcw} onPress={loadKey}></Button>
                     </XStack>
