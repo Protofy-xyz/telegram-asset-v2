@@ -100,7 +100,12 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs }) => {
                 </XStack>
                 <XStack flex={1}>
                     {
-                        tabs && tabs[selectedTab] && tabs[selectedTab].content && tabs[selectedTab].content
+                        tabs && Object.keys(tabs).map((key) => {
+                            const tab = tabs[key];
+                            return <YStack key={key} f={1} display={selectedTab === key ? 'flex' : 'none'}>
+                                {tab.content}
+                            </YStack>
+                        })
                     }
                 </XStack>
             </YStack>

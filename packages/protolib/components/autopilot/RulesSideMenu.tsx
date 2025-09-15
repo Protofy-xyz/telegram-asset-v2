@@ -1,17 +1,15 @@
 
 import { API } from 'protobase'
-import { YStack, XStack, Button, Spinner, useToastController, useTheme } from '@my/ui'
+import { YStack, XStack, useToastController, useTheme } from '@my/ui'
 import { Tinted } from '../../components/Tinted'
-import { Rules } from '../../components/autopilot/Rules'
-import { Monaco } from '../../components/Monaco'
-import { useState, useRef, useMemo, useEffect } from 'react'
-import { Panel, PanelGroup } from "react-resizable-panels";
-import CustomPanelResizeHandle from '../MainPanel/CustomPanelResizeHandle'
+import { useState, useRef, useMemo } from 'react'
 import { useSettingValue } from "@extensions/settings/hooks";
 import { getDefinition, toSourceFile } from 'protonode/dist/lib/code'
 import { ArrowFunction } from 'ts-morph';
 import { CodeView } from '@extensions/files/intents';
-import { ClipboardList, Save, Sparkles } from '@tamagui/lucide-icons'
+import { Save } from '@tamagui/lucide-icons'
+import { useKeyState } from '../KeySetter'
+import { RulesKeySetter } from './RulesKeySetter'
 
 function generateStateDeclarations(obj) {
     const recurse = (o) => {
@@ -68,6 +66,7 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
     const [generatingBoardCode, setGeneratingBoardCode] = useState(false)
     const toast = useToastController()
     const isAIEnabled = useSettingValue('ai.enabled', false);
+    const { hasKey, updateKey, loading } = useKeyState('OPENAI_API_KEY')
 
     const theme = useTheme()
     const flows = useMemo(() => {
@@ -90,7 +89,7 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
                     const definition = getDefinition(sourceFile, '"code"').getBody()
                     definition.replaceWithText("{\n" + editedCode.current + "\n}");
                     await API.post(`/api/core/v1/boards/${board.name}/automation`, { code: sourceFile.getFullText() })
-                    
+
                     automationInfo.code = sourceFile.getFullText()
 
                     toast.show(`Rules applied successfully!`)
@@ -102,6 +101,10 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
             disableAIPanels={!isAIEnabled}
             defaultMode={isAIEnabled ? 'rules' : 'code'}
             rules={board.rules}
+            rulesConfig={{
+                enabled: hasKey,
+                disabledView: () => <RulesKeySetter updateKey={updateKey} loading={loading} />
+            }}
             leftIcons={
                 <XStack gap="$3" pl="$2">
                     {leftIcons}
@@ -148,7 +151,7 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
                 minimap: { enabled: false }
             }}
         />
-    }, [resolvedTheme, board.name, theme, editedCode.current, isAIEnabled]);
+    }, [resolvedTheme, board.name, theme, editedCode.current, isAIEnabled, hasKey]);
     return <YStack w="100%" backgroundColor="transparent" backdropFilter='blur(5px)'>
         <Tinted>
             <YStack flex={1} alignItems="center" justifyContent="center">
