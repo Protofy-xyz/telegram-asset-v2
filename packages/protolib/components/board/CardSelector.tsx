@@ -159,10 +159,10 @@ const FirstSlide = ({ selected, setSelected, options }) => {
             width={600}
             height={"100%"}
             cursor="pointer"
-            borderRadius={"$3"}
             ai="center"
             jc="flex-start"
             blw={"1px"}
+            blc={"$gray6"}
             gap="$3"
             pl="$3"
           >
