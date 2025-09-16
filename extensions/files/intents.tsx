@@ -396,7 +396,7 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
   </AsyncView> : content
 }
 
-const MonacoViewer = ({ path }) => {
+const MonacoViewer = ({ path, extraIcons }) => {
   const [fileContent] = useFileFromAPI(path);
   const sourceCode = useRef('');
   const { resolvedTheme } = useThemeSetting();
@@ -413,12 +413,17 @@ const MonacoViewer = ({ path }) => {
 
   return (
     <AsyncView waitForLoading={1000} key={path} atom={fileContent}>
-      <XStack mt={30} f={1} width={"100%"}>
+      <XStack mt={30} f={1} width={"100%"} position="relative">
         <SaveButton
           path={path}
           getContent={() => sourceCode.current}
-          positionStyle={{ right: 55, top: -33 }}
+          positionStyle={{ right: 55, top: -33, zIndex: 2 }}
         />
+        {!!extraIcons && (
+          <XStack position="absolute" right={10} top={-33} gap="$2" zIndex={2}>
+            {extraIcons}
+          </XStack>
+        )}
         <Monaco
           path={path}
           darkMode={resolvedTheme === 'dark'}
@@ -439,8 +444,9 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
     return { component: <FlowsViewer {...data} />, supportIcons: true }
   } else if ((data.path).endsWith(".tsx")) {
     return {
-      component: <MonacoViewer path={data.path} />,
-      widget: 'text'
+      component: <MonacoViewer {...data} />,
+      widget: 'text',
+      supportIcons: true
     }
   } else if (mime == 'model/gltf-binary') {
     return {
@@ -449,8 +455,9 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
     }
   } else if (type == 'text' || type == 'application') {
     return {
-      component: <MonacoViewer path={data.path} />,
-      widget: 'text'
+      component: <MonacoViewer {...data} />,
+      widget: 'text',
+      supportIcons: true
     }
   } else if (type == 'image') {
     return { component: <img src={url} />, widget: 'image' }
