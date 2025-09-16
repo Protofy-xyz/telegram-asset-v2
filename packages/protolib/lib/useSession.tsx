@@ -108,6 +108,35 @@ export const useSession = (pageSession?) => {
         }
     }, [session.loggedIn, setSession])
 
+    // ensure the stored session is still valid on the API side (guards against stale cookies)
+    useEffect(() => {
+        if (!session.loggedIn || !session.token) {
+            return
+        }
+
+        const validateSession = async () => {
+            const result = await API.get('/api/core/v1/auth/validate')
+            if (!result || result.isError) return
+
+            if (result.isLoaded) {
+                const validatedSession = result.data
+
+                if (!validatedSession?.loggedIn) {
+                    setSession(createSession())
+                    return
+                }
+
+                if (validatedSession.token && validatedSession.token !== session.token) {
+                    setSession(validatedSession)
+                }
+            }
+
+        }
+
+        validateSession()
+
+    }, [session.loggedIn, session.token, setSession])
+
     return [session, setSession]
 }
 
