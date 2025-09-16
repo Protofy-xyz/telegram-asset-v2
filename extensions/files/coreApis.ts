@@ -50,7 +50,7 @@ export default async (app, context) => {
     addCard({
         group: 'files',
         tag: 'operations',
-        id: 'send',
+        id: 'files_read',
         templateName: 'Read File or Directory',
         name: 'files_read',
         defaults: {
