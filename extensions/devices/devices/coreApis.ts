@@ -96,14 +96,20 @@ export default (app, context) => {
                 }
 
                 for (const action of subsystem.actions ?? []) {
+                    const url = `/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}`;
+                    const isJsonSchema = action.payload?.type === "json-schema";
+
                     const params = {value: "value to set"}
-                    if(action.payload.type == "json-schema"){
+                    if(isJsonSchema){
                         delete params.value
                         Object.keys(action.payload.schema).forEach((key) => {
                             params[key] = formatParamsJson(action.payload.schema[key])
                         })
-                    }
 
+                    }
+                    const rulesCode = isJsonSchema
+                            ? `const value = { value: JSON.stringify(userParams) };\nreturn execute_action('${url}', value)`
+                            : `return execute_action('${url}', userParams)`;
                     addAction({
                         group: 'devices',
                         name: subsystem.name + '_' + action.name, //get last path element
@@ -124,7 +130,7 @@ export default (app, context) => {
                         defaults: {
                             name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
                             description: action.description ?? "",
-                            rulesCode: `return execute_action('/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}', userParams)`,
+                            rulesCode,
                             params: action.payload?.value ? {} : params,
                             type: 'action'
                         },
