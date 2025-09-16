@@ -1,7 +1,7 @@
-import { YStack, XStack, Spacer, ScrollView, useThemeName, Input, Text, Button } from '@my/ui'
+import { YStack, XStack, Spacer, ScrollView, useThemeName, Input, Text, Button, Paragraph } from '@my/ui'
 import { AlertDialog } from '../../components/AlertDialog';
 import { Slides } from '../../components/Slides'
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActionCardSettings } from '../autopilot/ActionCardSettings';
 import { useProtoStates } from '@extensions/protomemdb/lib/useProtoStates'
 import { Search, ScanEye, Rocket } from "@tamagui/lucide-icons";
@@ -17,13 +17,14 @@ const SelectGrid = ({ children }) => {
   </XStack>
 }
 
-const FirstSlide = ({ selected, setSelected, options }) => {
+const FirstSlide = ({ selected, setSelected, options, errors }) => {
   const themeName = useThemeName()
   const { resolvedTheme } = useThemeSetting()
   const darkMode = resolvedTheme == 'dark'
   const [search, setSearch] = useState('')
   const isAction = (option) => option.defaults?.type === 'action'
   const [selectedGroups, setSelectedGroups] = useState([]);
+  const cardNameInputRef = useRef(null)
 
   // Extrae los grupos disponibles de las options
   const groups = useMemo(() => {
@@ -53,6 +54,10 @@ const FirstSlide = ({ selected, setSelected, options }) => {
       return acc;
     }, {});
   }, [filteredOptions]);
+
+  useEffect(() => {
+    cardNameInputRef.current.focus()
+  }, [selected])
 
   return (
     <YStack f={1}>
@@ -150,24 +155,39 @@ const FirstSlide = ({ selected, setSelected, options }) => {
               </YStack>
             ))}
           </ScrollView>
-          {selected?.readme && <YStack
+          <YStack
             width={600}
             height={"100%"}
             cursor="pointer"
-            borderRadius={"$3"}
             ai="center"
             jc="flex-start"
             blw={"1px"}
+            blc={"$gray6"}
             gap="$3"
             pl="$3"
           >
-            <YStack flex={1} w="100%" h="100%" jc="flex-start" ai="center" gap="$3" overflow='scroll'>
+            <YStack flex={1} w="100%" h="100%" jc="flex-start" ai="center" px="$2" gap="$3" overflow='scroll'>
               <Text fontSize="$8" fontWeight="600" mb="$2" textAlign='center'>{selected.name}</Text>
-              <YStack w="100%">
-                <Markdown readOnly={true} data={selected.readme} />
+              <Input placeholder='card name' w="100%" ref={cardNameInputRef} onChangeText={(value) => {
+                setSelected(prev => {
+                  return { ...prev, defaults: { ...prev.defaults, customName: value } }
+                })
+              }} />
+              {errors?.length > 0 ?
+                <YStack>
+                  {errors.map((error, index) => (
+                    <Paragraph key={"err" + index} color="$red9" fontSize="$4">{error}</Paragraph>
+                  ))}
+                </YStack>
+                : <></>
+              }
+              <YStack w="100%" pt="$5">
+                <Text fontSize="$5" fontWeight="400" color="$gray9" w="fit-content"
+                  bbw="1px" bbc="$gray9">Description</Text>
+                <Markdown readOnly={true} data={selected.defaults?.description ?? "no description provided for this card"} />
               </YStack>
             </YStack>
-          </YStack>}
+          </YStack>
         </XStack>
         <Spacer marginBottom="$1" />
       </Tinted>
@@ -253,7 +273,19 @@ const extraCards = [
     defaults: {
       type: 'action',
       name: 'card',
-      displayResponse: true
+      displayResponse: true,
+      description: `A reusable card that executes actions defined in its rules. It can also trigger other action-type cards on the board.
+  
+  #### Key Features
+  - Run actions from rules.
+  - Chain/trigger other action cards.
+  - Parameterized execution (env, template context).
+  - Optional dry-run, retries, and timeouts (if supported by your board).
+  
+  #### Extensibility
+  - Customize parameters (schema, defaults, validation).
+  - Customize the card view (UI/render).
+  - Modify the card description to fit your board.`,
     },
     name: 'Action',
     id: 'action'
@@ -396,7 +428,7 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
           onFinish={async () => {
             try {
               const existingNames = board?.cards.map(c => c.name) ?? []
-              card["name"] = generateVersionatedName(card.name, existingNames)
+              card["name"] = card.customName ?? generateVersionatedName(card.name, existingNames)
               await onFinish(card)
               setAddOpened(false)
             } catch (e) {
@@ -407,8 +439,7 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
             {
               name: "Create new card",
               component: (
-                <FirstSlide options={cards} selected={selectedCard} setSelected={setSelectedCard}
-                />
+                <FirstSlide options={cards} selected={selectedCard} setSelected={setSelectedCard} errors={errors} />
               ),
             },
             // {

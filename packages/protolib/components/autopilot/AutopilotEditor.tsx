@@ -183,6 +183,9 @@ export const ActionsAndStatesPanel = ({board, panels=["actions","states"], actio
     const showActionsTabs = false
     const showStatesTabs = false
 
+    console.log("ActionsAndStatesPanel actions:", actions);
+    console.log("ActionsAndStatesPanel states:", states);
+
     const cleanedActions = useMemo(() => {
         const cleaned = {};
         if (!actions || typeof actions !== 'object') return cleaned;
@@ -208,11 +211,12 @@ export const ActionsAndStatesPanel = ({board, panels=["actions","states"], actio
         return filtered
     }, [states, stateSearch]);
 
+    console.log("filteredStateData:", filteredStateData);
     const actionData = filteredData
 
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
-            <JSONView collapsed={1} style={{ backgroundColor: 'var(--gray3)' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
+            {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'var(--gray3)' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
                 const path = 'board' + copy.namespace
                     .filter(v => v)
                     .map(k => `?.[${JSON.stringify(k)}]`)
@@ -222,6 +226,8 @@ export const ActionsAndStatesPanel = ({board, panels=["actions","states"], actio
                 navigator.clipboard.writeText(path)
                 return false
             }} />
+            }
+            {!filteredStateData && <Text>No states found</Text>}
         </YStack>
     }, [filteredStateData, board?.name]);
 
@@ -453,7 +459,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
                 minimap: { enabled: false }
             }}
         />
-    }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"]]);
+    }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"], rulesConfig["loading"]]);
 
     return (
         <PanelGroup direction="horizontal">

@@ -63,6 +63,7 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
     }}
     rulesConfig={{
       enabled: hasKey,
+      loading: loading,
       disabledView: () => <RulesKeySetter updateKey={updateKey} loading={loading} />
     }}
     valueReady={hasCode} />
