@@ -116,10 +116,9 @@ export const FileBrowser = ({ router, initialPath = '/', initialFile = '', initi
 
         if (onOpenFile) return onOpenFile(file);
 
-        navigate(
-            `${basePath}?path=${currentPath.startsWith('/') ? currentPath : '/' + currentPath}&file=${file.name}`
-        );
-    };
+        const filePath = file.path ?? `${(currentPath || '/').replace(/\/$/, '')}/${file.name}`
+        navigate(`${basePath}?path=${encodeURIComponent(currentPath)}&file=${encodeURIComponent(filePath)}`)
+    }
 
     const { resolvedTheme } = useThemeSetting()
 
