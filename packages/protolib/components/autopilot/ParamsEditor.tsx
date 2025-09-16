@@ -138,7 +138,7 @@ export const ParamsEditor = ({
                     <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$10"} my="$4.5" bottom={0}  >
                       <ArrowUpRightFromSquare size={20} color={"var(--gray8)"} style={{}} />
                     </TextEditDialog.Trigger>
-                    <Input {...inputDefProps} placeholder="Default Value" value={paramKey} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                    <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
                     <TextEditDialog.Editor
                       placeholder={paramKey}
                       value={defaultValue}
@@ -176,3 +176,5 @@ export const ParamsEditor = ({
     </YStack>
   )
 }
+
+
