@@ -62,11 +62,13 @@ export const DashboardCard = ({
 
             <Tinted>
                 <YStack
+                    enterStyle={{ scale: 0.4, opacity: 0 }}
                     animation="quick"
                     cursor="default"
                     onHoverIn={() => setHovered(true)}
                     onHoverOut={() => setHovered(false)}
                     key={id}
+                    id={id}
                     borderRadius="var(--radius-6)"
                     backgroundColor={hideFrame ? "transparent" : "var(--bgPanel)"}
                     flex={1}

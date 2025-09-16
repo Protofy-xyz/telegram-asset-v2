@@ -576,6 +576,11 @@ const Board = ({ board, icons }) => {
     setItems(newItems)
     boardRef.current.cards = newItems;
     await saveBoard(board.name, boardRef.current);
+
+    // animate to the bottom
+    setTimeout(() => {
+      document.getElementById(uniqueKey).scrollIntoView();
+    }, 500)
   };
 
   const setCardContent = (key, content) => {
@@ -888,7 +893,7 @@ const Board = ({ board, icons }) => {
                   formatOnType: true
                 }}
               />
-              : <YStack f={1} p={"$6"}>{cards.length > 0 ? <DashboardGrid
+              : <YStack f={1} p={"$6"}>{cards.length > 0 ? <DashboardGrid           
                 items={cards}
                 settings={board.settings}
                 layouts={boardRef.current.layouts}

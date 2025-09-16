@@ -37,8 +37,8 @@ function generateStateDeclarations(obj) {
 
 
 export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo, boardRef, board, actions, states, resolvedTheme }) => {
-    const boardStates = states.boards ? states.boards[board.name] : {}
-    const boardActions = actions.boards ? actions.boards[board.name] : {}
+    const boardStates = states?.boards ? states.boards[board.name] : {}
+    const boardActions = actions?.boards ? actions.boards[board.name] : {}
 
     const boardStatesDeclarations = useMemo(() => {
         return generateStateDeclarations(boardStates)

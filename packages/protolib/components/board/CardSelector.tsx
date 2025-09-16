@@ -150,7 +150,7 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
                             option?.defaults?.color
                               ? option?.defaults?.color
                               : isAction(option)
-                                ? "$orange8"
+                                ? "$yellow8"
                                 : "$blue8"
                           }
                         >
