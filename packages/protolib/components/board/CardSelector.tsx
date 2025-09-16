@@ -1,4 +1,4 @@
-import { YStack, XStack, Spacer, ScrollView, useThemeName, Input, Text, Button, Paragraph } from '@my/ui'
+import { YStack, XStack, Spacer, ScrollView, useThemeName, Input, Text, Button, Paragraph, Label } from '@my/ui'
 import { AlertDialog } from '../../components/AlertDialog';
 import { Slides } from '../../components/Slides'
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -175,8 +175,6 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
         width={500}
         height={"100%"}
         cursor="pointer"
-        ai="center"
-        jc="flex-start"
         gap="$3"
       >
         <YStack
@@ -195,30 +193,36 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
             </XStack>
             <Text fontSize="$7" fontWeight="600" mb="$2" textAlign='center'>{selected.name}</Text>
           </XStack>
-          <Input
-            bg="$gray6"
-            placeholder={selected.defaults?.name ?? "Card name"}
-            placeholderTextColor={"$gray10"}
-            outlineColor="$gray8"
-            w="100%"
-            ref={cardNameInputRef}
-            onChangeText={(value) => {
-              setSelected(prev => {
-                return { ...prev, defaults: { ...prev.defaults, customName: value } }
-              })
-            }}
-          />
-          {errors?.length > 0 ?
-            <YStack>
-              {errors.map((error, index) => (
-                <Paragraph key={"err" + index} color="$red9" fontSize="$4">{error}</Paragraph>
-              ))}
-            </YStack>
-            : <></>
-          }
+          <YStack w="100%">
+            <Label alignSelf="flex-start" ml={"$3"} h={"$3.5"} color="$gray9" size="$5">
+              Name
+            </Label>
+            <Input
+              bg="$gray6"
+              placeholder={selected.defaults?.name ?? "Card name"}
+              placeholderTextColor={"$gray10"}
+              outlineColor="$gray8"
+              w="100%"
+              ref={cardNameInputRef}
+              onChangeText={(value) => {
+                setSelected(prev => {
+                  return { ...prev, defaults: { ...prev.defaults, customName: value } }
+                })
+              }}
+            />
+            {errors?.length > 0 ?
+              <YStack>
+                {errors.map((error, index) => (
+                  <Paragraph key={"err" + index} color="$red9" fontSize="$4">{error}</Paragraph>
+                ))}
+              </YStack>
+              : <></>
+            }
+          </YStack>
           <YStack w="100%" pt="$5">
-            <Text fontSize="$5" fontWeight="400" color="$gray9" w="fit-content"
-              bbw="1px" bbc="$gray9">Description</Text>
+            <Label alignSelf="flex-start" ml={"$3"} h={"$3.5"} color="$gray9" size="$5">
+              Description
+            </Label>
             <Markdown readOnly={true} data={selected.defaults?.description ?? "No description provided for this card"} />
           </YStack>
         </YStack>
