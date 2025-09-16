@@ -37,13 +37,17 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
     );
   };
 
-  const filteredOptions = useMemo(() => {
+  const getFilteredOptions = (options, search, selectedGroups) => {
     const lowerSearch = search.toLowerCase();
     return options.filter(opt => {
       const matchSearch = opt.name?.toLowerCase().includes(lowerSearch);
       const matchGroup = selectedGroups.length === 0 || selectedGroups.includes(opt.group);
       return matchSearch && matchGroup;
     });
+  }
+
+  const filteredOptions = useMemo(() => {
+    return getFilteredOptions(options, search, selectedGroups);
   }, [options, search, selectedGroups]);
 
   const groupedOptions = useMemo(() => {
@@ -55,9 +59,13 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
     }, {});
   }, [filteredOptions]);
 
-  useEffect(() => {
-    cardNameInputRef.current.focus()
-  }, [selected])
+  const onChangeSearch = (text) => {
+    setSearch(text);
+    const itemToSelect = getFilteredOptions(options, text, selectedGroups)?.[0];
+    if (itemToSelect) {
+      setSelected(itemToSelect);
+    }
+  }
 
   return (
     <YStack f={1}>
@@ -76,7 +84,7 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
             placeholderTextColor="$gray9"
             outlineColor="$gray8"
             value={search}
-            onChangeText={setSearch}
+            onChangeText={onChangeSearch}
           />
         </XStack>
         <XStack gap="$2" mb="$4" flexWrap="wrap">
@@ -121,7 +129,10 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
                       gap={"$2"}
                       p={"$2"}
                       cursor="pointer"
-                      onPress={() => setSelected(option)}
+                      onPress={() => {
+                        setSelected(option)
+                        cardNameInputRef.current?.focus()
+                      }}
                       borderRadius={"$3"}
                       ai="center"
                       bc={selected?.id === option.id ? "$color4" : "$gray3"}
