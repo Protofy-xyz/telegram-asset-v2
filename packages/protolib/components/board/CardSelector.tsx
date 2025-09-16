@@ -6,7 +6,7 @@ import { ActionCardSettings } from '../autopilot/ActionCardSettings';
 import { useProtoStates } from '@extensions/protomemdb/lib/useProtoStates'
 import { Search, ScanEye, Rocket } from "@tamagui/lucide-icons";
 import { Tinted } from '../Tinted';
-import { getIconUrl } from '../IconSelect';
+import { PublicIcon } from '../IconSelect';
 import { useThemeSetting } from '@tamagui/next-theme'
 import { v4 as uuidv4 } from 'uuid';
 import { Markdown } from '../../components/Markdown';
@@ -69,25 +69,25 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
 
   return (
     <YStack f={1}>
-      <Tinted>
-        <XStack pb={8} mb={5} position="relative">
-          <Search pos="absolute" left="$3" top={14} size={16} pointerEvents="none" />
-          <Input
-            bg="$gray3"
-            color="$gray12"
-            paddingLeft="$7"
-            bw={themeName === 'dark' ? 0 : 1}
-            h="47px"
-            boc={'$gray5'}
-            w="100%"
-            placeholder="search card..."
-            placeholderTextColor="$gray9"
-            outlineColor="$gray8"
-            value={search}
-            onChangeText={onChangeSearch}
-          />
-        </XStack>
-        <XStack gap="$2" mb="$4" flexWrap="wrap">
+      <XStack pb={8} mb={5} position="relative">
+        <Search pos="absolute" left="$3" top={14} size={16} pointerEvents="none" />
+        <Input
+          bg="$gray3"
+          color="$gray12"
+          paddingLeft="$7"
+          bw={themeName === 'dark' ? 0 : 1}
+          h="47px"
+          boc={'$gray5'}
+          w="100%"
+          placeholder="search card..."
+          placeholderTextColor="$gray9"
+          outlineColor="$gray8"
+          value={search}
+          onChangeText={onChangeSearch}
+        />
+      </XStack>
+      <XStack gap="$2" mb="$4" flexWrap="wrap">
+        <Tinted>
           {groups.map((group) => {
             const isActive = selectedGroups.includes(group);
             return (
@@ -100,34 +100,36 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
                   borderColor: isActive ? 'var(--color7)' : 'var(--gray5)',
                   borderWidth: '1px',
                   borderRadius: "$10",
-                  color: isActive ? 'white' : 'inherit',
+                  color: isActive ? '$color' : 'inherit',
                 }}
               >
                 {group}
               </Button>
             );
           })}
-        </XStack>
+        </Tinted>
+      </XStack>
 
-        <XStack flex={1} gap="$3">
+      <XStack flex={1} gap="$3">
+        <Tinted>
           <ScrollView>
             {Object.entries(groupedOptions).map(([group, options]) => (
               <YStack key={group} mb="$3">
                 {group !== "__no_group__" && (
                   <>
                     <Text fontSize="$5" fontWeight="600" mb="$2">{group}</Text>
-                    <YStack height="1px" bg="$gray6" mb="$3" />
                   </>
                 )}
 
                 <SelectGrid>
                   {options.map((option) => (
                     <XStack
-                      width={200}
+                      width={220}
                       height={70}
                       key={option.id}
                       gap={"$2"}
                       p={"$2"}
+                      px={"$3"}
                       cursor="pointer"
                       onPress={() => {
                         setSelected(option)
@@ -135,73 +137,91 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
                       }}
                       borderRadius={"$3"}
                       ai="center"
-                      bc={selected?.id === option.id ? "$color4" : "$gray3"}
                       bw={"1px"}
-                      boc={selected?.id === option.id ? "$color7" : "$gray5"}
+                      boc={selected?.id === option.id ? "$gray8" : "$gray5"}
+                      bc={selected?.id === option.id ? "$gray5" : "$gray2"}
                       hoverStyle={{ bc: "$color4", boc: "$color7" }}
                     >
                       <YStack
                         br={isAction(option) ? "$10" : "$2"}
-                        p={"$2"}
+                        p={"$2.5"}
                         bc={
                           option?.defaults?.color
                             ? option?.defaults?.color
                             : isAction(option)
-                              ? "$yellow7"
-                              : "$blue7"
+                              ? "$orange8"
+                              : "$blue8"
                         }
                       >
-                        {option?.defaults?.icon ? (
-                          <img src={getIconUrl(option.defaults.icon)} width={20} height={20} style={darkMode ? { filter: 'brightness(0) saturate(100%) invert(1)' } : {}} />
-                        ) : isAction(option) ? (
-                          <Rocket />
-                        ) : (
-                          <ScanEye />
-                        )}
+                        <PublicIcon
+                          name={option.defaults.icon}
+                          color="var(--color)"
+                          size={20}
+                        />
                       </YStack>
-                      <Text fow={selected?.id === option.id && "600"} ml="$2" fontSize="$4">{option.name}</Text>
+                      <Text ml="$2" fontSize="$4">{option.name}</Text>
                     </XStack>
                   ))}
                 </SelectGrid>
               </YStack>
             ))}
           </ScrollView>
+        </Tinted>
+
+        <YStack
+          width={600}
+          height={"100%"}
+          cursor="pointer"
+          ai="center"
+          jc="flex-start"
+          gap="$3"
+        >
           <YStack
-            width={600}
-            height={"100%"}
-            cursor="pointer"
-            ai="center"
-            jc="flex-start"
-            blw={"1px"}
-            blc={"$gray6"}
-            gap="$3"
-            pl="$3"
+            flex={1} w="100%" h="100%" jc="flex-start"
+            ai="center" px="$2" gap="$3" overflow='scroll'
+            bw={1} bc="$gray3" br="$3" p="$4" boc={"$gray6"}
+            px="$6" overflowX="hidden"
           >
-            <YStack flex={1} w="100%" h="100%" jc="flex-start" ai="center" px="$2" gap="$3" overflow='scroll'>
-              <Text fontSize="$8" fontWeight="600" mb="$2" textAlign='center'>{selected.name}</Text>
-              <Input placeholder='card name' w="100%" ref={cardNameInputRef} onChangeText={(value) => {
+            <XStack gap="$2" ai="center" jc="center">
+              <XStack mah={20} mt="-8px">
+                <PublicIcon
+                  name={selected.defaults.icon}
+                  color="var(--color)"
+                  size={20}
+                />
+              </XStack>
+              <Text fontSize="$7" fontWeight="600" mb="$2" textAlign='center'>{selected.name}</Text>
+            </XStack>
+            <Input
+              bg="$gray6"
+              placeholder={selected.defaults?.name ?? "Card name"}
+              placeholderTextColor={"$gray10"}
+              outlineColor="$gray8"
+              w="100%"
+              ref={cardNameInputRef}
+              onChangeText={(value) => {
                 setSelected(prev => {
                   return { ...prev, defaults: { ...prev.defaults, customName: value } }
                 })
-              }} />
-              {errors?.length > 0 ?
-                <YStack>
-                  {errors.map((error, index) => (
-                    <Paragraph key={"err" + index} color="$red9" fontSize="$4">{error}</Paragraph>
-                  ))}
-                </YStack>
-                : <></>
-              }
-              <YStack w="100%" pt="$5">
-                <Text fontSize="$5" fontWeight="400" color="$gray9" w="fit-content"
-                  bbw="1px" bbc="$gray9">Description</Text>
-                <Markdown readOnly={true} data={selected.defaults?.description ?? "No description provided for this card"} />
+              }}
+            />
+            {errors?.length > 0 ?
+              <YStack>
+                {errors.map((error, index) => (
+                  <Paragraph key={"err" + index} color="$red9" fontSize="$4">{error}</Paragraph>
+                ))}
               </YStack>
+              : <></>
+            }
+            <YStack w="100%" pt="$5">
+              <Text fontSize="$5" fontWeight="400" color="$gray9" w="fit-content"
+                bbw="1px" bbc="$gray9">Description</Text>
+              <Markdown readOnly={true} data={selected.defaults?.description ?? "No description provided for this card"} />
             </YStack>
           </YStack>
-        </XStack>
-        <Spacer marginBottom="$1" />
-      </Tinted>
+        </YStack>
+      </XStack>
+      <Spacer marginBottom="$1" />
     </YStack>
   )
 }
@@ -285,6 +305,7 @@ const extraCards = [
       type: 'action',
       name: 'card',
       displayResponse: true,
+      icon: 'rocket',
       description: `A reusable card that executes actions defined in its rules. It can also trigger other action-type cards on the board.
   
   #### Key Features
@@ -336,6 +357,7 @@ const extraCards = [
     defaults: {
       type: 'value',
       name: 'value',
+      icon: 'scan-eye',
       description: `A reusable card that observes value changes on the board.
 
   #### Key Features
