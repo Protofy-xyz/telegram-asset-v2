@@ -1,5 +1,5 @@
 import { YStack, XStack, Label, Button, Input, ScrollView, Select, TooltipSimple } from '@my/ui'
-import { Eye, Plus, Trash } from '@tamagui/lucide-icons'
+import { Eye, Plus, Trash, ArrowUpRightFromSquare } from '@tamagui/lucide-icons'
 import { useState, useEffect, useCallback } from 'react'
 import { InteractiveIcon } from '../InteractiveIcon'
 import { nanoid } from 'nanoid'
@@ -109,7 +109,7 @@ export const ParamsEditor = ({
     )
   }, [])
 
-  const types = ["string", "number", "boolean", "json", "array", "card", "text", "path", "state"]
+  const types = ["string", "number", "boolean", "json", "array", "text", "path", "state"]
   const inputDefProps = { backgroundColor: "$gray1", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
   const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
@@ -124,19 +124,21 @@ export const ParamsEditor = ({
           <XStack key={rowId} space="$2" alignItems="center" padding="$2" borderRadius="$2" >
             {mode == 'action' && <InteractiveIcon Icon={Eye} IconColor={visible ? 'var(--color10)' : 'var(--gray9)'} onPress={() => handleToggleVisible(rowId)} />}
 
-            <Input {...inputDefProps} placeholder={mode == 'action' ? "Param Key" : "name"} flex={1} value={paramKey} onChange={(e) => handleChangeParamKey(rowId, e.target.value)} />
+            <Input {...inputDefProps} placeholder={mode == 'action' ? "Param Key" : "name"} value={paramKey} onChange={(e) => handleChangeParamKey(rowId, e.target.value)} />
 
-            <Input {...inputDefProps} placeholder={mode == 'action' ? "Description" : "value"} flex={2} value={description} onChange={(e) => handleChangeDescription(rowId, e.target.value)} />
+            <Input {...inputDefProps} placeholder={mode == 'action' ? "Description" : "value"} value={description} onChange={(e) => handleChangeDescription(rowId, e.target.value)} />
             <XStack width="150px">
               <SelectList triggerProps={selectTriggerDefProps} title="Select type" elements={types} value={type ?? "string"} setValue={(value) => handleChangeType(rowId, value)} />
             </XStack>
             {
               mode == 'action' && (
                 type === 'text'
-                  ? <TextEditDialog f={1}>
-                    <TextEditDialog.Trigger  >
-                      <Input {...inputDefProps} placeholder="Default Value" flex={4} value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                  ?
+                  <TextEditDialog key={rowId}>
+                    <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$10"} my="$4.5" bottom={0}  >
+                      <ArrowUpRightFromSquare size={20} color={"var(--gray8)"} style={{}} />
                     </TextEditDialog.Trigger>
+                    <Input {...inputDefProps} placeholder="Default Value" value={paramKey} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
                     <TextEditDialog.Editor
                       placeholder={paramKey}
                       value={defaultValue}
@@ -153,7 +155,7 @@ export const ParamsEditor = ({
                       triggerProps={selectTriggerDefProps}
                       placeholder="Select state"
                     />
-                    : <Input {...inputDefProps} placeholder="Default Value" flex={1} value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                    : <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
               )
             }
 

@@ -145,6 +145,7 @@ export const ParamsForm = ({ data, children }) => {
                                     <TextEditDialog mx="10px" f={1}>
                                         {type == 'text'
                                             ? <TextArea
+                                                mx="10px"
                                                 className="no-drag"
                                                 name={key}
                                                 f={1}
@@ -158,6 +159,7 @@ export const ParamsForm = ({ data, children }) => {
                                                 rows={6}
                                             />
                                             : <Input
+                                                mx="10px"
                                                 className="no-drag"
                                                 name={key}
                                                 defaultValue={defaultValue}
@@ -169,7 +171,7 @@ export const ParamsForm = ({ data, children }) => {
                                                 ref={(el) => inputRefs.current[key] = el}
                                             />
                                         }
-                                        <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={0} m="$3" bottom={0}>
+                                        <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$3"} m="$3" bottom={0}>
                                             <Icon name="square-arrow-out-up-right" size={20} color={"var(--gray8)"} style={{}} />
                                         </TextEditDialog.Trigger>
                                         <TextEditDialog.Editor

@@ -41,7 +41,7 @@ const Root = ({ children, ...props }: RootProps) => {
 
     return (
         <TextEditDialogContext.Provider value={ctx}>
-            <YStack {...props}>{children}</YStack>
+           {children}
         </TextEditDialogContext.Provider>
     );
 };
