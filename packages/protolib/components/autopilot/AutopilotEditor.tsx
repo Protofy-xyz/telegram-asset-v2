@@ -459,7 +459,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
                 minimap: { enabled: false }
             }}
         />
-    }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"]]);
+    }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"], rulesConfig["loading"]]);
 
     return (
         <PanelGroup direction="horizontal">
