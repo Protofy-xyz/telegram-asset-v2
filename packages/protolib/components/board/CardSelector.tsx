@@ -184,7 +184,7 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
               <YStack w="100%" pt="$5">
                 <Text fontSize="$5" fontWeight="400" color="$gray9" w="fit-content"
                   bbw="1px" bbc="$gray9">Description</Text>
-                <Markdown readOnly={true} data={selected.defaults?.description ?? "no description provided for this card"} />
+                <Markdown readOnly={true} data={selected.defaults?.description ?? "No description provided for this card"} />
               </YStack>
             </YStack>
           </YStack>
@@ -279,13 +279,9 @@ const extraCards = [
   #### Key Features
   - Run actions from rules.
   - Chain/trigger other action cards.
-  - Parameterized execution (env, template context).
-  - Optional dry-run, retries, and timeouts (if supported by your board).
-  
-  #### Extensibility
-  - Customize parameters (schema, defaults, validation).
-  - Customize the card view (UI/render).
-  - Modify the card description to fit your board.`,
+  - Parameterized execution.
+  - Customize parameters.
+  - Customize the card view (UI/render).`,
     },
     name: 'Action',
     id: 'action'
@@ -309,6 +305,14 @@ const extraCards = [
           type: "text"
         }
       },
+      description: `A reusable card that executes actions in natural language powered by AI.
+
+   #### Key Features
+  - Run actions based on AI.
+  - Chain/trigger other action cards.
+  - Parameterized execution.
+  - Customize parameters.
+  - Customize the card view (UI/render).`,
       displayIcon: false,
       displayButton: true,
       displayButtonIcon: true,
@@ -320,7 +324,14 @@ const extraCards = [
   {
     defaults: {
       type: 'value',
-      name: 'value'
+      name: 'value',
+      description: `A reusable card that observes value changes on the board.
+
+  #### Key Features
+  - Real time updates.
+  - Customize parameters.
+  - Rule execution on each value change.
+  - Customize the card view (UI/render).`
     },
     name: 'Observer',
     id: 'value'
