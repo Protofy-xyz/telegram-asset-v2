@@ -310,7 +310,7 @@ const getExecuteAction = (board, rawActions) => {
 const BoardStateView = ({ board }) => {
   const states = useProtoStates({}, 'states/boards/' + board.name + '/#', 'states')
   const data = states?.boards?.[board.name]
-  return <XStack p={"$4"} flex={1} flexDirection="column" gap="$4">
+  return <XStack p={"$4"} flex={1} flexDirection="column" gap="$4" overflow="auto">
     {data && <JSONView src={data ?? {}} />}
     {!data && <Center>
       <Paragraph size="$8" o={0.4}>No states found for this board</Paragraph>
