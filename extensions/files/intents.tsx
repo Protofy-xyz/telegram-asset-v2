@@ -434,6 +434,51 @@ const MonacoViewer = ({ path, extraIcons }) => {
     </AsyncView>
   );
 };
+
+const TopRightIcons = ({ children }) => (
+  <XStack position="absolute" right={10} top={-33} gap="$2" zIndex={2}>
+    {children}
+  </XStack>
+)
+
+const ImageViewer = ({ path, extraIcons }) => {
+  const url = ('/api/core/v1/files/' + path).replace(/\/+/g, '/')
+  return (
+     <YStack f={1} w="100%" position="relative" p="$4" alignItems="center" justifyContent="center">
+      {!!extraIcons && <TopRightIcons>{extraIcons}</TopRightIcons>}
+      <XStack ai="center" jc="center" f={1} h="100%" p="$2">
+        <img
+          src={url}
+          style={{ maxWidth: '100%', maxHeight: '84vh', objectFit: 'contain', borderRadius: 8 }}
+        />
+      </XStack>
+    </YStack>
+  )
+}
+
+
+const VideoViewer = ({ path, extraIcons }) => {
+  const url = ('/api/core/v1/files/' + path).replace(/\/+/g, '/')
+  return (
+     <YStack f={1} w="100%" position="relative" p="$4" alignItems="center" justifyContent="center">
+      {!!extraIcons && <TopRightIcons>{extraIcons}</TopRightIcons>}
+      <XStack ai="center" jc="center" f={1} h="100%" p="$2">
+        <video src={url} controls style={{ maxWidth: '100%', maxHeight: '84vh', borderRadius: 8 }} />
+      </XStack>
+    </YStack>
+  )
+}
+
+const AudioViewer = ({ path, extraIcons }) => {
+  const url = ('/api/core/v1/files/' + path).replace(/\/+/g, '/')
+  return (
+    <YStack f={1} w="100%" position="relative" p="$4" alignItems="center" justifyContent="center">
+      {!!extraIcons && <TopRightIcons>{extraIcons}</TopRightIcons>}
+      <audio src={url} controls style={{ maxWidth: '100%', maxHeight: '84vh', borderRadius: 8 }} />
+    </YStack>
+  )
+}
+
 export const processFilesIntent = ({ action, domain, data }: IntentType) => {
   const { mime } = data
   const type = mime ? mime.split('/')[0] : 'text'
@@ -460,10 +505,10 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
       supportIcons: true
     }
   } else if (type == 'image') {
-    return { component: <img src={url} />, widget: 'image' }
+    return { component: <ImageViewer {...data} />, widget: 'image', supportIcons: true }
   } else if (type == 'video') {
-    return { component: <video src={url} controls />, widget: 'video' }
+    return { component: <VideoViewer {...data} />, widget: 'video', supportIcons: true }
   } else if (type == 'audio') {
-    return { component: <audio src={url} controls />, widget: 'audio' }
+    return { component: <AudioViewer {...data} />, widget: 'audio', supportIcons: true }
   }
 }
