@@ -33,7 +33,7 @@ const cookieJSONStorage = createJSONStorage(() => ({
 
             // If there is no token -> logout (delete cookie)
             if (!obj.token) {
-                document.cookie = `${key}=;path=/;max-age=0;Secure;SameSite=Lax`
+                document.cookie = `${key}=;path=/;max-age=0;SameSite=Lax`
                 return
             }
 
@@ -48,19 +48,19 @@ const cookieJSONStorage = createJSONStorage(() => ({
 
             if (maxAgeSeconds > 0) {
                 // Update cookie with new sliding expiration
-                document.cookie = `${key}=${encodeURIComponent(JSON.stringify(obj))};path=/;max-age=${maxAgeSeconds};Secure;SameSite=Lax`
+                document.cookie = `${key}=${encodeURIComponent(JSON.stringify(obj))};path=/;max-age=${maxAgeSeconds};SameSite=Lax`
             } else {
                 // Absolute timeout reached, delete cookie
-                document.cookie = `${key}=;path=/;max-age=0;Secure;SameSite=Lax`
+                document.cookie = `${key}=;path=/;max-age=0;SameSite=Lax`
             }
         } catch {
             // Defensive fallback: session cookie without explicit expiration
-            document.cookie = `${key}=${encodeURIComponent(value ?? '')};path=/;Secure;SameSite=Lax`
+            document.cookie = `${key}=${encodeURIComponent(value ?? '')};path=/;SameSite=Lax`
         }
     },
     removeItem: (key: string) => {
         if (typeof document !== 'undefined') {
-            document.cookie = `${key}=;path=/;max-age=0;Secure;SameSite=Lax`
+            document.cookie = `${key}=;path=/;max-age=0;SameSite=Lax`
         }
     },
 }))
