@@ -1030,7 +1030,7 @@ export const BoardView = ({ workspace, pageState, initialItems, itemData, pageSe
 
   const [iconsData, setIconsData] = useState(icons ?? getPendingResult('pending'))
   usePendingEffect((s) => { API.get({ url: `/api/core/v1/icons` }, s) }, setIconsData, icons)
-  useIsAdmin(() => '/workspace/auth/login?return=' + document?.location?.pathname + (document?.location?.search ? '?' + document?.location?.search : ''))
+  useIsAdmin(() => '/workspace/auth/login?return=' + document?.location?.pathname + (document?.location?.search ?? ''))
 
   return (
     <BoardViewLoader

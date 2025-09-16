@@ -17,7 +17,7 @@ const SettingsConnector = dynamic(() => import('@extensions/settings/components/
 export const AdminPage = forwardRef(({ pageSession, title, children, integratedChat = false, actionBar = null, onActionBarEvent = (e) => { } }: any, ref) => {
   useSession(pageSession)
 
-  useIsAdmin(() => '/workspace/auth/login?return=' + document?.location?.pathname + (document?.location?.search ? '?' + document?.location?.search : ''))
+  useIsAdmin(() => '/workspace/auth/login?return=' + document?.location?.pathname + (document?.location?.search ?? ''))
   const router = useRouter()
 
   const [ready, setReady] = useState(false);
