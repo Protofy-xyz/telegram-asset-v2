@@ -1,4 +1,4 @@
-import { YStack, XStack, Spacer, ScrollView, useThemeName, Input, Text, Button } from '@my/ui'
+import { YStack, XStack, Spacer, ScrollView, useThemeName, Input, Text, Button, Paragraph } from '@my/ui'
 import { AlertDialog } from '../../components/AlertDialog';
 import { Slides } from '../../components/Slides'
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -17,7 +17,7 @@ const SelectGrid = ({ children }) => {
   </XStack>
 }
 
-const FirstSlide = ({ selected, setSelected, options }) => {
+const FirstSlide = ({ selected, setSelected, options, errors }) => {
   const themeName = useThemeName()
   const { resolvedTheme } = useThemeSetting()
   const darkMode = resolvedTheme == 'dark'
@@ -173,6 +173,14 @@ const FirstSlide = ({ selected, setSelected, options }) => {
                   return { ...prev, defaults: { ...prev.defaults, customName: value } }
                 })
               }} />
+              {errors?.length > 0 ?
+                <YStack>
+                  {errors.map((error, index) => (
+                    <Paragraph key={"err" + index} color="$red9" fontSize="$4">{error}</Paragraph>
+                  ))}
+                </YStack>
+                : <></>
+              }
               <YStack w="100%" pt="$5">
                 <Text fontSize="$5" fontWeight="400" color="$gray9" w="fit-content"
                   bbw="1px" bbc="$gray9">Readme</Text>
@@ -420,7 +428,7 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
             {
               name: "Create new card",
               component: (
-                <FirstSlide options={cards} selected={selectedCard} setSelected={setSelectedCard} />
+                <FirstSlide options={cards} selected={selectedCard} setSelected={setSelectedCard} errors={errors} />
               ),
             },
             // {
