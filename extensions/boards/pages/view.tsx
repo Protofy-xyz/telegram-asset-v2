@@ -32,7 +32,7 @@ import { FloatingWindow } from '../components/FloatingWindow'
 import { useAtom } from 'protolib/lib/Atom'
 import { AppState } from 'protolib/components/AdminPanel'
 import { useLog } from '@extensions/logs/hooks/useLog'
-import { isHighlightedCard } from '@extensions/boards/store/boardStore'
+import { useIsHighlightedCard } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 
@@ -176,7 +176,7 @@ const ActionCard = ({
 }) => {
   const [status, setStatus] = useState<'idle' | 'running' | 'error'>('idle')
   const lockRef = useRef(false)
-  const highlighted = isHighlightedCard(board?.name, data?.name)
+  const highlighted = useIsHighlightedCard(board?.name, data?.name)
 
   console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
 
