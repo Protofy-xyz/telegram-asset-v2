@@ -34,6 +34,7 @@ import { AppState } from 'protolib/components/AdminPanel'
 import { useLog } from '@extensions/logs/hooks/useLog'
 import { isHighlightedCard } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
+import { scrollToAndHighlight } from '../utils/animations'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -579,8 +580,12 @@ const Board = ({ board, icons }) => {
 
     // animate to the bottom
     setTimeout(() => {
-      document.getElementById(uniqueKey).scrollIntoView();
-    }, 500)
+      scrollToAndHighlight(document.getElementById(uniqueKey), {
+        duration: 1300,
+        color: 'var(--color6)',
+        ring: 2,
+      });
+    }, 500);
   };
 
   const setCardContent = (key, content) => {
@@ -893,7 +898,7 @@ const Board = ({ board, icons }) => {
                   formatOnType: true
                 }}
               />
-              : <YStack f={1} p={"$6"}>{cards.length > 0 ? <DashboardGrid           
+              : <YStack f={1} p={"$6"}>{cards.length > 0 ? <DashboardGrid
                 items={cards}
                 settings={board.settings}
                 layouts={boardRef.current.layouts}
