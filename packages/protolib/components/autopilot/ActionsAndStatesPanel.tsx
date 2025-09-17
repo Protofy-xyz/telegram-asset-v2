@@ -121,7 +121,7 @@ function filterObjectBySearch(data, search) {
     return Object.keys(result).length > 0 ? result : undefined;
 }
 
-export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states }) => {
+export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode }) => {
 
     const [inputMode, setInputMode] = useState<"json" | "formatted">("formatted")
     const [search, setSearch] = useState('')
@@ -133,7 +133,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
     const showActionsTabs = false
     const showStatesTabs = false
 
-    console.log("ActionsAndStatesPanel:", {actions, states});
+    console.log("ActionsAndStatesPanel:", { actions, states });
 
     const cleanedActions = useMemo(() => {
         const cleaned = {};
@@ -163,6 +163,31 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
     console.log("filteredStateData:", filteredStateData);
     const actionData = filteredData
 
+    const copy = (text, mode) => {
+        if (mode === "code") {
+            const val = actions[board.name][text];
+            if (!val || !val.url) return '';
+            const targetBoard = getBoardIdFromActionUrl(val.url);
+            let copyVal = val.url;
+            if (targetBoard && targetBoard === board?.name) {
+                copyVal = val.name
+            }
+
+            return `await executeAction({name: "${copyVal}", params: {
+${Object.entries(val.params || {}).map(([key, value]) => {
+                return `\t${key}: '', // ${value}`;
+            }).join('\n')}
+}})`
+        }
+
+        if (mode === "flows") { } // implement flows copy mode
+        if (mode === "rules") {
+            return "<" + text + ">"
+        }
+
+        return text
+    }
+
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
             {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'var(--gray3)' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
@@ -182,24 +207,10 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
 
     const actionsPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
-            {inputMode === "formatted" && <FormattedView hideValue={true} onCopy={text => {
-                const val = actions[board.name][text];
-                if (!val || !val.url) return '';
-                const targetBoard = getBoardIdFromActionUrl(val.url);
-                let copyVal = val.url;
-                if (targetBoard && targetBoard === board?.name) {
-                    copyVal = val.name
-                }
-
-                return `await executeAction({name: "${copyVal}", params: {
-${Object.entries(val.params || {}).map(([key, value]) => {
-                    return `\t${key}: '', // ${value}`;
-                }).join('\n')}
-}})`
-            }} data={actionData} />}
+            {inputMode === "formatted" && <FormattedView hideValue={true} onCopy={(text) => copy(text, copyMode)} data={actionData} />}
             {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'var(--gray3)' }} src={filteredData} />}
         </YStack>
-    }, [filteredData, actionData, inputMode, board?.name]);
+    }, [filteredData, actionData, inputMode, board?.name, copyMode]);
 
 
     const actionsTab = [

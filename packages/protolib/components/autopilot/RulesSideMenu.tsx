@@ -39,6 +39,7 @@ function generateStateDeclarations(obj) {
 export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo, boardRef, board, actions, states, resolvedTheme }) => {
     const boardStates = states?.boards ? states.boards[board.name] : {}
     const boardActions = actions?.boards ? actions.boards[board.name] : {}
+    const [rulesMode, setRulesMode] = useState(null)
 
     const boardStatesDeclarations = useMemo(() => {
         return generateStateDeclarations(boardStates)
@@ -78,6 +79,7 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
     const theme = useTheme()
     const flows = useMemo(() => {
         return <CodeView
+            onModeChange={(currMode) => setRulesMode(currMode)}
             onApplyRules={async (rules) => {
                 try {
                     boardRef.current.rules = rules
@@ -160,25 +162,26 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
         />
     }, [resolvedTheme, board.name, theme, editedCode.current, isAIEnabled, hasKey]);
     return <PanelGroup direction="horizontal" style={{ height: '100%' }}>
-  {/* Izquierda: tu contenido actual */}
-  <ActionsAndStatesPanel
-    board={board}
-    panels={['actions', 'states']}
-    actions={{ [board.name]: boardActions }}
-    states={{ [board.name]: boardStates }}
-  />
-  <CustomPanelResizeHandle direction="vertical" />
+        {/* Izquierda: tu contenido actual */}
+        <ActionsAndStatesPanel
+            board={board}
+            panels={['actions', 'states']}
+            actions={{ [board.name]: boardActions }}
+            states={{ [board.name]: boardStates }}
+            copyMode={rulesMode}
+        />
+        <CustomPanelResizeHandle direction="vertical" />
 
-  <Panel defaultSize={70} minSize={20}>
-    <YStack w="100%" backgroundColor="transparent" backdropFilter="blur(5px)" height="100%">
-      <Tinted>
-        <YStack flex={1} alignItems="center" justifyContent="center">
-          {flows}
-        </YStack>
-      </Tinted>
-    </YStack>
-  </Panel>
+        <Panel defaultSize={70} minSize={20}>
+            <YStack w="100%" backgroundColor="transparent" backdropFilter="blur(5px)" height="100%">
+                <Tinted>
+                    <YStack flex={1} alignItems="center" justifyContent="center">
+                        {flows}
+                    </YStack>
+                </Tinted>
+            </YStack>
+        </Panel>
 
 
-</PanelGroup>
+    </PanelGroup>
 }
