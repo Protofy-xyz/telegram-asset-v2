@@ -151,6 +151,7 @@ export const ParamsEditor = ({
                     {...inputDefProps}
                     placeholder="Default Value"
                     value={defaultValue}
+                    pr="$7"
                     onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)}
                     // si la key y esta abierto el popover mover seleccion del del state
                     onKeyPress={(e) => {

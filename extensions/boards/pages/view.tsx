@@ -139,7 +139,7 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
               <YStack>
                 <MenuButton text="Settings" Icon={Settings} onPress={() => onEdit("config")} />
                 <MenuButton text="Edit Rules" Icon={ClipboardList} onPress={() => onEdit("rules")} />
-                <MenuButton text="Edit Input" Icon={FileInput} onPress={() => onEdit("params")} />
+                <MenuButton text="Edit Inputs" Icon={FileInput} onPress={() => onEdit("params")} />
                 <MenuButton text="Edit UI" Icon={FileCode} onPress={() => onEdit("view")} />
                 <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
                 <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />

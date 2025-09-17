@@ -88,7 +88,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
     },
     {
       id: 'params',
-      label: 'Input',
+      label: 'Inputs',
       icon: <FileInput size={"$1"} />,
       content: <ParamsEditor
         params={cardData.params || {}}
