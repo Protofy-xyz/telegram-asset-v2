@@ -12,7 +12,7 @@ import { useKeyState } from '../KeySetter'
 import { RulesKeySetter } from './RulesKeySetter'
 import { Panel, PanelGroup } from "react-resizable-panels";
 import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
-import { ActionsAndStatesPanel } from './AutopilotEditor';
+import { ActionsAndStatesPanel } from './ActionsAndStatesPanel';
 
 
 function generateStateDeclarations(obj) {
