@@ -164,6 +164,10 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
     return <PanelGroup direction="horizontal" style={{ height: '100%' }}>
         {/* Izquierda: tu contenido actual */}
         <ActionsAndStatesPanel
+            colors={{
+                bgColor: "$bgContent",
+                inputBgColor: "$bgPanel"
+            }}
             board={board}
             panels={['actions', 'states']}
             actions={{ [board.name]: boardActions }}

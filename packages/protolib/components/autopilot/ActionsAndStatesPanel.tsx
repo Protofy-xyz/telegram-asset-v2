@@ -55,9 +55,21 @@ const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hi
                 const value = line[copyIndex]
 
                 return (
-                    <XStack key={keyLabel + index} cursor="pointer" p="$2" px="$4" bg="$gray2" gap="$2" br="$4" hoverStyle={{ backgroundColor: "$color5" }} onPress={() => handleCopy(value, index)}>
+                    <XStack
+                        key={keyLabel + index}
+                        cursor="pointer"
+                        p="$2"
+                        px="$4"
+                        bg="transparent"
+                        gap="$2"
+                        br="$4"
+                        hoverStyle={{ backgroundColor: "$color5" }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--gray5)'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        onPress={() => handleCopy(value, index)}
+                    >
                         {isCopied && (
-                            <Text fos="$4" color="$color7" pos="absolute" left="$4" >
+                            <Text fos="$4" color="$gray10" pos="absolute" left="$4" >
                                 copied to clipboard!
                             </Text>
                         )}
@@ -121,7 +133,7 @@ function filterObjectBySearch(data, search) {
     return Object.keys(result).length > 0 ? result : undefined;
 }
 
-export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode }) => {
+export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode, colors = {} }) => {
 
     const [inputMode, setInputMode] = useState<"json" | "formatted">("formatted")
     const [search, setSearch] = useState('')
@@ -189,7 +201,7 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
 
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
-            {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'var(--gray3)' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
+            {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
                 const path = 'board' + copy.namespace
                     .filter(v => v)
                     .map(k => `?.[${JSON.stringify(k)}]`)
@@ -207,7 +219,7 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
     const actionsPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
             {inputMode === "formatted" && <FormattedView hideValue={true} onCopy={(text) => copy(text, copyMode)} data={actionData} />}
-            {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'var(--gray3)' }} src={filteredData} />}
+            {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'transparent' }} src={filteredData} />}
         </YStack>
     }, [filteredData, actionData, inputMode, board?.name, copyMode]);
 
@@ -238,11 +250,11 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
     return <Panel defaultSize={30}>
         <PanelGroup direction="vertical">
             {panels && panels?.includes('actions') && <Panel defaultSize={50} minSize={20} maxSize={80}>
-                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor="$gray3" overflow="hidden" >
+                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor={colors["bgColor"] ?? "$gray3"} overflow="hidden" >
                     <XStack pb={8}>
                         <Search pos="absolute" left="$3" top={14} size={16} />
                         <Input
-                            bg="$gray1"
+                            bg={colors["inputBgColor"] ?? "$gray1"}
                             color="$gray12"
                             paddingLeft="$7"
                             bw={0}
@@ -262,14 +274,14 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
                         <XStack gap="$2">
                             <Button
                                 icon={AlignLeft}
-                                bc={inputMode === "formatted" ? "$color5" : "$gray4"}
+                                bc={inputMode === "formatted" ? "$gray7" : "$gray4"}
                                 scaleIcon={1.6}
                                 size="$2"
                                 onPress={() => setInputMode("formatted")}
                             />
                             <Button
                                 icon={Braces}
-                                bc={inputMode === "json" ? "$color5" : "$gray4"}
+                                bc={inputMode === "json" ? "$gray7" : "$gray4"}
                                 scaleIcon={1.6}
                                 size="$2"
                                 onPress={() => setInputMode("json")}
@@ -296,12 +308,12 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
             </Panel>}
             <CustomPanelResizeHandle direction="horizontal" />
             <Panel defaultSize={50} minSize={20} maxSize={80}>
-                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor="$gray3" overflow="hidden" >
+                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor={colors["bgColor"] ?? "$gray3"} overflow="hidden" >
                     <XStack pb={8}>
                         <Search pos="absolute" left="$3" top={14} size={16} />
                         <Input
-                            bg="$gray1"
-                            color="$gray12"
+                            bg={colors["inputBgColor"] ?? "$gray1"}
+                            color={"$gray12"}
                             paddingLeft="$7"
                             bw={0}
                             h="47px"
