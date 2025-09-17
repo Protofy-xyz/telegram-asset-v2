@@ -1,6 +1,6 @@
-import { YStack, XStack, Label, Button, Input, ScrollView, Select, TooltipSimple } from '@my/ui'
-import { Eye, Plus, Trash, ArrowUpRightFromSquare, Expand, Maximize, Maximize2 } from '@tamagui/lucide-icons'
-import { useState, useEffect, useCallback } from 'react'
+import { YStack, XStack, Label, Button, Input, ScrollView, TooltipSimple, Popover } from '@my/ui'
+import { Eye, Plus, Trash, Maximize2, Cable } from '@tamagui/lucide-icons'
+import { useState, useCallback } from 'react'
 import { InteractiveIcon } from '../InteractiveIcon'
 import { nanoid } from 'nanoid'
 import { useUpdateEffect } from 'usehooks-ts'
@@ -15,6 +15,7 @@ export const ParamsEditor = ({
   mode = 'action',
   availableStates = [],
 }) => {
+  const [statesVisible, setStatesVisible] = useState<string | undefined>()
   const [rows, setRows] = useState(() => {
     const allKeys = new Set([...Object.keys(params), ...Object.keys(configParams)])
 
@@ -132,21 +133,42 @@ export const ParamsEditor = ({
             </XStack>
             {
               mode == 'action' && (
-                //  type === 'state'
-                //   ? <SelectList
-                //     title="Select state"
-                //     elements={(availableStates && availableStates.length > 0) ? availableStates.map(s => "board." + s) : []}
-                //     value={defaultValue}
-                //     setValue={(value) => handleChangeDefaultValue(rowId, value)}
-                //     triggerProps={selectTriggerDefProps}
-                //     placeholder="Select state"
-                //   />
-                //  :
                 <TextEditDialog key={rowId}>
-                  <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$10"} my="$4.5" bottom={0} cursor='pointer' >
-                    <Maximize2 size={20} color={"var(--gray8)"} style={{}} />
-                  </TextEditDialog.Trigger>
-                  <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                  <Popover placement='bottom-start' open={statesVisible == rowId} onOpenChange={(next) => setStatesVisible(next ? rowId : null)}>
+                    <Popover.Trigger disabled={true}>
+                      <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" r={0} m="$3" bottom={0} cursor='pointer' >
+                        <Maximize2 size={20} color={"var(--gray8)"} style={{}} />
+                      </TextEditDialog.Trigger>
+                      <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                    </Popover.Trigger>
+                    <Popover.Content ai="flex-start" miw="200px" f={1} px={0} w={"100%"} bc={"$gray1"} py="$2" gap={"$2"}>
+                      <Label lineHeight={"$2"} pl="$3" col="$gray10">States</Label>
+                      <YStack overflow="auto" maxHeight={200}>
+                        {(availableStates && availableStates.length > 0)
+                          ? availableStates.map(s => (
+                            <XStack
+                              px="$3"
+                              onHoverIn={e => e.currentTarget.style.backgroundColor = "var(--gray4)"}
+                              onHoverOut={e => e.currentTarget.style.backgroundColor = "transparent"}
+                              hoverStyle={{ bc: "$gray4" }} gap={"$2"} alignItems="center" justifyContent="space-between" width="100%"
+                              onPress={() => { handleChangeDefaultValue(rowId, "board." + s); setStatesVisible(null) }}
+                            >
+                              <Label maw={300} whiteSpace='nowrap' overflow='hidden' textOverflow='ellipsis' >{s}</Label>
+                            </XStack>
+                          ))
+                          : <Label px="$3" o={0.6}>No available states</Label>}
+                      </YStack>
+                    </Popover.Content>
+                    <InteractiveIcon
+                      ml="$2"
+                      mt="4px"
+                      Icon={Cable}
+                      onPress={() =>
+                        statesVisible === rowId
+                          ? setStatesVisible(undefined)
+                          : setStatesVisible(rowId)
+                      } />
+                  </Popover>
                   <TextEditDialog.Editor
                     textAreaProps={{ bc: "$gray4" }}
                     placeholder={paramKey}
@@ -158,7 +180,7 @@ export const ParamsEditor = ({
               )
             }
 
-            <InteractiveIcon Icon={Trash} IconColor="var(--red10)" onPress={() => handleRemoveParam(rowId)} />
+            <InteractiveIcon mt="4px" Icon={Trash} IconColor="var(--red10)" onPress={() => handleRemoveParam(rowId)} />
           </XStack>
         ))}
         <TooltipSimple label="Add param" delay={{ open: 500, close: 0 }} restMs={0}>
