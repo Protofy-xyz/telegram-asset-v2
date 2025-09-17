@@ -23,26 +23,26 @@ export default (app, context) => {
     }
 
     const registerCards = async (context) => {
-        addCard({
-            group: 'chatGPT',
-            tag: "chat",
-            id: 'chatGPT__chat_response',
-            templateName: "chatGPT last chat response",
-            name: "response",
-            defaults: {
-                width: 2,
-                height: 8,
-                name: "chatGPT_last_chat_response",
-                icon: "openai",
-                color: "#74AA9C",
-                description: "ChatGPT last chat response",
-                rulesCode: `return states?.chatGPT?.conversation?.chatResponse`,
-                type: 'value',
-                html: "return markdown(data)",
-            },
-            emitEvent: true,
-            token: await getServiceToken()
-        })
+        // addCard({
+        //     group: 'chatGPT',
+        //     tag: "chat",
+        //     id: 'chatGPT__chat_response',
+        //     templateName: "chatGPT last chat response",
+        //     name: "response",
+        //     defaults: {
+        //         width: 2,
+        //         height: 8,
+        //         name: "chatGPT_last_chat_response",
+        //         icon: "openai",
+        //         color: "#74AA9C",
+        //         description: "ChatGPT last chat response",
+        //         rulesCode: `return states?.chatGPT?.conversation?.chatResponse`,
+        //         type: 'value',
+        //         html: "return markdown(data)",
+        //     },
+        //     emitEvent: true,
+        //     token: await getServiceToken()
+        // })
 
         addCard({
             group: 'chatGPT',
