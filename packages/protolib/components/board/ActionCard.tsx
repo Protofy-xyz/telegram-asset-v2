@@ -126,7 +126,7 @@ export const ParamsForm = ({ data, children }) => {
                             }}
                         >
                             <Text ml="20px" mb="$2">{key}</Text>
-                            {(type == 'text' || !['json', 'array', 'boolean', 'path', 'state'].includes(type)) &&
+                            {(type == 'text' || !['json', 'array', 'boolean', 'path'].includes(type)) &&
                                 <TextEditDialog f={1}>
                                     {type == 'text'
                                         ? <TextArea
@@ -148,8 +148,8 @@ export const ParamsForm = ({ data, children }) => {
                                             onChangeText={(val) => setParam(key, val)}
                                         />
                                     }
-                                    <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$2"} m="$3" bottom={0}>
-                                        <Icon name="square-arrow-out-up-right" size={20} color={"var(--gray8)"} style={{}} />
+                                    <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$2"} m="$3" bottom={0} cursor="pointer" >
+                                        <Icon name="maximize-2" size={20} color={"var(--gray8)"} style={{}} />
                                     </TextEditDialog.Trigger>
                                     <TextEditDialog.Editor
                                         placeholder={key}
@@ -159,7 +159,7 @@ export const ParamsForm = ({ data, children }) => {
                                     />
                                 </TextEditDialog>
                             }
-                            {type == 'state' && (
+                            {/* {type == 'state' && (
                                 <XStack mx={"$3"} f={1}>
                                     <SelectList
                                         title="Select state"
@@ -171,7 +171,7 @@ export const ParamsForm = ({ data, children }) => {
 
                                     />
                                 </XStack>
-                            )}
+                            )} */}
 
                             {(type == 'json' || type == 'array')
                                 && <XStack

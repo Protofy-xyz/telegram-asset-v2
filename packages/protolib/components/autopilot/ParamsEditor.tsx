@@ -1,5 +1,5 @@
 import { YStack, XStack, Label, Button, Input, ScrollView, Select, TooltipSimple } from '@my/ui'
-import { Eye, Plus, Trash, ArrowUpRightFromSquare } from '@tamagui/lucide-icons'
+import { Eye, Plus, Trash, ArrowUpRightFromSquare, Expand, Maximize, Maximize2 } from '@tamagui/lucide-icons'
 import { useState, useEffect, useCallback } from 'react'
 import { InteractiveIcon } from '../InteractiveIcon'
 import { nanoid } from 'nanoid'
@@ -132,30 +132,29 @@ export const ParamsEditor = ({
             </XStack>
             {
               mode == 'action' && (
-                type === 'text'
-                  ?
-                  <TextEditDialog key={rowId}>
-                    <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$10"} my="$4.5" bottom={0}  >
-                      <ArrowUpRightFromSquare size={20} color={"var(--gray8)"} style={{}} />
-                    </TextEditDialog.Trigger>
-                    <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
-                    <TextEditDialog.Editor
-                      placeholder={paramKey}
-                      value={defaultValue}
-                      readValue={() => defaultValue}
-                      onChange={(value) => handleChangeDefaultValue(rowId, value)}
-                    />
-                  </TextEditDialog>
-                  : type === 'state'
-                    ? <SelectList
-                      title="Select state"
-                      elements={(availableStates && availableStates.length > 0) ? availableStates.map(s => "board." + s) : []}
-                      value={defaultValue}
-                      setValue={(value) => handleChangeDefaultValue(rowId, value)}
-                      triggerProps={selectTriggerDefProps}
-                      placeholder="Select state"
-                    />
-                    : <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                //  type === 'state'
+                //   ? <SelectList
+                //     title="Select state"
+                //     elements={(availableStates && availableStates.length > 0) ? availableStates.map(s => "board." + s) : []}
+                //     value={defaultValue}
+                //     setValue={(value) => handleChangeDefaultValue(rowId, value)}
+                //     triggerProps={selectTriggerDefProps}
+                //     placeholder="Select state"
+                //   />
+                //  :
+                <TextEditDialog key={rowId}>
+                  <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$10"} my="$4.5" bottom={0} cursor='pointer' >
+                    <Maximize2 size={20} color={"var(--gray8)"} style={{}} />
+                  </TextEditDialog.Trigger>
+                  <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                  <TextEditDialog.Editor
+                    textAreaProps={{ bc: "$gray4" }}
+                    placeholder={paramKey}
+                    value={defaultValue}
+                    readValue={() => defaultValue}
+                    onChange={(value) => handleChangeDefaultValue(rowId, value)}
+                  />
+                </TextEditDialog>
               )
             }
 
