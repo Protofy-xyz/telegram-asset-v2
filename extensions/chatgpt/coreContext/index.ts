@@ -51,7 +51,7 @@ export const chatGPTSession = async ({
     done = (response, message) => { },
     chunk = (chunk: any) => { },
     error = (err) => { },
-    model = "gpt-5",
+    model = "gpt-4o", //"gpt-5",
     max_tokens = 4096,
     ...props
 }: ChatGPTRequest) => {
