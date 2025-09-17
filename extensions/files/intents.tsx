@@ -178,7 +178,7 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
   </AsyncView>
 }
 
-export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPanels = false, extraPanels = [], leftIcons = <></>, icons = <></>, disableFlowMode = false, masksPath = undefined, defaultMode = 'flow', monacoOnMount = (editor, monaco) => { }, monacoInstance = null, monacoProps = {}, monacoOptions = {}, onCodeChange = (code) => { }, onFlowChange = (code) => { }, fileContent = null, path, flowsPath = undefined, rules = [], onApplyRules = async (rules) => { }, sourceCode, isModified = false, setIsModified = (x) => { }, query = {}, children = <></>, viewPort = undefined }) => {
+export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPanels = false, extraPanels = [], leftIcons = <></>, icons = <></>, disableFlowMode = false, masksPath = undefined, defaultMode = 'flow', monacoOnMount = (editor, monaco) => { }, monacoInstance = null, monacoProps = {}, monacoOptions = {}, onCodeChange = (code) => { }, onFlowChange = (code) => { }, fileContent = null, path, flowsPath = undefined, rules = [], onApplyRules = async (rules) => { }, sourceCode, isModified = false, setIsModified = (x) => { }, query = {}, children = <></>, viewPort = undefined, onModeChange = (mode) => { } }) => {
   pathname = pathname ?? usePathname();
   const theme = useTheme()
   const tint = useTint().tint
@@ -202,6 +202,10 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
       {...monacoProps}
     />
   }, [sourceCode.current, path, resolvedTheme])
+
+  useEffect(() => {
+    onModeChange(mode)
+  }, [mode])
 
   const getFlows = () => {
     return <Flows

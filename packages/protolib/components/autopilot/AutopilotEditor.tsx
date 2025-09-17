@@ -3,7 +3,7 @@ import { YStack, useTheme } from "@my/ui";
 import { Tinted } from "../../components/Tinted";
 import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
 import { useThemeSetting } from '@tamagui/next-theme'
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSettingValue } from "@extensions/settings/hooks";
 import { CodeView } from '@extensions/files/intents';
 import { ActionsAndStatesPanel } from "./ActionsAndStatesPanel";
@@ -59,6 +59,7 @@ const generateParamsDeclaration = (cardData) => {
 export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'states'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {} }) => {
     const { resolvedTheme } = useThemeSetting()
     const isAIEnabled = useSettingValue('ai.enabled', false);
+    const [rulesMode, setRulesMode] = useState(null)
 
     const declarations = useMemo(() => {
         const decl = generateStatesDeclaration('states', { board: states });
@@ -132,12 +133,13 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
                 lineNumbers: true,
                 minimap: { enabled: false }
             }}
+            onModeChange={(currMode) => setRulesMode(currMode)}
         />
     }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"], rulesConfig["loading"]]);
 
     return (
         <PanelGroup direction="horizontal">
-            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} />
+            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} />
 
             <CustomPanelResizeHandle direction="vertical" />
 
