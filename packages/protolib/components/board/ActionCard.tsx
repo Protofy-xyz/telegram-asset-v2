@@ -243,6 +243,7 @@ export const ParamsForm = ({ data, children }) => {
                         p={"10px"}
                         textAlign="center"
                         bc={data.color}
+                        hoverStyle={{ bc: data.color, filter: "brightness(1.05)" }}
                         onHoverIn={(e) => e.currentTarget.style.filter = "brightness(1.05)"}
                         onHoverOut={(e) => e.currentTarget.style.filter = "none"}
                         pressStyle={{ bc: data.color, filter: "brightness(0.85)" }}

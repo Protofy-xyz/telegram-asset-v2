@@ -4,7 +4,7 @@ export function scrollToAndHighlight(
         duration = 1200,
         block = 'center',
         color = 'rgba(250, 204, 21, 0.5)', // amber
-        ring = 10, // grosor del halo
+        ring = 10, // width of the halo ring
     }: {
         duration?: number;
         block?: ScrollLogicalPosition;
