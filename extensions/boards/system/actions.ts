@@ -75,6 +75,17 @@ const castValueToType = (value, type, boardStates) => {
     }
 }
 
+const isState = (value) => {
+    if (typeof value !== 'string') return false;
+    // check if value starts with 'board.' or board?. or board[ or board?.[
+    return value.startsWith('board.') || value.startsWith('board?.') || value.startsWith('board[') || value.startsWith('board?.[');
+}
+
+const getStateName = (value) => {
+    const statePath = toPath(value)
+    return statePath[1]
+}
+
 export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
     const actions = await getBoardCardActions(boardId);
     const action = actions.find(a => a.name === action_or_card_id);
@@ -126,8 +137,8 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
     for (const param in params) {
         if (action.configParams && action.configParams[param]) {
             // si action.configParams[param] es tipo string y empieza por board. cogemos el valor del state del board
-            if (typeof action.configParams[param].defaultValue === 'string' && action.configParams[param].defaultValue.startsWith('board.')) {
-                const stateName = action.configParams[param].defaultValue.substring(6);
+            if (typeof action.configParams[param].defaultValue === 'string' && isState(action.configParams[param].defaultValue)) {
+                const stateName = getStateName(action.configParams[param].defaultValue);
                 const states = await context.state.getStateTree();
                 if (states?.boards?.[boardId] && states.boards[boardId][stateName] !== undefined) {
                     params[param] = states.boards[boardId][stateName];
