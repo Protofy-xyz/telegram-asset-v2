@@ -164,7 +164,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
     const actionData = filteredData
 
     const copy = (text, mode) => {
-        if (mode === "code" || mode === "flows") {
+        if (mode === "code" || mode === "flow") {
             const val = actions[board.name][text];
             if (!val || !val.url) return '';
             const targetBoard = getBoardIdFromActionUrl(val.url);
