@@ -125,6 +125,16 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
     //cast params to each param type
     for (const param in params) {
         if (action.configParams && action.configParams[param]) {
+            // si action.configParams[param] es tipo string y empieza por board. cogemos el valor del state del board
+            if (typeof action.configParams[param].defaultValue === 'string' && action.configParams[param].defaultValue.startsWith('board.')) {
+                const stateName = action.configParams[param].defaultValue.substring(6);
+                const states = await context.state.getStateTree();
+                if (states?.boards?.[boardId] && states.boards[boardId][stateName] !== undefined) {
+                    params[param] = states.boards[boardId][stateName];
+                } else {
+                    console.warn('State ' + stateName + ' not found in board ' + boardId);
+                }
+            }
             const type = action.configParams[param]?.type;
             if (type) {
                 const states = await context.state.getStateTree();

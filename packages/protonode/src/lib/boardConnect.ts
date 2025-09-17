@@ -30,7 +30,7 @@ export function boardConnect(run) {
     }
 
     async function execute_action({ name, params = {}, done = (result) => {}, error = (err) =>{} }) {
-        console.log('Executing action: ', name, params);
+        console.log('Executing action boardConnect: ', name, params);
         const action = context.actions[name]
         if (!action) {
             error('Action not found: ' + name);
@@ -49,8 +49,22 @@ export function boardConnect(run) {
         //if the param is not visible, hardcode the param value to the value in the configParams defaultValue
         if (action.configParams) {
             for (const param in action.configParams) {
-                if(action.configParams[param].visible === false && action.configParams[param].defaultValue !== '') {
-                    params[param] = action.configParams[param].defaultValue
+                // if(action.configParams[param].visible === false && action.configParams[param].defaultValue !== '') {
+                //     params[param] = action.configParams[param].defaultValue
+                // }
+                if(action.configParams[param].defaultValue !== '') {
+                    // si el param empieza por board. lo sustituimos por el valor del context.boardId
+                    // compruba que el defaultValue es un string
+                    if(typeof action.configParams[param].defaultValue === 'string' && action.configParams[param].defaultValue.startsWith('board.')) {
+                        const stateName = action.configParams[param].defaultValue.substring(6);
+                        if(context.states[stateName] && context.states[stateName] !== undefined) {
+                            params[param] = context.states[stateName];
+                        } else {
+                            console.warn('State ' + stateName + ' not found in board ' + context.boardId);
+                        }
+                    } else {
+                        params[param] = action.configParams[param].defaultValue;
+                    }
                 }
             }
         }

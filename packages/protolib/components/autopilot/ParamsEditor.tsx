@@ -109,7 +109,7 @@ export const ParamsEditor = ({
     )
   }, [])
 
-  const types = ["string", "number", "boolean", "json", "array", "text", "path", "state"]
+  const types = ["string", "number", "boolean", "json", "array", "text", "path"]
   const inputDefProps = { backgroundColor: "$gray1", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
   const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
