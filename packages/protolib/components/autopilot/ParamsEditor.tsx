@@ -15,6 +15,7 @@ export const ParamsEditor = ({
   availableStates = [],
 }) => {
   const [statesVisible, setStatesVisible] = useState<string | undefined>()
+  const [selectedIndex, setSelectedIndex] = useState<number>(0)
   const [rows, setRows] = useState(() => {
     const allKeys = new Set([...Object.keys(params), ...Object.keys(configParams)])
 
@@ -81,6 +82,11 @@ export const ParamsEditor = ({
 
 
   const handleChangeDefaultValue = useCallback((rowId, newValue) => {
+    if (newValue.startsWith("board.") || newValue.startsWith("@")) {
+      setStatesVisible(rowId)
+    } else {
+      setStatesVisible(undefined)
+    }
     setRows((prev) =>
       prev.map((row) => {
         if (row.rowId !== rowId) return row
@@ -129,20 +135,55 @@ export const ParamsEditor = ({
               <SelectList triggerProps={selectTriggerDefProps} title="Select type" elements={types} value={type ?? "string"} setValue={(value) => handleChangeType(rowId, value)} />
             </XStack>
             <TextEditDialog key={rowId}>
-              <Popover placement='bottom-start' open={statesVisible == rowId} onOpenChange={(next) => setStatesVisible(next ? rowId : null)}>
+              <Popover
+                placement='bottom-start'
+                open={statesVisible == rowId}
+                onOpenChange={(next) => {
+                  setStatesVisible(next ? rowId : null)
+                  setSelectedIndex(0)
+                }}
+              >
                 <Popover.Trigger disabled={true}>
                   <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" r={0} m="$3" bottom={0} cursor='pointer' >
                     <Maximize2 size={20} color={"var(--gray8)"} style={{}} />
                   </TextEditDialog.Trigger>
-                  <Input {...inputDefProps} placeholder="Default Value" value={defaultValue} onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)} />
+                  <Input
+                    {...inputDefProps}
+                    placeholder="Default Value"
+                    value={defaultValue}
+                    onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)}
+                    // si la key y esta abierto el popover mover seleccion del del state
+                    onKeyPress={(e) => {
+                      if (statesVisible === rowId) {
+                        if (e["key"] === "ArrowDown") {
+                          setSelectedIndex((prev) => Math.min(prev + 1, availableStates.length - 1))
+                          e.preventDefault()
+                        } else if (e["key"] === "ArrowUp") {
+                          setSelectedIndex((prev) => Math.max(prev - 1, 0))
+                          e.preventDefault()
+                        } else if (e["key"] === "Enter") {
+                          if (selectedIndex >= 0 && selectedIndex < availableStates.length) {
+                            handleChangeDefaultValue(rowId, "board." + availableStates[selectedIndex])
+                            setStatesVisible(null)
+                            setSelectedIndex(0)
+                            e.preventDefault()
+                          }
+                        }
+                      }
+                      return e
+                    }
+                    }
+                  />
                 </Popover.Trigger>
                 <Popover.Content ai="flex-start" miw="200px" f={1} px={0} w={"100%"} bc={"$gray1"} py="$2" gap={"$2"}>
                   <Label lineHeight={"$2"} pl="$3" col="$gray10">States</Label>
-                  <YStack overflow="auto" maxHeight={200}>
+                  <YStack overflow="auto" maxHeight={200} f={1} w="100%">
                     {(availableStates && availableStates.length > 0)
-                      ? availableStates.map(s => (
+                      ? availableStates.map((s, i) => (
                         <XStack
                           px="$3"
+                          w="100%"
+                          bc={i === selectedIndex ? "var(--gray5)" : "transparent"}
                           onHoverIn={e => e.currentTarget.style.backgroundColor = "var(--gray4)"}
                           onHoverOut={e => e.currentTarget.style.backgroundColor = "transparent"}
                           hoverStyle={{ bc: "$gray4" }} gap={"$2"} alignItems="center" justifyContent="space-between" width="100%"
