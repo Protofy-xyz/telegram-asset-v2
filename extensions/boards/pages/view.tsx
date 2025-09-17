@@ -1,4 +1,4 @@
-import { Cable, Copy, Plus, Trash2, Settings, MoreVertical, X, ArrowLeft, Book, FileJson, ClipboardList, Code, Activity, Bot, Presentation, FileCode, Sliders } from '@tamagui/lucide-icons'
+import { Cable, Copy, Plus, Trash2, Settings, MoreVertical, X, ArrowLeft, Book, FileJson, ClipboardList, Code, Activity, Bot, Presentation, FileCode, Sliders, FileInput } from '@tamagui/lucide-icons'
 import { API, getPendingResult } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
@@ -138,7 +138,7 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
               <YStack>
                 <MenuButton text="Settings" Icon={Settings} onPress={() => onEdit("config")} />
                 <MenuButton text="Edit Rules" Icon={ClipboardList} onPress={() => onEdit("rules")} />
-                <MenuButton text="Edit Params" Icon={Sliders} onPress={() => onEdit("params")} />
+                <MenuButton text="Edit Input" Icon={FileInput} onPress={() => onEdit("params")} />
                 <MenuButton text="Edit UI" Icon={FileCode} onPress={() => onEdit("view")} />
                 <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
                 <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />

@@ -1,4 +1,4 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings } from '@tamagui/lucide-icons'
+import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput } from '@tamagui/lucide-icons'
 import { Text, YStack, Paragraph, XStack } from '@my/ui'
 import { useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
@@ -88,8 +88,8 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
     },
     {
       id: 'params',
-      label: 'Params',
-      icon: <Sliders size={"$1"} />,
+      label: 'Input',
+      icon: <FileInput size={"$1"} />,
       content: <ParamsEditor
         params={cardData.params || {}}
         setParams={(newParams) => {
