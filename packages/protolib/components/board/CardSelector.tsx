@@ -206,7 +206,7 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
               ref={cardNameInputRef}
               onChangeText={(value) => {
                 setSelected(prev => {
-                  return { ...prev, defaults: { ...prev.defaults, customName: value } }
+                  return { ...prev, defaults: { ...prev.defaults, customName: value && value.length ? value : null } }
                 })
               }}
             />

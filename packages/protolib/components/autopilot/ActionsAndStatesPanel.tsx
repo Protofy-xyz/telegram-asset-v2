@@ -164,7 +164,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
     const actionData = filteredData
 
     const copy = (text, mode) => {
-        if (mode === "code") {
+        if (mode === "code" || mode === "flow") {
             const val = actions[board.name][text];
             if (!val || !val.url) return '';
             const targetBoard = getBoardIdFromActionUrl(val.url);
@@ -180,7 +180,6 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
 }})`
         }
 
-        if (mode === "flows") { } // implement flows copy mode
         if (mode === "rules") {
             return "<" + text + ">"
         }
