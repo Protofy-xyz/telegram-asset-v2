@@ -65,8 +65,8 @@ return card({
         name: 'board_html',
         defaults: {
             id: 'value_html',
-            width: 1,
-            height: 4,
+            width: 4,
+            height: 18,
             icon: "scan-text",
             type: "value",
             name: "html",
@@ -87,8 +87,8 @@ return card({
         defaults: {
             autorun: true,
             id: 'action_html',
-            width: 1,
-            height: 4,
+            width: 4,
+            height: 18,
             icon: "scan-text",
             type: "action",
             name: "html",
@@ -100,27 +100,27 @@ return card({
         emitEvent: true
     })
 
-    addCard({
-        group: 'board',
-        tag: 'html',
-        id: 'html_action_low',
-        templateName: 'Action with Low Code HTML output',
-        name: 'board_html_low_code_action',
-        defaults: {
-            autorun: true,
-            id: 'action_html',
-            width: 1,
-            height: 4,
-            icon: "scan-text",
-            type: "action",
-            name: "html",
-            displayIcon: false,
-            rulesCode: "return await context.html.html({\n  content: [\n    await context.html.head({\n      content: [\n        await context.html.title({\n          content: \"Vento\",\n        }),\n      ],\n    }),\n    await context.html.body({\n      content: [\n        await context.html.header({\n          content: await context.html.hgroup({\n            content: [\n              await context.html.h1({\n                content: \"Vento\",\n              }),\n              await context.html.p({\n                content: \"Agent Platform\",\n              }),\n            ],\n          }),\n        }),\n        await context.html.main({\n          content: await context.html.section({\n            content: [\n              await context.html.h4({\n                content: \"lorem ipsum\",\n              }),\n              await context.html.p({\n                content: \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur non varius tortor, hendrerit ullamcorper tellus. Nulla sit amet purus ac ex condimentum laoreet finibus pulvinar urna. Quisque mattis leo sodales, dapibus odio sed, sollicitudin sapien. Donec eget diam et libero egestas ultrices sit amet vel sapien. Maecenas eu neque diam. Fusce bibendum euismod neque non accumsan. Nam quis sodales felis. Donec sem nisi, maximus non aliquam vitae, sollicitudin cursus elit.\",\n              }),\n            ],\n          }),\n        }),\n      ],\n    }),\n  ],\n});\n",
-            html: "return iframeCard(data.value, data.domId)\n",
-            value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
-        },
-        emitEvent: true
-    })
+    // addCard({
+    //     group: 'board',
+    //     tag: 'html',
+    //     id: 'html_action_low',
+    //     templateName: 'Action with Low Code HTML output',
+    //     name: 'board_html_low_code_action',
+    //     defaults: {
+    //         autorun: true,
+    //         id: 'action_html',
+    //         width: 4,
+    //         height: 18,
+    //         icon: "scan-text",
+    //         type: "action",
+    //         name: "html",
+    //         displayIcon: false,
+    //         rulesCode: "return await context.html.html({\n  content: [\n    await context.html.head({\n      content: [\n        await context.html.title({\n          content: \"Vento\",\n        }),\n      ],\n    }),\n    await context.html.body({\n      content: [\n        await context.html.header({\n          content: await context.html.hgroup({\n            content: [\n              await context.html.h1({\n                content: \"Vento\",\n              }),\n              await context.html.p({\n                content: \"Agent Platform\",\n              }),\n            ],\n          }),\n        }),\n        await context.html.main({\n          content: await context.html.section({\n            content: [\n              await context.html.h4({\n                content: \"lorem ipsum\",\n              }),\n              await context.html.p({\n                content: \"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur non varius tortor, hendrerit ullamcorper tellus. Nulla sit amet purus ac ex condimentum laoreet finibus pulvinar urna. Quisque mattis leo sodales, dapibus odio sed, sollicitudin sapien. Donec eget diam et libero egestas ultrices sit amet vel sapien. Maecenas eu neque diam. Fusce bibendum euismod neque non accumsan. Nam quis sodales felis. Donec sem nisi, maximus non aliquam vitae, sollicitudin cursus elit.\",\n              }),\n            ],\n          }),\n        }),\n      ],\n    }),\n  ],\n});\n",
+    //         html: "return iframeCard(data.value, data.domId)\n",
+    //         value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
+    //     },
+    //     emitEvent: true
+    // })
 
     addCard({
         group: 'board',
