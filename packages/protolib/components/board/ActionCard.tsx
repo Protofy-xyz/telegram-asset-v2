@@ -5,7 +5,6 @@ import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
-import { SelectList } from "../SelectList";
 
 export const Icon = ({ name, size, color, style }) => {
     return (
@@ -31,7 +30,6 @@ export const Icon = ({ name, size, color, style }) => {
 export const ParamsForm = ({ data, children }) => {
     const allKeys = Object.keys(data.params || {});
     const [loading, setLoading] = useState(false);
-    const [boardStates, setBoardStates] = useState<string[]>([]);
     const { resolvedTheme } = useThemeSetting()
     const [paramsState, setParamsState] = useState<Record<string, any>>(() => {
         const initial: Record<string, any> = {};
@@ -45,32 +43,7 @@ export const ParamsForm = ({ data, children }) => {
         setParamsState(prev => ({ ...prev, [key]: val }));
     }, []);
 
-    const stateOptions = boardStates.filter(s => s !== data.name).map(s => `board.${s}`);
     const isButtonFull = data.buttonMode === "full"
-
-    useEffect(() => {
-        if (typeof window === "undefined") return;
-
-        const getBoardStates = () => {
-            const proto = (window as any).protoStates;
-            const boards = proto?.boards || {};
-
-            const params = new URLSearchParams(window.location.search);
-            const boardParam = params.get("board");
-            const boardName = boardParam ? decodeURIComponent(boardParam) : undefined;
-
-            if (!boardName || !boards[boardName]) {
-                setBoardStates([]);
-                return;
-            }
-
-            setBoardStates(Object.keys(boards[boardName]));
-        };
-
-        getBoardStates();
-        window.addEventListener("protoStates:update", () => getBoardStates());
-        return () => window.removeEventListener("protoStates:update", () => getBoardStates());
-    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -159,20 +132,6 @@ export const ParamsForm = ({ data, children }) => {
                                     />
                                 </TextEditDialog>
                             }
-                            {/* {type == 'state' && (
-                                <XStack mx={"$3"} f={1}>
-                                    <SelectList
-                                        title="Select state"
-                                        elements={(stateOptions && stateOptions?.length > 0) ? stateOptions : []}
-                                        value={value}
-                                        setValue={(v) => setParam(key, v)}
-                                        triggerProps={{ f: 1, bc: "$gray1", boc: "$gray6", hoverStyle: { bc: "$gray1", boc: "$gray7" } }}
-                                        placeholder="Select state"
-
-                                    />
-                                </XStack>
-                            )} */}
-
                             {(type == 'json' || type == 'array')
                                 && <XStack
                                     p="$3"
