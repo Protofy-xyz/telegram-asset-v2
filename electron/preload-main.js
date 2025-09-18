@@ -34,3 +34,11 @@ contextBridge.exposeInMainWorld('logAPI', {
     });
   }
 });
+
+contextBridge.exposeInMainWorld('webcam', {
+  arm: async (durationMs = 8000) => {
+    await ipcRenderer.invoke('webcam:arm-permission', { durationMs });
+    return true;
+  },
+  listDevices: async () => navigator.mediaDevices.enumerateDevices(),
+});

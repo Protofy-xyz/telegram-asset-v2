@@ -74,6 +74,50 @@ module.exports = function start(rootPath) {
   let browserWindow = null;
   let userSession = null;
 
+  // ====== 👇 Camera permissions on demand ======
+  const ALLOWLIST_ORIGINS = new Set([
+    'http://localhost:8000', // add your origins here
+  ]);
+
+  // wc.id -> expiresAt ms. One-shot and short-lived
+  const webcamGrants = new Map();
+
+  function isArmed(wc) {
+    const exp = webcamGrants.get(wc.id);
+    const ok = !!exp && Date.now() < exp;
+    if (ok) webcamGrants.delete(wc.id); // one-shot
+    return ok;
+  }
+
+  function wireMediaPermissions(ses) {
+    ipcMain.handle('webcam:arm-permission', (event, { durationMs = 8000 } = {}) => {
+      const wc = event.sender;
+      webcamGrants.set(wc.id, Date.now() + durationMs);
+      return true;
+    });
+  
+    ses.setPermissionCheckHandler((wc, permission, requestingOrigin) => {
+      if (permission === 'media' || permission === 'camera' || permission === 'microphone') {
+        return ALLOWLIST_ORIGINS.has(requestingOrigin) && isArmed(wc);
+      }
+      return false;
+    });
+  
+    ses.setPermissionRequestHandler((wc, permission, callback, details) => {
+      if (permission === 'media' || permission === 'camera' || permission === 'microphone') {
+        let originOk = false;
+        try {
+          const origin = new URL(details.requestingUrl).origin; // "http://localhost:8000"
+          originOk = ALLOWLIST_ORIGINS.has(origin);
+        } catch {}
+        const wantsVideo = Array.isArray(details.mediaTypes) ? details.mediaTypes.includes('video') : true;
+        const ok = originOk && isArmed(wc) && (wantsVideo || permission === 'microphone');
+        return callback(!!ok);
+      }
+      return callback(false);
+    });
+  }
+
   function logToRenderer(msg) {
     try {
       //if inside process.argv there is a -v argument, then log to console
@@ -267,6 +311,8 @@ module.exports = function start(rootPath) {
 
   app.whenReady().then(async () => {
     try {
+      wireMediaPermissions(session.defaultSession);
+
       let resolveWhenCoreReady;
       const coreStarted = new Promise(resolve => {
         resolveWhenCoreReady = resolve;
@@ -357,7 +403,7 @@ module.exports = function start(rootPath) {
 
     https.get(url, (response) => {
       const contentType = response.headers['content-type'];
-      if (!contentType.includes('zip')) {
+      if (!contentType || !contentType.includes('zip')) {
         console.error('❌ Invalid content type:', contentType);
         response.resume(); // descartar contenido
         return;
