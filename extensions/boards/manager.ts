@@ -73,7 +73,7 @@ export const Manager = {
                     setTimeout(() => {
                         console.log(`[Manager] Restarting board file ${file}`);
                         // Restart the process
-                        Manager.start(file, getContext, onExit, true);
+                        Manager.start(file, getContext, onExit, false); // last param at true leads to boards only updating on the first change
                     }, 500);
                 }, 1000);
 

@@ -8,8 +8,16 @@ import { getChatGPTApiKey } from '@extensions/chatgpt/coreContext';
 
 async function getImageBase64(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
+  
+    const textData = Buffer.from(response.data).toString("utf8");
+  
+    // in case the url is already a base64 image
+    if (textData.startsWith("data:image")) {
+      return textData.split(",")[1];
+    }
+  
     return Buffer.from(response.data, 'binary').toString('base64');
-}
+  }
 
 async function sendPromptWithImage(prompt, imageUrl) {
     const token = await getChatGPTApiKey();

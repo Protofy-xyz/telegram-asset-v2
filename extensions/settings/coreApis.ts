@@ -6,7 +6,24 @@ import * as fspath from 'path';
 
 
 const dataDir = (root) => fspath.join(root, "/data/settings/")
+const initialData = {
+    "ai.enabled": {
+        "name": "ai.enabled",
+        "value": "true",
+    }
+}
 
+const connectDB = (dbPath: string, initialData?: Object, options?) => {
+    try {
+        const dirPath = dataDir(getRoot());
+        Object.keys(initialData).map(key => {
+            const setting = initialData[key]
+            fs.writeFile(fspath.join(dirPath, setting.name), JSON.stringify(setting.value))
+        })
+    } catch (err) {
+        console.error("cannot connect to settings db: ", err)
+    }
+}
 
 const getDB = (path, req, session) => {
     const dirPath = dataDir(getRoot(req));
@@ -74,7 +91,9 @@ const SettingsAutoAPI = AutoAPI({
     modelType: SettingModel,
     prefix: '/api/core/v1/',
     dbName: 'settings',
+    connectDB: connectDB,
     getDB: getDB,
+    initialData: initialData,
     requiresAdmin: ['*'],
     allowUpsert: true
 })
