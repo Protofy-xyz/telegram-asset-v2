@@ -92,11 +92,14 @@ const resolveBoardParam = async ({ states, boardId, defaultValue, value, type })
     if (value === undefined || value === null || value === '') {
         value = defaultValue
     }
-
+    
+    // create boardStates due state value starts with board.
+    const boardsStates = { board: states?.boards?.[boardId] ?? {} };
+    
     if (typeof value === 'string' && isState(value)) {
         const stateName = getStateName(value);
         if (states?.boards?.[boardId] && states.boards[boardId][stateName] !== undefined) {
-            value = states.boards[boardId][stateName];
+            value = getByPath(boardsStates, value)
             resolved = true;
         } else {
             console.warn('State ' + stateName + ' not found in board ' + boardId);
@@ -104,7 +107,6 @@ const resolveBoardParam = async ({ states, boardId, defaultValue, value, type })
     }
 
     if (type && !resolved) {
-        const boardsStates = { board: states?.boards?.[boardId] ?? {} };
         value = castValueToType(value, type, boardsStates);
     }
 
