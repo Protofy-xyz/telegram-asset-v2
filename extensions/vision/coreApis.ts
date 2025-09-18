@@ -100,19 +100,57 @@ export default async (app: Application, context: typeof APIContext) => {
         defaults: {
             width: 3,
             height: 10,
-            type: "value",
+            type: "action",
             icon: 'camera',
             name: 'camera',
             description: 'Camera stream input',
-            html: 'return `<img style="width: 100%" src="${data.streamProtocol}${data.streamAddr}:${data.streamPort}${data.streamPath}" />`',
-            rulesCode: 'return `${data.streamProtocol}${data.streamAddr}:${data.streamPort}${data.stillPath}`',
-            streamAddr: '192.168.10.103',
-            streamPort: '8080',
-            streamPath: '/video',
-            stillPath: '/photo.jpg',
-            streamProtocol: 'http://'
+            displayResponse: true,
+            displayButton: true,
+            buttonLabel: "Try camera",
+            html: "//@card/react\n\n\n\nfunction Widget(card) {\n  const value = card.value;\n  const [loading, setLoading] = React.useState(true);\n  const [error, setError] = React.useState(false);\n  const [streamPath, setStreamPath] = React.useState(value?.streamPath?? \"\")\n\n  React.useEffect(() => {\n    console.log(\"card widget: ReactUseEffect\")\n    setStreamPath(value?.streamPath ?? \"\");\n    setLoading(true);\n    setError(false);\n  }, [value?.streamPath]);\n\n  console.log(\"card widget: \", card);\n\n  const content = (\n    <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {loading && !error && <p>Searching for camera...</p>}\n      {error && <p style={{ color: \"red\" }}>Error getting camera stream</p>}\n      <img\n        style={{\n          width: \"100%\",\n          display: loading || error ? \"none\" : \"block\",\n        }}\n        src={streamPath}\n        onLoad={() => setLoading(false)}\n        onError={() => {\n          setLoading(false);\n          setError(true);\n        }}\n        alt=\"Camera stream\"\n      />\n    </YStack>\n  );\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <ActionCard data={card}>\n          {card.displayButton !== false ? (\n            <ParamsForm data={card}>{content}</ParamsForm>\n          ) : (\n            card.displayResponse !== false && content\n          )}\n        </ActionCard>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}",
+            rulesCode: "return {\n  stillPath: `${params.cameraProtocol}${params.cameraAddr}:${params.cameraPort}${params.stillPath}`,\n  streamPath: `${params.cameraProtocol}${params.cameraAddr}:${\n    params.cameraPort\n  }${params.streamPath}?k=${\n    Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000\n  }`,\n};\n",
+            params: {
+                cameraAddr: "Ip camera address",
+                cameraPort: "Ip camera port",
+                streamPath: '/video',
+                stillPath: '/photo.jpg',
+                cameraProtocol: 'http://'
+            },
+            configParams: {
+                    "cameraAddr": {
+                        "visible": true,
+                        "description": "IP Camera address",
+                        "defaultValue": "192.168.10.131",
+                        "type": "string"
+                    },
+                    "cameraPort": {
+                        "visible": true,
+                        "description": "IP Camera port",
+                        "defaultValue": "8080",
+                        "type": "string"
+                    },
+                    "streamPath": {
+                        "visible": false,
+                        "description": "Path to the video stream",
+                        "defaultValue": "/video",
+                        "type": "string"
+                    },
+                    "stillPath": {
+                        "visible": false,
+                        "description": "Path to get a still image",
+                        "defaultValue": "/photo.jpg",
+                        "type": "string"
+                    },
+                    "cameraProtocol": {
+                        "visible": false,
+                        "description": "Camera protocol",
+                        "defaultValue": "http://",
+                        "type": "string"
+                }
+            }
+            
         },
-        emitEvent: true,
+        // emitEvent: true,
     })
 
     app.get('/api/core/v1/vision/detect', async (req, res) => {
