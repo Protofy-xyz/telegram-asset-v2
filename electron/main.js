@@ -39,7 +39,7 @@ function generateEvent(event, token = '') {
 
   const req = http.request(options, (res) => {
     res.setEncoding('utf8');
-    res.on('data', () => {});
+    res.on('data', () => { });
     res.on('end', () => {
       console.log('✅ Event sent:', event.path);
     });
@@ -79,6 +79,27 @@ module.exports = function start(rootPath) {
     'http://localhost:8000', // add your origins here
   ]);
 
+  function originFromUrl(u) {
+    try {
+      const url = new URL(u);
+      if (url.protocol === 'file:' || url.protocol === 'app:') return url.protocol; // "file:" | "app:"
+      return url.origin;
+    } catch {
+      return '';
+    }
+  }
+
+  function isAllowed(details, requestingOrigin) {
+    if (requestingOrigin && ALLOWLIST_ORIGINS.has(requestingOrigin)) return true;
+
+    const o = originFromUrl(details?.requestingUrl || '');
+    if (!o) return false;
+
+    if (o === 'file:' || o === 'app:') return true;
+
+    return ALLOWLIST_ORIGINS.has(o);
+  }
+
   // wc.id -> expiresAt ms. One-shot and short-lived
   const webcamGrants = new Map();
 
@@ -93,25 +114,43 @@ module.exports = function start(rootPath) {
     ipcMain.handle('webcam:arm-permission', (event, { durationMs = 8000 } = {}) => {
       const wc = event.sender;
       webcamGrants.set(wc.id, Date.now() + durationMs);
+      console.log('[media] armed', { wc: wc.id, until: new Date(Date.now() + durationMs).toISOString() });
       return true;
     });
   
-    ses.setPermissionCheckHandler((wc, permission, requestingOrigin) => {
+    ses.setPermissionCheckHandler((wc, permission, requestingOrigin, details) => {
       if (permission === 'media' || permission === 'camera' || permission === 'microphone') {
-        return ALLOWLIST_ORIGINS.has(requestingOrigin) && isArmed(wc);
+        const allowed = isAllowed(details, requestingOrigin);
+        const armedPeek = isArmedPeek(wc);
+        console.log('[media][check]', {
+          permission,
+          reqOrigin: requestingOrigin,
+          url: details?.requestingUrl,
+          allowed,
+          armedPeek
+        });
+        return allowed && armedPeek;
       }
       return false;
     });
   
     ses.setPermissionRequestHandler((wc, permission, callback, details) => {
       if (permission === 'media' || permission === 'camera' || permission === 'microphone') {
-        let originOk = false;
-        try {
-          const origin = new URL(details.requestingUrl).origin; // "http://localhost:8000"
-          originOk = ALLOWLIST_ORIGINS.has(origin);
-        } catch {}
-        const wantsVideo = Array.isArray(details.mediaTypes) ? details.mediaTypes.includes('video') : true;
-        const ok = originOk && isArmed(wc) && (wantsVideo || permission === 'microphone');
+        const originOk = isAllowed(details, details?.requestingOrigin);
+        const wantsVideo = Array.isArray(details?.mediaTypes) ? details.mediaTypes.includes('video') : true;
+        const armed = isArmed(wc); // consume 1 vez
+        const ok = originOk && armed && (wantsVideo || permission === 'microphone');
+  
+        console.log('[media][request]', {
+          permission,
+          reqOrigin: details?.requestingOrigin || originFromUrl(details?.requestingUrl || ''),
+          url: details?.requestingUrl,
+          originOk,
+          wantsVideo,
+          armedConsumed: armed,
+          ok
+        });
+  
         return callback(!!ok);
       }
       return callback(false);
@@ -344,6 +383,8 @@ module.exports = function start(rootPath) {
 
       const initialUrl = args.initialUrl || 'http://localhost:8000/workspace/boards';
       console.log('⏳ Waiting for port 8000...');
+      const initialOrigin = originFromUrl(initialUrl);
+      if (initialOrigin) ALLOWLIST_ORIGINS.add(initialOrigin);
       await waitForPortHttp(initialUrl);
 
       await new Promise(resolve => setTimeout(resolve, 1000));
