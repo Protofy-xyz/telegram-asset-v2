@@ -513,20 +513,24 @@ const Board = ({ board, icons }) => {
   useEffect(() => {
     window['execute_action'] = getExecuteAction(board.name, actions)
     window['setCardData'] = (cardId, key, value) => {
-      const card = items.find(item => item.key === cardId);
-      if (card) {
-        const newItems = items.map(item => {
-          if (item.key === cardId) {
-            return { ...item, [key]: value };
-          }
-          return item;
-        });
-        setItems(newItems);
-        board.cards = newItems;
-        saveBoard(board.name, board);
-      } else {
-        console.error('Card not found:', cardId);
-      }
+      setItems(prevItems => {
+        const card = prevItems.some(item => item.key === cardId);
+        if (card) {
+          const newItems = prevItems.map(item => {
+            if (item.key === cardId) {
+              return { ...item, [key]: value };
+            }
+            return item;
+          });
+
+          board.cards = newItems;
+          saveBoard(board.name, board);
+          return newItems;
+        } else {
+          console.error('Card not found:', cardId);
+          return prevItems;
+        }
+      })
     }
   }, [actions])
 
