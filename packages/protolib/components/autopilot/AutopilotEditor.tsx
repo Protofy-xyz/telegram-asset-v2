@@ -73,17 +73,16 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
     const theme = useTheme()
     const editedCode = useRef(rulesCode ?? 'return;')
 
-    const isPlainHTML = rulesCode?.trim().startsWith('<')
+    // const isPlainHTML = rulesCode?.trim().startsWith('<')
 
     const flows = useMemo(() => {
         return <CodeView
-            rulesWithFlows={true}
             pathname={cardData.type == 'action' ? '/rules' : '/observerCard'}
             onApplyRules={async (rules) => {
                 return await setRules(rules)
             }}
             disableAIPanels={!isAIEnabled}
-            defaultMode={isAIEnabled && !isPlainHTML ? 'rules' : 'code'}
+            defaultMode={isAIEnabled ? 'rules' : 'code'}
             rules={rules}
             viewPort={{ x: 20, y: window.innerHeight / 8, zoom: 0.8 }}
             onFlowChange={(code) => {
@@ -94,7 +93,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
                 editedCode.current = code
                 setRulesCode(code)
             }}
-            disableFlowMode={isPlainHTML}
+            // disableFlowMode={isPlainHTML}
             path={cardData.name + (rulesCode && rulesCode.trim && rulesCode.trim().startsWith('<') ? '.html' : '.ts')}
             flowsPath={cardData.name}
             sourceCode={editedCode}

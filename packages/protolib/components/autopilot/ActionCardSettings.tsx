@@ -13,6 +13,32 @@ import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
 
+function getAllPaths(obj, prefix = "", includeIntermediate = true) {
+  if (obj === null || typeof obj !== "object") {
+    return prefix ? [prefix] : [];
+  }
+
+  let out = [];
+  if (includeIntermediate && prefix) out.push(prefix);
+
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return includeIntermediate && prefix ? [prefix] : [];
+    for (let i = 0; i < obj.length; i++) {
+      const p = prefix ? `${prefix}[${i}]` : `[${i}]`;
+      out = out.concat(getAllPaths(obj[i], p, includeIntermediate));
+    }
+    return out;
+  }
+
+  const keys = Object.keys(obj);
+  if (keys.length === 0) return includeIntermediate && prefix ? [prefix] : [];
+  for (const k of keys) {
+    const p = prefix ? `${prefix}.${k}` : k;
+    out = out.concat(getAllPaths(obj[k], p, includeIntermediate));
+  }
+  return out;
+}
+
 export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, onSave = () => { }, errors, mode = "edit", tab = "rules" }) => {
 
   const [cardData, setCardData] = useState(card);
@@ -107,7 +133,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
             configParams: newConfigParams,
           }))
         }}
-        availableStates={Object.keys(states?.boards?.[board.name] ?? {}).filter(s => s !== cardData.name)}
+        availableStates={getAllPaths(states?.boards?.[board.name] ?? {}).filter(s => s !== cardData.name)}
       />
     },
     {

@@ -61,7 +61,7 @@ return card({
         group: 'board',
         tag: 'html',
         id: 'html',
-        templateName: 'Display HTML content',
+        templateName: 'Display HTML',
         name: 'board_html',
         defaults: {
             id: 'value_html',

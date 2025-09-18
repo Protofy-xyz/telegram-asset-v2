@@ -39,7 +39,7 @@ function generateEvent(event, token = '') {
 
   const req = http.request(options, (res) => {
     res.setEncoding('utf8');
-    res.on('data', () => {});
+    res.on('data', () => { });
     res.on('end', () => {
       console.log('✅ Event sent:', event.path);
     });
@@ -73,6 +73,84 @@ module.exports = function start(rootPath) {
   let mainWindow = null;
   let browserWindow = null;
   let userSession = null;
+
+  // ====== 👇 Camera permissions on demand ======
+  const ALLOWLIST_ORIGINS = new Set(['http://localhost:8000']);
+  const webcamGrants = new Map(); // wc.id -> expiresAt ms
+
+  function isArmedPeek(wc) {
+    const exp = webcamGrants.get(wc.id);
+    return !!exp && Date.now() < exp;
+  }
+
+  function isArmed(wc) { // one-time
+    const exp = webcamGrants.get(wc.id);
+    const ok = !!exp && Date.now() < exp;
+    if (ok) webcamGrants.delete(wc.id);
+    return ok;
+  }
+
+  function originFromUrl(u) {
+    try {
+      const url = new URL(u);
+      if (url.protocol === 'file:' || url.protocol === 'app:') return url.protocol; // "file:" / "app:"
+      return url.origin;
+    } catch { return ''; }
+  }
+
+  function isAllowed(details, requestingOrigin) {
+    if (requestingOrigin && ALLOWLIST_ORIGINS.has(requestingOrigin)) return true;
+    const o = originFromUrl(details?.requestingUrl || '');
+    if (o === 'file:' || o === 'app:') return true;
+    return ALLOWLIST_ORIGINS.has(o);
+  }
+
+  function wireMediaPermissions(ses) {
+    ipcMain.handle('webcam:arm-permission', (event, { durationMs = 8000 } = {}) => {
+      const wc = event.sender;
+      webcamGrants.set(wc.id, Date.now() + durationMs);
+      console.log('[media] armed', { wc: wc.id, until: new Date(Date.now() + durationMs).toISOString() });
+      return true;
+    });
+
+    ses.setPermissionCheckHandler((wc, permission, requestingOrigin, details) => {
+      if (permission === 'media' || permission === 'camera' || permission === 'microphone') {
+        const allowed = isAllowed(details, requestingOrigin);
+        const armedPeek = isArmedPeek(wc);
+        console.log('[media][check]', {
+          permission,
+          reqOrigin: requestingOrigin,
+          url: details?.requestingUrl,
+          allowed,
+          armedPeek
+        });
+        return allowed && armedPeek;
+      }
+      return false;
+    });
+
+    ses.setPermissionRequestHandler((wc, permission, callback, details) => {
+      if (permission === 'media' || permission === 'camera' || permission === 'microphone') {
+        const originOk = isAllowed(details, details?.requestingOrigin);
+        const wantsVideo = Array.isArray(details?.mediaTypes) ? details.mediaTypes.includes('video') : true;
+        const armed = isArmed(wc); // one-time
+        const ok = originOk && armed && (wantsVideo || permission === 'microphone');
+
+        console.log('[media][request]', {
+          permission,
+          reqOrigin: details?.requestingOrigin || originFromUrl(details?.requestingUrl || ''),
+          url: details?.requestingUrl,
+          originOk,
+          wantsVideo,
+          armedConsumed: armed,
+          ok
+        });
+
+        return callback(!!ok);
+      }
+      return callback(false);
+    });
+  }
 
   function logToRenderer(msg) {
     try {
@@ -267,6 +345,8 @@ module.exports = function start(rootPath) {
 
   app.whenReady().then(async () => {
     try {
+      wireMediaPermissions(session.defaultSession);
+
       let resolveWhenCoreReady;
       const coreStarted = new Promise(resolve => {
         resolveWhenCoreReady = resolve;
@@ -297,6 +377,8 @@ module.exports = function start(rootPath) {
       console.log('✅ Core service started.');
 
       const initialUrl = args.initialUrl || 'http://localhost:8000/workspace/boards';
+      const initialOrigin = originFromUrl(initialUrl);
+      if (initialOrigin) ALLOWLIST_ORIGINS.add(initialOrigin);
       console.log('⏳ Waiting for port 8000...');
       await waitForPortHttp(initialUrl);
 
@@ -357,7 +439,7 @@ module.exports = function start(rootPath) {
 
     https.get(url, (response) => {
       const contentType = response.headers['content-type'];
-      if (!contentType.includes('zip')) {
+      if (!contentType || !contentType.includes('zip')) {
         console.error('❌ Invalid content type:', contentType);
         response.resume(); // descartar contenido
         return;

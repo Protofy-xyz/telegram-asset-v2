@@ -177,7 +177,7 @@ const ActionCard = ({
   const [status, setStatus] = useState<'idle' | 'running' | 'error'>('idle')
   const lockRef = useRef(false)
   const highlighted = useIsHighlightedCard(board?.name, data?.name)
-
+  const action = window["protoActions"]?.boards?.[board.name]?.[name]
   console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
 
   useEventEffect((payload, msg) => {
@@ -218,6 +218,11 @@ const ActionCard = ({
       console.error(e)
     }
   }, { path: "actions/boards/" + board.name + "/" + name + "/#" })
+
+  useEffect(() => {
+    if (!action || !action.status) return;
+    setStatus(action.status);
+  }, [action?.status]);
 
   return (
     <CenterCard
