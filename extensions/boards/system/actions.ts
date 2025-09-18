@@ -16,6 +16,12 @@ const getBoardCardActions = async (boardId) => {
 const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
 const token = getServiceToken()
 
+//TODO: refactor to use only protomemdb (state.set) for card state persistance and updates on frontend  (now using .set for persist and state event for updates)
+const updateActionStatus = async (context, boardId, actionId, status) => {
+    const action = await context.state.get({ chunk: 'actions', group: 'boards', tag: boardId, name: actionId });
+    await context.state.set({ chunk: 'actions', group: 'boards', tag: boardId, name: actionId, value: { ...action, status } });
+};
+
 export const getActions = async (context) => {
     const actions = await context.state.getStateTree({ chunk: 'actions' });
     const flatActions = []
@@ -114,6 +120,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
                 stackTrace
             },
         }, getServiceToken());
+        await updateActionStatus(context, boardId, action_or_card_id, 'error');
 
         getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: "Recursive action call detected" }, "Error executing card: ");
         res.status(500).send({ _err: "e_code", error: "Error executing action code", message: "Recursive action call detected" });
@@ -154,7 +161,6 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
             }
         }
     }
-
     await generateEvent({
         path: `actions/boards/${boardId}/${action_or_card_id}/run`,
         from: 'system',
@@ -168,6 +174,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
             stackTrace
         },
     }, getServiceToken());
+    await updateActionStatus(context, boardId, action_or_card_id, 'running');
 
     const states = await context.state.getStateTree();
     let rulesCode = action.rulesCode.trim();
@@ -204,6 +211,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
                     stackTrace
                 },
             }, getServiceToken());
+            await updateActionStatus(context, boardId, action_or_card_id, 'error');
 
             getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err }, "Error executing card: ");
             res.status(500).send({ _err: "e_code", error: "Error executing action code", message: err.message, stack: err.stack, stackTrace, name: err.name, code: err.code });
@@ -245,6 +253,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
                 stackTrace
             },
         }, getServiceToken());
+        await updateActionStatus(context, boardId, action_or_card_id, 'idle');
 
         // if persistValue is true
         if (action.persistValue) {
@@ -269,6 +278,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
                 stackTrace
             },
         }, getServiceToken());
+        await updateActionStatus(context, boardId, action_or_card_id, 'error');
         console.error("Error executing action: ", err);
         res.status(500).send({ _err: "e_general", error: "Error executing action", message: err.message, stack: err.stack, name: err.name, code: err.code });
     }
