@@ -5,6 +5,8 @@ import axios from "axios";
 import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
 import { getChatGPTApiKey } from '@extensions/chatgpt/coreContext';
+import fs from "fs";
+import path from "path";
 
 async function getImageBase64(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -99,16 +101,16 @@ export default async (app: Application, context: typeof APIContext) => {
         name: 'vision_camera',
         defaults: {
             width: 3,
-            height: 10,
+            height: 16,
             type: "action",
             icon: 'camera',
             name: 'camera',
-            description: 'Camera stream input',
+            description: fs.readFileSync(path.resolve(__dirname, 'IPCamera.md'), 'utf-8'),
             displayResponse: true,
             displayButton: true,
-            buttonLabel: "Try camera",
+            buttonLabel: "Open camera",
             html: "//@card/react\n\n\n\nfunction Widget(card) {\n  const value = card.value;\n  const [loading, setLoading] = React.useState(true);\n  const [error, setError] = React.useState(false);\n  const [streamPath, setStreamPath] = React.useState(value?.streamPath?? \"\")\n\n  React.useEffect(() => {\n    console.log(\"card widget: ReactUseEffect\")\n    setStreamPath(value?.streamPath ?? \"\");\n    setLoading(true);\n    setError(false);\n  }, [value?.streamPath]);\n\n  console.log(\"card widget: \", card);\n\n  const content = (\n    <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {loading && !error && <p>Searching for camera...</p>}\n      {error && <p style={{ color: \"red\" }}>Error getting camera stream</p>}\n      <img\n        style={{\n          width: \"100%\",\n          display: loading || error ? \"none\" : \"block\",\n        }}\n        src={streamPath}\n        onLoad={() => setLoading(false)}\n        onError={() => {\n          setLoading(false);\n          setError(true);\n        }}\n        alt=\"Camera stream\"\n      />\n    </YStack>\n  );\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <ActionCard data={card}>\n          {card.displayButton !== false ? (\n            <ParamsForm data={card}>{content}</ParamsForm>\n          ) : (\n            card.displayResponse !== false && content\n          )}\n        </ActionCard>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}",
-            rulesCode: "return {\n  stillPath: `${params.cameraProtocol}${params.cameraAddr}:${params.cameraPort}${params.stillPath}`,\n  streamPath: `${params.cameraProtocol}${params.cameraAddr}:${\n    params.cameraPort\n  }${params.streamPath}?k=${\n    Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000\n  }`,\n};\n",
+            rulesCode: "return {\n  imageUrl: `${params.cameraProtocol}${params.cameraAddr}:${params.cameraPort}${params.stillPath}`,\n  streamPath: `${params.cameraProtocol}${params.cameraAddr}:${\n    params.cameraPort\n  }${params.streamPath}?k=${\n    Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000\n  }`,\n};\n",
             params: {
                 cameraAddr: "Ip camera address",
                 cameraPort: "Ip camera port",
