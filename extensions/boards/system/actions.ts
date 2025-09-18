@@ -86,6 +86,31 @@ const getStateName = (value) => {
     return statePath[1]
 }
 
+const resolveBoardParam = async ({ states, boardId, defaultValue, value, type }) => {
+    let resolved = false;
+
+    if (value === undefined || value === null || value === '') {
+        value = defaultValue
+    }
+
+    if (typeof value === 'string' && isState(value)) {
+        const stateName = getStateName(value);
+        if (states?.boards?.[boardId] && states.boards[boardId][stateName] !== undefined) {
+            value = states.boards[boardId][stateName];
+            resolved = true;
+        } else {
+            console.warn('State ' + stateName + ' not found in board ' + boardId);
+        }
+    }
+
+    if (type && !resolved) {
+        const boardsStates = { board: states?.boards?.[boardId] ?? {} };
+        value = castValueToType(value, type, boardsStates);
+    }
+
+    return value;
+}
+
 export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
     const actions = await getBoardCardActions(boardId);
     const action = actions.find(a => a.name === action_or_card_id);
@@ -133,25 +158,15 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
     }
 
 
-    //cast params to each param type
     for (const param in params) {
         if (action.configParams && action.configParams[param]) {
-            // si action.configParams[param] es tipo string y empieza por board. cogemos el valor del state del board
-            if (typeof action.configParams[param].defaultValue === 'string' && isState(action.configParams[param].defaultValue)) {
-                const stateName = getStateName(action.configParams[param].defaultValue);
-                const states = await context.state.getStateTree();
-                if (states?.boards?.[boardId] && states.boards[boardId][stateName] !== undefined) {
-                    params[param] = states.boards[boardId][stateName];
-                } else {
-                    console.warn('State ' + stateName + ' not found in board ' + boardId);
-                }
-            }
-            const type = action.configParams[param]?.type;
-            if (type) {
-                const states = await context.state.getStateTree();
-                const boardsStates = { board: states?.boards?.[boardId] ?? {} };
-                params[param] = castValueToType(params[param], type, boardsStates);
-            }
+            params[param] = await resolveBoardParam({
+                states: await context.state.getStateTree(),
+                boardId,
+                defaultValue: action.configParams[param].defaultValue,
+                value: params[param],
+                type: action.configParams[param]?.type
+            });
         }
     }
 
