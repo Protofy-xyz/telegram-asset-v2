@@ -65,8 +65,8 @@ return card({
         name: 'board_html',
         defaults: {
             id: 'value_html',
-            width: 1,
-            height: 4,
+            width: 4,
+            height: 18,
             icon: "scan-text",
             type: "value",
             name: "html",
@@ -87,8 +87,8 @@ return card({
         defaults: {
             autorun: true,
             id: 'action_html',
-            width: 1,
-            height: 4,
+            width: 4,
+            height: 18,
             icon: "scan-text",
             type: "action",
             name: "html",
@@ -109,8 +109,8 @@ return card({
     //     defaults: {
     //         autorun: true,
     //         id: 'action_html',
-    //         width: 1,
-    //         height: 4,
+    //         width: 4,
+    //         height: 18,
     //         icon: "scan-text",
     //         type: "action",
     //         name: "html",
