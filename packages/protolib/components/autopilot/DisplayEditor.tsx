@@ -126,20 +126,26 @@ export const DisplayEditor = ({
             get: (cd) => cd.customPath ?? `/workspace/cards/${cd.name}`,
         },
 
-        { label: 'Allow public run', key: 'publicRun', type: 'checkbox', section: 'Paths and Permissions' },
-        { label: 'Custom run path', key: 'enableCustomRunPath', type: 'checkbox', section: 'Paths and Permissions' },
-        {
-            label: 'Path to card run',
-            key: 'customRunPath',
-            type: 'text',
-            section: 'Paths and Permissions',
-            indent: 1,
-            visible: ({ cardData }) => !!cardData.enableCustomRunPath,
-            get: (cd) => cd.customRunPath ?? `/workspace/cards/${cd.name}/run`,
-        },
+        { label: 'Read Card Page Path', key: 'customCardViewPath', type: 'text', placeholder: "Path to card (Ex: /card)", section: 'Paths and Permissions' },
+        // @ts-ignore
+        ...(cardData.type === "action"
+            ? [
+                { label: 'Allow public run', key: 'publicRun', type: 'checkbox', section: 'Paths and Permissions' },
+                { label: 'Custom run path', key: 'enableCustomRunPath', type: 'checkbox', section: 'Paths and Permissions' },
+                {
+                    label: 'Path to card run',
+                    key: 'customRunPath',
+                    type: 'text',
+                    section: 'Paths and Permissions',
+                    indent: 1,
+                    visible: ({ cardData }) => !!cardData.enableCustomRunPath,
+                    get: (cd) => cd.customRunPath ?? `/workspace/cards/${cd.name}/run`,
+                },
 
-        { label: 'Card Page Path', key: 'customCardViewPath', type: 'text', placeholder: "Path to card (Ex: /card)", section: 'Paths and Permissions' },
-        { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', placeholder: "Path to card run (Ex: /card/run)", section: 'Paths and Permissions' },
+                { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', placeholder: "Path to card run (Ex: /card/run)", section: 'Paths and Permissions' }
+            ]
+            : []
+        ),
     ]
 
     // Group settings by section and filter by visible
