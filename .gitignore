@@ -23,6 +23,7 @@ data/public/images
 !.yarn/sdks
 !.yarn/versions
 types
+!extensions/types
 dist
 # expo
 **/.expo/*

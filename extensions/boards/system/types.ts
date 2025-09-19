@@ -10,6 +10,7 @@ export const TypeParser = {
     },
     "string": (v) => String(v),
     "object": (v) => {
+        if (v === null) return {}
         if (typeof v === "object" && !Array.isArray(v)) {
             return v
         } else {
