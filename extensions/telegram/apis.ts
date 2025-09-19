@@ -57,11 +57,11 @@ const registerCards = async (context, botUsername) => {
     defaults: {
       width: 3,
       height: 10,
-      name: "telegram_last_received_message",
+      name: "Telegram last received message",
       icon: "send",
       color: "#24A1DE",
       description: "telegram last received message",
-      html: "\n//data contains: data.value, data.icon and data.color\nreturn card({\n    content: `\n        ${icon({ name: data.icon, color: data.color, size: '48' })}    \n        ${cardValue({ value: data.value})}\n    `\n});\n",
+      html: "//@card/react\n\nfunction Widget(card) {\n    const value = card.value;\n    const message = value?.content ?? \"No message\"\n    const sender = value?.from ?? \"\"\n    const chatId = value?.chat_id ?? \"\"\n\n    return (\n        <Tinted>\n            <ProtoThemeProvider forcedTheme= { window.TamaguiTheme }>\n                <YStack gap=\"$3\" p=\"$3\">\n                    <XStack gap=\"$2\" ai=\"center\">\n                        <YStack jc=\"center\" ai=\"center\" p=\"$2\" bc={card.color} br=\"$20\" mr=\"$1\">\n                            <Icon name={data.icon} size={16} color={\"white\"}/>\n                        </YStack>\n                        <Text fow=\"600\" fos=\"$3\">{sender}</Text>\n                        <Text fow=\"100\" fos=\"$3\" o={0.3}>{chatId}</Text>\n                    </XStack>\n                    <YStack bc={\"$bgContent\"} p=\"$2\" br=\"$4\">\n                        <Markdown readOnly={ true } data={message} />\n                    </YStack>\n                </YStack>\n            </ProtoThemeProvider>\n        </Tinted>\n  );\n}\n",
       rulesCode: `return states?.telegram?.received?.message`,
       type: 'value'
     },
