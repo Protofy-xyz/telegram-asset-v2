@@ -91,7 +91,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
         if (card.customCardViewPath) {
             proxyDB.set('boards', boardId, card.name + '_view', {
                 alias: card.customCardViewPath,
-                target: '/workspace/card',
+                target: '/workspace/boards/card',
                 query: 'card=' + encodeURIComponent(card.name) + '&board=' + encodeURIComponent(boardId)
             });
         }
