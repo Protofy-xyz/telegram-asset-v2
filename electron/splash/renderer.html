@@ -144,7 +144,40 @@
       height: 100vh;
       width: 100vw;
       display: none;
+      overflow: auto; /* scrolling happens here */
     }
+
+    /* Sticky header bar inside logs */
+    #logs-bar {
+      position: sticky;
+      top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 5; /* above log content */
+    }
+    #logs-title {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    /* Back button (logs view) */
+    #back-to-splash {
+      font-size: 0.85rem;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #ffffff33;
+      background: linear-gradient(90deg, var(--brand-from), var(--brand-to));
+      color: #1b1300;
+      cursor: pointer;
+      transition: transform .08s ease, opacity .2s ease;
+    }
+    #back-to-splash:hover { opacity: .9; }
+    #back-to-splash:active { transform: scale(0.98); }
 
     #log {
       white-space: pre-wrap;
@@ -173,7 +206,11 @@
   </div>
 
   <!-- Logs -->
-  <div id="logs" style="overflow: auto;">
+  <div id="logs">
+    <div id="logs-bar">
+      <button id="back-to-splash" type="button" aria-label="Back to boot screen">← Back</button>
+      <span id="logs-title">Vento Logs</span>
+    </div>
     <pre id="log" readonly></pre>
   </div>
 
@@ -288,9 +325,21 @@
       logsPanel.style.display = 'block';
       logsPanel.scrollTop = logsPanel.scrollHeight; // Scroll to bottom on second open
       document.title = 'Vento Logs';
-    }
+    };
+
+    const showSplash = () => {
+      logsPanel.style.display = 'none';
+      splash.style.display = 'flex'; // restore flex layout
+      document.title = 'Starting Vento...';
+    };
 
     viewLogs.addEventListener('click', showLogs);
+  
+    document.getElementById('back-to-splash').addEventListener('click', showSplash);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && logsPanel.style.display !== 'none') showSplash();
+    });
 
     window.logAPI?.onShowLogs(showLogs);
 
