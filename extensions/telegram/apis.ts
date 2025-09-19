@@ -190,8 +190,18 @@ export default async (app, context) => {
 
   // Función para construir o rehacer el bot
   const buildOrRebuildBot = async () => {
-    const TELEGRAM_BOT_TOKEN = await getKey({ key: "TELEGRAM_BOT_TOKEN", token: getServiceToken() })
-    const TELEGRAM_BOT_USERNAME = await getKey({ key: "TELEGRAM_BOT_USERNAME", token: getServiceToken() })
+    let TELEGRAM_BOT_TOKEN = "a"
+    try{
+      TELEGRAM_BOT_TOKEN= await getKey({ key: "TELEGRAM_BOT_TOKEN", token: getServiceToken() })
+    }catch(e){
+      console.error("Error getting TELEGRAM_BOT_TOKEN", e)
+    }
+    let TELEGRAM_BOT_USERNAME = "a"
+    try{
+      TELEGRAM_BOT_USERNAME = await getKey({ key: "TELEGRAM_BOT_USERNAME", token: getServiceToken() })
+    }catch(e){
+      console.error("Error getting TELEGRAM_BOT_USERNAME", e)
+    }
 
     // Si algo cambió (token/username) o el bot no existe, rehacer
     const needsRebuild =
@@ -203,7 +213,12 @@ export default async (app, context) => {
 
     // Parar bot anterior si existe
     if (bot) {
-      try { await bot.stop('graceful') } catch (e) { logger.warn('Error stopping previous bot', e) }
+      try {
+        await bot.stop('graceful')
+      } catch (e) {
+        console.error('Error stopping previous bot', e)
+        logger.warn('Error stopping previous bot', e)
+      }
       bot = null
     }
 
@@ -251,27 +266,35 @@ export default async (app, context) => {
       res.send({ result: "error" })
     }
   }))
+  console.log("Setup events for telegram keys changes")
+  context.events.onEvent(
+    context.mqtt,
+    context,
+    async () => { 
+      console.log("Telegram: rebuild bot due to keys/update/TELEGRAM_BOT_TOKEN");
+      await buildOrRebuildBot()
+    },
+    "keys/+/TELEGRAM_BOT_TOKEN",
+    "api"
+  )
+
+  context.events.onEvent(
+    context.mqtt,
+    context,
+    async () => { 
+      console.log("Telegram: rebuild bot due to keys/update/TELEGRAM_BOT_USERNAME");
+      await buildOrRebuildBot()
+    },
+    "keys/+/TELEGRAM_BOT_USERNAME",
+    "api"
+  )
 
   // Construcción inicial
   await buildOrRebuildBot()
 
   // Reaccionar a cambios de keys → rehacer bot y refrescar cards/actions
   // (evita duplicar listeners de eventos: registramos estos una sola vez)
-  context.events.onEvent(
-    context.mqtt,
-    context,
-    async () => { await buildOrRebuildBot() },
-    "keys/update/TELEGRAM_BOT_TOKEN",
-    "api"
-  )
 
-  context.events.onEvent(
-    context.mqtt,
-    context,
-    async () => { await buildOrRebuildBot() },
-    "keys/update/TELEGRAM_BOT_USERNAME",
-    "api"
-  )
 
   // (Opcional) Hooks de parada elegante si tu host envía señales:
   // process.once('SIGINT', async () => { try { await bot?.stop('graceful') } catch {} })
