@@ -14,6 +14,20 @@ if (!fs.existsSync(PROJECTS_DIR)) {
   fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 }
 
+function notifyProjectStatus(name, status) {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('vento:project-status', {
+        name,
+        status,
+        at: new Date().toISOString(),
+      });
+    }
+  } catch (e) {
+    console.error('notifyProjectStatus error:', e);
+  }
+}
+
 function readProjects() {
   try {
     if (fs.existsSync(PROJECTS_FILE)) {
@@ -43,6 +57,7 @@ function updateProjectStatus(name, status) {
     updatedAt: new Date().toISOString(),
   };
   writeProjects(projects);
+  notifyProjectStatus(name, status);
   return true;
 }
 
@@ -200,6 +215,7 @@ app.whenReady().then(async () => {
         const projectPath = path.join(PROJECTS_DIR, projectName);
         if (fs.existsSync(projectPath)) {
           fs.rmSync(projectPath, { recursive: true, force: true });
+          notifyProjectStatus(projectName, 'deleted');
           console.log('Project deleted:', projectPath);
         }
         respond({

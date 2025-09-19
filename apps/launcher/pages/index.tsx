@@ -40,6 +40,11 @@ const obj = {
 function CardElement({ element, width, onDelete, onDownload }) {
   const [menuOpened, setMenuOpened] = useState(false)
   const [downloading, setDownloading] = useState(false)
+
+  useEffect(() => {
+    setDownloading(element.status === 'downloading');
+  }, [element.status]);
+
   return (
     <YStack borderRadius={10} p="$4" jc="center" cursor="auto" backgroundColor="rgba(0, 0, 0, 0.6)">
       <XStack f={1} ai="center">
@@ -86,8 +91,6 @@ function CardElement({ element, width, onDelete, onDownload }) {
             const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
             setDownloading(true)
             const result = await fetch(url)
-            setDownloading(false)
-            onDownload?.()
           }} />}
         </XStack>}
         {element.status === 'downloading' && (
@@ -112,6 +115,23 @@ const MainView = () => {
   const [reload, setReload] = useState(0)
   const [addOpened, setAddOpened] = useState(false)
   const [result, loading, error] = useFetch('https://api.github.com/repos/Protofy-xyz/Vento/releases', null, true)
+
+  useEffect(() => {
+    const api = (typeof window !== 'undefined' && (window as any).electronAPI) ? (window as any).electronAPI : null;
+    if (!api?.onProjectStatus) return;
+
+    const handler = ({ name, status }: { name: string; status: string }) => {
+      // simple approach: any status change triggers a refresh of the list
+      if (['downloaded', 'error', 'downloading', 'deleted'].includes(status)) {
+        setReload((r) => r + 1);
+      }
+    };
+
+    api.onProjectStatus(handler);
+    return () => {
+      api.offProjectStatus?.(handler);
+    };
+  }, []);
 
   let parsedResult = JSON.parse(result ?? '[]')
 
