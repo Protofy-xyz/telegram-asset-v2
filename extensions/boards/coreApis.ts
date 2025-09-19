@@ -118,7 +118,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             description: card.description ?? "",
             params: card.params ?? {},
             ...(card.configParams && { configParams: card.configParams }),
-            emitEvent: i === actionsCards.length - 1,
+            emitEvent: true,
             persistValue: card.persistValue ?? false
         })
         if (!regenerate && card.persistValue && !card.autorun) {

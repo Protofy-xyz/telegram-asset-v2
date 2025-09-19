@@ -1,4 +1,5 @@
-import { getLogger, ProtoMemDB } from 'protobase';
+import { getLogger, ProtoMemDB, generateEvent } from 'protobase';
+import { getServiceToken } from 'protonode';
 const logger = getLogger();
 
 export const removeActions = async (options: {
@@ -20,6 +21,23 @@ export const removeActions = async (options: {
         return
     }
 
-    //removes all actions in the group and tag
-    ProtoMemDB(chunk).clear(group, tag)
+    const db = ProtoMemDB(chunk)
+    const existing = db.getByTag(group, tag)
+
+    db.clear(group, tag)
+
+    if (!existing || typeof existing !== 'object') {
+        return
+    }
+
+    const serviceToken = getServiceToken()
+    for (const name of Object.keys(existing)) {
+        generateEvent({
+            path: `${chunk}/${group}/${tag}/${name}/delete`,
+            from: 'states',
+            user: 'system',
+            payload: {},
+            ephemeral: true
+        }, serviceToken)
+    }
 }
