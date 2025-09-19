@@ -107,7 +107,7 @@ const registerCards = async (context, botUsername) => {
     defaults: {
       width: 3,
       height: 10,
-      name: "telegram_send_message",
+      name: "Telegram send message",
       icon: "send",
       color: "#24A1DE",
       description: "send a telegram message to a chat id",
