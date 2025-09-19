@@ -162,6 +162,11 @@ export default async (app, context) => {
 
   // Handlers del bot (reutilizables)
   const attachHandlers = (b: Telegraf) => {
+    b.start((ctx) => {
+      const userId = String(ctx.from.id);
+      return ctx.reply(`Your chat_id is: ${userId}`);
+    });
+
     b.on('text', async (ctx) => {
       try {
         const fromLabel = ctx.from?.username
