@@ -123,7 +123,7 @@
                 "orderDirection": "direction to order the results by (asc or desc) (optional)"
             },
             "rulesCode": "return execute_action(\"/api/v1/actions/players/list\", userParams)",
-            "html": "return dataView('players', data.domId)"
+            "html": "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\"players\"/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n"
         },
         {
             "key": "value_1753540637550",

@@ -129,7 +129,7 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
       {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
       <CardIcon Icon={Settings} onPress={() => onEdit("config")} />
 
-      <Popover onOpenChange={setMenuOpened} open={menuOpened} allowFlip>
+      <Popover onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
         <Popover.Trigger>
           <CardIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
         </Popover.Trigger>
