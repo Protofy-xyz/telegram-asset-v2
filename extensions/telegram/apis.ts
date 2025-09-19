@@ -72,15 +72,15 @@ const registerCards = async (context, botUsername) => {
   addCard({
     group: 'telegram',
     tag: "setter",
-    id: 'telegram_key_setter',
-    templateName: "Telegram key setter",
+    id: 'telegram_connector',
+    templateName: "Telegram connector",
     name: "key",
     defaults: {
       width: 4,
-      height: 4,
+      height: 13,
       icon: "send",
-      name: "telegram_key_setter",
-      description: "Displays a key setter for Telegram keys",
+      name: "Telegram connector",
+      description: "Connects Vento with a Telegram bot using apikeys",
       type: "value",
       params: {
         nameKey: "The key name to set",
@@ -91,7 +91,7 @@ const registerCards = async (context, botUsername) => {
         nameKey2: { visible: true, defaultValue: "TELEGRAM_BOT_USERNAME", type: "string" }
       },
       rulesCode: "",
-      html: "\n//@react\nreactCard(`\n  async function validateKey(apiKey) { return true; }\n  async function validateKey2(apiKey) { return true; }\n  function Widget() {\n    return (\n      <View className=\"no-drag\">\n        <KeySetter nameKey={data?.configParams?.nameKey?.defaultValue} validate={validateKey} />\n        <KeySetter nameKey={data?.configParams?.nameKey2?.defaultValue} validate={validateKey2} />\n      </View>\n    );\n  }\n`, data.domId)\n",
+      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  async function validateKey(apiKey) { return true; }\n  async function validateKey2(apiKey) { return true; }\n\n  const readmeIntro =`\n  # Telegram Bot with Goodfather\n\n## Create a bot\n- Open Telegram, search **@BotFather**.  \n- Run _/newbot_ \n- Enter a **name** (must end in **bot**). It must be unused.  \n- Your bot is live. \n- After that the **@BotFather** gives you the **token** (looks like _1234567890:ABC-123xyz_). Store it securely.\n- Set the **token** and **name** below\n`\n  console.log(\"DEV: card -> \", card)\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <YStack>\n            <Markdown readOnly={true} data={readmeIntro}/>\n          </YStack>\n          <View className={\"no-drag\"}>\n            <KeySetter nameKey={data?.configParams?.nameKey?.defaultValue} validate={validateKey} />\n            <KeySetter nameKey={data?.configParams?.nameKey2?.defaultValue} validate={validateKey2} />\n          </View>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
       color: "#24a1de",
     },
     emitEvent: true,
