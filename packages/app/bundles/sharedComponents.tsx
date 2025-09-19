@@ -30,6 +30,7 @@ import { DataView } from 'protolib/components/DataView';
 import { ObjectViewLoader } from 'protolib/components/ObjectViewLoader';
 import { MqttWrapper } from 'protolib/components/MqttWrapper';
 import { BasicPlaceHolder } from 'protolib/visualui/visualuiWrapper';
+import { StorageView } from 'protolib/components/StorageView';
 
 const layoutMetadata = {
     visualui: {
@@ -113,6 +114,7 @@ export const transferExtensionComponents = () => {
     TransferComponent(Provider, 'Provider');
     TransferComponent(Tinted, 'Tinted');
     TransferComponent(DataView, 'ProtoDataView');
+    TransferComponent(StorageView, 'StorageView');
     TransferComponent(ObjectViewLoader, 'ObjectViewLoader');
     TransferComponent(ProtoModel, 'ProtoModel');
     TransferComponent(MqttWrapper, 'MqttWrapper');

@@ -501,7 +501,7 @@ export const AutoActions = ({
             icon: 'search',
             displayResponse: true,
             name: `list ${modelName}`,
-            html: getHTML("list", "return dataView('" + (object ?? modelName) + "', data.domId)"),
+            html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\""+ (object ?? modelName) +"\"/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
             type: 'action',
             description: `Returns a list of ${modelName} objects. You can filter the results by passing itemsPerPage, page, search, orderBy and orderDirection parameters.`,
             params: {
