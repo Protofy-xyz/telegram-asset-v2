@@ -108,6 +108,23 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                 </Checkbox>
             </XStack>
             <XStack alignItems="center">
+                <ColumnTitle>Show board UI while playing</ColumnTitle>
+                <Checkbox
+                    w="$2"
+                    h="$2"
+                    focusStyle={{ outlineWidth: 0 }}
+                    checked={currentSettings?.showBoardUIWhilePlaying ?? false}
+                    onCheckedChange={(checked) => setCurrentSettings({ ...currentSettings, showBoardUIWhilePlaying: checked })}
+                    className="no-drag"
+                    backgroundColor={BG_COLOR}
+                    borderColor={"transparent"}
+                >
+                    <Checkbox.Indicator>
+                        <Check size={16} />
+                    </Checkbox.Indicator>
+                </Checkbox>
+            </XStack>
+            <XStack alignItems="center">
                 <ColumnTitle>{"Margin"}</ColumnTitle>
                 <ColInput
                     backgroundColor={BG_COLOR}

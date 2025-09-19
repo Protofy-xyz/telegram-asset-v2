@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { API } from 'protobase'
 
 interface Controls {
@@ -37,6 +37,11 @@ export const BoardControlsProvider: React.FC<{
 
   const toggleJson = () => setIsJSONView(v => !v);
   const openAdd = () => setAddOpened(true);
+  useEffect(() => {
+    if (board?.settings?.showBoardUIWhilePlaying) {
+      setViewMode(autopilot ? 'ui' : 'board');
+    }
+  }, [autopilot, board?.settings?.showBoardUIWhilePlaying]);
 
   const toggleAutopilot = useCallback(async () => {
     setAutopilot(v => !v);
