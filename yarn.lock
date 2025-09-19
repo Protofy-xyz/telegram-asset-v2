@@ -3684,6 +3684,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@extensions/types@workspace:extensions/types":
+  version: 0.0.0-use.local
+  resolution: "@extensions/types@workspace:extensions/types"
+  languageName: unknown
+  linkType: soft
+
 "@extensions/ui@workspace:extensions/ui":
   version: 0.0.0-use.local
   resolution: "@extensions/ui@workspace:extensions/ui"
