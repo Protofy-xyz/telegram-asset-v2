@@ -559,7 +559,7 @@ const Board = ({ board, icons }) => {
     // }
     const lyt = {}
     Object.keys(gridSizes).forEach(key => {
-      lyt[key] = computeLayout(items, gridSizes[key], { layout: board?.layouts?.[key] });
+      lyt[key] = computeLayout(items, gridSizes[key], { layout: boardRef.current?.layouts[key] ?? board?.layouts[key] });
     });
     return lyt
   }, [items, board?.layouts])
