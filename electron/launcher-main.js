@@ -21,9 +21,10 @@ function readProjects() {
       return projects.map(project => {
         return {
           ...project,
-          status: fs.existsSync(path.join(PROJECTS_DIR, project.name)) ? 'downloaded' : 'pending',
-        }
-      })
+          status: project.status || 'pending', // default if missing
+        };
+      });
+
     } else {
       return [];
     }
@@ -32,6 +33,19 @@ function readProjects() {
     return [];
   }
 }
+function updateProjectStatus(name, status) {
+  const projects = readProjects();
+  const i = projects.findIndex(p => p.name === name);
+  if (i === -1) return false;
+  projects[i] = {
+    ...projects[i],
+    status,
+    updatedAt: new Date().toISOString(),
+  };
+  writeProjects(projects);
+  return true;
+}
+
 
 function writeProjects(projects) {
   try {
@@ -104,70 +118,74 @@ app.whenReady().then(async () => {
       const match = pathname.match(/^\/api\/v1\/projects\/([^\/]+)\/download$/);
       const projectName = match?.[1];
 
-      //read project to get version
-      const projects = readProjects();
-      const project = projects.find(p => p.name === projectName);
-      if (!project) {
+      try {
+        // read project to get version
+        const projects = readProjects();
+        const project = projects.find(p => p.name === projectName);
+        if (!project) {
+          respond({ statusCode: 404, data: Buffer.from('Project not found') });
+          return;
+        }
+
+        // >>> ADD: mark JSON status
+        updateProjectStatus(projectName, 'downloading');
+
+        // get zip url from github (keep your code, or apply your 'stable→latest' tweak if you want)
+        const url = 'https://api.github.com/repos/Protofy-xyz/Vento/releases/tags/' + (project.version == 'latest' ? 'latest' : 'v' + project.version);
+        const response = await fetch(url);
+        const data = await response.json();
+        const zipBallUrl = data?.assets[0]?.browser_download_url;
+        if (!zipBallUrl) {
+          respond({ statusCode: 404, data: Buffer.from('Release not found') });
+          return;
+        }
+
+        // download the zip file to PROJECTS_DIR
+        const zipFilePath = path.join(PROJECTS_DIR, `${projectName}.zip`);
+        const zipResponse = await fetch(zipBallUrl);
+        if (!zipResponse.ok) {
+          respond({ statusCode: zipResponse.status, data: Buffer.from('Failed to download project zip') });
+          return;
+        }
+        const arrayBuffer = await zipResponse.arrayBuffer();
+        const zipBuffer = Buffer.from(arrayBuffer);
+        fs.writeFileSync(zipFilePath, zipBuffer);
+        console.log('Project downloaded:', zipFilePath);
+
+        // extract the zip file
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip(zipFilePath);
+        const projectFolderPath = path.join(PROJECTS_DIR, projectName);
+        zip.extractAllTo(projectFolderPath, true);
+        console.log('Project extracted to:', projectFolderPath);
+        fs.unlinkSync(zipFilePath);
+        console.log('Zip file removed:', zipFilePath);
+
+        // run scripts
+        const removeDevModeScript = path.join(projectFolderPath, 'scripts', 'removeDevMode.js');
+        require(removeDevModeScript);
+        console.log('removeDevMode script executed');
+
+        const downloadBinariesScript = path.join(projectFolderPath, 'scripts', 'download-bins.js');
+        await require(downloadBinariesScript)(AdmZip, require('tar'));
+        console.log('download-bins script executed');
+
+        // >>> ADD: mark JSON status
+        updateProjectStatus(projectName, 'downloaded');
+
         respond({
-          statusCode: 404,
-          data: Buffer.from('Project not found')
+          mimeType: 'application/json',
+          data: Buffer.from(JSON.stringify({ success: true, message: 'done' }))
         });
         return;
-      }
+      } catch (err) {
+        console.error('Download failed:', err);
+        // >>> ADD: mark JSON status
+        updateProjectStatus(projectName, 'error');
 
-      //get zip url from github
-      const url = 'https://api.github.com/repos/Protofy-xyz/Vento/releases/tags/' + (project.version == 'latest' ? 'latest' : 'v'+project.version);
-      const response = await fetch(url)
-      const data = await response.json()
-      const zipBallUrl = data?.assets[0]?.browser_download_url;
-      if (!zipBallUrl) {
-        respond({
-          statusCode: 404,
-          data: Buffer.from('Release not found')
-        });
+        respond({ statusCode: 500, data: Buffer.from('Failed to download project') });
         return;
       }
-
-      //download the zip file to PROJECTS_DIR
-      const zipFilePath = path.join(PROJECTS_DIR, `${projectName}.zip`);
-      const zipResponse = await fetch(zipBallUrl);
-      if (!zipResponse.ok) {
-        respond({
-          statusCode: zipResponse.status,
-          data: Buffer.from('Failed to download project zip')
-        });
-        return;
-      }
-      const arrayBuffer = await zipResponse.arrayBuffer();
-      const zipBuffer = Buffer.from(arrayBuffer);
-      fs.writeFileSync(zipFilePath, zipBuffer);
-      console.log('Project downloaded:', zipFilePath);
-
-      //extract the zip file with adm-zip
-      const AdmZip = require('adm-zip');
-      const zip = new AdmZip(zipFilePath);
-      const projectFolderPath = path.join(PROJECTS_DIR, projectName);
-      zip.extractAllTo(projectFolderPath, true);
-      console.log('Project extracted to:', projectFolderPath);
-      //remove the zip file
-      fs.unlinkSync(zipFilePath);
-      console.log('Zip file removed:', zipFilePath);
-
-      //run the removeDevMode script inside the project folder
-      const removeDevModeScript = path.join(projectFolderPath, 'scripts', 'removeDevMode.js');
-      require(removeDevModeScript);
-      console.log('removeDevMode script executed');
-
-      //run the download-binaries script inside the project folder
-      const downloadBinariesScript = path.join(projectFolderPath, 'scripts', 'download-bins.js');
-      require(downloadBinariesScript)(AdmZip, require('tar'))
-      console.log('download-bins script executed');
-      //reply to the renderer process
-      respond({
-        mimeType: 'application/json',
-        data: Buffer.from(JSON.stringify({ success: true, message: 'done' }))
-      });
-
     } else if (
       request.method === 'GET' &&
       /^\/api\/v1\/projects\/[^\/]+\/delete$/.test(pathname)
@@ -270,6 +288,7 @@ ipcMain.on('create-project', (event, newProject) => {
   const projects = readProjects();
   projects.push({
     ...newProject,
+    status: 'pending',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   });

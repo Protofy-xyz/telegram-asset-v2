@@ -90,6 +90,15 @@ function CardElement({ element, width, onDelete, onDownload }) {
             onDownload?.()
           }} />}
         </XStack>}
+        {element.status === 'downloading' && (
+          <XStack><Tinted><Spinner /></Tinted></XStack>
+        )}
+        {element.status === 'error' && (
+          <XStack ai="center" space="$2">
+            <AlertTriangle size={16} />
+            <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>Download failed</Paragraph>
+          </XStack>
+        )}
       </XStack>
 
 
