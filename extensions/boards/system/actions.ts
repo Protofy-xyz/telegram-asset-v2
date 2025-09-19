@@ -5,6 +5,7 @@ import { dbProvider, getDBOptions } from 'protonode';
 import { getExecuteAction } from "./getExecuteAction";
 import fetch from 'node-fetch';
 import { getLogger } from 'protobase';
+import { TypeParser } from "./types";
 
 const getBoardCardActions = async (boardId) => {
     const board = await getBoard(boardId);
@@ -209,6 +210,9 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
         let response = null;
         try {
             response = await wrapper(boardId, action_or_card_id, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
+            response = action.returnType && typeof TypeParser?.[action.returnType] === "function"
+                ? TypeParser?.[action.returnType](response)
+                : response
             getLogger({ module: 'boards', board: boardId, card: action.name }).info({ value: response, stackTrace }, "New value for card: " + action.name);
         } catch (err) {
             await generateEvent({

@@ -66,5 +66,6 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
       loading: loading,
       disabledView: () => <RulesKeySetter updateKey={updateKey} loading={loading} />
     }}
+    setReturnType={(t) => setCardData(prev => ({ ...prev, returnType: t }))}
     valueReady={hasCode} />
 }

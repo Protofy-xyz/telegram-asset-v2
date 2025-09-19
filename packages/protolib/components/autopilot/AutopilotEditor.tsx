@@ -1,5 +1,5 @@
 import { Panel, PanelGroup } from "react-resizable-panels";
-import { YStack, useTheme } from "@my/ui";
+import { XStack, YStack, useTheme } from "@my/ui";
 import { Tinted } from "../../components/Tinted";
 import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
 import { useThemeSetting } from '@tamagui/next-theme'
@@ -7,6 +7,7 @@ import { useMemo, useRef, useState } from "react";
 import { useSettingValue } from "@extensions/settings/hooks";
 import { CodeView } from '@extensions/files/intents';
 import { ActionsAndStatesPanel } from "./ActionsAndStatesPanel";
+import { SelectList } from "../../components/SelectList";
 
 /**
  * A partir de un objeto JS, genera una declaración TS
@@ -56,10 +57,11 @@ const generateParamsDeclaration = (cardData) => {
     return `declare const params: {\n${params}\n};`;
 }
 
-export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'states'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {} }) => {
+export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'states'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {}, setReturnType = (t) => { } }) => {
     const { resolvedTheme } = useThemeSetting()
     const isAIEnabled = useSettingValue('ai.enabled', false);
     const [rulesMode, setRulesMode] = useState(null)
+    const returnTypes = ["auto", "number", "string", "object", "array"]
 
     const declarations = useMemo(() => {
         const decl = generateStatesDeclaration('states', { board: states });
@@ -77,6 +79,17 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
     const flows = useMemo(() => {
         return <CodeView
+            leftIcons={<YStack jc="center" ai="center" gap="$2" pb="$4">
+                <Text fos="$4" color="$gray9" style={{ whiteSpace: "nowrap" }}>return type</Text>
+                <SelectList
+                    title={null}
+                    defaultValue="auto"
+                    placeholder="auto"
+                    elements={returnTypes}
+                    onValueChange={(v) => setReturnType(v)}
+                    value={cardData.returnType}
+                />
+            </YStack>}
             pathname={cardData.type == 'action' ? '/rules' : '/observerCard'}
             onApplyRules={async (rules) => {
                 return await setRules(rules)
@@ -134,7 +147,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
             }}
             onModeChange={(currMode) => setRulesMode(currMode)}
         />
-    }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"], rulesConfig["loading"]]);
+    }, [resolvedTheme, board.name, theme, isAIEnabled, rulesConfig["enabled"], rulesConfig["loading"], cardData.returnType]);
 
     return (
         <PanelGroup direction="horizontal">
