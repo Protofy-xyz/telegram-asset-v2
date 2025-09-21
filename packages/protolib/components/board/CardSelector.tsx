@@ -28,6 +28,12 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
 
   // Extrae los grupos disponibles de las options
   const groups = useMemo(() => {
+    options.sort((a, b) => {
+      if (a.group && b.group) {
+        return a.group.localeCompare(b.group);
+      }
+      return 0;
+    });
     return [...new Set(options.map(o => o.group).filter(Boolean))];
   }, [options]);
 
