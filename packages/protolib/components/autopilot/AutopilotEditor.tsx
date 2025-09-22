@@ -79,17 +79,44 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
     const flows = useMemo(() => {
         return <CodeView
-            leftIcons={<YStack jc="center" ai="center" gap="$2" pb="$4">
-                <Text fos="$4" color="$gray9" style={{ whiteSpace: "nowrap" }}>return type</Text>
-                <SelectList
-                    title={null}
-                    defaultValue="auto"
-                    placeholder="auto"
-                    elements={returnTypes}
-                    onValueChange={(v) => setReturnType(v)}
-                    value={cardData.returnType}
-                />
-            </YStack>}
+            rightIcons={<SelectList
+                title={"Return type"}
+                selectorStyle={{
+                    normal: {
+                        backgroundColor: "$color8",
+                        px: "$3",
+                        py: "0px",
+                        width: "150px",
+                    },
+                    hover: {
+                        backgroundColor: "$color9"
+                    }
+                }}
+                titleStyle={{
+                    normal: {
+                        backgroundColor: "$color8",
+                        px: "$3",
+                        py: "0px",
+                        fontWeight: "300"
+                    }
+                }}
+                rowStyle={{
+                    normal: {
+                        backgroundColor: "$color7",
+                        px: "$3",
+                        py: "0px",
+                        fontWeight: "300"
+                    },
+                    hover: {
+                        backgroundColor: "$color8",
+                    }
+                }}
+                defaultValue="auto"
+                placeholder="return type"
+                elements={returnTypes}
+                onValueChange={(v) => setReturnType(v)}
+                value={cardData.returnType}
+            />}
             pathname={cardData.type == 'action' ? '/rules' : '/observerCard'}
             onApplyRules={async (rules) => {
                 return await setRules(rules)

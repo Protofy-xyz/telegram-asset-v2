@@ -12,6 +12,9 @@ export function SelectList({
   triggerProps,
   valueProps,
   placeholder = "choose an option",
+  selectorStyle = { normal: {}, hover: {} },
+  titleStyle = { normal: {}, hover: {} },
+  rowStyle = { normal: {}, hover: {} },
   ...props
 }: SelectProps & {
   title: string;
@@ -20,6 +23,9 @@ export function SelectList({
   setValue: (v: string) => void;
   triggerProps?: SelectTriggerProps;
   valueProps?: any;
+  selectorStyle?: { normal?: {}, hover?: {} };
+  titleStyle?: { normal?: {}, hover?: {} };
+  rowStyle?: { normal?: {}, hover?: {} };
   placeholder?: string;
 }) {
   const opts = useMemo(
@@ -36,7 +42,7 @@ export function SelectList({
       disablePreventBodyScroll
       {...props}
     >
-      <Select.Trigger f={1} iconAfter={ChevronDown} {...triggerProps}>
+      <Select.Trigger f={1} iconAfter={ChevronDown} {...triggerProps} style={{ ...selectorStyle.normal }} hoverStyle={{ ...selectorStyle.hover }}>
         <Select.Value {...valueProps} placeholder={placeholder} />
       </Select.Trigger>
 
@@ -55,10 +61,10 @@ export function SelectList({
 
         <Select.Viewport minWidth={200}>
           <Select.Group>
-            <Select.Label>{title}</Select.Label>
+            <Select.Label style={{ ...titleStyle.normal }} hoverStyle={{ ...titleStyle.hover }}>{title}</Select.Label>
             {opts.map((item, index) => (
               <Select.Item key={item.value} index={index} value={item.value}
-                style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', ...rowStyle.normal }} hoverStyle={{ ...rowStyle.hover }}>
                 <Select.ItemText>{item.caption}</Select.ItemText>
                 <Select.ItemIndicator marginLeft="auto"><Check size={16} /></Select.ItemIndicator>
               </Select.Item>

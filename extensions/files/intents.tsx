@@ -178,7 +178,7 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
   </AsyncView>
 }
 
-export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPanels = false, extraPanels = [], leftIcons = <></>, icons = <></>, disableFlowMode = false, masksPath = undefined, defaultMode = 'flow', monacoOnMount = (editor, monaco) => { }, monacoInstance = null, monacoProps = {}, monacoOptions = {}, onCodeChange = (code) => { }, onFlowChange = (code) => { }, fileContent = null, path, flowsPath = undefined, rules = [], onApplyRules = async (rules) => { }, sourceCode, isModified = false, setIsModified = (x) => { }, query = {}, children = <></>, viewPort = undefined, onModeChange = (mode) => { } }) => {
+export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPanels = false, extraPanels = [], leftIcons = <></>, rightIcons = <></>, icons = <></>, disableFlowMode = false, masksPath = undefined, defaultMode = 'flow', monacoOnMount = (editor, monaco) => { }, monacoInstance = null, monacoProps = {}, monacoOptions = {}, onCodeChange = (code) => { }, onFlowChange = (code) => { }, fileContent = null, path, flowsPath = undefined, rules = [], onApplyRules = async (rules) => { }, sourceCode, isModified = false, setIsModified = (x) => { }, query = {}, children = <></>, viewPort = undefined, onModeChange = (mode) => { } }) => {
   pathname = pathname ?? usePathname();
   const theme = useTheme()
   const tint = useTint().tint
@@ -363,7 +363,7 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
       <XStack>
         {leftIcons}
       </XStack>
-      <XStack alignItems="center">
+      <XStack alignItems="center" mb="$2">
         {!disableFlowMode && <>
           {extraPanels.map(v => {
             const LICon = v.icon;
@@ -383,6 +383,7 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
             {/* <SizableText mr={"$2"}>Save</SizableText> */}
             <Code color="var(--color)" size={"$1"} />
           </IconContainer>
+          {rightIcons && <XStack pl="$3">{rightIcons}</XStack>}
         </>}
         {icons}
         {children}
