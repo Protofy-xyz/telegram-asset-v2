@@ -288,7 +288,7 @@ export default async (app, context) => {
     try {
       if (!bot) throw new Error('Bot not initialized')
       await bot.telegram.sendMessage(chat_id.toString(), message.toString())
-      res.send({ result: 'done' })
+      res.send({ result: 'done', message: message, chat_id: chat_id })
     } catch (e) {
       logger.error("TelegramAPI error", e)
       res.send({ result: "error" })
