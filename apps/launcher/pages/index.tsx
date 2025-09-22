@@ -40,10 +40,38 @@ const obj = {
 function CardElement({ element, width, onDelete, onDownload }) {
   const [menuOpened, setMenuOpened] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     setDownloading(element.status === 'downloading');
   }, [element.status]);
+
+  const handleDelete = async (e: any) => {
+    e.stopPropagation();
+    if (isDeleting) return;
+    setDeleteError(null);
+    setIsDeleting(true);
+
+    try {
+      const res = await fetch(`app://localhost/api/v1/projects/${element.name}/delete`);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Delete failed with status ${res.status}`);
+      }
+
+      // Close the menu, show a brief "Deleted" badge, and notify parent
+      setMenuOpened(false);
+      onDelete?.(element);
+
+      // Clean up if the component unmounts quickly
+      return;
+    } catch (err: any) {
+      setDeleteError(err?.message || 'Delete failed');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <YStack borderRadius={10} p="$4" jc="center" cursor="auto" backgroundColor="rgba(0, 0, 0, 0.6)">
@@ -52,19 +80,27 @@ function CardElement({ element, width, onDelete, onDownload }) {
           {element.name}
         </Paragraph>
         <Popover onOpenChange={setMenuOpened} open={menuOpened} allowFlip>
-          <Popover.Trigger>
+          <Popover.Trigger disabled={isDeleting}>
             <InteractiveIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
           </Popover.Trigger>
           <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
             <Tinted>
-              <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"} onPress={async (e) => {
-                //call deleteProject with element.id
-                await fetch(`app://localhost/api/v1/projects/${element.name}/delete`)
-                //document.location.reload()
-                onDelete?.(element)
-              }}>
+              <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"}
+                onPress={isDeleting ? undefined : handleDelete}
+              >
                 <YStack>
-                  <XStack cursor="pointer" ai="center">Delete</XStack>
+                  <XStack cursor={isDeleting ? "not-allowed" : "pointer"} ai="center" space="$2">
+                    {isDeleting ? <Spinner size="small" /> : null}
+                    <Paragraph>{isDeleting ? 'Deleting…' : 'Delete'}</Paragraph>
+                  </XStack>
+                  {deleteError && (
+                    <XStack ai="center" space="$2" mt="$2">
+                      <AlertTriangle size={14} />
+                      <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>
+                        {deleteError}
+                      </Paragraph>
+                    </XStack>
+                  )}
                 </YStack>
               </YStack>
             </Tinted>
