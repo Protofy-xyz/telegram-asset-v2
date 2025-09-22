@@ -239,7 +239,8 @@ return card({
             rulesCode: "if (params.action === 'reset' || params.action === 'clear') {\r\n  return {};\r\n} else if (params.action === 'set') {\r\n  const key = params.key\r\n  const value = params.value\r\n  return { ...(board?.[name] ?? {}), [key]: value }\r\n} else if (params.action === 'delete') {\r\n  const newObj = { ...(board?.[name] ?? {}) }\r\n  delete newObj[params.key]\r\n  return newObj\r\n} else if (params.action === 'rename') {\r\n  const oldKey = params.oldKey\r\n  const newKey = params.newKey\r\n  const obj = { ...(board?.[name] ?? {}) }\r\n  if (oldKey !== newKey && obj[oldKey] !== undefined && obj[newKey] === undefined) {\r\n    obj[newKey] = obj[oldKey]\r\n    delete obj[oldKey]\r\n  }\r\n  return obj\r\n} else {\r\n  return board?.[name] ?? {}\r\n}",
             params: {
                 key: "key",
-                value: "value"
+                value: "value",
+                action: "action to perform in the object: set, delete, rename, reset or clear"
             },
             configParams: {
                 key: {
@@ -247,6 +248,10 @@ return card({
                     defaultValue: ""
                 },
                 value: {
+                    visible: true,
+                    defaultValue: ""
+                },
+                action: {
                     visible: true,
                     defaultValue: ""
                 }
