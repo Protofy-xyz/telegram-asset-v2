@@ -6,6 +6,7 @@ import { addCard } from "@extensions/cards/coreContext/addCard";
 import { getKey } from "@extensions/keys/coreContext";
 import { Telegraf } from 'telegraf';
 
+const GENERATE_EPHEMERAL_EVENT = true;
 const logger = getLogger()
 
 const onboardingHtml = async (botUsername) => {
@@ -91,7 +92,7 @@ const registerCards = async (context, botUsername) => {
         nameKey2: { visible: true, defaultValue: "TELEGRAM_BOT_USERNAME", type: "string" }
       },
       rulesCode: "",
-      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  async function validateKey(apiKey) { return true; }\n  async function validateKey2(apiKey) { return true; }\n\n  const readmeIntro =`\n  # Telegram Bot with Goodfather\n\n## Create a bot\n- Open Telegram, search **@BotFather**.  \n- Run **/newbot** \n- Enter a **name** (must end in **bot**). It must be unused.  \n- Your bot is live. \n- After that the **@BotFather** gives you the **token** (looks like _1234567890:ABC-123xyz_). Store it securely.\n- Set the **token** and **name** below\n`\n  console.log(\"DEV: card -> \", card)\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <YStack>\n            <Markdown readOnly={true} data={readmeIntro}/>\n          </YStack>\n          <View className={\"no-drag\"}>\n            <KeySetter nameKey={data?.configParams?.nameKey?.defaultValue} validate={validateKey} />\n            <KeySetter nameKey={data?.configParams?.nameKey2?.defaultValue} validate={validateKey2} />\n          </View>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
+      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  async function validateKey(apiKey) { return true; }\n  async function validateKey2(apiKey) { return true; }\n\n  const readmeIntro =`\n  # Telegram Bot with BotFather\n\n## Create a bot\n- Open Telegram, search **@BotFather**.  \n- Run **/newbot** \n- Enter a **name** (must end in **bot**). It must be unused.  \n- Your bot is live. \n- After that the **@BotFather** gives you the **token** (looks like _1234567890:ABC-123xyz_). Store it securely.\n- Set the **token** and **name** below\n`\n  console.log(\"DEV: card -> \", card)\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <YStack>\n            <Markdown readOnly={true} data={readmeIntro}/>\n          </YStack>\n          <View className={\"no-drag\"}>\n            <KeySetter nameKey={data?.configParams?.nameKey?.defaultValue} validate={validateKey} />\n            <KeySetter nameKey={data?.configParams?.nameKey2?.defaultValue} validate={validateKey2} />\n          </View>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
       color: "#24a1de",
     },
     emitEvent: true,
@@ -158,7 +159,6 @@ export default async (app, context) => {
 
   // Bootstrap de estado (una vez)
   context.state.set({ group: 'telegram', tag: "received", name: "message", value: "", emitEvent: true });
-  context.state.set({ group: 'telegram', tag: "received", name: "message_from", value: "", emitEvent: true });
 
   // Handlers del bot (reutilizables)
   const attachHandlers = (b: Telegraf) => {
@@ -191,15 +191,15 @@ export default async (app, context) => {
   // Función para construir o rehacer el bot
   const buildOrRebuildBot = async () => {
     let TELEGRAM_BOT_TOKEN = "a"
-    try{
-      TELEGRAM_BOT_TOKEN= await getKey({ key: "TELEGRAM_BOT_TOKEN", token: getServiceToken() })
-    }catch(e){
+    try {
+      TELEGRAM_BOT_TOKEN = await getKey({ key: "TELEGRAM_BOT_TOKEN", token: getServiceToken() })
+    } catch (e) {
       console.error("Error getting TELEGRAM_BOT_TOKEN", e)
     }
     let TELEGRAM_BOT_USERNAME = "a"
-    try{
+    try {
       TELEGRAM_BOT_USERNAME = await getKey({ key: "TELEGRAM_BOT_USERNAME", token: getServiceToken() })
-    }catch(e){
+    } catch (e) {
       console.error("Error getting TELEGRAM_BOT_USERNAME", e)
     }
 
@@ -236,13 +236,41 @@ export default async (app, context) => {
     // (Re)registrar cards/actions con el username actual
     await registerActionsAndCards(context, currentUsername || undefined)
 
+    console.log("Launching Telegram bot for username")
     // Lanzar
     try {
+      logger.info('Telegram bot launched (rebuilt)')
+      generateEvent(
+        {
+          ephemeral: GENERATE_EPHEMERAL_EVENT,
+          path: `telegram/bot/${TELEGRAM_BOT_USERNAME}/status/launched`,
+          from: "telegram",
+          user: TELEGRAM_BOT_USERNAME,
+          payload: {
+            message: "Telegram bot launched successfully",
+            botUsername: TELEGRAM_BOT_USERNAME,
+          }
+        },
+        getServiceToken()
+      );
       await bot.launch()
-      logger.info('Telegraf bot launched (rebuilt)')
+
     } catch (e) {
-      console.error('Error launching Telegraf bot', e)
-      logger.error('Error launching Telegraf bot', e)
+      console.error('Error launching Telegram bot', e)
+      logger.error('Error launching Telegram bot', e)
+      generateEvent(
+        {
+          ephemeral: GENERATE_EPHEMERAL_EVENT,
+          path: `telegram/bot/${TELEGRAM_BOT_USERNAME}/status/error`,
+          from: "telegram",
+          user: TELEGRAM_BOT_USERNAME,
+          payload: {
+            message: "Telegram bot not launched, error: " + e?.message || e,
+            botUsername: TELEGRAM_BOT_USERNAME,
+          }
+        },
+        getServiceToken()
+      );
     }
   }
 
@@ -270,7 +298,7 @@ export default async (app, context) => {
   context.events.onEvent(
     context.mqtt,
     context,
-    async () => { 
+    async () => {
       console.log("Telegram: rebuild bot due to keys/update/TELEGRAM_BOT_TOKEN");
       await buildOrRebuildBot()
     },
@@ -281,7 +309,7 @@ export default async (app, context) => {
   context.events.onEvent(
     context.mqtt,
     context,
-    async () => { 
+    async () => {
       console.log("Telegram: rebuild bot due to keys/update/TELEGRAM_BOT_USERNAME");
       await buildOrRebuildBot()
     },
