@@ -55,7 +55,7 @@ export const AutoHeightTextArea = ({
     }, [transcript, speechRecognitionEnabled]);
 
     return (
-        <XStack f={1}>
+        <XStack f={1} gap="$3" ai="flex-end">
             <textarea
                 ref={ref}
                 readOnly={readOnly}
@@ -91,9 +91,11 @@ export const AutoHeightTextArea = ({
                     SpeechRecognition.startListening({ continuous: true });
                     // Start speech recognition logic here
                 }
-            }} position="absolute" right="12px" top="12px" gap="$2" opacity={speechRecognitionEnabled ? 1.0 : 0.5} hoverStyle={{opacity: 0.8}} pressStyle={{opacity: 1.0}}>
-                <Mic />
-            </XStack> }
+            }} gap="$2" h="fit-content" w="fit-content" backgroundColor={speechRecognitionEnabled ? "$red6" : "$gray4"} p="$3" jc="center"
+                ai="center" hoverStyle={{ opacity: 0.9 }} pressStyle={{ opacity: 1.0 }}
+                br="$3">
+                <Mic size={"$1"} />
+            </XStack>}
         </XStack>
     );
 };

@@ -11,7 +11,7 @@ const AutoHeightTextArea = dynamic(() =>
 
 export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur, ...props }) => {
   return (
-    <XStack ai="center" gap="$2" mb="$2" width="100%" {...props}>
+    <XStack ai="flex-end" gap="$2" mb="$2" width="100%" {...props}>
       <AutoHeightTextArea
         speechRecognition={true}
         readOnly={!onEdit}
@@ -140,7 +140,7 @@ export const Rules = ({
         </YStack>
 
         {/* Input para nueva regla */}
-        <XStack ai="center" gap="$2" mb="$2" mt="$4" width="100%">
+        <XStack ai="flex-end" gap="$3" mb="$2" mt="$4" width="100%">
           <AutoHeightTextArea
             speechRecognition={true}
             placeholder={isLoadingOrGenerating ? "Generating rules..." : "Add new rule..."}
