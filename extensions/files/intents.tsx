@@ -371,15 +371,15 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
               <LICon color="var(--color)" size={"$1"} />
             </IconContainer>
           })}
-          {!disableAIPanels && <IconContainer selected={mode == 'rules'} onPress={() => setMode('rules')}>
+          {!disableAIPanels && <IconContainer selected={mode == 'rules'} onPress={() => setMode('rules')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
             {/* <SizableText mr={"$2"}>Save</SizableText> */}
             <Sparkles color="var(--color)" size={"$1"} />
           </IconContainer>}
-          <IconContainer selected={mode == 'flow'} onPress={() => setMode('flow')}>
+          <IconContainer selected={mode == 'flow'} onPress={() => setMode('flow')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
             {/* <SizableText mr={"$2"}>Save</SizableText> */}
             <Workflow color="var(--color)" size={"$1"} />
           </IconContainer>
-          <IconContainer selected={mode == 'code'} onPress={() => setMode('code')}>
+          <IconContainer selected={mode == 'code'} onPress={() => setMode('code')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
             {/* <SizableText mr={"$2"}>Save</SizableText> */}
             <Code color="var(--color)" size={"$1"} />
           </IconContainer>
