@@ -57,8 +57,8 @@ export const useKeyState = (nameKey: string) => {
         }
     }
 
-    useEventEffect(onKeyValueChange, { path: "keys/update/OPENAI_API_KEY" })
-    useEventEffect(onKeyValueChange, { path: "keys/create/OPENAI_API_KEY" })
+    useEventEffect(onKeyValueChange, { path: `keys/update/${nameKey}` })
+    useEventEffect(onKeyValueChange, { path: `keys/create/${nameKey}` })
 
     return { keyValue, loading, updateKey, hasKey };
 }
