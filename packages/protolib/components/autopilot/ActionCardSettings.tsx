@@ -156,6 +156,11 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
     }
   ]
 
+  const isTabVisible = (tab) => {
+    const id = tab.id;
+    return cardData.editorOptions?.hiddenTabs?.includes(id) ? false : true;
+  }
+
   return (
     <YStack f={1}>
       <Tinted>
@@ -167,7 +172,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
             ai="center"
           >
             <TabBar
-              tabs={tabs}
+              tabs={tabs.filter(isTabVisible)}
               selectedId={selectedTab}
               onSelect={(id) => setSelectedTab(id)}
             />

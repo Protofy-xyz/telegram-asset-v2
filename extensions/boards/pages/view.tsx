@@ -124,10 +124,21 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
       </XStack>
     )
   }
+
+  const menuShortcuts = [
+    { id: 'config', text: 'Edit Settings', icon: Settings },
+    { id: 'rules', text: 'Edit Rules', icon: ClipboardList },
+    { id: 'params', text: 'Edit Inputs', icon: FileInput },
+    { id: 'view', text: 'Edit UI', icon: FileCode }
+  ].filter(menu => {
+    if (data?.editorOptions?.hiddenTabs?.includes(menu.id)) return false;
+    return true;
+  })
+
   return <Tinted>
     <XStack pt={"$2"}>
       {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
-      <CardIcon Icon={Settings} onPress={() => onEdit("config")} />
+      <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "config")} />
 
       <Popover onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
         <Popover.Trigger>
@@ -137,10 +148,11 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
           <Tinted>
             <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"} onPress={(e) => e.stopPropagation()}>
               <YStack>
-                <MenuButton text="Settings" Icon={Settings} onPress={() => onEdit("config")} />
-                <MenuButton text="Edit Rules" Icon={ClipboardList} onPress={() => onEdit("rules")} />
-                <MenuButton text="Edit Inputs" Icon={FileInput} onPress={() => onEdit("params")} />
-                <MenuButton text="Edit UI" Icon={FileCode} onPress={() => onEdit("view")} />
+                {
+                  menuShortcuts.map((menu, index) => (
+                    <MenuButton key={index} text={menu.text} Icon={menu.icon} onPress={() => onEdit(menu.id)} />
+                  ))
+                }
                 <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
                 <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />
                 <MenuButton text="Delete" Icon={Trash2} onPress={() => onDelete()} />
