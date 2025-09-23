@@ -76,8 +76,9 @@ export default (app, context) => {
                             defaults: {
                                 name: deviceInfo.data.name + ' ' + monitor.name,
                                 description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${monitor.name}']`,
-                                type: 'value'
+                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
+                                type: 'value',
+                                icon: "scan-eye"
                             },
                             emitEvent: true
                         })
@@ -132,7 +133,8 @@ export default (app, context) => {
                             description: action.description ?? "",
                             rulesCode,
                             params: action.payload?.value ? {} : params,
-                            type: 'action'
+                            type: 'action',
+                            icon: "rocket",
                         },
                         emitEvent: true
                     })
