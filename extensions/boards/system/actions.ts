@@ -1,5 +1,5 @@
 import { getBoard } from "./boards";
-import { getServiceToken, requireAdmin } from "protonode";
+import { getServiceToken, requireAdmin, resolveBoardParam } from "protonode";
 import { API, generateEvent } from "protobase";
 import { dbProvider, getDBOptions } from 'protonode';
 import { getExecuteAction } from "./getExecuteAction";
@@ -37,87 +37,6 @@ export const getActions = async (context) => {
     }
     flatten(actions, '')
     return flatActions
-}
-
-function toPath(path) {
-    return path
-        .replace(/\?\./g, ".")           // remove optional chaining
-        .replace(/\[(["']?)(.*?)\1\]/g, ".$2") // convert [x] or ["x"] into .x
-        .split(".")
-        .filter(Boolean);
-}
-
-function getByPath(obj, path, def?) {
-    return toPath(path).reduce((acc, key) => acc?.[key], obj) ?? def;
-}
-
-const castValueToType = (value, type, boardStates) => {
-    switch (type) {
-        case 'string':
-            return String(value);
-        case 'number':
-            return Number(value);
-        case 'boolean':
-            return value === 'true' || value === true;
-        case 'json':
-            try {
-                return JSON.parse(value);
-            } catch (e) {
-                return {};
-            }
-        case 'array':
-            try {
-                return JSON.parse(value);
-            } catch (e) {
-                return [];
-            }
-        case 'card':
-            return value; // Assuming card is a string identifier
-        case 'text':
-            return value; // Assuming markdown is a string
-        case "state":
-            return JSON.stringify(getByPath(boardStates, value))
-        default:
-            return value; // Default case, return as is
-    }
-}
-
-const isState = (value) => {
-    if (typeof value !== 'string') return false;
-    // check if value starts with 'board.' or board?. or board[ or board?.[
-    return value.startsWith('board.') || value.startsWith('board?.') || value.startsWith('board[') || value.startsWith('board?.[');
-}
-
-const getStateName = (value) => {
-    const statePath = toPath(value)
-    return statePath[1]
-}
-
-const resolveBoardParam = async ({ states, boardId, defaultValue, value, type }) => {
-    let resolved = false;
-
-    if (value === undefined || value === null || value === '') {
-        value = defaultValue
-    }
-    
-    // create boardStates due state value starts with board.
-    const boardsStates = { board: states?.boards?.[boardId] ?? {} };
-    
-    if (typeof value === 'string' && isState(value)) {
-        const stateName = getStateName(value);
-        if (states?.boards?.[boardId] && states.boards[boardId][stateName] !== undefined) {
-            value = getByPath(boardsStates, value)
-            resolved = true;
-        } else {
-            console.warn('State ' + stateName + ' not found in board ' + boardId);
-        }
-    }
-
-    if (type && !resolved) {
-        value = castValueToType(value, type, boardsStates);
-    }
-
-    return value;
 }
 
 export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
