@@ -76,7 +76,7 @@ export default (app, context) => {
                             defaults: {
                                 name: deviceInfo.data.name + ' ' + monitor.name,
                                 description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${monitor.name}']`,
+                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
                                 type: 'value'
                             },
                             emitEvent: true
