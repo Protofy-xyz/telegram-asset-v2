@@ -55,7 +55,7 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
       value={value}
       setRules={async (rules) => {
         const rulesRes = await getRulesCode(rules)
-        if (rulesRes.error) throw new Error(rulesRes.error)
+        if (rulesRes.error) throw new Error(rulesRes.message ?? rulesRes.error)
 
         setKey(k => k + 1)
 

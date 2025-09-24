@@ -510,6 +510,26 @@ export default async (app, context) => {
         }
         return cleaned
     }
+
+    const handleCallModel = async (res, prompt) => {
+        let reply = await callModel(prompt, context, defaultAIProvider)
+
+        console.log('REPLY: ', reply)
+        if (reply?.raw?.error) {
+            logger.error({ error: reply.raw.error }, "Error from AI model");
+            res.status(500).send({ error: 'Error from AI model', message: reply.raw.error });
+            return
+        }
+        if (!reply || !reply.choices || reply.choices.length === 0) {
+            logger.error('No response from AI model or empty choices array', { reply });
+            res.status(500).send({ error: 'No response from AI model', message: reply?.error })
+        } else {
+            const jsCode = reply.choices[0].message.content
+            console.log("JS CODE: ", jsCode)
+            res.send({ jsCode: cleanCode(jsCode) })
+        }
+    }
+
     BoardsAutoAPI(app, context)
 
     app.get('/api/core/v1/autopilot/actions', requireAdmin(), async (req, res) => {
@@ -680,9 +700,9 @@ export default async (app, context) => {
     app.get('/api/core/v1/autopilot/getContext', requireAdmin(), async (req, res) => {
         const { mqtt, ...cleanContext } = context;
         let serializedContext = safeDump(cleanContext);
-        try{
+        try {
             serializedContext = safeDump(await filterContext(JSON.parse(serializedContext)));
-        }catch(e){
+        } catch (e) {
             console.error("Error filtering context: ", e)
         }
         res.send(serializedContext);
@@ -701,21 +721,7 @@ export default async (app, context) => {
             if (req.query.debug) {
                 console.log("Prompt: ", prompt)
             }
-            let reply = await callModel(prompt, context, defaultAIProvider)
-            console.log('REPLY: ', reply)
-            if(reply?.raw?.error){
-                logger.error( { error: reply.raw.error }, "Error from AI model");
-                res.send({ error: 'Error from AI model', message: reply.raw.error });
-                return
-            }
-            if (!reply || !reply.choices || reply.choices.length === 0) {
-                logger.error('No response from AI model or empty choices array', { reply });
-                res.status(500).send({ error: 'No response from AI model', message: reply?.error })
-            } else {
-                const jsCode = reply.choices[0].message.content
-                console.log("JS CODE: ", jsCode)
-                res.send({ jsCode: cleanCode(jsCode) })
-            }
+            await handleCallModel(res, prompt)
         } catch (e) {
             console.error('Error getting action code: ', e)
             logger.error('Error getting action code', e);
@@ -741,10 +747,7 @@ export default async (app, context) => {
         if (req.query.debug) {
             console.log("Prompt: ", prompt)
         }
-        let reply = await callModel(prompt, context, defaultAIProvider)
-        console.log('REPLY: ', reply)
-        const jsCode = reply.choices[0].message.content
-        res.send({ jsCode: cleanCode(jsCode) })
+        await handleCallModel(res, prompt)
     })
 
     app.post('/api/core/v1/autopilot/getComponent', async (req, res) => {
@@ -992,7 +995,7 @@ export default async (app, context) => {
                 states: states.boards && states.boards[boardId] ? states.boards[boardId] : {},
                 actions: await context.state.get({ group: 'boards', tag: boardId, chunk: 'actions', defaultValue: {} })
             }
-        }, () => {})
+        }, () => { })
 
         if (started) {
             logger.info(`Autopilot started for board: ${boardId}`);
