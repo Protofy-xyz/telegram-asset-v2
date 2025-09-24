@@ -140,9 +140,9 @@ export const KeySetter: React.FC<KeySetterProps> = ({
                 </XStack>
                 : <YStack>
                     <XStack ai="center" jc="space-between" gap="$4" flexWrap='wrap'>
-                        <YStack ai="center" gap="$2">
-                            <Text col="$red8" fost="italic" pos="absolute" top="-25px" l={0}>Required!</Text>
-                            <Text>{nameKey}</Text>
+                        <YStack ai="center">
+                            <Text fos="$3" col="$red9" pos="absolute" top="-20px" l={0}>Required</Text>
+                            <Text >{nameKey}</Text>
                         </YStack>
                         <XStack gap="$2" ai="center" flex={1}>
                             <Input
@@ -154,7 +154,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
                                 onChangeText={(text) => setValue(text)}
                             />
                             <Tinted>
-                                <Button circular icon={Plus} onPress={() => onEditKey(value)}></Button>
+                                <Button bc="$color7" circular icon={Plus} onPress={() => onEditKey(value)}></Button>
                             </Tinted>
                         </XStack>
                     </XStack>

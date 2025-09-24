@@ -9,6 +9,7 @@ import { RadarChart } from 'protolib/components/RadarChart';
 import { Markdown } from 'protolib/components/Markdown';
 import { RadialBarChart } from 'protolib/components/RadialBartChart';
 import { KeySetter } from 'protolib/components/KeySetter';
+import { KeyGate } from 'protolib/components/KeyGate';
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon';
 import CanvasDraw from "react-canvas-draw"
 import ReactMarkdown from 'react-markdown';
@@ -69,6 +70,7 @@ export const transferExtensionComponents = () => {
     TransferComponent(RadarChart, 'RadarChart');
     TransferComponent(RadialBarChart, 'RadialBarChart');
     TransferComponent(KeySetter, 'KeySetter');
+    TransferComponent(KeyGate, 'KeyGate');
     TransferComponent(InteractiveIcon, 'InteractiveIcon');
     TransferComponent(CanvasDraw, 'CanvasDraw');
     TransferComponent(Markdown, 'Markdown');
