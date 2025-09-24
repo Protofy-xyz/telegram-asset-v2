@@ -130,7 +130,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
         try {
             response = await wrapper(boardId, action_or_card_id, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
             response = action.returnType && typeof TypeParser?.[action.returnType] === "function"
-                ? TypeParser?.[action.returnType](response)
+                ? TypeParser?.[action.returnType](response, action.enableReturnCustomFallback, action.fallbackValue)
                 : response
             getLogger({ module: 'boards', board: boardId, card: action.name }).info({ value: response, stackTrace }, "New value for card: " + action.name);
         } catch (err) {

@@ -1,4 +1,4 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput } from '@tamagui/lucide-icons'
+import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput, FileOutput, ArrowDownRight, ArrowUpRight } from '@tamagui/lucide-icons'
 import { Text, YStack, Paragraph, XStack } from '@my/ui'
 import { useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
@@ -12,6 +12,7 @@ import { ViewEditor } from './ViewEditor'
 import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
+import { OutputEditor } from './OutputEditor'
 
 function getAllPaths(obj, prefix = "", includeIntermediate = true) {
   if (obj === null || typeof obj !== "object") {
@@ -96,26 +97,9 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       </YStack>
     },
     {
-      id: 'rules',
-      label: 'Rules',
-      icon: <ClipboardList size={"$1"} />,
-      content: <RuleEditor
-        board={board}
-        extraCompilerData={{ userParams: cardData.params, actions: actions?.boards?.[board.name] }}
-        onCodeChange={(cardData, states) => {
-          return "rules processed"
-        }}
-        actions={actions.boards || {}}
-        compiler={cardData.type == 'value' ? 'getValueCode' : 'getActionCode'}
-        states={states?.boards || {}}
-        cardData={cardData}
-        setCardData={setCardData}
-      />
-    },
-    {
       id: 'params',
       label: 'Inputs',
-      icon: <FileInput size={"$1"} />,
+      icon: <ArrowDownRight size={"$1"} />,
       content: <ParamsEditor
         params={cardData.params || {}}
         setParams={(newParams) => {
@@ -134,6 +118,32 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
           }))
         }}
         availableStates={getAllPaths(states?.boards?.[board.name] ?? {}).filter(s => s !== cardData.name)}
+      />
+    },
+    {
+      id: 'rules',
+      label: 'Rules',
+      icon: <ClipboardList size={"$1"} />,
+      content: <RuleEditor
+        board={board}
+        extraCompilerData={{ userParams: cardData.params, actions: actions?.boards?.[board.name] }}
+        onCodeChange={(cardData, states) => {
+          return "rules processed"
+        }}
+        actions={actions.boards || {}}
+        compiler={cardData.type == 'value' ? 'getValueCode' : 'getActionCode'}
+        states={states?.boards || {}}
+        cardData={cardData}
+        setCardData={setCardData}
+      />
+    },
+    {
+      id: 'output',
+      label: 'Output',
+      icon: <ArrowUpRight size={"$1"} />,
+      content: <OutputEditor
+        card={cardData}
+        setCardData={setCardData}
       />
     },
     {
