@@ -27,6 +27,7 @@ import dynamic from 'next/dynamic'
 import { SearchAIModalButton } from './SearchAIModalButton';
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from './Monaco';
+import { usePageStateManager } from '../lib/usePageStateManager';
 
 const FileWidget = dynamic<any>(() =>
     import('../adminpanel/features/components/FilesWidget').then(module => module.FileWidget),
@@ -297,7 +298,14 @@ const DataViewInternal = forwardRef(({
     const [currentItems, setCurrentItems] = useState<PendingResult | undefined>(initialItems ?? getPendingResult('pending'))
     const [createOpen, setCreateOpen] = useState(addOpened ?? false)
     const [deleteOpen, setDeleteOpen] = useState(false)
-    const { push, mergePush, removePush, replace } = usePageParams(state)
+    const {
+        push: pushToUrl,
+        mergePush: mergePushToUrl,
+        removePush: removePushFromUrl,
+        replace: replaceToUrl
+    } = usePageParams(state)
+    const pageStateManager = usePageStateManager({ setState, pushToUrl, mergePushToUrl, removePushFromUrl, replaceToUrl })
+    const { push: pushState, mergePush: mergePushState, removePush: removePushState, replace: replaceState } = pageStateManager
     const [selected, setSelected] = useState([])
     const [currentItemData, setCurrentItemData] = useState(itemData)
     const { search, setSearch, setSearchName, setSearchStatus } = useContext(SearchContext)
@@ -308,8 +316,17 @@ const DataViewInternal = forwardRef(({
 
     const isXs = useMedia().xs
 
+    const onSearch = (value) => {
+        setSearch(value)
+        if (value) {
+            mergePushState({ search: value, page: 0 })
+        } else {
+            removePushState("search")
+        }
+    }
+
     useUpdateEffect(() => {
-        if(addOpened !== undefined) {
+        if (addOpened !== undefined) {
             setCreateOpen(addOpened)
         }
     }, [addOpened])
@@ -332,17 +349,7 @@ const DataViewInternal = forwardRef(({
             setCurrentItems(items)
         }
     }, [items])
-
-    useUpdateEffect(() => {
-        if (search) {
-            mergePush({
-                search: search,
-                page: 0
-            })
-        } else {
-            removePush("search")
-        }
-    }, [search])
+    
 
     useEffect(() => {
         setSearchName(displayName)
@@ -371,7 +378,7 @@ const DataViewInternal = forwardRef(({
                     }
                     onDelete({ sourceUrl: _sourceUrl, selected })
                 },
-                onSelectItem: onSelectItem ? onSelectItem : (item) => replace('item', item.getId()),
+                onSelectItem: onSelectItem ? onSelectItem : (item) => replaceState('item', item.getId()),
                 deleteable,
                 enableAddToInitialData,
                 extraMenuActions,
@@ -401,7 +408,7 @@ const DataViewInternal = forwardRef(({
         //         disableItemSelection,
         //         lineSelect: true,
         //         fillWidth: true,
-        //         onRowSelect: onSelectItem ? onSelectItem : (item) => replace('item', item.getId()),
+        //         onRowSelect: onSelectItem ? onSelectItem : (item) => replaceState('item', item.getId()),
         //         ...dataTableSheetProps
         //     }
         // },
@@ -423,7 +430,7 @@ const DataViewInternal = forwardRef(({
                     await API.get(sourceUrl + '/delete')
                     onDelete({ sourceUrl, selected })
                 },
-                onSelectItem: onSelectItem ? onSelectItem : (item) => replace('item', item.getId()),
+                onSelectItem: onSelectItem ? onSelectItem : (item) => replaceState('item', item.getId()),
                 extraMenuActions: extraMenuActions,
                 itemMinHeight: 320,
                 itemMinWidth: 320,
@@ -514,7 +521,7 @@ const DataViewInternal = forwardRef(({
                     message: "Saved new settings for: " + id
                 })
             },
-            onSelectItem: onSelectItem ? onSelectItem : (item) => replace('item', item.getId()),
+            onSelectItem: onSelectItem ? onSelectItem : (item) => replaceState('item', item.getId()),
             items,
             sourceUrl,
             model,
@@ -561,7 +568,7 @@ const DataViewInternal = forwardRef(({
                         setIsModified={() => { }}
                         icons={[
                             <IconContainer onPress={() => {
-                                removePush('editFile')
+                                removePushState('editFile')
                             }}>
                                 <X color="var(--color)" size={"$1"} />
                             </IconContainer>
@@ -610,7 +617,7 @@ const DataViewInternal = forwardRef(({
                                             }
                                             //fetch(setItems)
                                             setCreateOpen(false);
-                                            if(setAddOpened) {
+                                            if (setAddOpened) {
                                                 setAddOpened(false);
                                             }
                                             toast.show(name + ' created', {
@@ -663,7 +670,7 @@ const DataViewInternal = forwardRef(({
                     acceptCaption="Save"
                     setOpen={(s) => {
                         setCurrentItemData(undefined);
-                        removePush('item')
+                        removePushState('item')
                     }}
                     open={state.item}
                     description={""}
@@ -707,7 +714,7 @@ const DataViewInternal = forwardRef(({
                                             toast.show(name + ' updated', {
                                                 message: "Saved new settings for: " + id
                                             })
-                                            removePush('item')
+                                            removePushState('item')
                                         } catch (e) {
                                             throw getPendingResult('error', null, e instanceof z.ZodError ? e.flatten() : e)
                                         }
@@ -762,7 +769,7 @@ const DataViewInternal = forwardRef(({
                                                 onPress={(e) => {
                                                     e.stopPropagation();
                                                     if (currentItems.data.page > 0) {
-                                                        push("page", currentItems.data.page - 1);
+                                                        pushState("page", currentItems.data.page - 1);
                                                     }
                                                 }} ml={"$3"}
                                                 disabled={!(currentItems.data.page > 0)} />
@@ -772,7 +779,7 @@ const DataViewInternal = forwardRef(({
                                                 onPress={(e) => {
                                                     e.stopPropagation();
                                                     if (currentItems.data.page < totalPages - 1) {
-                                                        push("page", currentItems.data.page + 1);
+                                                        pushState("page", currentItems.data.page + 1);
                                                     }
                                                 }}
                                                 ml={"$3"}
@@ -785,14 +792,15 @@ const DataViewInternal = forwardRef(({
                                 {!hideSearch && <SearchAIModalButton
                                     placeholder={"Search in " + name}
                                     initialState={search}
-                                    defaultOpened={true}
-                                    onSearch={setSearch}
+                                    onSearch={onSearch}
                                     trigger={
-                                        <DataViewActionButton
-                                            id="admin-dataview-add-btn"
-                                            icon={Search}
-                                            description={`Search in ${name}`}
-                                        />
+                                        <Tinted>
+                                            <DataViewActionButton
+                                                id="admin-dataview-add-btn"
+                                                icon={Search}
+                                                description={`Search in ${name}`}
+                                            />
+                                        </Tinted>
                                     }
                                 />}
                                 {!hideFilters && <Filters
@@ -824,7 +832,7 @@ const DataViewInternal = forwardRef(({
                                 </Tinted>}
                                 {!disableViewSelector && <ButtonGroup marginLeft="$3" boc="$gray5" br="$4">
                                     {
-                                        tableViews.map((v, index) => <ActiveGroupButton id={'tableView-' + v.name} key={index} onSetActive={() => push('view', v.name)} activeId={index}>
+                                        tableViews.map((v, index) => <ActiveGroupButton id={'tableView-' + v.name} key={index} onSetActive={() => pushState('view', v.name)} activeId={index}>
                                             {React.createElement(v.icon, { size: "$1", strokeWidth: 1 })}
                                         </ActiveGroupButton>)
                                     }
