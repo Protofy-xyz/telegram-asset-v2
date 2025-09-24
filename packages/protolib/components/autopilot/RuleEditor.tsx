@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AutopilotEditor } from './AutopilotEditor'
 import { useKeyState } from "../KeySetter";
 import { RulesKeySetter } from './RulesKeySetter'
+import { TabContainer, TabTitle } from './Tab';
 
 export const RuleEditor = ({ board, actions, states, cardData, setCardData, compiler, onCodeChange, extraCompilerData = {} }) => {
   const [hasCode, setHasCode] = useState(cardData.rulesCode !== undefined)
@@ -37,35 +38,38 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
     }
   }, [cardData.rulesCode])
 
-  return <AutopilotEditor
-    key={key}
-    cardData={cardData}
-    board={board}
-    panels={cardData.type == 'value' ? ['states'] : ['actions', 'states']}
-    setRulesCode={(rulesCode) => {
-      setCardData(prev => ({ ...prev, rulesCode }))
-    }}
-    rulesCode={cardData.rulesCode}
-    actions={actions}
-    states={states}
-    rules={cardData.rules ?? []}
-    value={value}
-    setRules={async (rules) => {
-      const rulesRes = await getRulesCode(rules)
-      if (rulesRes.error) throw new Error(rulesRes.error)
+  return <TabContainer>
+    <TabTitle tabname={"Card Rules"} tabDescription='Define the behavior of your card using using natural language' />
+    <AutopilotEditor
+      key={key}
+      cardData={cardData}
+      board={board}
+      panels={cardData.type == 'value' ? ['states'] : ['actions', 'states']}
+      setRulesCode={(rulesCode) => {
+        setCardData(prev => ({ ...prev, rulesCode }))
+      }}
+      rulesCode={cardData.rulesCode}
+      actions={actions}
+      states={states}
+      rules={cardData.rules ?? []}
+      value={value}
+      setRules={async (rules) => {
+        const rulesRes = await getRulesCode(rules)
+        if (rulesRes.error) throw new Error(rulesRes.error)
 
-      setKey(k => k + 1)
+        setKey(k => k + 1)
 
-      setCardData(prev => {
-        const next = { ...prev, ...rulesRes, rules }
-        return next
-      })
-    }}
-    rulesConfig={{
-      enabled: hasKey,
-      loading: loading,
-      disabledView: () => <RulesKeySetter updateKey={updateKey} loading={loading} />
-    }}
-    setReturnType={(t) => setCardData(prev => ({ ...prev, returnType: t }))}
-    valueReady={hasCode} />
+        setCardData(prev => {
+          const next = { ...prev, ...rulesRes, rules }
+          return next
+        })
+      }}
+      rulesConfig={{
+        enabled: hasKey,
+        loading: loading,
+        disabledView: () => <RulesKeySetter updateKey={updateKey} loading={loading} />
+      }}
+      setReturnType={(t) => setCardData(prev => ({ ...prev, returnType: t }))}
+      valueReady={hasCode} />
+  </TabContainer>
 }

@@ -13,6 +13,7 @@ import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
 import { OutputEditor } from './OutputEditor'
+import { TabContainer, TabTitle } from './Tab'
 
 function getAllPaths(obj, prefix = "", includeIntermediate = true) {
   if (obj === null || typeof obj !== "object") {
@@ -74,27 +75,25 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'info',
       label: 'Readme',
       icon: <FileQuestion size={"$1"} />,
-      content: <YStack f={1} gap="$4">
-        <YStack f={1} gap="$2">
-          <SettingsTitle>Description</SettingsTitle>
-          <PanelGroup direction="horizontal">
-            <Panel defaultSize={50}>
-              <YStack
-                flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
-                <Markdown
-                  data={cardData.description}
-                  setData={(newCode) => {
-                    setCardData({
-                      ...cardData,
-                      description: newCode
-                    })
-                  }}
-                />
-              </YStack>
-            </Panel>
-          </PanelGroup>
-        </YStack>
-      </YStack>
+      content: <TabContainer>
+        <TabTitle tabname={"Description"} />
+        <PanelGroup direction="horizontal">
+          <Panel defaultSize={50}>
+            <YStack
+              flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
+              <Markdown
+                data={cardData.description}
+                setData={(newCode) => {
+                  setCardData({
+                    ...cardData,
+                    description: newCode
+                  })
+                }}
+              />
+            </YStack>
+          </Panel>
+        </PanelGroup>
+      </TabContainer>
     },
     {
       id: 'params',
@@ -150,13 +149,19 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'config',
       label: 'Settings',
       icon: <Settings size={"$1"} />,
-      content: <DisplayEditor board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
+      content: <TabContainer>
+        <TabTitle tabname={"General Setting"} />
+        <DisplayEditor style={{ width: "100%", height: "fit-content" }} board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
+      </TabContainer>
     },
     {
       id: 'view',
       label: 'View',
       icon: <FileCode size={"$1"} />,
-      content: <ViewEditor cardData={cardData} setHTMLCode={setHTMLCode} />
+      content: <TabContainer>
+        <TabTitle tabname={"Card View"} tabDescription='Configure the view of your card with React or plain html' />
+        <ViewEditor cardData={cardData} setHTMLCode={setHTMLCode} />
+      </TabContainer>
     },
     {
       id: 'raw',

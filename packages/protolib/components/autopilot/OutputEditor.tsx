@@ -2,6 +2,7 @@ import { Text, YStack, Paragraph, XStack, Checkbox, Input, TextArea } from '@my/
 import { Check } from "@tamagui/lucide-icons"
 import { useEffect, useState } from 'react'
 import { types } from "@extensions/boards/system/types"
+import { TabContainer, TabTitle } from './Tab'
 
 export const OutputEditor = ({ card, setCardData }: any) => {
   const [selectedType, setSelectedType] = useState(card.returnType)
@@ -20,12 +21,9 @@ export const OutputEditor = ({ card, setCardData }: any) => {
     }))
   }, [selectedType])
 
-  return <YStack gap="$8" px="$5" py="$5" flex={1} jc="flex-start" ai="flex-start">
-    <YStack h="fit-content" w="fit-content">
-      <Text fontSize={"$8"} fontWeight={"400"}>Output Configuration</Text>
-      <Text fontSize={"$5"} fontWeight={"300"} color="$gray8">Configure all the possible behaviours that your card </Text>
-    </YStack>
-    <XStack flex={1} w="100%" >
+  return <TabContainer>
+    <TabTitle tabname="Output Configuration" tabDescription='Configure all the possible behaviours that your card' />
+    <XStack flex={1} w="100%" mt="$3">
       <YStack gap="$8" w="50%">
         <YStack>
           <Text fontSize={"$5"} fontWeight={"300"}>Return Type</Text>
@@ -84,6 +82,6 @@ export const OutputEditor = ({ card, setCardData }: any) => {
         </YStack>
       </YStack>
     </XStack>
-  </YStack>
+  </TabContainer>
 }
 
