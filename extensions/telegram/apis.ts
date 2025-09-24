@@ -61,6 +61,23 @@ const registerActions = async (context) => {
     emitEvent: true,
     token: await getServiceToken()
   })
+
+  addAction({
+    group: 'telegram',
+    name: 'file',
+    url: `/api/v1/telegram/send/file`,
+    tag: "send",
+    description: "send a telegram document/file to a chat id",
+    params: {
+      chat_id: "Telegram chat id (number). Example: 123456789",
+      path: "path to local file or public URL",
+      caption: "(optional) caption for the document",
+      disable_notification: "(optional) true/false to disable notification"
+    },
+    emitEvent: true,
+    token: await getServiceToken()
+  })
+
 }
 
 const registerCards = async (context, botUsername) => {
@@ -159,6 +176,35 @@ const registerCards = async (context, botUsername) => {
     emitEvent: true,
     token: await getServiceToken()
   })
+
+  addCard({
+    group: 'telegram',
+    tag: "file",
+    id: 'telegram_send_file',
+    templateName: "Telegram send file",
+    name: "file_send",
+    defaults: {
+      width: 3,
+      height: 10,
+      name: "Telegram send file",
+      icon: "paperclip",
+      color: "#24A1DE",
+      description: "send a telegram file/document to a chat id",
+      rulesCode: `return execute_action("/api/v1/telegram/send/file", { chat_id: userParams.chat_id, path: userParams.path, caption: userParams.caption, disable_notification: userParams.disable_notification });`,
+      params: {
+        chat_id: "chat id",
+        path: "path to local file or public URL",
+        caption: "(optional) caption for the file",
+        disable_notification: "(optional) true/false to disable notification"
+      },
+      type: 'action',
+      displayButton: true,
+      buttonLabel: "Send File"
+    },
+    emitEvent: true,
+    token: await getServiceToken()
+  })
+
 
   addCard({
     group: 'telegram',
@@ -474,6 +520,83 @@ export default async (app, context) => {
       res.status(500).send({ result: "error", error: e?.message || String(e) });
     }
   }));
+
+  // Enviar documento/archivo (URL o path relativo a ../../)
+  app.get('/api/v1/telegram/send/file', handler(async (req, res, session) => {
+    const { chat_id, path: rawPath, caption, disable_notification } = req.query as {
+      chat_id?: string | number;
+      path?: string;
+      caption?: string;
+      disable_notification?: string;
+    };
+
+    if (!chat_id || !rawPath) {
+      res.status(400).send({ error: `Missing ${chat_id ? 'path' : 'chat_id'}` });
+      return;
+    }
+    if (!session || !session.user?.admin) {
+      res.status(401).send({ error: "Unauthorized" });
+      return;
+    }
+
+    try {
+      if (!bot) throw new Error('Bot not initialized');
+
+      const cap = normalizeOptional(caption);
+      const disableNotif = String(disable_notification).toLowerCase() === "true";
+      const extra: Record<string, any> = {};
+      if (cap !== undefined) extra.caption = cap;
+      if (disableNotif) extra.disable_notification = true;
+
+      const raw = String(rawPath);
+      let inputForTelegram: any;
+
+      if (isUrl(raw)) {
+        inputForTelegram = raw;
+      } else {
+        const baseDir = path.resolve(__dirname, '../../');
+        const normalizedBase = baseDir.endsWith(path.sep) ? baseDir : baseDir + path.sep;
+
+        const cleanedRelative = raw.replace(/^[/\\]+/, '');
+        const absPath = path.resolve(path.join(baseDir, cleanedRelative));
+
+        if (!absPath.startsWith(normalizedBase)) {
+          res.status(400).send({ error: "Invalid path (outside allowed base directory)" });
+          return;
+        }
+
+        try {
+          await fsp.access(absPath, fs.constants.R_OK);
+          const st = await fsp.stat(absPath);
+          if (!st.isFile()) {
+            res.status(400).send({ error: "Path is not a file" });
+            return;
+          }
+        } catch {
+          res.status(404).send({ error: `File not found or unreadable: ${cleanedRelative}` });
+          return;
+        }
+
+        inputForTelegram = {
+          source: createReadStream(absPath),
+          filename: path.basename(absPath),
+        };
+      }
+
+      await bot.telegram.sendDocument(chat_id.toString(), inputForTelegram, extra);
+
+      res.send({
+        result: 'done',
+        chat_id,
+        path: rawPath,
+        base_dir: path.resolve(__dirname, '../../'),
+      });
+    } catch (e: any) {
+      logger.error("TelegramAPI sendFile error", e);
+      res.status(500).send({ result: "error", error: e?.message || String(e) });
+    }
+  }));
+
 
   console.log("Setup events for telegram keys changes")
   context.events.onEvent(
