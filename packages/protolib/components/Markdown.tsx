@@ -6,6 +6,10 @@ import { Monaco } from "./Monaco";
 import { useThemeSetting } from '@tamagui/next-theme'
 import useKeypress from 'react-use-keypress';
 
+function escapeMarkdownForTemplate(md) {
+  return md.replace(/\\\\/g, '\\\\\\\\').replace(/\`/g, '\\\\\\\`')
+}
+
 export function Markdown({ data, readOnly = false, setData = undefined }) {
   const text = data ? (typeof data === 'string' ? data : String(data)) : '';
   const [editing, setEditing] = useState(false);
@@ -15,12 +19,12 @@ export function Markdown({ data, readOnly = false, setData = undefined }) {
 
   useEffect(() => {
     if (data) {
-      code.current = data;
+      code.current = escapeMarkdownForTemplate(data);
     }
   }, [data]);
 
   const updateData = () => {
-    if (setData) setData(code.current);
+    if (setData) setData(escapeMarkdownForTemplate(code.current));
   };
 
   useKeypress(['Escape'], (event) => {
@@ -30,7 +34,6 @@ export function Markdown({ data, readOnly = false, setData = undefined }) {
       event.preventDefault();
     }
   })
-
   return (
     <div onClick={() => { !readOnly && !editing && setEditing(!editing) }} className="no-drag markdown-body" style={{
       height: "100%",
@@ -69,6 +72,10 @@ export function Markdown({ data, readOnly = false, setData = undefined }) {
       />}
       {!editing && <Tinted>
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+        {/* <>
+          <div style={{ whiteSpace: 'pre-line' }}>{`p\naaa`}</div>
+        <div style={{ whiteSpace: 'pre-line' }}>{text}</div>
+        </> */}
       </Tinted>}
     </div>
   );

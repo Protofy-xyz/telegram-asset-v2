@@ -1,13 +1,22 @@
-import { ScrollView, XStack, YStack } from "tamagui";
+import { ScrollView, XStack, YStack, Button } from "tamagui";
 import { JSONView } from "../JSONView";
 import { Markdown } from "../Markdown";
+import { useEffect, useState } from "react";
 
-export const CardValue = ({ value, style = {}, id = undefined, mode = undefined }) => {
+export const CardValue = ({ value, style = {}, id = undefined, mode = undefined, readOnly = true, executeActionOnEdit= (val)=>{}}) => {
     let fullHeight = false;
+    const [markdownData, setMarkdownData] = useState(mode === 'markdown' ? value : '');
+    useEffect(() => {
+        if (mode === 'markdown') {
+            setMarkdownData(value);
+        }
+    }, [value, mode]);
     if(mode === 'markdown') {
-        return <ScrollView mt="20px" f={1} width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
-            <Markdown readOnly={true} data={value} />
-        </ScrollView>
+        return (
+            <YStack  f={1} width={"100%"} height={"100%"}>
+                <Markdown readOnly={readOnly} data={markdownData} setData={(val)=>{setMarkdownData(val); if(executeActionOnEdit){ executeActionOnEdit(val)}}}/>
+            </YStack>
+        )  
     }
     //check if value is string, number or boolean
     if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
