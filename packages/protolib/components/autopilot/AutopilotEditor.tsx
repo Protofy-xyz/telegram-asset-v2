@@ -57,11 +57,10 @@ const generateParamsDeclaration = (cardData) => {
     return `declare const params: {\n${params}\n};`;
 }
 
-export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'states'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {}, setReturnType = (t) => { } }) => {
+export const AutopilotEditor = ({ cardData, board, panels = ['actions', 'states'], actions, states, rules, rulesCode, setRulesCode, value, valueReady = true, setRules, rulesConfig = {} }) => {
     const { resolvedTheme } = useThemeSetting()
     const isAIEnabled = useSettingValue('ai.enabled', false);
     const [rulesMode, setRulesMode] = useState(null)
-    const returnTypes = ["auto", "number", "string", "object", "array"]
 
     const declarations = useMemo(() => {
         const decl = generateStatesDeclaration('states', { board: states });
@@ -79,44 +78,6 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
     const flows = useMemo(() => {
         return <CodeView
-            rightIcons={<SelectList
-                title={"Return type"}
-                selectorStyle={{
-                    normal: {
-                        backgroundColor: "$color8",
-                        px: "$3",
-                        py: "0px",
-                        width: "150px",
-                    },
-                    hover: {
-                        backgroundColor: "$color9"
-                    }
-                }}
-                titleStyle={{
-                    normal: {
-                        backgroundColor: "$color8",
-                        px: "$3",
-                        py: "0px",
-                        fontWeight: "300"
-                    }
-                }}
-                rowStyle={{
-                    normal: {
-                        backgroundColor: "$color7",
-                        px: "$3",
-                        py: "0px",
-                        fontWeight: "300"
-                    },
-                    hover: {
-                        backgroundColor: "$color8",
-                    }
-                }}
-                defaultValue="auto"
-                placeholder="return type"
-                elements={returnTypes}
-                onValueChange={(v) => setReturnType(v)}
-                value={cardData.returnType}
-            />}
             pathname={cardData.type == 'action' ? '/rules' : '/observerCard'}
             onApplyRules={async (rules) => {
                 return await setRules(rules)
