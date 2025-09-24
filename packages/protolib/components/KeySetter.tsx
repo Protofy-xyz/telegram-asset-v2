@@ -57,8 +57,13 @@ export const useKeyState = (nameKey: string) => {
         }
     }
 
+    const onKeyDelete = (payload, msg) => {
+        setKeyValue(null)
+    }
+
     useEventEffect(onKeyValueChange, { path: `keys/update/${nameKey}` })
     useEventEffect(onKeyValueChange, { path: `keys/create/${nameKey}` })
+    useEventEffect(onKeyDelete, { path: `keys/delete/${nameKey}` })
 
     return { keyValue, loading, updateKey, hasKey };
 }
