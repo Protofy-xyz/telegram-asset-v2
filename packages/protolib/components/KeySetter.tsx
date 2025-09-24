@@ -17,7 +17,7 @@ interface KeySetterProps {
 
 export const useKeyState = (nameKey: string) => {
     const [keyValue, setKeyValue] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     const hasKey = !!(!loading && keyValue && keyValue.trim() !== "")
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { YStack } from '@my/ui';
 import { KeySetter, useKeyState } from './KeySetter';
 import { Markdown } from './Markdown';
@@ -18,14 +18,14 @@ export const KeyGate = ({ requiredKeys, children, readme }: KeyGateProps) => {
     }
 
     const keyStates = requiredKeys.map((key) => {
-        const { hasKey } = useKeyState(key);
+        const { hasKey, loading } = useKeyState(key);
         const resolvedValue = keys[key];
-        return { key, hasKey: resolvedValue ?? hasKey };
+        return { key, hasKey: resolvedValue ?? hasKey, loading };
     });
 
-    const allKeysSetted = keyStates.every(({ hasKey }) => hasKey);
+    const hasMissingKeys = keyStates.some(({ hasKey, loading }) => !loading && !hasKey);
 
-    if (allKeysSetted) {
+    if (!hasMissingKeys) {
         return <>{children}</>;
     }
 
