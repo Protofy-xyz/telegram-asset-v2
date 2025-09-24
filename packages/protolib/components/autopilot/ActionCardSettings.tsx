@@ -1,4 +1,4 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput } from '@tamagui/lucide-icons'
+import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput, FileOutput, ArrowDownRight, ArrowUpRight } from '@tamagui/lucide-icons'
 import { Text, YStack, Paragraph, XStack } from '@my/ui'
 import { useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
@@ -12,6 +12,8 @@ import { ViewEditor } from './ViewEditor'
 import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
+import { OutputEditor } from './OutputEditor'
+import { TabContainer, TabTitle } from './Tab'
 
 function getAllPaths(obj, prefix = "", includeIntermediate = true) {
   if (obj === null || typeof obj !== "object") {
@@ -73,49 +75,30 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'info',
       label: 'Readme',
       icon: <FileQuestion size={"$1"} />,
-      content: <YStack f={1} gap="$4">
-        <YStack f={1} gap="$2">
-          <SettingsTitle>Description</SettingsTitle>
-          <PanelGroup direction="horizontal">
-            <Panel defaultSize={50}>
-              <YStack
-                flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
-                <Markdown
-                  data={cardData.description}
-                  setData={(newCode) => {
-                    setCardData({
-                      ...cardData,
-                      description: newCode
-                    })
-                  }}
-                />
-              </YStack>
-            </Panel>
-          </PanelGroup>
-        </YStack>
-      </YStack>
-    },
-    {
-      id: 'rules',
-      label: 'Rules',
-      icon: <ClipboardList size={"$1"} />,
-      content: <RuleEditor
-        board={board}
-        extraCompilerData={{ userParams: cardData.params, actions: actions?.boards?.[board.name] }}
-        onCodeChange={(cardData, states) => {
-          return "rules processed"
-        }}
-        actions={actions.boards || {}}
-        compiler={cardData.type == 'value' ? 'getValueCode' : 'getActionCode'}
-        states={states?.boards || {}}
-        cardData={cardData}
-        setCardData={setCardData}
-      />
+      content: <TabContainer>
+        <TabTitle tabname={"Description"} />
+        <PanelGroup direction="horizontal">
+          <Panel defaultSize={50}>
+            <YStack
+              flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
+              <Markdown
+                data={cardData.description}
+                setData={(newCode) => {
+                  setCardData({
+                    ...cardData,
+                    description: newCode
+                  })
+                }}
+              />
+            </YStack>
+          </Panel>
+        </PanelGroup>
+      </TabContainer>
     },
     {
       id: 'params',
       label: 'Inputs',
-      icon: <FileInput size={"$1"} />,
+      icon: <ArrowDownRight size={"$1"} />,
       content: <ParamsEditor
         params={cardData.params || {}}
         setParams={(newParams) => {
@@ -137,16 +120,48 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       />
     },
     {
+      id: 'rules',
+      label: 'Rules',
+      icon: <ClipboardList size={"$1"} />,
+      content: <RuleEditor
+        board={board}
+        extraCompilerData={{ userParams: cardData.params, actions: actions?.boards?.[board.name] }}
+        onCodeChange={(cardData, states) => {
+          return "rules processed"
+        }}
+        actions={actions.boards || {}}
+        compiler={cardData.type == 'value' ? 'getValueCode' : 'getActionCode'}
+        states={states?.boards || {}}
+        cardData={cardData}
+        setCardData={setCardData}
+      />
+    },
+    {
+      id: 'output',
+      label: 'Output',
+      icon: <ArrowUpRight size={"$1"} />,
+      content: <OutputEditor
+        card={cardData}
+        setCardData={setCardData}
+      />
+    },
+    {
       id: 'config',
       label: 'Settings',
       icon: <Settings size={"$1"} />,
-      content: <DisplayEditor board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
+      content: <TabContainer>
+        <TabTitle tabname={"General Setting"} />
+        <DisplayEditor style={{ width: "100%", height: "fit-content" }} board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
+      </TabContainer>
     },
     {
       id: 'view',
       label: 'View',
       icon: <FileCode size={"$1"} />,
-      content: <ViewEditor cardData={cardData} setHTMLCode={setHTMLCode} />
+      content: <TabContainer>
+        <TabTitle tabname={"Card View"} tabDescription='Configure the view of your card with React or plain html' />
+        <ViewEditor cardData={cardData} setHTMLCode={setHTMLCode} />
+      </TabContainer>
     },
     {
       id: 'raw',
@@ -155,6 +170,11 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       content: <SettingsEditor cardData={cardData} setCardData={setCardData} resolvedTheme={resolvedTheme} />
     }
   ]
+
+  const isTabVisible = (tab) => {
+    const id = tab.id;
+    return cardData.editorOptions?.hiddenTabs?.includes(id) ? false : true;
+  }
 
   return (
     <YStack f={1}>
@@ -167,7 +187,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
             ai="center"
           >
             <TabBar
-              tabs={tabs}
+              tabs={tabs.filter(isTabVisible)}
               selectedId={selectedTab}
               onSelect={(id) => setSelectedTab(id)}
             />

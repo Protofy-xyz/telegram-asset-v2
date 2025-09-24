@@ -76,7 +76,7 @@ export default (app, context) => {
                             defaults: {
                                 name: deviceInfo.data.name + ' ' + monitor.name,
                                 description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
+                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${monitor.name}']`,
                                 type: 'value',
                                 icon: "scan-eye"
                             },
@@ -304,8 +304,7 @@ export default (app, context) => {
                 return
             }
             // const subsystem = deviceInfo.getSubsystem(req.params.subsystem)
-            //TODO: replace endpoint.split('/')[1] with the subsystem name and use the monitor name inside the object value
-            context.state.set({ group: 'devices', tag: deviceName, name: endpoint.split('/')[1], value: parsedMessage, emitEvent: true });
+            context.state.set({ group: 'devices', tag: deviceName, name: monitor.data.name, value: parsedMessage, emitEvent: true });
             generateEvent(
                 {
                     ephemeral: monitor.data.ephemeral??false,

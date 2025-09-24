@@ -48,12 +48,14 @@ export const DisplayEditor = ({
     setCardData,
     icons,
     board,
+    style, 
 }: {
     card: any
     cardData: any
     icons: any
     setCardData: (data: any) => void
     board: any
+    style?: any
 }) => {
     const [error, setError] = useState<string | null>(null)
 
@@ -219,7 +221,7 @@ export const DisplayEditor = ({
     }
 
     return (
-        <YStack f={1} gap="$4">
+        <YStack f={1} gap="$4" style={style}>
             <XStack space="$4" flexWrap="wrap">
                 <YStack flex={1} maw={400}>
                     <SettingsTitle error={error ?? ''}>

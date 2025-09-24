@@ -24,7 +24,7 @@ return card({
 });
 `,
             editorOptions: {
-                defaultTab: "value"
+                // defaultTab: "value"
             },
         },
         emitEvent: true
@@ -51,7 +51,7 @@ return card({
 });
 `,
             editorOptions: {
-                defaultTab: "value"
+                // defaultTab: "value"
             },
         },
         emitEvent: true
@@ -144,7 +144,7 @@ return card({
 });
 `,
             editorOptions: {
-                defaultTab: "value"
+                // defaultTab: "value"
             },
         },
         emitEvent: true
@@ -168,7 +168,10 @@ return card({
             html: "//@react\nreturn markdown(data)",
             rulesCode: "return `# h1 Heading 8-)\n## h2 Heading\n### h3 Heading\n#### h4 Heading\n##### h5 Heading\n###### h6 Heading\n\n## Tables\n\n| Option | Description |\n| ------ | ----------- |\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |\n\nRight aligned columns\n\n| Option | Description |\n| ------:| -----------:|\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |`",
             editorOptions: {
-                defaultTab: "value"
+                hiddenTabs: [
+                    "rules",
+                    "params"
+                ]
             },
         },
         emitEvent: true
@@ -183,15 +186,13 @@ return card({
         defaults: {
             width: 3,
             height: 12,
-            name: 'Markdown',
+            name: 'Markdown Display',
             icon: 'file-text',
             description: 'Render formatted markdown using ReactMarkdown',
             type: 'value',
             html: "//@react\nreturn markdown(data, true)",
             rulesCode: "return `# h1 Heading 8-)\n## h2 Heading\n### h3 Heading\n#### h4 Heading\n##### h5 Heading\n###### h6 Heading\n\n## Tables\n\n| Option | Description |\n| ------ | ----------- |\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |\n\nRight aligned columns\n\n| Option | Description |\n| ------:| -----------:|\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |`",
-            editorOptions: {
-                defaultTab: "value"
-            },
+            editorOptions: {},
         },
         emitEvent: true
     });
@@ -212,7 +213,7 @@ return card({
             html: "return fileBrowser(data)",
             rulesCode: "return `/data/public`",
             editorOptions: {
-                defaultTab: "value"
+                // defaultTab: "value"
             },
         },
         emitEvent: true
@@ -232,7 +233,7 @@ return card({
             description: 'Interactive object',
             type: 'action',
             editorOptions: {
-                defaultTab: "value"
+                // defaultTab: "value"
             },
             html: "reactCard(`\n  function Widget(props) {\n    console.log('react object widget: ', props.value)\n    return (\n      <Tinted>\n        <ViewObject\n          object={props.value}\n          onAdd={(key, value) => execute_action('${data.name}', { action: 'set', key, value })}\n          onValueEdit={(key, value) => execute_action('${data.name}', { action: 'set', key, value })}\n          onKeyDelete={(key) => execute_action('${data.name}', { action: 'delete', key })}\n          onKeyEdit={(oldKey, newKey) => execute_action('${data.name}', { action: 'rename', oldKey, newKey })}\n          onClear={() => execute_action('${data.name}', { action: 'reset' })}\n        />\n      </Tinted>\n    );\n  }\n`, data.domId, data)",
             displayResponse: true,
@@ -275,7 +276,7 @@ return card({
             description: 'Interactive queue of items',
             type: 'action',
             editorOptions: {
-                defaultTab: "value"
+                // defaultTab: "value"
             },
             html: "//@card/react\nfunction Widget(props) {\n  return (\n          <ViewList \n            items={props.value} \n            onClear={(items) => execute_action(props.name, {action: 'clear'})}\n            onPush={(item) => execute_action(props.name, {action: 'push', item})}\n            onDeleteItem={(item, index) => execute_action(props.name, {action: 'remove', index})} \n          />\n  );\n}\n",
             displayResponse: true,
@@ -314,7 +315,7 @@ return card({
             description: "# Matrix / Grid\r\n\r\nCreates and manipulates bi-dimensional grids. The grid is stored as a bidimensional\r\narray where the first level is the row, and second level is the column.\r\n\r\n## Accessing a specific position given row and column\r\n\r\n```js\r\nmatrix[row][column]\r\n```\r\n\r\n## Actions\r\n\r\n### `reset`\r\n\r\nCreates a new matrix with the given dimensions and initializes all cells with a value.\r\n\r\n**Parameters:**\r\n\r\n* `action`: `\"reset\"`\r\n* `width`: number of columns (must be a positive integer)\r\n* `height`: number of rows (must be a positive integer)\r\n* `value`: initial value for all cells\r\n\r\n**Example:**\r\n\r\n```json\r\n{\r\n  \"action\": \"reset\",\r\n  \"width\": 3,\r\n  \"height\": 3,\r\n  \"value\": \"\"\r\n}\r\n```\r\n\r\n**Effect:**\r\nResets the matrix to a 3×3 grid with all cells initialized to an empty string (`\"\"`).\r\n\r\n---\r\n\r\n### `setCell`\r\n\r\nSets a specific cell at position `(x, y)` to the given value.\r\nCoordinates are 0-based: `x` is the column index, `y` is the row index.\r\n\r\n**Parameters:**\r\n\r\n* `action`: `\"setCell\"`\r\n* `x`: column index\r\n* `y`: row index\r\n* `value`: value to set in the specified cell\r\n\r\n**Example:**\r\n\r\n```json\r\n{\r\n  \"action\": \"setCell\",\r\n  \"x\": 1,\r\n  \"y\": 2,\r\n  \"value\": \"X\"\r\n}\r\n```\r\n\r\n**Effect:**\r\nSets the value `\"X\"` in the cell located at column 1, row 2.",
             type: 'action',
             editorOptions: {
-                defaultTab: "value"
+                // defaultTab: "value"
             },
             "rulesCode": "const matrix = board?.[name];\r\n\r\nif (params.action === 'reset') {\r\n  const width = params.width;\r\n  const height = params.height;\r\n  const initialValue = params.value;\r\n\r\n  if (!Number.isInteger(width) || width <= 0 ||\r\n      !Number.isInteger(height) || height <= 0) {\r\n    throw new TypeError('matrix reset error: width and height should positive numbers');\r\n  }\r\n\r\n  // Nueva matriz de height x width\r\n  return Array.from({ length: height }, () =>\r\n    Array.from({ length: width }, () => initialValue)\r\n  );\r\n} else {\r\n  if (!Array.isArray(matrix)) {\r\n    throw new Error('matrix set error: cannot set a value in an empty matrix');\r\n  }\r\n\r\n  const posX = params.x;\r\n  const posY = params.y;\r\n  const val = params.value;\r\n\r\n  if (!Number.isInteger(posY) || posY < 0 || posY >= matrix.length) {\r\n    throw new RangeError(`matrix set error: y out of range: ${posY}`);\r\n  }\r\n  const row = matrix[posY];\r\n  if (!Array.isArray(row)) {\r\n    throw new TypeError(`matrix set error: invalud row`);\r\n  }\r\n  if (!Number.isInteger(posX) || posX < 0 || posX >= row.length) {\r\n    throw new RangeError(`matrix set error x out of range: ${posX}`);\r\n  }\r\n\r\n  // Copia inmutable y set\r\n  const next = matrix.map(r => r.slice());\r\n  next[posY][posX] = val;\r\n  return next;\r\n}",
             "html": "//@card/react\n\nfunction MatrixTable({ data }) {\n  const rows = Array.isArray(data) ? data : []\n  const maxCols = rows.reduce((m, r) => Math.max(m, Array.isArray(r) ? r.length : 0), 0)\n\n  const wrapStyle = {\n    width: '100%',\n    height: '100%',\n    overflow: 'auto',\n  }\n  const tableStyle = {\n    borderCollapse: 'collapse',\n    width: '100%',\n    height: '100%',\n  }\n  const cellStyle = {\n    border: '1px solid #ccc',\n    padding: '6px 8px',\n    textAlign: 'center',\n  }\n\n  return (\n    <div style={wrapStyle}>\n      <table style={tableStyle}>\n        <tbody>\n          {rows.map((row, rIdx) => (\n            <tr key={rIdx}>\n              {Array.from({ length: maxCols }).map((_, cIdx) => {\n                const v = Array.isArray(row) ? row[cIdx] : undefined\n                const text = v == null ? '' : String(v)\n                return <td key={cIdx} style={cellStyle}><CardValue value={text ?? \"\"} /></td>\n              })}\n            </tr>\n          ))}\n        </tbody>\n      </table>\n    </div>\n  )\n}\n\nfunction Widget(card) {\n  const value = card.value;\n  const isMatrix = Array.isArray(value) && value.every(r => Array.isArray(r));\n  const fullHeight = value !== undefined && typeof value !== \"string\" && typeof value !== \"number\" && typeof value !== \"boolean\";\n\n  const content = (\n    <YStack f={1} h=\"100%\" miH={0} mt={fullHeight ? \"20px\" : \"0px\"} ai=\"stretch\" jc=\"flex-start\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n        <Icon name={card.icon} size={48} color={card.color} />\n      )}\n\n      {card.displayResponse !== false && (\n        isMatrix ? (\n          <YStack f={1} miH={0} width=\"100%\">\n            <MatrixTable data={value} />\n          </YStack>\n        ) : (\n          <YStack f={1} miH={0} width=\"100%\"><h1>{value !== undefined ? String(value) : 'Empty table'}</h1></YStack>\n        )\n      )}\n    </YStack>\n  );\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <ActionCard data={card} style={{ height: '100%'}}>\n          {card.displayButton !== false ? (\n            <ParamsForm data={card} style={{ height: '100%' }}>\n              {content}\n            </ParamsForm>\n          ) : (\n            card.displayResponse !== false && content\n          )}\n        </ActionCard>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}",

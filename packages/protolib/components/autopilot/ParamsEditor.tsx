@@ -6,6 +6,7 @@ import { nanoid } from 'nanoid'
 import { useUpdateEffect } from 'usehooks-ts'
 import { SelectList } from '../SelectList'
 import { TextEditDialog } from '../TextEditDialog'
+import { TabContainer, TabTitle } from './Tab'
 
 export const ParamsEditor = ({
   params = {},
@@ -117,8 +118,9 @@ export const ParamsEditor = ({
   const inputDefProps = { backgroundColor: "$gray1", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
   const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
-  return (
-    <YStack flex={1} height="100%" borderRadius="$3" p="$3" backgroundColor="$gray3" overflow="hidden" >
+  return <TabContainer>
+    <TabTitle tabname={"Inputs Configuration"} tabDescription='Configure all the dynamic inputs for your card' />
+    <YStack flex={1} height="100%" w="100%" borderRadius="$3" p="$3" backgroundColor="$gray3" overflow="hidden" >
       <XStack alignItems="center" justifyContent="space-between">
         <Label size="$4">Parameters</Label>
       </XStack>
@@ -229,7 +231,7 @@ export const ParamsEditor = ({
         </TooltipSimple>
       </ScrollView>
     </YStack>
-  )
+  </TabContainer>
 }
 
 
