@@ -5,6 +5,10 @@ import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
 import { getKey } from "@extensions/keys/coreContext";
 import { Telegraf } from 'telegraf';
+import path from "path";
+import { createReadStream } from "fs";
+import { promises as fsp } from "fs";
+import fs from "fs";
 
 const GENERATE_EPHEMERAL_EVENT = true;
 const logger = getLogger()
@@ -43,6 +47,17 @@ const registerActions = async (context) => {
     tag: "send",
     description: "send a telegram message to a chat id",
     params: { chat_id: "Telegram chat id (number). Example: 123456789", message: "message value to send" },
+    emitEvent: true,
+    token: await getServiceToken()
+  })
+  //add action to send photo
+  addAction({
+    group: 'telegram',
+    name: 'photo',
+    url: `/api/v1/telegram/send/photo`,
+    tag: "send",
+    description: "send a telegram photo to a chat id",
+    params: { chat_id: "Telegram chat id (number). Example: 123456789", path: "path to local file or public URL", caption: "(optional) caption for the photo", disable_notification: "(optional) true/false to disable notification" },
     emitEvent: true,
     token: await getServiceToken()
   })
@@ -117,6 +132,29 @@ const registerCards = async (context, botUsername) => {
       type: 'action',
       displayButton: true,
       buttonLabel: "Send Message"
+    },
+    emitEvent: true,
+    token: await getServiceToken()
+  })
+
+  addCard({
+    group: 'telegram',
+    tag: "photo",
+    id: 'telegram_send_photo',
+    templateName: "Telegram send photo",
+    name: "photo_send",
+    defaults: {
+      width: 3,
+      height: 10,
+      name: "Telegram send photo",
+      icon: "camera",
+      color: "#24A1DE",
+      description: "send a telegram photo to a chat id",
+      rulesCode: `return execute_action("/api/v1/telegram/send/photo", { chat_id: userParams.chat_id, path: userParams.path, caption: userParams.caption, disable_notification: userParams.disable_notification });`,
+      params: { chat_id: "chat id", path: "path to local file or public URL", caption: "(optional) caption for the photo", disable_notification: "(optional) true/false to disable notification" },
+      type: 'action',
+      displayButton: true,
+      buttonLabel: "Send Photo"
     },
     emitEvent: true,
     token: await getServiceToken()
@@ -273,6 +311,40 @@ export default async (app, context) => {
       );
     }
   }
+  // Helpers
+  const allowedImageExts = new Set([
+    ".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".tif", ".tiff", ".heic", ".heif"
+  ]);
+
+  const isUrl = (s: string) => /^https?:\/\//i.test(s);
+
+  async function isRemoteImage(urlStr: string): Promise<{ ok: boolean; contentType?: string }> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    try {
+      let resp = await fetch(urlStr, { method: 'HEAD', redirect: 'follow', signal: controller.signal as any });
+      if (!resp.ok) {
+        resp = await fetch(urlStr, {
+          method: 'GET',
+          headers: { Range: 'bytes=0-0' },
+          redirect: 'follow',
+          signal: controller.signal as any,
+        });
+      }
+      const ct = resp.headers.get('content-type') || undefined;
+      return { ok: !!ct && ct.toLowerCase().startsWith('image/'), contentType: ct };
+    } catch {
+      return { ok: false };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  const normalizeOptional = (v?: unknown) => {
+    if (v == null) return undefined;
+    const s = String(v).trim();
+    return (s === "" || s.toLowerCase() === "undefined" || s.toLowerCase() === "null") ? undefined : s;
+  };
 
   // Endpoint HTTP para enviar mensajes (usa el bot actual)
   app.get('/api/v1/telegram/send/message', handler(async (req, res, session) => {
@@ -294,6 +366,115 @@ export default async (app, context) => {
       res.status(500).send(e)
     }
   }))
+  
+
+  // Enviar foto (URL o path relativo a ../../)
+  app.get('/api/v1/telegram/send/photo', handler(async (req, res, session) => {
+    const { chat_id, path: rawPath, caption, disable_notification } = req.query as {
+      chat_id?: string | number;
+      path?: string;
+      caption?: string;
+      disable_notification?: string;
+    };
+
+    if (!chat_id || !rawPath) {
+      res.status(400).send({ error: `Missing ${chat_id ? 'path' : 'chat_id'}` });
+      return;
+    }
+    if (!session || !session.user?.admin) {
+      res.status(401).send({ error: "Unauthorized" });
+      return;
+    }
+
+    try {
+      if (!bot) throw new Error('Bot not initialized');
+
+      const cap = normalizeOptional(caption);
+      const disableNotif = String(disable_notification).toLowerCase() === "true";
+      const extra: Record<string, any> = {};
+      if (cap !== undefined) extra.caption = cap;
+      if (disableNotif) extra.disable_notification = true;
+
+      const raw = String(rawPath);
+
+      let inputForTelegram: any;
+
+      if (isUrl(raw)) {
+        let looksImage = false;
+        try {
+          const u = new URL(raw);
+          const ext = (u.pathname && (u.pathname.includes('.') ? u.pathname.substring(u.pathname.lastIndexOf('.')) : '')).toLowerCase();
+          if (ext && allowedImageExts.has(ext)) looksImage = true;
+        } catch { /* ignore */ }
+
+        if (!looksImage) {
+          const { ok, contentType } = await isRemoteImage(raw);
+          if (!ok) {
+            res.status(415).send({ error: "Remote resource is not an image (no image Content-Type detected)" });
+            return;
+          }
+        }
+
+        inputForTelegram = raw;
+      } else {
+        const baseDir = path.resolve(__dirname, '../../');
+        const normalizedBase = baseDir.endsWith(path.sep) ? baseDir : baseDir + path.sep;
+
+        const cleanedRelative = raw.replace(/^[/\\]+/, '');
+        const absPath = path.resolve(path.join(baseDir, cleanedRelative));
+
+        if (!absPath.startsWith(normalizedBase)) {
+          res.status(400).send({ error: "Invalid path (outside allowed base directory)" });
+          return;
+        }
+
+        try {
+          await fsp.access(absPath, fs.constants.R_OK);
+          const st = await fsp.stat(absPath);
+          if (!st.isFile()) {
+            res.status(400).send({ error: "Path is not a file" });
+            return;
+          }
+        } catch {
+          res.status(404).send({ error: `File not found or unreadable: ${cleanedRelative}` });
+          return;
+        }
+
+        let isImage = false;
+        try {
+          // @ts-ignore
+          const { fileTypeFromFile } = await import('file-type');
+          if (typeof fileTypeFromFile === 'function') {
+            const ft = await fileTypeFromFile(absPath);
+            if (ft?.mime?.startsWith('image/')) isImage = true;
+          }
+        } catch { /* ignore */ }
+        if (!isImage) {
+          const ext = path.extname(absPath).toLowerCase();
+          if (allowedImageExts.has(ext)) isImage = true;
+        }
+        if (!isImage) {
+          res.status(415).send({ error: "Unsupported media type: file is not an image (or format not allowed)" });
+          return;
+        }
+
+        inputForTelegram = { source: createReadStream(absPath) };
+      }
+
+      await bot.telegram.sendPhoto(chat_id.toString(), inputForTelegram, extra);
+
+      res.send({
+        result: 'done',
+        chat_id,
+        path: rawPath,
+        base_dir: path.resolve(__dirname, '../../'),
+      });
+    } catch (e: any) {
+      logger.error("TelegramAPI sendPhoto error", e);
+      res.status(500).send({ result: "error", error: e?.message || String(e) });
+    }
+  }));
+
   console.log("Setup events for telegram keys changes")
   context.events.onEvent(
     context.mqtt,
