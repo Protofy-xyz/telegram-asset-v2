@@ -1,26 +1,28 @@
-﻿import React, { useState } from 'react';
+﻿import React from 'react';
 import { YStack } from '@my/ui';
 import { KeySetter, useKeyState } from './KeySetter';
 import { Markdown } from './Markdown';
+import { MqttWrapper } from './MqttWrapper';
 
 
 type KeyGateProps = {
     requiredKeys: string[];
     readme?: string;
     children: React.ReactNode;
+    validators?: Record<string, (value: string) => Promise<string | true>>;
 };
 
-export const KeyGate = ({ requiredKeys, children, readme }: KeyGateProps) => {
-    const [keys, setKeys] = useState({});
+export const KeyGate = ({ ...props }: any) => {
+    return <MqttWrapper>
+        <KeyGateLoader {...props} />
+    </MqttWrapper>
+}
 
-    const handleResolve = (key: string, hasKey: boolean) => {
-        setKeys((prev) => (prev[key] === hasKey ? prev : { ...prev, [key]: hasKey }));
-    }
+const KeyGateLoader = ({ requiredKeys, children, readme, validators = {} }: KeyGateProps) => {
 
     const keyStates = requiredKeys.map((key) => {
         const { hasKey, loading } = useKeyState(key);
-        const resolvedValue = keys[key];
-        return { key, hasKey: resolvedValue ?? hasKey, loading };
+        return { key, hasKey, loading };
     });
 
     const hasMissingKeys = keyStates.some(({ hasKey, loading }) => !loading && !hasKey);
@@ -36,8 +38,7 @@ export const KeyGate = ({ requiredKeys, children, readme }: KeyGateProps) => {
                 <KeySetter
                     key={key}
                     nameKey={key}
-                    onAdd={() => handleResolve(key, true)}
-                    onRemove={() => handleResolve(key, false)}
+                    validate={validators[key]}
                 />
             ))}
         </YStack>
