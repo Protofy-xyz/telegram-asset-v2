@@ -313,7 +313,7 @@ export const chatGPTPrompt = async ({
             
             logger.error("❌ Error callback fired: "+  errorMessage);
             console.error("❌ Error callback fired log:", err);
-            if (props.error) props.error(err.message);
+            if (props.error) props.error(err.message ?? err);
         }
     });
 

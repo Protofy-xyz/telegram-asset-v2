@@ -315,11 +315,17 @@ const getExecuteAction = (board, rawActions) => {
       let { token, ...data } = params;
       //console.log('url: ', action.url+'?token='+token)
       const response = await API.post(action.url, data);
+      if (response.isError) {
+        throw new Error(JSON.stringify(response.error || 'Error executing action'));
+      }
       return response.data
     } else {
       const paramsStr = Object.keys(params).map(k => k + '=' + params[k]).join('&');
       //console.log('url: ', action.url+'?token='+token+'&'+paramsStr)
       const response = await API.get(action.url + '?' + paramsStr);
+      if (response.isError) {
+        throw new Error(JSON.stringify(response.error || 'Error executing action'));
+      }
       return response.data
     }
   }

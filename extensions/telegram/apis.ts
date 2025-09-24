@@ -291,7 +291,7 @@ export default async (app, context) => {
       res.send({ result: 'done', message: message, chat_id: chat_id })
     } catch (e) {
       logger.error("TelegramAPI error", e)
-      res.send({ result: "error" })
+      res.status(500).send(e)
     }
   }))
   console.log("Setup events for telegram keys changes")

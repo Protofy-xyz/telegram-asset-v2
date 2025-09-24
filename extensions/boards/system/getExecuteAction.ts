@@ -47,11 +47,17 @@ async function execute_action(url_or_name, params={}) {
         const url = action.url+'?token='+(token ? token : '${getServiceToken()}')
         console.log('url: ', url)
         const response = await API.post(url, data);
+        if (response.isError) {
+            throw new Error(JSON.stringify(response.error || 'Error executing action'));
+        }             
         return response.data
     } else {
         const paramsStr = Object.keys(params).map(k => k + '=' + encodeURIComponent(params[k])).join('&');
         //console.log('url: ', action.url+'?token='+token+'&'+paramsStr)
         const response = await API.get(action.url+'?token='+token+'&'+paramsStr);
+        if (response.isError) {
+            throw new Error(JSON.stringify(response.error || 'Error executing action'));
+        }
         return response.data
     }
 }
