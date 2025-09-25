@@ -52,17 +52,18 @@ export default (app, context) => {
             defaults: {
                 width: 3,
                 height: 13,
-                name: "chatGPT_message_send",
+                name: "chatGPT message send",
                 icon: "openai",
                 color: "#74AA9C",
                 description: "Send a message to ChatGPT",
-                rulesCode: "if (userParams.forcedValue) {\n  return JSON.parse(userParams.forcedValue);\n}\nreturn execute_action(\"/api/v1/chatgpt/send/prompt\", {\n  message:\n    (userParams.preprompt ?? \"\") +\n    \" \" +\n    (userParams.prompt ?? \"\") +\n    \" \" +\n    (userParams.postprompt ?? \"\"),\n});\n",
+                rulesCode: "if (userParams.forcedValue) {\n  return JSON.parse(userParams.forcedValue);\n}\nreturn execute_action(\"/api/v1/chatgpt/send/prompt\", {\n  model: userParams.model,\n  message:\n    (userParams.preprompt ?? \"\") +\n    \" \" +\n    (userParams.prompt ?? \"\") +\n    \" \" +\n    (userParams.postprompt ?? \"\"),\n});\n",
                 html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  const nameKey = 'OPENAI_API_KEY';\n  const readme = `\n### 🔑 How to get your OpenAI API key?\n1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n2. Log in and click **\"Create new secret key\"**.\n3. Copy and save your key securely, it won't be shown again.\n---\n> ⚠️ **Keep it secret!** Your API key is private and usage-based.\n`;\n\n  async function validateKey(apiKey) {\n    if (!apiKey.startsWith('sk-')) return 'The OpenAI API key must start with sk-.';\n    const response = await API.post('/api/v1/chatgpt/validateKey', { apiKey });\n    if (response.isError) return response.error.error\n    return true;\n  }\n\n  const content = (\n    <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n        <Icon name={card.icon} size={48} color={card.color} />\n      )}\n      {card.displayResponse !== false && (\n        <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} readOnly={card.markdownDisplay ? false: true} executeActionOnEdit={(val)=>execute_action(card.name, {forcedValue: JSON.stringify(val)})}/>\n      )}\n    </YStack>\n  );\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <KeyGate requiredKeys={[nameKey]} readme={readme} validators={{ [nameKey]: validateKey }} >\n          <ActionCard data={card}>\n            {card.displayButton !== false\n              ? <ParamsForm data={card}>{content}</ParamsForm>\n              : card.displayResponse !== false && content}\n          </ActionCard>\n        </KeyGate>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}\n\n",
-                params: { 
+                params: {
                     preprompt: "preprompt",
                     prompt: "prompt",
                     postprompt: "postprompt",
-                    forcedValue: "forcedValue" 
+                    forcedValue: "forcedValue",
+                    model: "model"
                 },
                 type: 'action',
                 configParams: {
@@ -85,6 +86,11 @@ export default (app, context) => {
                         "visible": false,
                         "defaultValue": "",
                         "type": "string"
+                    },
+                    "model": {
+                        "visible": false,
+                        "defaultValue": "gpt-4o",
+                        "type": "string"
                     }
                 },
                 markdownDisplay: true
@@ -94,7 +100,7 @@ export default (app, context) => {
         })
     }
 
-    const handleSendPrompt = async (message, images, files, res) => {
+    const handleSendPrompt = async (message, images, files, res, model?) => {
         console.log('--------------------------------------------------------------------------------------')
         console.log('************** chatgpt send prompt: ', message, images, files)
         if (!message) {
@@ -113,6 +119,7 @@ export default (app, context) => {
         chatGPTPrompt({
             images: images || [],
             files: (files || []).map(file => getRoot() + file),
+            model: model,
             message: message, done: (response, msg) => {
                 console.log('************** chatgpt: ', response, msg)
                 context.state.set({ group: 'chatGPT', tag: "conversation", name: "userMessage", value: message, emitEvent: true });
@@ -152,7 +159,7 @@ export default (app, context) => {
             return
         }
         console.log('************** chatgpt send prompt: ', req.body.message, req.body.images, req.body.files)
-        handleSendPrompt(req.body.message, req.body.images, req.body.files, res)
+        handleSendPrompt(req.body.message, req.body.images, req.body.files, res, req.body.model)
     }))
 
     app.get("/api/v1/chatgpt/send/prompt", handler(async (req, res, session) => {
@@ -160,7 +167,7 @@ export default (app, context) => {
             res.status(401).send({ error: "Unauthorized" })
             return
         }
-        handleSendPrompt(req.query.message, req.query.images, req.query.files, res)
+        handleSendPrompt(req.query.message, req.query.images, req.query.files, res, req.body.model)
 
     }))
     registerActions(context);

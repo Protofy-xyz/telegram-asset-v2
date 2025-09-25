@@ -1,10 +1,11 @@
 import { getLogger } from "protobase";
 const logger = getLogger();
 
-export const callModel = async (prompt, context, provider='chatgpt') => {
+export const callModel = async (prompt, context, provider='chatgpt', options = {}) => {
     let reply;
     if (provider === 'chatgpt') {
         reply = await context.chatgpt.chatGPTPrompt({
+            ...options,
             message: prompt
         })
 
