@@ -82,6 +82,7 @@ export const automation = async (options: {
                 params: getParams(options?.cardConfigParams ?? {}),
                 configParams: options?.cardConfigParams ?? {},
                 displayResponse: true,
+                icon: 'zap',
                 responseKey: 'result',
                 ...(options.sourceFile?{sourceFile: options.sourceFile}:{}),
                 type: 'action'
