@@ -79,7 +79,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
 }) => {
 
     const [value, setValue] = useState("");
-    const [currKey, setCurrKey] = useState<any>("");
+    const [currKey, setCurrKey] = useState<any>("-");
     const [loading, setLoading] = useState(false);
     const toast = useToastController()
 
