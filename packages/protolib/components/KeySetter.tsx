@@ -1,4 +1,4 @@
-import { YStack, Text, Button, Input, XStack, useToastController } from '@my/ui';
+import { YStack, Text, Button, Input, XStack, useToastController, Spinner } from '@my/ui';
 import { useEffect, useState } from 'react';
 import { getKey } from "@extensions/keys/coreContext";
 import { API } from 'protobase';
@@ -80,7 +80,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
 
     const [value, setValue] = useState("");
     const [currKey, setCurrKey] = useState<any>("");
-
+    const [loading, setLoading] = useState(false);
     const toast = useToastController()
 
     const loadKey = async () => {
@@ -96,10 +96,12 @@ export const KeySetter: React.FC<KeySetterProps> = ({
     }
 
     const onEditKey = async (keyVal) => {
+        setLoading(true);
         if (keyVal !== placeholderValue) {
             const validationResult = await validate(keyVal);
             if (validationResult !== true) {
                 toast.show(validationResult, { duration: 2000, tint: "red" });
+                setLoading(false);
                 return;
             }
         }
@@ -116,12 +118,14 @@ export const KeySetter: React.FC<KeySetterProps> = ({
             setCurrKey(res?.data.value);
             if (keyVal !== placeholderValue) {
                 onAdd(keyVal)
+                toast.show("Key set successfully", { duration: 1000, tint: "green" });
             } else {
                 onRemove(keyVal);
             }
         } else if (res?.isError) {
             toast.show("Error setting key", { duration: 2000, tint: "red" });
         }
+        setLoading(false);
     }
 
     useEffect(() => {
@@ -159,7 +163,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
                                 onChangeText={(text) => setValue(text)}
                             />
                             <Tinted>
-                                <Button bc="$color7" circular icon={Plus} onPress={() => onEditKey(value)}></Button>
+                                <Button bc="$color7" circular disabled={loading} icon={loading ? <Spinner /> : <Plus />} onPress={() => onEditKey(value)}></Button>
                             </Tinted>
                         </XStack>
                     </XStack>
