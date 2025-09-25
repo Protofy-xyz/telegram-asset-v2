@@ -81,6 +81,44 @@ const getActionBar = (generateEvent) => {
 
   const { isJSONView, autopilot, setViewMode, viewMode, tabVisible } = useBoardControls();
 
+    // Utils para no disparar atajos cuando escribes en inputs/textarea/etc.
+  const isEditableTarget = (t: EventTarget | null) => {
+    if (!(t instanceof HTMLElement)) return false;
+    const tag = t.tagName.toLowerCase();
+    if (t.isContentEditable) return true;
+    if (['input', 'textarea', 'select'].includes(tag)) return true;
+    // Evita capturar si el foco está en controles clicables/teclables
+    if (tag === 'button' || tag === 'a' || t.getAttribute('role') === 'button' || t.getAttribute('role') === 'textbox') {
+      return true;
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    if (isJSONView) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+      if (isEditableTarget(e.target)) return;
+
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault(); // evita scroll de la página con espacio
+        generateEvent({ type: 'toggle-autopilot' });
+        return;
+      }
+
+      if ((e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        generateEvent({ type: 'open-add' });
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // deps: si cambian estas, re-registra el handler
+  }, [isJSONView, generateEvent]);
+
   const bars = {
     'JSONView': [
       <ActionBarButton Icon={X} iconProps={{ color: 'var(--gray9)' }} onPress={() => generateEvent({ type: "toggle-json" })} />,
