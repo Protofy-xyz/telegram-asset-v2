@@ -53,10 +53,11 @@ export const ParamsForm = ({ data, children }) => {
             for (const key of allKeys) {
                 const param = data.configParams?.[key] || {};
                 const defaultValue = param.defaultValue;
+                const visible = param.visible ?? true;
                 const state = paramsState[key];
-                if (state !== undefined && state !== "") {
+                if (state !== undefined && state !== "" && visible) {
                     cleanedParams[key] = state;
-                } else if (defaultValue !== undefined && defaultValue !== "") {
+                } else if (defaultValue !== undefined && defaultValue !== "" || !visible) {
                     cleanedParams[key] = defaultValue;
                 }
             }
