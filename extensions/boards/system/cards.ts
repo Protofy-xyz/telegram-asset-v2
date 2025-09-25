@@ -210,7 +210,7 @@ return card({
             icon: 'folder-search',
             description: 'Render a file browser',
             type: 'value',
-            html: "return fileBrowser(data)",
+            html: "// @card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n    <div className=\"no-drag\" style={{\r\n      height: \"100%\",\r\n      padding: \"1em\",\r\n      overflow: \"auto\",\r\n      fontFamily: \"sans-serif\",\r\n      fontSize: \"14px\",\r\n      display: \"flex\",\r\n      color: \"var(--color)\"\r\n    }}>\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n            <FileBrowser initialPath={card.value} />\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n    </div>\r\n  );\r\n}",
             rulesCode: "return `/data/public`",
             editorOptions: {
                 // defaultTab: "value"
