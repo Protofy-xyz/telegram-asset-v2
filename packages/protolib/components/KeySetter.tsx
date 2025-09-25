@@ -100,7 +100,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
         if (keyVal !== placeholderValue) {
             const validationResult = await validate(keyVal);
             if (validationResult !== true) {
-                toast.show(validationResult, { duration: 2000, tint: "red" });
+                toast?.show?.(validationResult, { duration: 2000, tint: "red" });
                 setLoading(false);
                 return;
             }
@@ -118,12 +118,12 @@ export const KeySetter: React.FC<KeySetterProps> = ({
             setCurrKey(res?.data.value);
             if (keyVal !== placeholderValue) {
                 onAdd(keyVal)
-                toast.show("Key set successfully", { duration: 1000, tint: "green" });
+                toast?.show?.("Key set successfully", { duration: 1000, tint: "green" });
             } else {
                 onRemove(keyVal);
             }
         } else if (res?.isError) {
-            toast.show("Error setting key", { duration: 2000, tint: "red" });
+            toast?.show?.("Error setting key", { duration: 2000, tint: "red" });
         }
         setLoading(false);
     }
