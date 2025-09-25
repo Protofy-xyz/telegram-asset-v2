@@ -54,7 +54,6 @@ export function Markdown({
   });
 
   const normalizedText = text;
-  console.log("Dev:::::::::", { normalizedText });
 
   return (
     <div
@@ -83,33 +82,33 @@ export function Markdown({
       >
         {!editing ? (
           <Tinted>
-          <YStack jc="center"
-            ai="center"
-            br="$4"
-            cursor='pointer' onPress={() => {
-              if (readOnly) return;
-              originalBeforeEdit.current = code.current; // snapshot para cancelar
-              setEditing(true);
-            }}>
-            <Pencil size={20} color="var(--color8)" style={{ marginLeft: 0, marginTop: 0 }} />
-          </YStack>
+            <YStack jc="center"
+              ai="center"
+              br="$4"
+              cursor='pointer' onPress={() => {
+                if (readOnly) return;
+                originalBeforeEdit.current = code.current; // snapshot para cancelar
+                setEditing(true);
+              }}>
+              <Pencil size={20} color="var(--color8)" style={{ marginLeft: 0, marginTop: 0 }} />
+            </YStack>
           </Tinted>
         ) : (
           <>
-          <Tinted>
-          <YStack jc="center"
-            ai="center"
-            br="$4"
-            cursor='pointer' onPress={() => {cancel()}}>
-            <X size={20} color="var(--red9)" style={{ marginLeft: 0, marginTop: 0 }} />
-          </YStack>
-          <YStack jc="center"
-            ai="center"
-            br="$4"
-            cursor='pointer' onPress={() => {save()}}>
-            <Save size={20} color="var(--color8)" style={{ marginLeft: 0, marginTop: 0 }} />
-          </YStack>
-          </Tinted>
+            <Tinted>
+              <YStack jc="center"
+                ai="center"
+                br="$4"
+                cursor='pointer' onPress={() => { cancel() }}>
+                <X size={20} color="var(--red9)" style={{ marginLeft: 0, marginTop: 0 }} />
+              </YStack>
+              <YStack jc="center"
+                ai="center"
+                br="$4"
+                cursor='pointer' onPress={() => { save() }}>
+                <Save size={20} color="var(--color8)" style={{ marginLeft: 0, marginTop: 0 }} />
+              </YStack>
+            </Tinted>
           </>
         )}
       </div>
@@ -150,7 +149,20 @@ export function Markdown({
           />
         ) : (
           <Tinted>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ node, ...props }) => {
+                  const target = props.target ?? "_blank";
+                  const rel = target === "_blank" ? "noopener noreferrer" : undefined;
+
+                  return (
+                    <a {...props} target={target} rel={rel}>
+                      {props.children}
+                    </a>
+                  );
+                },
+              }}
+            >
               {normalizedText}
             </ReactMarkdown>
           </Tinted>
