@@ -25,6 +25,16 @@ export const getChatGPTApiKey = async (options?: {
     }
 }
 
+export const validateOpenAIApiKey = async (apiKey: string) => {
+    if (!apiKey) {
+        throw new Error("API key is required");
+    }
+
+    const client = new OpenAI({ apiKey });
+    await client.models.list();
+    return true;
+}
+
 async function uploadFileToOpenAI(filePath: string): Promise<string> {
     let apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -423,5 +433,6 @@ export default {
     prompt,
     processResponse,
     getChatGPTApiKey,
-    getSystemPrompt
+    getSystemPrompt,
+    validateOpenAIApiKey
 }

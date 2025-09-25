@@ -1,9 +1,8 @@
-import { chatGPTPrompt, getChatGPTApiKey } from "./coreContext"
+import { chatGPTPrompt, getChatGPTApiKey, validateOpenAIApiKey } from "./coreContext"
 import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
 import { getLogger, getServiceToken } from 'protobase';
 import { handler, getRoot } from 'protonode'
-import OpenAI from 'openai';
 
 export default (app, context) => {
 
@@ -58,7 +57,7 @@ export default (app, context) => {
                 color: "#74AA9C",
                 description: "Send a message to ChatGPT",
                 rulesCode: "if (userParams.forcedValue) {\n  return JSON.parse(userParams.forcedValue);\n}\nreturn execute_action(\"/api/v1/chatgpt/send/prompt\", {\n  message:\n    (userParams.preprompt ?? \"\") +\n    \" \" +\n    (userParams.prompt ?? \"\") +\n    \" \" +\n    (userParams.postprompt ?? \"\"),\n});\n",
-                html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  const nameKey = 'OPENAI_API_KEY';\n  const readme = `\n### 🔑 How to get your OpenAI API key?\n1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n2. Log in and click **\"Create new secret key\"**.\n3. Copy and save your key securely, it won't be shown again.\n---\n> ⚠️ **Keep it secret!** Your API key is private and usage-based.\n`;\n\n  async function validateKey(apiKey) {\n    if (!apiKey.startsWith('sk-')) return 'The OpenAI API key must start with sk-.';\n    const response = await API.post('/api/v1/chatgpt/validate-key', { apiKey });\n    if (response.isError) return response.error.error\n    return true;\n  }\n\n  const content = (\n    <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n        <Icon name={card.icon} size={48} color={card.color} />\n      )}\n      {card.displayResponse !== false && (\n        <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} readOnly={card.markdownDisplay ? false: true} executeActionOnEdit={(val)=>execute_action(card.name, {forcedValue: JSON.stringify(val)})}/>\n      )}\n    </YStack>\n  );\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <KeyGate requiredKeys={[nameKey]} readme={readme} validators={{ [nameKey]: validateKey }} >\n          <ActionCard data={card}>\n            {card.displayButton !== false\n              ? <ParamsForm data={card}>{content}</ParamsForm>\n              : card.displayResponse !== false && content}\n          </ActionCard>\n        </KeyGate>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}\n\n",
+                html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  const nameKey = 'OPENAI_API_KEY';\n  const readme = `\n### 🔑 How to get your OpenAI API key?\n1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n2. Log in and click **\"Create new secret key\"**.\n3. Copy and save your key securely, it won't be shown again.\n---\n> ⚠️ **Keep it secret!** Your API key is private and usage-based.\n`;\n\n  async function validateKey(apiKey) {\n    if (!apiKey.startsWith('sk-')) return 'The OpenAI API key must start with sk-.';\n    const response = await API.post('/api/v1/chatgpt/validateKey', { apiKey });\n    if (response.isError) return response.error.error\n    return true;\n  }\n\n  const content = (\n    <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n        <Icon name={card.icon} size={48} color={card.color} />\n      )}\n      {card.displayResponse !== false && (\n        <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} readOnly={card.markdownDisplay ? false: true} executeActionOnEdit={(val)=>execute_action(card.name, {forcedValue: JSON.stringify(val)})}/>\n      )}\n    </YStack>\n  );\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <KeyGate requiredKeys={[nameKey]} readme={readme} validators={{ [nameKey]: validateKey }} >\n          <ActionCard data={card}>\n            {card.displayButton !== false\n              ? <ParamsForm data={card}>{content}</ParamsForm>\n              : card.displayResponse !== false && content}\n          </ActionCard>\n        </KeyGate>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}\n\n",
                 params: { 
                     preprompt: "preprompt",
                     prompt: "prompt",
@@ -126,7 +125,7 @@ export default (app, context) => {
         })
     }
 
-    app.post("/api/v1/chatgpt/validate-key", handler(async (req, res, session) => {
+    app.post("/api/v1/chatgpt/validateKey", handler(async (req, res, session) => {
         if (!session || !session.user.admin) {
             res.status(401).send({ error: "Unauthorized" })
             return
@@ -139,8 +138,7 @@ export default (app, context) => {
         }
 
         try {
-            const client = new OpenAI({ apiKey });
-            await client.models.list();
+            await validateOpenAIApiKey(apiKey);
             res.send({ valid: true });
         } catch (error) {
             const errorMessage = error?.error?.message ?? error.message ?? "Invalid OpenAI API key";
