@@ -511,8 +511,8 @@ export default async (app, context) => {
         return cleaned
     }
 
-    const handleCallModel = async (res, prompt) => {
-        let reply = await callModel(prompt, context, defaultAIProvider)
+    const handleCallModel = async (res, prompt, options = {}) => {
+        let reply = await callModel(prompt, context, defaultAIProvider, options)
 
         console.log('REPLY: ', reply)
         if (reply?.raw?.error) {
