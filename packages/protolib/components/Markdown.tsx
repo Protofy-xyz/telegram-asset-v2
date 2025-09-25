@@ -1,6 +1,5 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
 import { Tinted } from "./Tinted";
 import { Pencil, Save, X } from "@tamagui/lucide-icons";
 import { useEffect, useRef, useState } from "react";
@@ -140,25 +139,10 @@ export function Markdown({
               parameterHints: { enabled: false },
               tabCompletion: "off",
             }}
-            // onMount={(editor, monaco) => {
-            //   editor.addCommand(monaco.KeyCode.Enter, () => {
-            //     const model = editor.getModel();
-            //     if (!model) return;
-            //     const selections = editor.getSelections() || [];
-            //     editor.executeEdits(
-            //       "hard-break",
-            //       selections.map((sel) => ({
-            //         range: sel,
-            //         text: "  \n", // 2 espacios + nueva línea
-            //         forceMoveMarkers: true,
-            //       }))
-            //     );
-            //   });
-            // }}
             onMount={(editor, monaco) => {
               editor.addCommand(monaco.KeyCode.Enter, () => {
                 const model = editor.getModel(); if (!model) return; const selections = editor.getSelections() || []; editor.executeEdits("hard-break", selections.map(sel => ({
-                  range: sel, text: " \n", // 2 espacios + nueva línea
+                  range: sel, text: "  \n",
                   forceMoveMarkers: true,
                 })));
               })
@@ -166,7 +150,7 @@ export function Markdown({
           />
         ) : (
           <Tinted>
-            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {normalizedText}
             </ReactMarkdown>
           </Tinted>
