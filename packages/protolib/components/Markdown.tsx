@@ -215,21 +215,21 @@ export function Markdown({
               parameterHints: { enabled: false },
               tabCompletion: "off",
             }}
-            onMount={(editor, monaco) => {
-              editor.addCommand(monaco.KeyCode.Enter, () => {
-                const model = editor.getModel();
-                if (!model) return;
-                const selections = editor.getSelections() || [];
-                editor.executeEdits(
-                  "hard-break",
-                  selections.map((sel) => ({
-                    range: sel,
-                    text: "  \n",
-                    forceMoveMarkers: true,
-                  }))
-                );
-              });
-            }}
+            // onMount={(editor, monaco) => {
+            //   editor.addCommand(monaco.KeyCode.Enter, () => {
+            //     const model = editor.getModel();
+            //     if (!model) return;
+            //     const selections = editor.getSelections() || [];
+            //     editor.executeEdits(
+            //       "hard-break",
+            //       selections.map((sel) => ({
+            //         range: sel,
+            //         text: "  \n",
+            //         forceMoveMarkers: true,
+            //       }))
+            //     );
+            //   });
+            // }}
           />
         ) : (
           <Tinted>
