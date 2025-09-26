@@ -7,6 +7,7 @@ import { Monaco } from "./Monaco";
 import { useThemeSetting } from "@tamagui/next-theme";
 import useKeypress from "react-use-keypress";
 import { YStack } from "tamagui";
+import { v4 as uuid } from 'uuid';
 
 function escapeMarkdownForTemplate(md: string) {
   // return md.replace(/\\\\/g, "\\\\\\\\").replace(/\`/g, "\\\\\\`");
@@ -25,6 +26,7 @@ export function Markdown({
   const text = data ? (typeof data === "string" ? data : String(data)) : "";
   const [editing, setEditing] = useState(false);
   const { resolvedTheme } = useThemeSetting();
+  const id = uuid();
 
   const code = useRef(text);
   const originalBeforeEdit = useRef(text);
@@ -117,8 +119,9 @@ export function Markdown({
       <div style={{ flex: 1, overflow: "auto" }}>
         {editing ? (
           <Monaco
+            key= {id}
             height={"100%"}
-            path={(data?.id ?? "markdown") + "_markdown.md"}
+            path={id  + "_markdown.md"}
             darkMode={resolvedTheme === "dark"}
             sourceCode={code.current}
             onChange={(newCode) => {
