@@ -163,16 +163,31 @@ return card({
             height: 12,
             name: 'Markdown Editor',
             icon: 'file-text',
+            markdownDisplay: true,
+            displayIcon: false,
+            displayResponse: true,
             description: 'Render and edit formatted markdown using ReactMarkdown',
-            type: 'value',
-            html: "//@react\nreturn markdown(data)",
-            rulesCode: "return `# h1 Heading 8-)\n## h2 Heading\n### h3 Heading\n#### h4 Heading\n##### h5 Heading\n###### h6 Heading\n\n## Tables\n\n| Option | Description |\n| ------ | ----------- |\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |\n\nRight aligned columns\n\n| Option | Description |\n| ------:| -----------:|\n| data   | path to data files to supply the data that will be passed into templates. |\n| engine | engine to be used for processing templates. Handlebars is the default. |\n| ext    | extension to be used for dest files. |`",
-            editorOptions: {
-                hiddenTabs: [
-                    "rules",
-                    "params"
-                ]
+            type: 'action',
+            rulesCode: "if (userParams.editedValue) {\n  return userParams.editedValue;\n}\n",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} readOnly={false} executeActionOnEdit={(val)=>{executeAction(card.name,{editedValue: val})}} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
+            // editorOptions: {
+            //     hiddenTabs: [
+            //         "rules",
+            //         "params"
+            //     ]
+            // },
+            params: {
+                editedValue: "New edited value"
             },
+            configParams: {
+                editedValue: {
+                    visible: false,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
+            displayButton: true,
+            buttonLabel: "Refresh"
         },
         emitEvent: true
     });
