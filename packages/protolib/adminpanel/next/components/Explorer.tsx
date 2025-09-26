@@ -45,6 +45,7 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
         const fetchPath = (normalizedCurrentPath || '/').replace(/^\/+/, '');
         const res = (await API.get('/api/core/v1/files/' + fetchPath + '?ts=' + ts)) ?? { data: [] };
         setFiles(res);
+        props?.onFileActionEvent && props.onFileActionEvent?.({id: "refresh_files", payload: { path: fetchPath }})
     }, [normalizedCurrentPath, setFiles]);
 
     const onUploadFiles = async () => {
