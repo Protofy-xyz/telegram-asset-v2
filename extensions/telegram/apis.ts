@@ -226,6 +226,27 @@ const registerCards = async (context, botUsername) => {
     emitEvent: true,
     token: await getServiceToken()
   })
+
+  addCard({
+    group: 'telegram',
+    tag: "chats",
+    id: 'telegram_allowed_chats',
+    templateName: "Telegram allowed chats",
+    name: "link",
+    defaults: {
+      width: 3,
+      height: 10,
+      name: "Telegram allowed chats",
+      icon: "send",
+      color: "#24A1DE",
+      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}",
+      description: "Edit the allowed chats for the telegram communications",
+      rulesCode: `return [];`,
+      type: 'action'
+    },
+    emitEvent: true,
+    token: await getServiceToken()
+  })
 }
 
 const registerActionsAndCards = async (context, botUsername) => {
@@ -238,6 +259,7 @@ export default async (app, context) => {
 
   // --- Estado y variables del bot ---
   let bot: Telegraf | null = null
+  let allowedChats: string[] = []
   let currentToken: string | null = null
   let currentUsername: string | null = null
 
@@ -253,6 +275,11 @@ export default async (app, context) => {
 
     b.on('text', async (ctx) => {
       try {
+        if (allowedChats.length && !allowedChats.includes(String(ctx.chat?.id))) {
+          console.log("blocked telegram message from user: ", ctx.from?.username)
+          return
+        }
+
         const fromLabel = ctx.from?.username
           ? `@${ctx.from.username}`
           : (ctx.from?.first_name || '') + (ctx.from?.last_name ? ` ${ctx.from.last_name}` : '') || `${ctx.from?.id}`
@@ -412,7 +439,6 @@ export default async (app, context) => {
       res.status(500).send(e)
     }
   }))
-  
 
   // Enviar foto (URL o path relativo a ../../)
   app.get('/api/v1/telegram/send/photo', handler(async (req, res, session) => {
@@ -597,6 +623,48 @@ export default async (app, context) => {
     }
   }));
 
+
+  // allowed chats
+  app.post('/api/v1/telegram/allowed-chats', handler(async (req, res, session) => {
+    const { chat_id } = req.query as {
+      chat_id?: string | number;
+    };
+
+    if (!chat_id) {
+      res.status(400).send({ error: `Missing 'chat_id'` });
+      return;
+    }
+    // if (!session || !session.user?.admin) {
+    //   res.status(401).send({ error: "Unauthorized" });
+    //   return;
+    // }
+
+    try {
+      console.log("chat_id: ", chat_id)
+      if (String(chat_id) === "undefined") {
+        allowedChats = []
+        res.json({ result: allowedChats, ok: true })
+        return
+      }
+
+      allowedChats.push(String(chat_id))
+      res.json({ result: allowedChats, ok: true })
+      return
+    } catch (e: any) {
+      logger.error("TelegramAPI cannot add allowed chats. error", e);
+      res.status(500).send({ result: "error", error: e?.message || String(e) });
+    }
+  }));
+
+  app.get('/api/v1/telegram/allowed-chats', handler(async (req, res, session) => {
+    try {
+      res.json({ result: allowedChats ?? [] })
+      return
+    } catch (e: any) {
+      logger.error("TelegramAPI cannot add allowed chats. error", e);
+      res.status(500).send({ result: "error", error: e?.message || String(e) });
+    }
+  }));
 
   console.log("Setup events for telegram keys changes")
   context.events.onEvent(
