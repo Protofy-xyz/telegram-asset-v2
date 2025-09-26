@@ -166,9 +166,9 @@ return card({
             markdownDisplay: true,
             displayIcon: false,
             displayResponse: true,
-            description: 'Render and edit formatted markdown using ReactMarkdown',
+            description: 'Render and edit formatted Markdown',
             type: 'action',
-            rulesCode: "if (userParams.editedValue) {\n  return userParams.editedValue;\n}\n",
+            rulesCode: "if (userParams.editedValue) {\n  return userParams.editedValue;\n} else {\n  return userParams.state;\n}\n",
             html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} readOnly={false} executeActionOnEdit={(val)=>{executeAction(card.name,{editedValue: val})}} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
             // editorOptions: {
             //     hiddenTabs: [
@@ -177,17 +177,23 @@ return card({
             //     ]
             // },
             params: {
-                editedValue: "New edited value"
+                editedValue: "New edited value",
+                state: "Set state name"
             },
             configParams: {
                 editedValue: {
                     visible: false,
                     defaultValue: "",
                     type: "string"
+                },
+                state: {
+                    visible: false,
+                    defaultValue: "",
+                    type: "string"
                 }
             },
             displayButton: true,
-            buttonLabel: "Refresh"
+            buttonLabel: "Refresh from state",
         },
         emitEvent: true
     });
