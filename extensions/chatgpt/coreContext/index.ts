@@ -5,7 +5,9 @@ import OpenAI from 'openai';
 import axios from "axios";
 import * as fs from "fs";
 import { getRoot } from "protonode";
-
+import * as path from "path";
+import * as fsp from "fs/promises";
+import * as fspath from "node:path";
 const logger = getLogger()
 
 export const getChatGPTApiKey = async (options?: {
@@ -247,6 +249,22 @@ export const chatGPTPrompt = async ({
         content.push({ type: "file", file: { file_id } });
     }
 
+    function guessMimeFromExt(p: string) {
+        const extension = path.extname(p).toLowerCase();
+        if (extension !== "jpg") return `image/${extension.slice(1)}`;
+        return "image/jpeg";
+    }
+
+    async function filePathToDataUrl(p: string) {
+        const clean = p.replace(/^[/\\]+/, "");
+        const abs = fspath.join(getRoot(), clean);
+        const buf = await fsp.readFile(abs);
+        const ext = fspath.extname(abs).toLowerCase();
+        let mime = "application/octet-stream";
+        ext.startsWith(".") && (mime = guessMimeFromExt(ext));
+        return `data:${mime};base64,${buf.toString("base64")}`;
+    }
+
     // Images -> SIEMPRE data URL accesible por OpenAI (nada de localhost)
     if (images.length > 0) {
         console.log("📸 Chatgpt: there are images in the request:", images);
@@ -263,17 +281,18 @@ export const chatGPTPrompt = async ({
                     }
 
                     // 2) Si es una URL (p.ej. tu localhost)
-                    const resp = await axios.get(url, { responseType: "text" });
-                    const raw = (resp?.data ?? "").toString().trim();
-                    console.log(`   axios.get(${url}) -> length:`, raw?.length, "sample:", raw?.slice(0, 80));
+                    if (typeof url === "string" && url.startsWith("http")) {
+                        const resp = await axios.get(url, { responseType: "arraybuffer" });
+                        const contentType = String(resp.headers["content-type"] || "").split(";")[0] || guessMimeFromExt(url);
+                        const b64 = Buffer.from(resp.data).toString("base64");
+                        const dataUrl = `data:${contentType};base64,${b64}`;
+                        console.log(`   [url ${idx}] http(s) -> data URL`);
+                        return { type: "image_url", image_url: dataUrl };
+                    }
 
-                    if (!raw) return null;
-
-                    const dataUrl = raw.startsWith("data:")
-                        ? normalizeDataUrl(raw)
-                        : `data:image/jpeg;base64,${raw}`;
-
-                    console.log(`   final dataUrl[${idx}]:`, dataUrl.slice(0, 100) + "...");
+                    const dataUrl = await filePathToDataUrl(url);
+                    console.log(`   [url ${idx}] file path -> data URL`);
+                    
                     return { type: "image_url", image_url: dataUrl };
                 } catch (err) {
                     console.warn(`⚠️ Error fetching image from ${url}:`, err);
