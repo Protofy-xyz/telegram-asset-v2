@@ -113,7 +113,7 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
 
     useEffect(() => {
         if (filesState.isLoaded) {
-            setFiles(filesState)
+            refreshFiles()
         }
     }, [filesState])
 
@@ -217,7 +217,7 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
                                 normalizedCurrentPath,
                                 setCustomAction,
                                 async () => await refreshFiles()
-                            )}                        
+                            )}
                         </YStack>
 
                     </AlertDialog>
@@ -236,7 +236,7 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
                                 folderChain={folderChain}
                                 fileActions={myFileActions}
                                 onFileAction={(data) => {
-                                    props.onFileActionEvent && props.onFileActionEvent?.(data)
+                                    props?.onFileActionEvent && props.onFileActionEvent?.(data)
                                     if (props.fileActionCheck && typeof props.fileActionCheck === 'function') {
                                         const actionCheck = props.fileActionCheck(data);
                                         if (actionCheck === false) return
@@ -258,7 +258,7 @@ export const Explorer = ({ currentPath, customActions, onOpen, onChangeSelection
                                         if ((Math.abs(Date.now() - lastClickInfo.current.time) < 750) && data.payload.file.id == lastClickInfo.current.id) {
                                             lastClickInfo.current = { id: null, time: 0 }
                                             onOpen(data.payload.file)
-                                            props.onFileActionEvent && props.onFileActionEvent?.({...data, id: 'open_files' })
+                                            props.onFileActionEvent && props.onFileActionEvent?.({ ...data, id: 'open_files' })
                                         } else {
                                             lastClickInfo.current.time = Date.now()
                                             lastClickInfo.current.id = data.payload.file.id
