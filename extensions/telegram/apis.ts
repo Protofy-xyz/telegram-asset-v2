@@ -241,8 +241,11 @@ const registerCards = async (context, botUsername) => {
       color: "#24A1DE",
       html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}",
       description: "Edit the allowed chats for the telegram communications",
-      rulesCode: `return [];`,
-      type: 'action'
+      rulesCode: "// set new state\nlet result = (await API.post(\"/api/v1/telegram/allowed-chats?chat_id=\" + params.chat_id, {}));\n\n// read new state \nreturn (await API.get(\"/api/v1/telegram/allowed-chats\")).data.result;",
+      type: 'action',
+      params: {
+        "chat_id": "the chat id to allow in the whitelist"
+      },
     },
     emitEvent: true,
     token: await getServiceToken()
