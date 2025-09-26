@@ -62,13 +62,16 @@ const FirstSlide = ({ selected, setSelected }) => {
   </YStack>
 }
 
-const isNameValid = text => /^[a-z_]*$/.test(text)
+const isNameValid = (text) => {
+  return text == ''? false:/^[a-z_]*$/.test(text)
+}
 
-const SecondSlide = ({ selected, setName }) => {
+const SecondSlide = ({ selected, setName, errorMessage=''}) => {
   const [error, setError] = useState('')
+  useEffect(() => setError(errorMessage), [errorMessage])
   const handleChange = (text: string) => {
     if (!isNameValid(text)) {
-      setError('Use only lowercase letters and underscores')
+      setError('Name is required and must use only lowercase letters and underscores')
     } else {
       setError('')
     }
