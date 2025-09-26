@@ -83,7 +83,7 @@ export function Markdown({
         }}
       >
         {!editing ? (
-          <Tinted>
+          !readOnly? <Tinted>
             <YStack jc="center"
               ai="center"
               br="$4"
@@ -94,7 +94,7 @@ export function Markdown({
               }}>
               <Pencil size={20} color="var(--color8)" style={{ marginLeft: 0, marginTop: 0 }} />
             </YStack>
-          </Tinted>
+          </Tinted>:<></>
         ) : (
           <>
             <Tinted>
