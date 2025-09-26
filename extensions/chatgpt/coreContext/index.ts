@@ -125,8 +125,6 @@ export const chatGPTSession = async ({
             name?: string;
         }>;
 
-        const attachments: Array<{ file_id: string; tools: Array<{ type: "file_search" }> }> = [];
-
         // En v5 el contenido de Responses debe ser:
         // { type: "input_text", text: string } | { type: "input_image", image_url: string }
         const input: Array<{
@@ -134,6 +132,7 @@ export const chatGPTSession = async ({
             content: Array<
                 | { type: "input_text"; text: string }
                 | { type: "input_image"; image_url: string }
+                | { type: "input_file"; file_id: string }
             >;
         }> = [];
 
@@ -163,8 +162,7 @@ export const chatGPTSession = async ({
                     continue;
                 }
                 if ((p as any).type === "file" && (p as any).file?.file_id) {
-                    attachments.push({ file_id: (p as any).file.file_id, tools: [{ type: "file_search" }] });
-                    // los files NO van en content; solo en attachments
+                    converted.push({ type: "input_file", file_id: (p as any).file.file_id });
                     continue;
                 }
             }
@@ -183,10 +181,6 @@ export const chatGPTSession = async ({
             top_p: (props as any).top_p,
         };
 
-        if (attachments.length > 0) {
-            request.tools = [{ type: "file_search" }];
-            request.attachments = attachments;
-        }
         if ((props as any).response_format) {
             request.response_format = (props as any).response_format;
         }
