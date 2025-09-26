@@ -229,7 +229,7 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
             <Label alignSelf="flex-start" ml={"$3"} h={"$3.5"} color="$gray9" size="$5">
               Description
             </Label>
-            <Markdown readOnly={true} data={selected.defaults?.description ?? "No description provided for this card"} />
+            <Markdown readOnly={true} copyToClipboardEnabled={false} data={selected.defaults?.description ?? "No description provided for this card"} />
           </YStack>
         </YStack>
       </YStack>
