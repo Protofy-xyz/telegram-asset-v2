@@ -123,8 +123,7 @@ export function Markdown({
           flexShrink: 0,
         }}
       >
-        {/* Botón copiar: solo si NO estamos en http fuera de localhost */}
-        {!disableCopy && (
+        {(!disableCopy && !editing) && (
           <Tinted>
             <YStack
               jc="center"
