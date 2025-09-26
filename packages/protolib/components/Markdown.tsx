@@ -1,26 +1,52 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Tinted } from "./Tinted";
-import { Pencil, Save, X } from "@tamagui/lucide-icons";
+import { Pencil, Save, X, Check, ClipboardPaste } from "@tamagui/lucide-icons";
 import { useEffect, useRef, useState } from "react";
 import { Monaco } from "./Monaco";
 import { useThemeSetting } from "@tamagui/next-theme";
 import useKeypress from "react-use-keypress";
 import { YStack } from "tamagui";
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid } from "uuid";
 
 function escapeMarkdownForTemplate(md: string) {
-  // return md.replace(/\\\\/g, "\\\\\\\\").replace(/\`/g, "\\\\\\`");
   return md;
+}
+
+async function copyToClipboardSafe(text: string) {
+  if (navigator?.clipboard && window?.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.top = "0";
+    ta.style.left = "0";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 export function Markdown({
   data,
   readOnly = false,
+  copyToClipboardEnabled = true,
   setData = undefined,
 }: {
   data: any;
   readOnly?: boolean;
+  copyToClipboardEnabled?: boolean;
   setData?: (val: string) => void;
 }) {
   const text = data ? (typeof data === "string" ? data : String(data)) : "";
@@ -31,6 +57,12 @@ export function Markdown({
   const code = useRef(text);
   const originalBeforeEdit = useRef(text);
 
+  const [copied, setCopied] = useState(false);
+
+  // detecta si está en HTTP y no es localhost
+  const isHttp = window.location.protocol === "http:";
+  const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const disableCopy = copyToClipboardEnabled ? isHttp && !isLocalhost: true;
   useEffect(() => {
     if (data) {
       code.current = escapeMarkdownForTemplate(data);
@@ -50,12 +82,21 @@ export function Markdown({
 
   useKeypress(["Escape"], (event) => {
     if (editing) {
-      cancel(); // ahora Escape cancela (sale sin guardar)
+      cancel();
       event.preventDefault();
     }
   });
 
   const normalizedText = text;
+
+  const handleCopy = async () => {
+    const toCopy = editing ? code.current : normalizedText;
+    const ok = await copyToClipboardSafe(toCopy);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    }
+  };
 
   return (
     <div
@@ -82,33 +123,68 @@ export function Markdown({
           flexShrink: 0,
         }}
       >
-        {!editing ? (
-          !readOnly? <Tinted>
-            <YStack jc="center"
+        {/* Botón copiar: solo si NO estamos en http fuera de localhost */}
+        {!disableCopy && (
+          <Tinted>
+            <YStack
+              jc="center"
               ai="center"
               br="$4"
-              cursor='pointer' onPress={() => {
-                if (readOnly) return;
-                originalBeforeEdit.current = code.current; // snapshot para cancelar
-                setEditing(true);
-              }}>
-              <Pencil size={20} color="var(--color8)" style={{ marginLeft: 0, marginTop: 0 }} />
+              cursor="pointer"
+              onPress={handleCopy}
+            >
+              {copied ? (
+                <Check size={20} color="var(--green9)" />
+              ) : (
+                <ClipboardPaste size={20} color="var(--color8)" />
+              )}
             </YStack>
-          </Tinted>:<></>
+          </Tinted>
+        )}
+
+        {!editing ? (
+          !readOnly ? (
+            <Tinted>
+              <YStack
+                jc="center"
+                ai="center"
+                br="$4"
+                cursor="pointer"
+                onPress={() => {
+                  if (readOnly) return;
+                  originalBeforeEdit.current = code.current; // snapshot para cancelar
+                  setEditing(true);
+                }}
+                title="Edit"
+              >
+                <Pencil size={20} color="var(--color8)" />
+              </YStack>
+            </Tinted>
+          ) : null
         ) : (
           <>
             <Tinted>
-              <YStack jc="center"
+              <YStack
+                jc="center"
                 ai="center"
                 br="$4"
-                cursor='pointer' onPress={() => { cancel() }}>
-                <X size={20} color="var(--red9)" style={{ marginLeft: 0, marginTop: 0 }} />
+                cursor="pointer"
+                onPress={cancel}
+                title="Cancel"
+              >
+                <X size={20} color="var(--red9)" />
               </YStack>
-              <YStack jc="center"
+            </Tinted>
+            <Tinted>
+              <YStack
+                jc="center"
                 ai="center"
                 br="$4"
-                cursor='pointer' onPress={() => { save() }}>
-                <Save size={20} color="var(--color8)" style={{ marginLeft: 0, marginTop: 0 }} />
+                cursor="pointer"
+                onPress={save}
+                title="Save"
+              >
+                <Save size={20} color="var(--color8)" />
               </YStack>
             </Tinted>
           </>
@@ -119,15 +195,14 @@ export function Markdown({
       <div style={{ flex: 1, overflow: "auto" }}>
         {editing ? (
           <Monaco
-            key= {id}
+            key={id}
             height={"100%"}
-            path={id  + "_markdown.md"}
+            path={id + "_markdown.md"}
             darkMode={resolvedTheme === "dark"}
             sourceCode={code.current}
             onChange={(newCode) => {
               code.current = newCode;
             }}
-            // Se quita onBlur para NO guardar automáticamente
             autofocus={true}
             options={{
               folding: false,
@@ -143,21 +218,28 @@ export function Markdown({
             }}
             onMount={(editor, monaco) => {
               editor.addCommand(monaco.KeyCode.Enter, () => {
-                const model = editor.getModel(); if (!model) return; const selections = editor.getSelections() || []; editor.executeEdits("hard-break", selections.map(sel => ({
-                  range: sel, text: "  \n",
-                  forceMoveMarkers: true,
-                })));
-              })
+                const model = editor.getModel();
+                if (!model) return;
+                const selections = editor.getSelections() || [];
+                editor.executeEdits(
+                  "hard-break",
+                  selections.map((sel) => ({
+                    range: sel,
+                    text: "  \n",
+                    forceMoveMarkers: true,
+                  }))
+                );
+              });
             }}
           />
         ) : (
           <Tinted>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
               components={{
                 a: ({ node, ...props }) => {
                   const target = props.target ?? "_blank";
                   const rel = target === "_blank" ? "noopener noreferrer" : undefined;
-
                   return (
                     <a {...props} target={target} rel={rel}>
                       {props.children}
