@@ -426,6 +426,7 @@ const Board = ({ board, icons }) => {
   } = useBoardControls();
 
   const breakpointCancelRef = useRef(null) as any
+  const layoutsInitRef = useRef(false)
   const dedupRef = useRef() as any
   const [items, setItems] = useState((board.cards && board.cards.length ? [...board.cards.filter(i => i).filter(key => key != 'addwidget')] : []))
   const [isDeleting, setIsDeleting] = useState(false)
@@ -492,6 +493,8 @@ const Board = ({ board, icons }) => {
       let newItems = (dataData.data?.cards || []).filter(card => card)
       if (!newItems || newItems.length == 0) newItems = []
       setItems(newItems)
+      const hasAnyLayout = dataData.data?.layouts && Object.values(dataData.data.layouts).some((arr:any) => Array.isArray(arr) && arr.length > 0)
+      setTimeout(() => { layoutsInitRef.current = !!hasAnyLayout }, 0)
     }
   }
 
@@ -937,6 +940,11 @@ const Board = ({ board, icons }) => {
                 settings={board.settings}
                 layouts={boardRef.current.layouts}
                 onLayoutChange={(layout, layouts) => {
+                  if (!breakpointRef.current) return
+                  if (!layoutsInitRef.current) {
+                    layoutsInitRef.current = true
+                    return
+                  }
                   if (breakpointCancelRef.current == breakpointRef.current) {
                     console.log('Layout change cancelled for breakpoint: ', breakpointRef.current, breakpointCancelRef.current)
                     breakpointCancelRef.current = null
