@@ -7,7 +7,7 @@ import { basicParticlesMask } from 'protolib/components/particles/particlesMasks
 import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
 import { Button, H2, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
-import { AlertTriangle, Bird, Download, MoreVertical, Play } from '@tamagui/lucide-icons'
+import { AlertTriangle, Bird, Download, MoreVertical, Play, Trash2 } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { useFetch } from 'protolib'
@@ -48,8 +48,7 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
     setDownloading(element.status === 'downloading');
   }, [element.status]);
 
-  const handleDelete = async (e: any) => {
-    e.stopPropagation();
+  const handleDelete = async () => {
     if (isDeleting) return;
     setDeleteError(null);
     setIsDeleting(true);
@@ -85,26 +84,25 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
             <InteractiveIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
           </Popover.Trigger>
           <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
-            <Tinted>
-              <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"}
-                onPress={isDeleting ? undefined : handleDelete}
-              >
-                <YStack>
-                  <XStack cursor={isDeleting ? "not-allowed" : "pointer"} ai="center" space="$2">
-                    {isDeleting ? <Spinner m="$2" color="$color8" size="small" /> : null}
-                    <Paragraph>{isDeleting ? 'Deleting…' : 'Delete'}</Paragraph>
-                  </XStack>
-                  {deleteError && (
-                    <XStack ai="center" space="$2" mt="$2">
-                      <AlertTriangle size={14} />
-                      <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>
-                        {deleteError}
-                      </Paragraph>
-                    </XStack>
-                  )}
-                </YStack>
-              </YStack>
-            </Tinted>
+            <YStack p="$2" >
+              <XStack hoverStyle={{ filter: "brightness(1.2)" }} cursor="pointer" p="$2" gap="$2"
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setMenuOpened(false)
+                  handleDelete()
+                }}>
+                <Trash2 color="$red8" size={"$1"} />
+                <Paragraph color="#fff8e1">Delete</Paragraph>
+              </XStack>
+              {deleteError && (
+                <XStack ai="center" space="$2" mt="$2">
+                  <AlertTriangle size={14} />
+                  <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>
+                    {deleteError}
+                  </Paragraph>
+                </XStack>
+              )}
+            </YStack>
           </Popover.Content>
         </Popover>
       </XStack>
@@ -112,11 +110,11 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
         v: {element.version}
       </Paragraph>
 
-      <XStack h={"$3"} ai="center">
+      <XStack h={"$3"} ai="center" jc="center">
         <Paragraph alignSelf='flex-start' o={0.5} f={1} style={{ color: '#fff8e1', fontSize: '10px' }}>
 
         </Paragraph>
-        {element.status == 'downloaded' && <XStack>
+        {(element.status == 'downloaded' && !isDeleting) && <XStack>
           <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Play} onPress={async () => {
             const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
             const result = await fetch(url)
@@ -130,8 +128,11 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
             const result = await fetch(url)
           }} />}
         </XStack>}
-        {element.status === 'downloading' && (
-          <Tinted><Spinner m="$2" color="$color8" /></Tinted>
+        {(element.status === 'downloading' || isDeleting) && (
+          <Tinted>
+            <Paragraph col="#fff8e150">{isDeleting ? 'Deleting…' : 'Downloading…'}</Paragraph>
+            <Spinner m="$2" color="$color8" />
+          </Tinted>
         )}
         {element.status === 'error' && (
           <XStack ai="center" space="$2">
