@@ -1,4 +1,4 @@
-const { app, BrowserWindow, protocol, session, ipcMain } = require('electron');
+const { app, BrowserWindow, protocol, session, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Readable } = require('stream');
@@ -231,6 +231,53 @@ app.whenReady().then(async () => {
       return;
     } else if (
       request.method === 'GET' &&
+      /^\/api\/v1\/projects\/[^\/]+\/open-folder$/.test(pathname)
+    ) {
+      const match = pathname.match(/^\/api\/v1\/projects\/([^\/]+)\/open-folder$/);
+      const projectName = match?.[1];
+
+      if (!projectName) {
+        respond({
+          statusCode: 400,
+          data: Buffer.from('Invalid project name')
+        });
+        return;
+      }
+
+      const projectFolderPath = path.join(PROJECTS_DIR, projectName);
+      if (!fs.existsSync(projectFolderPath)) {
+        respond({
+          statusCode: 404,
+          data: Buffer.from('Project folder not found')
+        });
+        return;
+      }
+
+      try {
+        const openError = await shell.openPath(projectFolderPath);
+        if (openError) {
+          respond({
+            statusCode: 500,
+            data: Buffer.from(openError || 'Failed to open folder')
+          });
+          return;
+        }
+
+        respond({
+          mimeType: 'application/json',
+          data: Buffer.from(JSON.stringify({ success: true }))
+        });
+        return;
+      } catch (err) {
+        respond({
+          statusCode: 500,
+          data: Buffer.from('Failed to open folder')
+        });
+        return;
+      }
+
+    } else if (
+      request.method === 'GET' &&
       /^\/api\/v1\/projects\/[^\/]+\/run$/.test(pathname)
     ) {
       const match = pathname.match(/^\/api\/v1\/projects\/([^\/]+)\/run$/);
@@ -302,6 +349,11 @@ app.on('activate', () => {
 
 ipcMain.on('create-project', (event, newProject) => {
   const projects = readProjects();
+  const exists = projects.some(p => p.name === newProject.name);
+  if (exists) {
+    event.reply('create-project-done', { success: false, error: 'A project with this name already exists' });
+    return;
+  }
   projects.push({
     ...newProject,
     status: 'pending',

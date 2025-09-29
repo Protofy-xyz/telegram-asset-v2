@@ -4,14 +4,13 @@ import { initParticlesAtom } from 'protolib/components/particles/ParticlesEngine
 import { ParticlesView } from 'protolib/components/particles/ParticlesView'
 import { Page } from 'protolib/components/Page'
 import { basicParticlesMask } from 'protolib/components/particles/particlesMasks/basicParticlesMask'
-import { getPendingResult, ProtoModel, z } from 'protobase'
+import { ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
-import { Button, H2, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
-import { AlertTriangle, Bird, Download, MoreVertical, Play, Trash2 } from '@tamagui/lucide-icons'
+import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
+import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, X, FolderOpen } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { useFetch } from 'protolib'
-import semver from 'semver'
 
 const obj = {
   "name": "project",
@@ -38,15 +37,41 @@ const obj = {
   "filePath": "data/objects/project.ts"
 }
 
+function CardMenuItem({ icon: Icon, label, onPress, iconColor }: any) {
+  return <XStack hoverStyle={{ filter: "brightness(1.2)" }} cursor="pointer" p="$2" gap="$2" onPress={onPress}>
+    <Tinted><Icon color={iconColor ?? "$color8"} size={"$1"} /></Tinted>
+    <Paragraph color="#fff8e1">{label}</Paragraph>
+  </XStack>
+}
+
 function CardElement({ element, width, onDelete, onDownload }: any) {
   const [menuOpened, setMenuOpened] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [openError, setOpenError] = useState<string | null>(null)
 
   useEffect(() => {
     setDownloading(element.status === 'downloading');
+    if (element.status !== 'downloaded') {
+      setOpenError(null);
+    }
   }, [element.status]);
+
+  const handleOpenFolder = async (e?: any) => {
+    e?.stopPropagation?.();
+    setOpenError(null);
+
+    try {
+      const res = await fetch(`app://localhost/api/v1/projects/${element.name}/open-folder`);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Open folder failed with status ${res.status}`);
+      }
+    } catch (err: any) {
+      setOpenError(err?.message || 'Unable to open project folder');
+    }
+  };
 
   const handleDelete = async () => {
     if (isDeleting) return;
@@ -85,15 +110,15 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
           </Popover.Trigger>
           <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
             <YStack p="$2" >
-              <XStack hoverStyle={{ filter: "brightness(1.2)" }} cursor="pointer" p="$2" gap="$2"
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setMenuOpened(false)
-                  handleDelete()
-                }}>
-                <Trash2 color="$red8" size={"$1"} />
-                <Paragraph color="#fff8e1">Delete</Paragraph>
-              </XStack>
+              <CardMenuItem icon={Trash2} iconColor="$red8" label="Delete" onPress={(e) => {
+                e.stopPropagation();
+                setMenuOpened(false)
+                handleDelete()
+              }} />
+              <CardMenuItem label="Go to folder" icon={FolderOpen}
+                onPress={async () => {
+                  handleOpenFolder()
+                }} />
               {deleteError && (
                 <XStack ai="center" space="$2" mt="$2">
                   <AlertTriangle size={14} />
@@ -120,6 +145,9 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
             const result = await fetch(url)
           }} />
         </XStack>}
+        {openError && (
+          <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>{openError}</Paragraph>
+        )}
 
         {element.status == 'pending' && <XStack>
           {downloading ? <Tinted><Spinner m="$2" color="$color8" /></Tinted> : <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Download} onPress={async () => {
@@ -216,15 +244,23 @@ const MainView = () => {
         </YStack>
       }}
       createElement={async (data) => {
-        if (isProjectNameValid(data.name) && typeof window !== 'undefined' && window.electronAPI) {
-          window.electronAPI.createProject(data);
-          window.electronAPI.onProjectCreated((result) => {
-            setReload((prev) => prev + 1);
-          });
-        } else if (!isProjectNameValid(data.name)) {
-          return getPendingResult("error", null, "\nProject name must use only lowercase and underscores")
-        } else if (!data.name) {
-          return getPendingResult("error", null, "\nPlease enter a project name")
+        if (!isProjectNameValid(data.name)) {
+          return getPendingResult("error", null, "\nProject name must use only lowercase and underscores");
+        }
+
+        if (typeof window !== 'undefined' && (window as any).electronAPI) {
+          const api = (window as any).electronAPI
+          return new Promise((resolve) => {
+            api.createProject(data);
+            api.onProjectCreated((result: any) => {
+              if (result?.success === true) {
+                setReload((prev) => prev + 1);
+                resolve(getPendingResult('loaded', { created: true }));
+              } else {
+                resolve(getPendingResult('error', null, result?.error));
+              }
+            });
+          })
         }
       }}
       extraFieldsFormsAdd={{
