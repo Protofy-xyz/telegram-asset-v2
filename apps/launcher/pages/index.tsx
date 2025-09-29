@@ -248,7 +248,7 @@ export default function Home() {
         color: '#fff8e1',
         fontSize: '10px',
         background: 'radial-gradient(circle at bottom,rgb(1, 13, 0) 0%,rgb(21, 21, 21) 100%)',
-        overflow: 'hidden',
+        overflow: 'auto',
         position: 'relative',
       }}
     >
