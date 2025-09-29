@@ -4,13 +4,14 @@ import { initParticlesAtom } from 'protolib/components/particles/ParticlesEngine
 import { ParticlesView } from 'protolib/components/particles/ParticlesView'
 import { Page } from 'protolib/components/Page'
 import { basicParticlesMask } from 'protolib/components/particles/particlesMasks/basicParticlesMask'
-import { ProtoModel, z } from 'protobase'
+import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
 import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
 import { AlertTriangle, AudioLines, Bird, Download, MoreVertical, Play, X } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { useFetch } from 'protolib'
+import semver from 'semver'
 
 const obj = {
   "name": "project",
@@ -170,7 +171,9 @@ const MainView = () => {
   }, []);
 
   let parsedResult = JSON.parse(result ?? '[]')
-
+  const isProjectNameValid = (name: string) => {
+    return name == '' ? false : /^[a-z_]*$/.test(name)
+  }
   const versions = parsedResult && parsedResult.map ? parsedResult.map((item) => {
     return "" + item.tag_name.replace('v', '')
   }) : []
@@ -212,19 +215,25 @@ const MainView = () => {
         </YStack>
       }}
       createElement={async (data) => {
-        if (typeof window !== 'undefined' && window.electronAPI) {
+        if (isProjectNameValid(data.name) && typeof window !== 'undefined' && window.electronAPI) {
           window.electronAPI.createProject(data);
-
           window.electronAPI.onProjectCreated((result) => {
             setReload((prev) => prev + 1);
           });
+        } else if (!isProjectNameValid(data.name)) {
+          return getPendingResult("error", null, "\nProject name must use only lowercase and underscores")
+        } else if( !data.name) {
+          return getPendingResult("error", null, "\nPlease enter a project name")
         }
       }}
       extraFieldsFormsAdd={{
-        version: z.union(versions.map((v) => z.literal(v)))
+        version: z.union(versions.map((v: any) => z.literal(v)))
           .label("version")
           .after('name')
-          .defaultValue("stable")
+          .defaultValue(
+            versions
+              .filter((v: any) => v !== "latest")
+              .sort((a: any, b: any) => semver.rcompare(semver.coerce(a)!, semver.coerce(b)!))[0])
       }}
     />
   </XStack>

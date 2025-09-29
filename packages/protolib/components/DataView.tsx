@@ -349,7 +349,7 @@ const DataViewInternal = forwardRef(({
             setCurrentItems(items)
         }
     }, [items])
-    
+
 
     useEffect(() => {
         setSearchName(displayName)
@@ -611,9 +611,9 @@ const DataViewInternal = forwardRef(({
                                                 result = await createElement(obj.create().getData())
                                             } else {
                                                 result = await API.post(sourceUrl, onAdd(obj.create().getData()))
-                                                if (result.isError) {
-                                                    throw result.error
-                                                }
+                                            }
+                                            if (result.isError) {
+                                                throw result.error
                                             }
                                             //fetch(setItems)
                                             setCreateOpen(false);
@@ -642,11 +642,10 @@ const DataViewInternal = forwardRef(({
                                             result = await createElement(obj.create().getData())
                                         } else {
                                             result = await API.post(sourceUrl, onAdd(obj.create().getData()))
-                                            if (result.isError) {
-                                                throw result.error
-                                            }
                                         }
-
+                                        if (result.isError) {
+                                            throw result.error
+                                        }
                                         //fetch(setItems)
                                         setCreateOpen(false);
                                         toast.show(name + ' created', {
