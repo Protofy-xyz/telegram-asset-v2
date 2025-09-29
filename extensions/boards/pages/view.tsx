@@ -687,6 +687,15 @@ const Board = ({ board, icons }) => {
             };
             const newItems = [...boardRef.current.cards, newCard].filter(i => i.key !== 'addwidget');
             boardRef.current.cards = newItems;
+            // duplicate also the item layout to respect size and position
+            Object.keys(boardRef.current.layouts || {}).forEach(bp => {
+              if (boardRef.current.layouts[bp]) {
+                boardRef.current.layouts[bp].push({
+                  ...boardRef.current.layouts[bp].find(l => l.i === item.key),
+                  i: newCard.key,
+                })
+              }
+            })
             setItems(newItems);
             saveBoard(board.name, boardRef.current);
           }}
