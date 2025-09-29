@@ -586,7 +586,7 @@ const Board = ({ board, icons }) => {
 
   const addWidget = async (card) => {
     try {
-      await checkCard(items, card)
+      await checkCard(boardRef.current?.cards, card)
       setErrors([]); // Clear errors if validation passes
     } catch (e) {
       if (e instanceof ValidationError) {
@@ -600,7 +600,7 @@ const Board = ({ board, icons }) => {
 
     const uniqueKey = card.type + '_' + Date.now();
     const newCard = { ...card, key: uniqueKey }
-    const newItems = [...items, newCard].filter(item => item.key !== 'addwidget');
+    const newItems = [...boardRef.current?.cards, newCard].filter(item => item.key !== 'addwidget');
     setItems(newItems)
     boardRef.current.cards = newItems;
     await saveBoard(board.name, boardRef.current);
@@ -685,11 +685,9 @@ const Board = ({ board, icons }) => {
               key: item.key.replace(/_vento_copy_.+$/, '') + '_vento_copy_' + generate_random_id(),
               name: item.name.replace(/ _\d+$/, '') + ' _' + (parseInt(item.name.match(/_(\d+)$/)?.[1] || '1') + 1)
             };
-            setItems(prevItems => {
-              const newItems = [...prevItems, newCard].filter(i => i.key !== 'addwidget');
-              boardRef.current.cards = newItems;
-              return newItems;
-            });
+            const newItems = [...boardRef.current.cards, newCard].filter(i => i.key !== 'addwidget');
+            boardRef.current.cards = newItems;
+            setItems(newItems);
             saveBoard(board.name, boardRef.current);
           }}
           onDelete={() => {
