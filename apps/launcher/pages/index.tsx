@@ -117,14 +117,14 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
 
         </Paragraph>
         {element.status == 'downloaded' && <XStack>
-          <InteractiveIcon size={20} IconColor="var(--color)" Icon={Play} onPress={async () => {
+          <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Play} onPress={async () => {
             const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
             const result = await fetch(url)
           }} />
         </XStack>}
 
         {element.status == 'pending' && <XStack>
-          {downloading ? <Tinted><Spinner m="$2" color="$color8" /></Tinted> : <InteractiveIcon size={20} IconColor="var(--color)" Icon={Download} onPress={async () => {
+          {downloading ? <Tinted><Spinner m="$2" color="$color8" /></Tinted> : <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Download} onPress={async () => {
             const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
             setDownloading(true)
             const result = await fetch(url)
