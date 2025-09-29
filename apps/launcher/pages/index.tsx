@@ -59,8 +59,7 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
     }
   }, [element.status]);
 
-  const handleOpenFolder = async (e?: any) => {
-    e?.stopPropagation?.();
+  const handleOpenFolder = async () => {
     setOpenError(null);
 
     try {
@@ -117,8 +116,10 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
                 handleDelete()
               }} />
               <CardMenuItem label="Go to folder" icon={FolderOpen}
-                onPress={async () => {
+                onPress={async (e) => {
+                  e?.stopPropagation?.();
                   handleOpenFolder()
+                  setMenuOpened(false)
                 }} />
               {deleteError && (
                 <XStack ai="center" space="$2" mt="$2">
