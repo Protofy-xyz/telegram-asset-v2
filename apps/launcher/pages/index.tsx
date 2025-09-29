@@ -6,8 +6,8 @@ import { Page } from 'protolib/components/Page'
 import { basicParticlesMask } from 'protolib/components/particles/particlesMasks/basicParticlesMask'
 import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
-import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
-import { AlertTriangle, AudioLines, Bird, Download, MoreVertical, Play, X } from '@tamagui/lucide-icons'
+import { Button, H2, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
+import { AlertTriangle, Bird, Download, MoreVertical, Play } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { useFetch } from 'protolib'
@@ -38,7 +38,7 @@ const obj = {
   "filePath": "data/objects/project.ts"
 }
 
-function CardElement({ element, width, onDelete, onDownload }) {
+function CardElement({ element, width, onDelete, onDownload }: any) {
   const [menuOpened, setMenuOpened] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -91,7 +91,7 @@ function CardElement({ element, width, onDelete, onDownload }) {
               >
                 <YStack>
                   <XStack cursor={isDeleting ? "not-allowed" : "pointer"} ai="center" space="$2">
-                    {isDeleting ? <Spinner size="small" /> : null}
+                    {isDeleting ? <Spinner m="$2" color="$color8" size="small" /> : null}
                     <Paragraph>{isDeleting ? 'Deleting…' : 'Delete'}</Paragraph>
                   </XStack>
                   {deleteError && (
@@ -112,7 +112,7 @@ function CardElement({ element, width, onDelete, onDownload }) {
         v: {element.version}
       </Paragraph>
 
-      <XStack>
+      <XStack h={"$3"} ai="center">
         <Paragraph alignSelf='flex-start' o={0.5} f={1} style={{ color: '#fff8e1', fontSize: '10px' }}>
 
         </Paragraph>
@@ -124,14 +124,14 @@ function CardElement({ element, width, onDelete, onDownload }) {
         </XStack>}
 
         {element.status == 'pending' && <XStack>
-          {downloading ? <Tinted><Spinner /></Tinted> : <InteractiveIcon size={20} IconColor="var(--color)" Icon={Download} onPress={async () => {
+          {downloading ? <Tinted><Spinner m="$2" color="$color8" /></Tinted> : <InteractiveIcon size={20} IconColor="var(--color)" Icon={Download} onPress={async () => {
             const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
             setDownloading(true)
             const result = await fetch(url)
           }} />}
         </XStack>}
         {element.status === 'downloading' && (
-          <XStack><Tinted><Spinner /></Tinted></XStack>
+          <Tinted><Spinner m="$2" color="$color8" /></Tinted>
         )}
         {element.status === 'error' && (
           <XStack ai="center" space="$2">
@@ -222,7 +222,7 @@ const MainView = () => {
           });
         } else if (!isProjectNameValid(data.name)) {
           return getPendingResult("error", null, "\nProject name must use only lowercase and underscores")
-        } else if( !data.name) {
+        } else if (!data.name) {
           return getPendingResult("error", null, "\nPlease enter a project name")
         }
       }}
