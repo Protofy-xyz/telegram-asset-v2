@@ -51,18 +51,20 @@ export default (app, context) => {
             name: "send_message",
             defaults: {
                 width: 3,
-                height: 15,
+                height: 18,
                 name: "chatGPT message send",
                 icon: "openai",
                 color: "#74AA9C",
                 description: "Send a message to ChatGPT",
-                rulesCode: "return execute_action(\"/api/v1/chatgpt/send/prompt\", {\n  message:\n    (userParams.preprompt ?? \"\") +\n    \" \" +\n    (userParams.prompt ?? \"\") +\n    \" \" +\n    (userParams.postprompt ?? \"\"),\n});\n",
+                rulesCode: "return execute_action(\"/api/v1/chatgpt/send/prompt\", {\n  message:\n    (userParams.preprompt ?? \"\") +\n    \" \" +\n    (userParams.prompt ?? \"\") +\n    \" \" +\n    (userParams.postprompt ?? \"\"),\n  images: userParams.images,\n  files: userParams.files,\n  model: userParams.model,\n});\n",
                 html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  async function validateKey(apiKey) { return true; }\n  const nameKey = 'OPENAI_API_KEY';\n\n  const readme = `\n### 🔑 How to get your OpenAI API key?\n1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n2. Log in and click **\"Create new secret key\"**.\n3. Copy and save your key securely, it won't be shown again.\n---\n> ⚠️ **Keep it secret!** Your API key is private and usage-based.\n`;\n\n  const content = (\n    <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n        <Icon name={card.icon} size={48} color={card.color} />\n      )}\n      {card.displayResponse !== false && (\n        <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} readOnly={true}/>\n      )}\n    </YStack>\n  );\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <KeyGate requiredKeys={[nameKey]} readme={readme} >\n          <ActionCard data={card}>\n            {card.displayButton !== false\n              ? <ParamsForm data={card}>{content}</ParamsForm>\n              : card.displayResponse !== false && content}\n          </ActionCard>\n        </KeyGate>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}\n\n",
                 params: {
                     preprompt: "preprompt",
                     prompt: "prompt",
                     postprompt: "postprompt",
-                    model: "model"
+                    model: "model",
+                    files: "file paths",
+                    images: "image paths"
                 },
                 type: 'action',
                 configParams: {
@@ -85,6 +87,16 @@ export default (app, context) => {
                         "visible": false,
                         "defaultValue": "gpt-4o",
                         "type": "string"
+                    },
+                    "files": {
+                        "visible": true,
+                        "defaultValue": "",
+                        "type": "path"
+                    },
+                    "images": {
+                        "visible": true,
+                        "defaultValue": "",
+                        "type": "path"
                     }
                 },
                 markdownDisplay: true

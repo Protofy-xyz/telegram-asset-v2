@@ -176,6 +176,7 @@ export const ParamsForm = ({ data, children }) => {
 
                             {type == 'path'
                                 && <FilePicker
+                                    allowMultiple={true}
                                     mx="10px"
                                     initialPath={"/data/public"}
                                     onFileChange={filePath => {

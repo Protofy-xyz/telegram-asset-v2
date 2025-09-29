@@ -16,13 +16,8 @@ export const registerCards = async () => {
             icon: "monitor-stop",
             description: "Display a link in an iframe",
             type: 'value',
-            html: `
-// data contains: data.value, data.icon and data.color
-return card({
-  content: iframe({ src: \`\${data.value}\` }),
-  padding: '3px'
-});
-`,
+            rulesCode: "return {\n  frame: \"\", //url to display\n  type: \"frame\",\n};\n",
+            html: "\n// data contains: data.value, data.icon and data.color\nreturn card({\n  content: iframe({ src: `${data.value.frame}` }),\n  padding: '3px'\n});\n",
             editorOptions: {
                 // defaultTab: "value"
             },
