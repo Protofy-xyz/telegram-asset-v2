@@ -13,6 +13,7 @@ import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { useFetch } from 'protolib'
 import semver from 'semver'
+import rootPkg from '../../../package.json'
 
 const obj = {
   "name": "project",
@@ -145,7 +146,7 @@ function CardElement({ element }: any) {
         <Paragraph f={1} style={{ color: '#fff8e1', fontSize: '14px' }}>
           {element.name}
         </Paragraph>
-        <CardMenu disabled={isDeleting} options={[
+        <CardMenu disabled={isDeleting || element.status !== 'downloaded'} options={[
           { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
           { icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder },
         ]} />
@@ -311,7 +312,9 @@ export default function Home() {
     >
       <ParticlesView options={basicParticlesMask({ particleColors: ['rgb(0, 201, 87) ', 'rgb(105, 255, 165) '] })} />
       <MainView />
-
+      <YStack position="absolute" bottom={10} right={10} opacity={0.6} pointerEvents="none">
+        <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>Launcher v{rootPkg.version}</Paragraph>
+      </YStack>
     </Page>
   )
 }
