@@ -14,6 +14,10 @@ if (!fs.existsSync(PROJECTS_DIR)) {
   fs.mkdirSync(PROJECTS_DIR, { recursive: true });
 }
 
+function isValidProjectName(name) {
+ return name == '' ? false : /^[a-z_]*$/.test(name)
+}
+
 function notifyProjectStatus(name, status) {
   try {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -348,14 +352,21 @@ app.on('activate', () => {
 });
 
 ipcMain.on('create-project', (event, newProject) => {
+  const name = newProject?.name
+  if (!isValidProjectName(name)) {
+    event.reply('create-project-done', { success: false, error: 'Project name must use only lowercase and underscores' })
+    return
+  }
+
   const projects = readProjects();
-  const exists = projects.some(p => p.name === newProject.name);
+  const exists = projects.some(p => p.name === name);
   if (exists) {
     event.reply('create-project-done', { success: false, error: 'A project with this name already exists' });
     return;
   }
   projects.push({
     ...newProject,
+    name,
     status: 'pending',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()

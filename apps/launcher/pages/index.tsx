@@ -84,12 +84,8 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
         const text = await res.text().catch(() => '');
         throw new Error(text || `Delete failed with status ${res.status}`);
       }
-
-      // Close the menu, show a brief "Deleted" badge, and notify parent
       setMenuOpened(false);
       onDelete?.(element);
-
-      // Clean up if the component unmounts quickly
       return;
     } catch (err: any) {
       setDeleteError(err?.message || 'Delete failed');
@@ -112,8 +108,8 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
             <YStack p="$2" >
               <CardMenuItem icon={Trash2} iconColor="$red8" label="Delete" onPress={(e) => {
                 e.stopPropagation();
-                setMenuOpened(false)
                 handleDelete()
+                setMenuOpened(false)
               }} />
               <CardMenuItem label="Go to folder" icon={FolderOpen}
                 onPress={async (e) => {
@@ -136,11 +132,7 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
       <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>
         v: {element.version}
       </Paragraph>
-
-      <XStack h={"$3"} ai="center" jc="center">
-        <Paragraph alignSelf='flex-start' o={0.5} f={1} style={{ color: '#fff8e1', fontSize: '10px' }}>
-
-        </Paragraph>
+      <XStack h={"$3"} ai="center" jc="flex-end">
         {(element.status == 'downloaded' && !isDeleting) && <XStack>
           <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Play} onPress={async () => {
             const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
@@ -152,11 +144,13 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
         )}
 
         {element.status == 'pending' && <XStack>
-          {downloading ? <Tinted><Spinner m="$2" color="$color8" /></Tinted> : <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Download} onPress={async () => {
-            const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
-            setDownloading(true)
-            const result = await fetch(url)
-          }} />}
+          {downloading
+            ? <Tinted><Spinner m="$2" color="$color8" /></Tinted>
+            : <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Download} onPress={async () => {
+              const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
+              setDownloading(true)
+              const result = await fetch(url)
+            }} />}
         </XStack>}
         {(element.status === 'downloading' || isDeleting) && (
           <Tinted>
@@ -202,9 +196,6 @@ const MainView = () => {
   }, []);
 
   let parsedResult = JSON.parse(result ?? '[]')
-  const isProjectNameValid = (name: string) => {
-    return name == '' ? false : /^[a-z_]*$/.test(name)
-  }
   const versions = parsedResult && parsedResult.map ? parsedResult.map((item) => {
     return "" + item.tag_name.replace('v', '')
   }) : []
@@ -246,10 +237,6 @@ const MainView = () => {
         </YStack>
       }}
       createElement={async (data) => {
-        if (!isProjectNameValid(data.name)) {
-          return getPendingResult("error", null, "\nProject name must use only lowercase and underscores");
-        }
-
         if (typeof window !== 'undefined' && (window as any).electronAPI) {
           const api = (window as any).electronAPI
           return new Promise((resolve) => {
@@ -259,7 +246,7 @@ const MainView = () => {
                 setReload((prev) => prev + 1);
                 resolve(getPendingResult('loaded', { created: true }));
               } else {
-                resolve(getPendingResult('error', null, result?.error));
+                resolve(getPendingResult('error', null, "\n" + result?.error));
               }
             });
           })
