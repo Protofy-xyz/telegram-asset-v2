@@ -7,6 +7,7 @@ import { basicParticlesMask } from 'protolib/components/particles/particlesMasks
 import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
 import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
+import { useToastController } from '@my/ui'
 import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, X, FolderOpen } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
@@ -46,6 +47,7 @@ function CardMenuItem({ icon: Icon, label, onPress, iconColor }: any) {
 }
 
 function CardElement({ element, width, onDelete, onDownload }: any) {
+  const toast = useToastController()
   const [menuOpened, setMenuOpened] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -135,9 +137,26 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
       <XStack h={"$3"} ai="center" jc="flex-end">
         {(element.status == 'downloaded' && !isDeleting) && <XStack>
           <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Play} onPress={async () => {
-            const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
-            const result = await fetch(url)
-          }} />
+            try {
+              const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
+              const res = await fetch(url)
+              if (!res.ok) {
+                const text = await res.text().catch(() => '')
+                toast.show('Unable to run project', {
+                  message: text || `Run failed with status ${res.status}`,
+                  tint: 'red',
+                  duration: 2000,
+                })
+              }
+            } catch (err: any) {
+              toast.show('Unable to run project', {
+                message: err?.message || 'Unexpected error',
+                tint: 'red',
+                duration: 2000,
+              })
+            }
+          }}
+          />
         </XStack>}
         {openError && (
           <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>{openError}</Paragraph>

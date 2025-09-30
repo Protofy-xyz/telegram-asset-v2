@@ -298,20 +298,26 @@ app.whenReady().then(async () => {
         return;
       }
 
-
-      const projectFolderPath = path.join(PROJECTS_DIR, projectName);
-      hasRun = true;
-      //close the main window
-      if (mainWindow) {
-        mainWindow.close();
+      try {
+        const projectFolderPath = path.join(PROJECTS_DIR, projectName);
+        const startMain = require(projectFolderPath + '/electron/masdadsadadasin.js');
+        startMain(projectFolderPath);
+        // only mark and close on success
+        hasRun = true;
+        if (mainWindow) {
+          mainWindow.close();
+        }
+        //reply to the renderer process
+        respond({
+          mimeType: 'application/json',
+          data: Buffer.from(JSON.stringify({ success: true, message: 'done' }))
+        });
+        return;
+      } catch (e) {
+        console.error('Run project failed:', e);
+        respond({ statusCode: 500, data: Buffer.from(JSON.stringify(e)) });
+        return;
       }
-      const startMain = require(projectFolderPath+'/electron/main.js');
-      startMain(projectFolderPath);
-      //reply to the renderer process
-      respond({
-        mimeType: 'application/json',
-        data: Buffer.from(JSON.stringify({ success: true, message: 'done' }))
-      });
     }
     respond({ statusCode: 404, data: Buffer.from('not found') });
   });
