@@ -160,7 +160,7 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
                 minimap: { enabled: false }
             }}
         />
-    }, [resolvedTheme, board.name, theme, editedCode.current, isAIEnabled, hasKey]);
+    }, [resolvedTheme, board.name, theme, editedCode.current, isAIEnabled, hasKey, loading]);
     return <PanelGroup direction="horizontal" style={{ height: '100%' }}>
         {/* Izquierda: tu contenido actual */}
         <ActionsAndStatesPanel
