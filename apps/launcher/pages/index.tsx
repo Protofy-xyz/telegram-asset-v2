@@ -8,7 +8,7 @@ import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
 import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
 import { useToastController } from '@my/ui'
-import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, X, FolderOpen } from '@tamagui/lucide-icons'
+import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, X, FolderOpen, Car } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { useFetch } from 'protolib'
@@ -39,16 +39,42 @@ const obj = {
   "filePath": "data/objects/project.ts"
 }
 
-function CardMenuItem({ icon: Icon, label, onPress, iconColor }: any) {
+type CardMenuItemProps = {
+  icon: React.ComponentType<any>,
+  label: string,
+  onPress: () => void,
+  iconColor?: string
+}
+
+function CardMenuItem({ icon: Icon, label, onPress, iconColor }: CardMenuItemProps) {
   return <XStack hoverStyle={{ filter: "brightness(1.2)" }} cursor="pointer" p="$2" gap="$2" onPress={onPress}>
     <Tinted><Icon color={iconColor ?? "$color8"} size={"$1"} /></Tinted>
     <Paragraph color="#fff8e1">{label}</Paragraph>
   </XStack>
 }
 
-function CardElement({ element, width, onDelete, onDownload }: any) {
+function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenuItemProps[] }) {
+  return <Popover allowFlip>
+    <Popover.Trigger disabled={disabled}>
+      <InteractiveIcon Icon={MoreVertical} />
+    </Popover.Trigger>
+    <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
+      <Popover.Arrow borderWidth={1} boc="$gray4" />
+      <YStack p="$2" >
+        {
+          options.map((option: any, index: number) => {
+            return <Popover.Close asChild>
+              <CardMenuItem icon={option.icon} iconColor={option.iconColor} label={option.label} onPress={option.onPress} />
+            </Popover.Close>
+          })
+        }
+      </YStack>
+    </Popover.Content>
+  </Popover>
+}
+
+function CardElement({ element }: any) {
   const toast = useToastController()
-  const [menuOpened, setMenuOpened] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -63,7 +89,6 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
 
   const handleOpenFolder = async () => {
     setOpenError(null);
-
     try {
       const res = await fetch(`app://localhost/api/v1/projects/${element.name}/open-folder`);
       if (!res.ok) {
@@ -79,15 +104,12 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
     if (isDeleting) return;
     setDeleteError(null);
     setIsDeleting(true);
-
     try {
       const res = await fetch(`app://localhost/api/v1/projects/${element.name}/delete`);
       if (!res.ok) {
         const text = await res.text().catch(() => '');
         throw new Error(text || `Delete failed with status ${res.status}`);
       }
-      setMenuOpened(false);
-      onDelete?.(element);
       return;
     } catch (err: any) {
       setDeleteError(err?.message || 'Delete failed');
@@ -96,96 +118,76 @@ function CardElement({ element, width, onDelete, onDownload }: any) {
     }
   };
 
+  const runProject = async () => {
+    try {
+      const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
+      const res = await fetch(url)
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        toast.show('Unable to run project', {
+          message: text || `Run failed with status ${res.status}`,
+          tint: 'red',
+          duration: 2000,
+        })
+      }
+    } catch (err: any) {
+      toast.show('Unable to run project', {
+        message: err?.message || 'Unexpected error',
+        tint: 'red',
+        duration: 2000,
+      })
+    }
+  }
+
   return (
     <YStack borderRadius={10} p="$4" jc="center" cursor="auto" backgroundColor="rgba(0, 0, 0, 0.6)">
       <XStack f={1} ai="center">
         <Paragraph f={1} style={{ color: '#fff8e1', fontSize: '14px' }}>
           {element.name}
         </Paragraph>
-        <Popover onOpenChange={setMenuOpened} open={menuOpened} allowFlip>
-          <Popover.Trigger disabled={isDeleting}>
-            <InteractiveIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
-          </Popover.Trigger>
-          <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
-            <YStack p="$2" >
-              <CardMenuItem icon={Trash2} iconColor="$red8" label="Delete" onPress={(e) => {
-                e.stopPropagation();
-                handleDelete()
-                setMenuOpened(false)
-              }} />
-              <CardMenuItem label="Go to folder" icon={FolderOpen}
-                onPress={async (e) => {
-                  e?.stopPropagation?.();
-                  handleOpenFolder()
-                  setMenuOpened(false)
-                }} />
-              {deleteError && (
-                <XStack ai="center" space="$2" mt="$2">
-                  <AlertTriangle size={14} />
-                  <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>
-                    {deleteError}
-                  </Paragraph>
-                </XStack>
-              )}
-            </YStack>
-          </Popover.Content>
-        </Popover>
+        <CardMenu disabled={isDeleting} options={[
+          { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
+          { icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder },
+        ]} />
       </XStack>
       <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>
         v: {element.version}
       </Paragraph>
       <XStack h={"$3"} ai="center" jc="flex-end">
-        {(element.status == 'downloaded' && !isDeleting) && <XStack>
-          <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Play} onPress={async () => {
-            try {
-              const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
-              const res = await fetch(url)
-              if (!res.ok) {
-                const text = await res.text().catch(() => '')
-                toast.show('Unable to run project', {
-                  message: text || `Run failed with status ${res.status}`,
-                  tint: 'red',
-                  duration: 2000,
-                })
-              }
-            } catch (err: any) {
-              toast.show('Unable to run project', {
-                message: err?.message || 'Unexpected error',
-                tint: 'red',
-                duration: 2000,
-              })
-            }
-          }}
-          />
-        </XStack>}
-        {openError && (
-          <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>{openError}</Paragraph>
-        )}
-
-        {element.status == 'pending' && <XStack>
-          {downloading
-            ? <Tinted><Spinner m="$2" color="$color8" /></Tinted>
-            : <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Download} onPress={async () => {
-              const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
-              setDownloading(true)
-              const result = await fetch(url)
-            }} />}
-        </XStack>}
-        {(element.status === 'downloading' || isDeleting) && (
-          <Tinted>
+        {(element.status == 'downloaded' && !isDeleting)
+          && <XStack>
+            <InteractiveIcon
+              size={20}
+              IconColor="#fff8e1"
+              Icon={Play}
+              onPress={runProject}
+            />
+          </XStack>
+        }
+        {element.status == 'pending'
+          && <XStack>
+            {downloading
+              ? <Tinted><Spinner m="$2" color="$color8" /></Tinted>
+              : <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Download} onPress={async () => {
+                const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
+                setDownloading(true)
+                const result = await fetch(url)
+              }} />}
+          </XStack>
+        }
+        {(element.status === 'downloading' || isDeleting)
+          && <Tinted>
             <Paragraph col="#fff8e150">{isDeleting ? 'Deleting…' : 'Downloading…'}</Paragraph>
             <Spinner m="$2" color="$color8" />
           </Tinted>
-        )}
-        {element.status === 'error' && (
-          <XStack ai="center" space="$2">
-            <AlertTriangle size={16} />
-            <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>Download failed</Paragraph>
+        }
+        {(element.status === 'error' || deleteError || openError)
+          && <XStack ai="center" space="$2">
+            <AlertTriangle col="$red8" size={16} />
+            <Paragraph style={{ color: '#fff8e1' }}>{openError ?? deleteError ?? "Download failed"}</Paragraph>
           </XStack>
-        )}
+        }
       </XStack>
-
-
     </YStack>
   )
 }
@@ -245,7 +247,7 @@ const MainView = () => {
       dataTableGridProps={{
         marginTop: '$10',
         getCard: (element: any, width: any) => {
-          return <CardElement element={element} width={width} onDelete={() => setReload((prev) => prev + 1)} onDownload={() => setReload((prev) => prev + 1)} />
+          return <CardElement element={element} />
         },
         emptyMessage: <YStack position="absolute" top={-120} left={0} width={'100vw'} height={'100vh'} flex={1} alignItems="center" justifyContent="center" space="$4" pointerEvents='none'>
           <YStack ai="center" jc="center" space="$2" o={0.4} pointerEvents='none' userSelect='none'>
@@ -283,6 +285,7 @@ const MainView = () => {
     />
   </XStack>
 }
+
 export default function Home() {
   const initParticles = useSetAtom(initParticlesAtom)
 
