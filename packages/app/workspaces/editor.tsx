@@ -1,31 +1,58 @@
-import { Router, Inbox, Library, Key, Cog, Database, DatabaseBackup, Bot, HelpingHand } from '@tamagui/lucide-icons'
+import {
+    Router,
+    Key,
+    Cog,
+    Database,
+    Boxes,
+    Box,
+    LayoutDashboard,
+    Zap,
+    HelpingHand,
+    Blocks,
+    Palette
+} from '@tamagui/lucide-icons'
+import { MonitorCog as RawMonitorCog } from 'lucide-react'
+import { styled } from 'tamagui'
 
-export default (pages) => {
+const MonitorCog = styled(RawMonitorCog, {
+    name: 'MonitorCog',
+    size: '$true',
+    color: 'currentColor',
+})
+
+export default ({ boards, objects }) => {
+    const objectsWithPage = objects ? objects.filter(o => o?.features?.adminPage) : []
+
+    const manageBoards = { "name": "Manage Boards", "icon": MonitorCog, "href": '/workspace/boards' }
+
+    const objectsMenu = objectsWithPage.length ? objectsWithPage.map((obj) => {
+        return { "name": obj.name.charAt(0).toUpperCase() + obj.name.slice(1), "icon": Box, "href": ('/workspace/') + obj.features.adminPage }
+    }) : [];
+
+    objectsMenu.push({ "name": "Manage Storage", "icon": Boxes, "href": "/workspace/objects" })
+    const initialData = {
+        Boards: [],
+        Storage: objectsMenu,
+    }
+
+    const boardsGroupByCategory = boards ? boards.reduce((acc, board) => {
+        const category = board.category || 'Boards';
+        if (!acc[category]) {
+            acc[category] = [];
+        }
+        acc[category].push({ "name": (board.displayName ?? board.name).charAt(0).toUpperCase() + (board.displayName ?? board.name).slice(1), "icon": board.icon ?? LayoutDashboard, "href": '/workspace/boards/view?board=' + (board.name) });
+        return acc;
+    }, initialData) : initialData;
+
+    boardsGroupByCategory['Boards'].push(manageBoards);
+
     return {
-        "default": "/workspace/boards",
-        "label": "Workspace",
+        "default": "/workspace/",
+        "label": "Admin panel",
         "assistant": true,
-        "logs": false,
+        "logs": true,
         "menu": {
-            "System": [
-                { "name": "Users", "icon": "users", "href": "/workspace/users" },
-                { "name": "Keys", "icon": Key, "href": "/workspace/keys" },
-                { "name": "Events", "icon": "activity", "href": "/workspace/events" },
-                { "name": "Messages", "icon": Inbox, "href": "/workspace/messages" },
-                { "name": "Services", "icon": HelpingHand, "href": "/workspace/services" },
-                { "name": "Databases", "icon": Database, "type": "databases", "path": "/system" },
-                { "name": "Settings", "icon": Cog, "href": "/workspace/settings" }
-            ],
-            "Content": [
-                { "name": "Files", "icon": "folder", "href": "/workspace/files?path=/" },
-                { "name": "Resources", "icon": Library, "href": "/workspace/resources" },
-                { "name": "Public", "icon": "door-open", "type": "/workspace/files?path=/data/public"},
-                { "name": "Databases", "icon": DatabaseBackup, "href": "/workspace/databases" },
-            ],
-            "Devices": [
-                { "name": "Devices", "icon": Router, "href": "/workspace/devices" },
-                { "name": "Definitions", "icon": "book-open", "href": "/workspace/deviceDefinitions" }
-            ]
+            ...boardsGroupByCategory,
         }
     }
 }
