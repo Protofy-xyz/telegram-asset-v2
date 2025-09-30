@@ -2,6 +2,7 @@ const { app, BrowserWindow, protocol, session, ipcMain, shell } = require('elect
 const path = require('path');
 const fs = require('fs');
 const { Readable } = require('stream');
+const { spawnSync } = require('child_process');
 
 const isDev = process.argv.includes('--ui-dev');
 const PROJECTS_DIR = path.join(app.getPath('userData'), 'vento-projects');
@@ -15,7 +16,7 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 }
 
 function isValidProjectName(name) {
- return name == '' ? false : /^[a-z_]*$/.test(name)
+  return name == '' ? false : /^[a-z_]*$/.test(name)
 }
 
 function notifyProjectStatus(name, status) {
@@ -300,6 +301,19 @@ app.whenReady().then(async () => {
 
       try {
         const projectFolderPath = path.join(PROJECTS_DIR, projectName);
+        // Pre-run safeguard: rebuild native modules if needed
+        const electronVersion = '29.4.6';
+        const opts = {
+          cwd: projectFolderPath,
+          stdio: 'inherit',
+          shell: process.platform === 'win32'
+        };
+
+        const r = spawnSync('npx', ['--yes', 'electron-rebuild', '-f', '--version', electronVersion], opts);
+
+        if (r.error || r.status !== 0) {
+          spawnSync('npm', ['rebuild'], opts);
+        }
         const startMain = require(projectFolderPath + '/electron/main.js');
         startMain(projectFolderPath);
         // only mark and close on success
@@ -348,7 +362,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
-  if(!hasRun) {
+  if (!hasRun) {
     app.quit();
   }
 });
