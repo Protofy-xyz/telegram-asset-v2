@@ -8,7 +8,7 @@ import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
 import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
 import { useToastController } from '@my/ui'
-import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, X, FolderOpen, Car } from '@tamagui/lucide-icons'
+import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, FolderOpen } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { useFetch } from 'protolib'
@@ -63,7 +63,7 @@ function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenu
       <YStack p="$2" >
         {
           options.map((option: any, index: number) => {
-            return <Popover.Close asChild>
+            return <Popover.Close key={index} asChild>
               <CardMenuItem icon={option.icon} iconColor={option.iconColor} label={option.label} onPress={option.onPress} />
             </Popover.Close>
           })
