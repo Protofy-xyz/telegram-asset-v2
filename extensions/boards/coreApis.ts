@@ -566,8 +566,8 @@ export default async (app, context) => {
         const templates = fsSync.readdirSync(TemplatesDir(getRoot())).filter(file => fsSync.statSync(TemplatesDir(getRoot()) + '/' + file).isDirectory()).map(dir => {
             const description = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/README.md', 'utf-8') || ''
             const json = JSON.parse(fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/' + dir + '.json', 'utf-8'));
-            return { id: dir, name: dir, description, icon: json.icon };
-        });
+            return { id: dir, name: dir, description, icon: json.icon, disabled: json?.disabled };
+        }).filter(tplJson => !tplJson.disabled);
         res.send(templates);
     });
 

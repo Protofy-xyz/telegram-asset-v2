@@ -1,6 +1,7 @@
 {
     "name": "{{{name}}}",
     "icon": "openai",
+    "disabled": true, 
     "settings": {},
     "layouts": {
         "lg": [
