@@ -14,53 +14,95 @@ const GENERATE_EPHEMERAL_EVENT = true;
 const logger = getLogger()
 
 const onboardingHtml = async (botUsername) => {
-  if (!botUsername || botUsername === "a") {
-    // Prompt user to use the Telegram connector card
-    return `
-return card({
-  content: \`
-    \${icon({ name: data.icon, color: data.color, size: '48' })}
-    <div style="display:flex;flex-direction:column;gap:12px;max-width:620px;text-align:center;align-items:center;justify-content:center;margin:0 auto;">
-      <div style="font-weight:600;">Telegram not configured</div>
-      <div style="opacity:0.9;">
-        Use the <strong>Telegram connector</strong> card to set up your bot.
-      </div>
-    </div>
-  \`
-});
-`;
+  const username = botUsername && botUsername !== "a" ? botUsername : "";
+  const link = username ? `https://t.me/${username}` : "";
+  const qrUrl = username
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`
+    : "";
+
+  return `//@card/react
+
+function Widget(card) {
+  const username = ${JSON.stringify(username)};
+  const link = ${JSON.stringify(link)};
+  const qrUrl = ${JSON.stringify(qrUrl)};
+
+  function copyLink() {
+    if (!link) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(link);
+      alert("Link copied to clipboard");
+    } else {
+      // Fallback
+      const el = document.createElement("textarea");
+      el.value = link;
+      document.body.appendChild(el);
+      el.select();
+      try { document.execCommand("copy"); } catch(e) {}
+      document.body.removeChild(el);
+      alert("Link copied to clipboard");
+    }
   }
 
-  const link = `https://t.me/${botUsername}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`;
+  return (
+    <Tinted>
+      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>
+        {!username ? (
+          // Not configured: prompt to use Telegram connector card
+          <YStack ai="center" jc="center" gap="$3" p="$4" className="no-drag" mx="auto" maw={620} ta="center">
+            <XStack ai="center" gap="$2">
+              <YStack jc="center" ai="center" p="$2" bc={card.color} br="$20" mr="$1">
+                <Icon name={card.icon ?? "send"} size={16} color="white" />
+              </YStack>
+              <Text fow="600">Telegram not configured</Text>
+            </XStack>
+            <Text o={0.9}>
+              Use the <Text fow="700">Telegram connector</Text> card to set up your bot.
+            </Text>
+          </YStack>
+        ) : (
+          // Configured: centered QR + link
+          <YStack ai="center" jc="center" gap="$3" p="$4" className="no-drag" mx="auto" maw={760} ta="center">
+            <XStack ai="center" gap="$2">
+              <YStack jc="center" ai="center" p="$2" bc={card.color} br="$20" mr="$1">
+                <Icon name={card.icon ?? "send"} size={16} color="white" />
+              </YStack>
+              <Text fow="600">Open your Telegram bot</Text>
+            </XStack>
 
-  // Centered QR + link when configured
-  return `
-// data contains: data.value, data.icon and data.color
-return card({
-  content: \`
-    \${icon({ name: data.icon, color: data.color, size: '48' })}
-    <div style="display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;text-align:center;max-width:760px;margin:0 auto;">
-      <div style="font-weight:600;">Open your Telegram bot</div>
+            <img
+              src={qrUrl}
+              width={200}
+              height={200}
+              alt={"QR to open @" + username + " on Telegram"}
+              style={{ borderRadius: 8, border: "1px solid #eee" }}
+            />
 
-      <img
-        src="${qrUrl}"
-        width="200"
-        height="200"
-        alt="QR to open @${botUsername} on Telegram"
-        style="border-radius:8px;border:1px solid #eee;"
-      />
+            <a href={link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, wordBreak: "break-all" }}>
+              {link}
+            </a>
 
-      <a href="${link}" target="_blank" rel="noopener noreferrer" style="font-size:14px; word-break:break-all;">
-        ${link}
-      </a>
+            <XStack gap="$2" ai="center" jc="center">
+              <button onClick={copyLink} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd", cursor: "pointer" }}>
+                Copy link
+              </button>
+              <a
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid #ddd" }}
+              >
+                Open in Telegram
+              </a>
+            </XStack>
 
-      <div style="opacity:0.7;font-size:12px;max-width:520px;">
-        Scan the QR with your phone camera, or tap the link above.
-      </div>
-    </div>
-  \`
-});
+            <Text o={0.7} fos="$2">Scan the QR with your phone camera, or tap the link above.</Text>
+          </YStack>
+        )}
+      </ProtoThemeProvider>
+    </Tinted>
+  );
+}
 `;
 };
 
