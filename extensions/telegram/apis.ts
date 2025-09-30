@@ -14,30 +14,57 @@ const GENERATE_EPHEMERAL_EVENT = true;
 const logger = getLogger()
 
 const onboardingHtml = async (botUsername) => {
-  if (!botUsername) {
+  if (!botUsername || botUsername === "a") {
+    // Prompt user to use the Telegram connector card
     return `
 return card({
   content: \`
     \${icon({ name: data.icon, color: data.color, size: '48' })}
-    Add TELEGRAM_BOT_TOKEN & TELEGRAM_BOT_USERNAME on "keys" to enable Telegram support
-  \`
-});
-`;
-  }
-  const link = `https://t.me/${botUsername}`;
-  return `
-//data contains: data.value, data.icon and data.color
-return card({
-  content: \`
-    \${icon({ name: data.icon, color: data.color, size: '48' })}
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <div>Scan or tap to open your Telegram bot:</div>
-      <a href="${link}" target="_blank" rel="noopener noreferrer">${link}</a>
+    <div style="display:flex;flex-direction:column;gap:12px;max-width:620px;text-align:center;align-items:center;justify-content:center;margin:0 auto;">
+      <div style="font-weight:600;">Telegram not configured</div>
+      <div style="opacity:0.9;">
+        Use the <strong>Telegram connector</strong> card to set up your bot.
+      </div>
     </div>
   \`
 });
 `;
-}
+  }
+
+  const link = `https://t.me/${botUsername}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`;
+
+  // Centered QR + link when configured
+  return `
+// data contains: data.value, data.icon and data.color
+return card({
+  content: \`
+    \${icon({ name: data.icon, color: data.color, size: '48' })}
+    <div style="display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;text-align:center;max-width:760px;margin:0 auto;">
+      <div style="font-weight:600;">Open your Telegram bot</div>
+
+      <img
+        src="${qrUrl}"
+        width="200"
+        height="200"
+        alt="QR to open @${botUsername} on Telegram"
+        style="border-radius:8px;border:1px solid #eee;"
+      />
+
+      <a href="${link}" target="_blank" rel="noopener noreferrer" style="font-size:14px; word-break:break-all;">
+        ${link}
+      </a>
+
+      <div style="opacity:0.7;font-size:12px;max-width:520px;">
+        Scan the QR with your phone camera, or tap the link above.
+      </div>
+    </div>
+  \`
+});
+`;
+};
+
+
 
 const registerActions = async (context) => {
   addAction({
