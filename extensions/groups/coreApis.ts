@@ -4,7 +4,8 @@ import { AutoAPI } from 'protonode'
 const initialData = {
     admin: {"name": "admin", "workspaces": ["admin", "editor"], "admin": true},
     editor: {"name": "editor", "workspaces": ["editor"], "admin": true},
-    user: {"name": "user", "workspaces": []}
+    // DISABLED for now, test back when enabled
+    // user: {"name": "user", "workspaces": ["user"]}
 }
 
 const GroupsAutoAPI = AutoAPI({
