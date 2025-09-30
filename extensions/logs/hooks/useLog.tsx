@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSubscription } from 'protolib/lib/mqtt'
 
-const levelTable = {
+export const levelTable = {
     trace: 10,
     debug: 20,
     info: 30,

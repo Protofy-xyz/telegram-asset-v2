@@ -13,6 +13,7 @@ import { useActionBar } from './ActionBarWidget';
 import dynamic from 'next/dynamic'
 
 const SettingsConnector = dynamic(() => import('@extensions/settings/components/SettingsConnector').then(mod => mod.SettingsConnector), { ssr: false })
+const UILogs = dynamic(() => import('@extensions/logs/components/UILogs').then(mod => mod.UILogs), { ssr: false })
 
 export const AdminPage = forwardRef(({ pageSession, title, children, integratedChat = false, actionBar = null, onActionBarEvent = (e) => { } }: any, ref) => {
   useSession(pageSession)
@@ -64,6 +65,7 @@ export const AdminPage = forwardRef(({ pageSession, title, children, integratedC
         </SearchContext.Provider>
         {integratedChat && settingsAssistantEnabled && <BubbleChat apiUrl="/api/v1/chatbots/board" />}
         {ActionBar}
+        <UILogs />
       </Page>
     </SettingsConnector>
   )
