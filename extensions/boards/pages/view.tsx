@@ -5,7 +5,7 @@ import { useIsAdmin } from "protolib/lib/useIsAdmin"
 import ErrorMessage from "protolib/components/ErrorMessage"
 import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Popover, Text, Stack, H1, H3 } from '@my/ui'
 import { computeLayout } from '@extensions/autopilot/layout';
-import { DashboardGrid, gridSizes } from 'protolib/components/DashboardGrid';
+import { DashboardGrid, gridSizes, getCurrentBreakPoint } from 'protolib/components/DashboardGrid';
 import { LogPanel } from 'protolib/components/LogPanel';
 import { AlertDialog } from 'protolib/components/AlertDialog';
 import { CenterCard, HTMLView } from '@extensions/services/widgets'
@@ -938,6 +938,9 @@ const Board = ({ board, icons }) => {
                 settings={board.settings}
                 layouts={boardRef.current.layouts}
                 onLayoutChange={(layout, layouts) => {
+                  if (!breakpointRef.current && typeof window !== 'undefined') {
+                    breakpointRef.current = getCurrentBreakPoint(window.innerWidth)
+                  }
                   if (breakpointCancelRef.current == breakpointRef.current) {
                     console.log('Layout change cancelled for breakpoint: ', breakpointRef.current, breakpointCancelRef.current)
                     breakpointCancelRef.current = null

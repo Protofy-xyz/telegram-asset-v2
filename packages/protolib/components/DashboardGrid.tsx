@@ -10,7 +10,16 @@ export const gridSizes = {
     sm: { totalCols: 2, normalW: 2, normalH: 6, doubleW: 2, doubleH: 6 },
     xs: { totalCols: 1, normalW: 1, normalH: 6, doubleW: 1, doubleH: 6 },
 }
-
+export const breakpoints = { lg: 1500, md: 800, sm: 400, xs: 0 }
+export const getCurrentBreakPoint = (w, bps?) =>{
+    if (!bps) {
+        bps = breakpoints
+    }
+    return w >= bps.lg ? "lg" :
+    w >= bps.md ? "md" :
+    w >= bps.sm ? "sm" : "xs";
+}
+    
 export const DashboardGrid = ({ items = [], layouts = {}, borderRadius = 10, padding = 10, settings = {}, ...props }) => {
     return (
         <Tinted>
@@ -19,7 +28,7 @@ export const DashboardGrid = ({ items = [], layouts = {}, borderRadius = 10, pad
                 className="layout"
                 layouts={layouts}
                 margin={[6, 6]}
-                breakpoints={{ lg: 1500, md: 800, sm: 400, xs: 0 }}
+                breakpoints={breakpoints}
                 rowHeight={30}
                 draggableCancel=".no-drag"
                 style={{height: '100%', overflow: 'auto'}}
