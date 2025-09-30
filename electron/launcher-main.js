@@ -300,7 +300,7 @@ app.whenReady().then(async () => {
 
       try {
         const projectFolderPath = path.join(PROJECTS_DIR, projectName);
-        const startMain = require(projectFolderPath + '/electron/masdadsadadasin.js');
+        const startMain = require(projectFolderPath + '/electron/main.js');
         startMain(projectFolderPath);
         // only mark and close on success
         hasRun = true;
