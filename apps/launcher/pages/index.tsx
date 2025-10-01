@@ -318,7 +318,7 @@ export default function Home() {
       }}
     >
       <MainView />
-      <YStack position="absolute" bottom={10} right={10} opacity={0.6} pointerEvents="none">
+      <YStack position="fixed" bottom={10} right={10} opacity={0.6} pointerEvents="none">
         <Paragraph style={{ color: 'var(--color)', fontSize: '10px' }}>Launcher v{rootPkg.version}</Paragraph>
       </YStack>
     </Page>
