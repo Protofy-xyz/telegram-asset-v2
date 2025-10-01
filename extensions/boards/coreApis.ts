@@ -516,12 +516,12 @@ export default async (app, context) => {
 
         console.log('REPLY: ', reply)
         if (reply?.raw?.error) {
-            logger.error({ error: reply.raw.error }, "Error from AI model");
+            logger.ui.error({ error: reply.raw.error }, "Error from AI model");
             res.status(500).send({ error: 'Error from AI model', message: reply.raw.error });
             return
         }
         if (!reply || !reply.choices || reply.choices.length === 0) {
-            logger.error('No response from AI model or empty choices array', { reply });
+            logger.ui.error({ reply }, 'No response from AI model or empty choices array');
             res.status(500).send({ error: 'No response from AI model', message: reply?.error })
         } else {
             const jsCode = reply.choices[0].message.content
@@ -724,7 +724,7 @@ export default async (app, context) => {
             await handleCallModel(res, prompt)
         } catch (e) {
             console.error('Error getting action code: ', e)
-            logger.error('Error getting action code', e);
+            logger.ui.error('Error getting action code', e);
             res.status(500).send({ error: 'Internal Server Error', message: e.message })
         }
     })
