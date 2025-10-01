@@ -1,19 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useSetAtom } from 'jotai'
-import { initParticlesAtom } from 'protolib/components/particles/ParticlesEngineAtom'
-import { ParticlesView } from 'protolib/components/particles/ParticlesView'
 import { Page } from 'protolib/components/Page'
-import { basicParticlesMask } from 'protolib/components/particles/particlesMasks/basicParticlesMask'
-import { getPendingResult, ProtoModel, z } from 'protobase'
+import { getPendingResult, ProtoModel, set, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
-import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack, useThemeName } from 'tamagui'
+import { Button, Paragraph, Popover, Spinner, useThemeName, XStack, YStack } from 'tamagui'
 import { useToastController } from '@my/ui'
 import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, FolderOpen } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
-import { useFetch } from 'protolib'
+import { ErrorMessage, useFetch } from 'protolib'
 import semver from 'semver'
 import rootPkg from '../../../package.json'
+import { useThemeSetting } from '@tamagui/next-theme'
 
 const obj = {
   "name": "project",
@@ -49,19 +46,19 @@ type CardMenuItemProps = {
 
 function CardMenuItem({ icon: Icon, label, onPress, iconColor }: CardMenuItemProps) {
   return <XStack hoverStyle={{ filter: "brightness(1.2)" }} cursor="pointer" p="$2" gap="$2" onPress={onPress}>
-    <Tinted><Icon color={iconColor ?? "$color8"} size={"$1"} /></Tinted>
-    <Paragraph color="$color12">{label}</Paragraph>
+    <Tinted><Icon color={iconColor ?? "var(--color8)"} size={"$1"} /></Tinted>
+    <Paragraph color="var(--color)">{label}</Paragraph>
   </XStack>
 }
 
 function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenuItemProps[] }) {
   return <Popover allowFlip>
     <Popover.Trigger disabled={disabled}>
-      <InteractiveIcon Icon={MoreVertical} />
+      <InteractiveIcon IconColor="var(--color)" Icon={MoreVertical} />
     </Popover.Trigger>
-    <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
+    <Popover.Content left={"$7"} top={"$2"} bw={1} boc={"$borderColor"} bc={"var(--bgContent)"} >
       <Popover.Arrow borderWidth={1} boc="$gray4" />
-      <YStack p="$2" bg="$color2" o={0.85} borderRadius={10}>
+      <YStack >
         {
           options.map((option: any, index: number) => {
             return <Popover.Close key={index} asChild>
@@ -74,15 +71,14 @@ function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenu
   </Popover>
 }
 
-function CardElement({ element }: any) {
+function CardElement({ element, onDeleted }: any) {
   const toast = useToastController()
-  const [downloading, setDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [openError, setOpenError] = useState<string | null>(null)
+  const [isRunning, setIsRunning] = useState(false)
 
   useEffect(() => {
-    setDownloading(element.status === 'downloading');
     if (element.status !== 'downloaded') {
       setOpenError(null);
     }
@@ -111,6 +107,8 @@ function CardElement({ element }: any) {
         const text = await res.text().catch(() => '');
         throw new Error(text || `Delete failed with status ${res.status}`);
       }
+      // Force refresh of the list if no status event arrives
+      onDeleted?.();
       return;
     } catch (err: any) {
       setDeleteError(err?.message || 'Delete failed');
@@ -120,6 +118,7 @@ function CardElement({ element }: any) {
   };
 
   const runProject = async () => {
+    setIsRunning(true);
     try {
       const url = 'app://localhost/api/v1/projects/' + element.name + '/run'
       const res = await fetch(url)
@@ -138,54 +137,54 @@ function CardElement({ element }: any) {
         duration: 2000,
       })
     }
+    setIsRunning(false)
   }
 
   return (
-    <YStack borderRadius={10} p="$4" jc="center" cursor="auto" backgroundColor="$color4" o={0.85}>
+    <YStack borderRadius={10} p="$4" jc="center" cursor="auto" backgroundColor="$bgContent">
       <XStack f={1} ai="center">
-        <Paragraph f={1} color="$color12" style={{ fontSize: '14px' }}>
+        <Paragraph f={1} style={{ color: 'var(--color)', fontSize: '14px', fontWeight: '600' }} numberOfLines={1} ellipsizeMode="tail">
           {element.name}
         </Paragraph>
-        <CardMenu disabled={isDeleting || element.status !== 'downloaded'} options={[
+        <CardMenu disabled={isDeleting || !["downloaded", "pending"].includes(element.status)} options={[
           { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
-          { icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder },
+          ...(element.status === "downloaded" ? [{ icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder }] : [])
         ]} />
       </XStack>
-      <Paragraph color="$color12" style={{ fontSize: '10px' }}>
+      <Paragraph style={{ color: 'var(--color)', fontSize: '10px' }}>
         v: {element.version}
       </Paragraph>
       <XStack h={"$3"} ai="center" jc="flex-end">
-        {(element.status == 'downloaded' && !isDeleting)
+        {(element.status == 'downloaded' && !isDeleting && !isRunning)
           && <XStack>
-            <InteractiveIcon
-              size={20}
-              IconColor="$color12"
-              Icon={Play}
-              onPress={runProject}
-            />
+            <Tinted>
+              <InteractiveIcon
+                size={20}
+                IconColor="var(--color8)"
+                Icon={Play}
+                onPress={runProject}
+              />
+            </Tinted>
           </XStack>
         }
         {element.status == 'pending'
-          && <XStack>
-            {downloading
-              ? <Tinted><Spinner m="$2" color="$color8" /></Tinted>
-              : <InteractiveIcon size={20} IconColor="$color12" Icon={Download} onPress={async () => {
-                const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
-                setDownloading(true)
-                const result = await fetch(url)
-              }} />}
-          </XStack>
-        }
-        {(element.status === 'downloading' || isDeleting)
           && <Tinted>
-            <Paragraph col="$color12">{isDeleting ? 'Deleting…' : 'Downloading…'}</Paragraph>
-            <Spinner m="$2" color="$color8" />
+            <InteractiveIcon size={20} IconColor="var(--color8)" Icon={Download} onPress={async () => {
+              const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
+              const result = await fetch(url)
+            }} />
+          </Tinted>
+        }
+        {(element.status === 'downloading' || isDeleting || isRunning)
+          && <Tinted>
+            <Paragraph col="var(--color)">{isDeleting ? 'Deleting…' : isRunning ? 'Running…' : 'Downloading…'}</Paragraph>
+            <Spinner m="$2" color="var(--color8)" />
           </Tinted>
         }
         {(element.status === 'error' || deleteError || openError)
           && <XStack ai="center" space="$2">
             <AlertTriangle col="$red8" size={16} />
-            <Paragraph col="$color12">{openError ?? deleteError ?? "Download failed"}</Paragraph>
+            <Paragraph style={{ color: 'var(--color)' }}>{openError ?? deleteError ?? "Download failed"}</Paragraph>
           </XStack>
         }
       </XStack>
@@ -199,6 +198,9 @@ const MainView = () => {
   const [reload, setReload] = useState(0)
   const [addOpened, setAddOpened] = useState(false)
   const [result, loading, error] = useFetch('https://api.github.com/repos/Protofy-xyz/Vento/releases', null, true)
+  const { resolvedTheme } = useThemeSetting()
+  const darkMode = resolvedTheme === 'dark'
+
 
   useEffect(() => {
     const api = (typeof window !== 'undefined' && (window as any).electronAPI) ? (window as any).electronAPI : null;
@@ -222,8 +224,17 @@ const MainView = () => {
     return "" + item.tag_name.replace('v', '')
   }) : []
 
+  const logoStyle = {
+    width: '200px',
+    paddingLeft: '6px',
+    filter: darkMode
+      ? 'invert(1)'
+      : 'invert(0)',
+    animation: 'float 6s ease-in-out infinite',
+  }
+
   console.log('versions', versions)
-  return <XStack f={1}>
+  return <YStack f={1}>
     <DataView
       addOpened={addOpened}
       setAddOpened={setAddOpened}
@@ -242,21 +253,20 @@ const MainView = () => {
         return false
       }}
       disableItemSelection={true}
-      title={<Paragraph pl="$2" color="$color12" style={{ fontSize: '25px' }}>
-        Vento Projects
-      </Paragraph>}
+      title={<img src="/public/vento-logo.png" alt="Vento logo" style={logoStyle} />}
       dataTableGridProps={{
         marginTop: '$10',
         getCard: (element: any, width: any) => {
-          return <CardElement element={element} />
+          return <CardElement element={element} onDeleted={() => setReload((r) => r + 1)} />
         },
-        emptyMessage: <YStack position="absolute" top={-120} left={0} width={'100vw'} height={'100vh'} flex={1} alignItems="center" justifyContent="center" space="$4" pointerEvents='none'>
-          <YStack ai="center" jc="center" space="$2" o={0.4} pointerEvents='none' userSelect='none'>
-            <Bird size="$7" />
-            <H2>Empty project list</H2>
-          </YStack>
+        emptyMessage: <ErrorMessage
+          icon={Bird}
+          msg={`Empty project list`}
+          containerProps={{ mt: '15vh', o: 0.5 }}
+          iconProps={{}}
+        >
           <Tinted><Button pointerEvents='auto' onPress={() => setAddOpened(true)}>Add project</Button></Tinted>
-        </YStack>
+        </ErrorMessage>,
       }}
       createElement={async (data) => {
         if (typeof window !== 'undefined' && (window as any).electronAPI) {
@@ -284,26 +294,14 @@ const MainView = () => {
               .sort((a: any, b: any) => semver.rcompare(semver.coerce(a)!, semver.coerce(b)!))[0])
       }}
     />
-  </XStack>
+  </YStack>
 }
 
 export default function Home() {
-  const initParticles = useSetAtom(initParticlesAtom)
   const themeName = useThemeName()
   const isDark = typeof themeName === 'string' && themeName.toLowerCase().includes('dark')
 
-  useEffect(() => {
-    initParticles()
-  }, [initParticles])
-  
-  const darkGradient =
-    'radial-gradient(1200px 700px at 50% 100%, rgba(0, 201, 87, 0.25) 0%, rgba(0, 120, 60, 0.15) 40%, rgba(10, 20, 15, 0.9) 100%), linear-gradient(180deg, #0A2F1D 0%, #0B1A13 100%)'
 
-  const lightGradient =
-    'radial-gradient(1200px 700px at 50% 100%, rgba(0, 201, 87, 0.35) 0%, rgba(105, 255, 165, 0.20) 40%, rgba(235, 255, 245, 0.9) 100%), linear-gradient(180deg, #E9FFF3 0%, #F5FFF9 100%)'
-
-
-  const background = isDark ? darkGradient : lightGradient
   return (
     <Page
       skipSessionManagement={true}
@@ -312,16 +310,16 @@ export default function Home() {
         margin: 0,
         padding: 0,
         fontFamily: "'Inter', sans-serif",
+        color: 'var(--color)',
         fontSize: '10px',
+        backgroundColor: 'var(--bgPanel)',
         overflow: 'auto',
         position: 'relative',
-        background,
       }}
     >
-      <ParticlesView options={basicParticlesMask({ particleColors: ['rgb(0, 201, 87) ', 'rgb(105, 255, 165) '] })} />
       <MainView />
       <YStack position="absolute" bottom={10} right={10} opacity={0.6} pointerEvents="none">
-        <Paragraph color="$color12" style={{ fontSize: '10px' }}>Launcher v{rootPkg.version}</Paragraph>
+        <Paragraph style={{ color: 'var(--color)', fontSize: '10px' }}>Launcher v{rootPkg.version}</Paragraph>
       </YStack>
     </Page>
   )
