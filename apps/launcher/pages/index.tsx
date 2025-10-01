@@ -6,7 +6,7 @@ import { Page } from 'protolib/components/Page'
 import { basicParticlesMask } from 'protolib/components/particles/particlesMasks/basicParticlesMask'
 import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
-import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack } from 'tamagui'
+import { Button, H2, H3, Paragraph, Popover, Spinner, XStack, YStack, useThemeName } from 'tamagui'
 import { useToastController } from '@my/ui'
 import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, FolderOpen } from '@tamagui/lucide-icons'
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
@@ -50,7 +50,7 @@ type CardMenuItemProps = {
 function CardMenuItem({ icon: Icon, label, onPress, iconColor }: CardMenuItemProps) {
   return <XStack hoverStyle={{ filter: "brightness(1.2)" }} cursor="pointer" p="$2" gap="$2" onPress={onPress}>
     <Tinted><Icon color={iconColor ?? "$color8"} size={"$1"} /></Tinted>
-    <Paragraph color="#fff8e1">{label}</Paragraph>
+    <Paragraph color="$color12">{label}</Paragraph>
   </XStack>
 }
 
@@ -61,7 +61,7 @@ function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenu
     </Popover.Trigger>
     <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
       <Popover.Arrow borderWidth={1} boc="$gray4" />
-      <YStack p="$2" >
+      <YStack p="$2" bg="$color2" o={0.85} borderRadius={10}>
         {
           options.map((option: any, index: number) => {
             return <Popover.Close key={index} asChild>
@@ -141,9 +141,9 @@ function CardElement({ element }: any) {
   }
 
   return (
-    <YStack borderRadius={10} p="$4" jc="center" cursor="auto" backgroundColor="rgba(0, 0, 0, 0.6)">
+    <YStack borderRadius={10} p="$4" jc="center" cursor="auto" backgroundColor="$color4" o={0.85}>
       <XStack f={1} ai="center">
-        <Paragraph f={1} style={{ color: '#fff8e1', fontSize: '14px' }}>
+        <Paragraph f={1} color="$color12" style={{ fontSize: '14px' }}>
           {element.name}
         </Paragraph>
         <CardMenu disabled={isDeleting || element.status !== 'downloaded'} options={[
@@ -151,7 +151,7 @@ function CardElement({ element }: any) {
           { icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder },
         ]} />
       </XStack>
-      <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>
+      <Paragraph color="$color12" style={{ fontSize: '10px' }}>
         v: {element.version}
       </Paragraph>
       <XStack h={"$3"} ai="center" jc="flex-end">
@@ -159,7 +159,7 @@ function CardElement({ element }: any) {
           && <XStack>
             <InteractiveIcon
               size={20}
-              IconColor="#fff8e1"
+              IconColor="$color12"
               Icon={Play}
               onPress={runProject}
             />
@@ -169,7 +169,7 @@ function CardElement({ element }: any) {
           && <XStack>
             {downloading
               ? <Tinted><Spinner m="$2" color="$color8" /></Tinted>
-              : <InteractiveIcon size={20} IconColor="#fff8e1" Icon={Download} onPress={async () => {
+              : <InteractiveIcon size={20} IconColor="$color12" Icon={Download} onPress={async () => {
                 const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
                 setDownloading(true)
                 const result = await fetch(url)
@@ -178,14 +178,14 @@ function CardElement({ element }: any) {
         }
         {(element.status === 'downloading' || isDeleting)
           && <Tinted>
-            <Paragraph col="#fff8e150">{isDeleting ? 'Deleting…' : 'Downloading…'}</Paragraph>
+            <Paragraph col="$color12">{isDeleting ? 'Deleting…' : 'Downloading…'}</Paragraph>
             <Spinner m="$2" color="$color8" />
           </Tinted>
         }
         {(element.status === 'error' || deleteError || openError)
           && <XStack ai="center" space="$2">
             <AlertTriangle col="$red8" size={16} />
-            <Paragraph style={{ color: '#fff8e1' }}>{openError ?? deleteError ?? "Download failed"}</Paragraph>
+            <Paragraph col="$color12">{openError ?? deleteError ?? "Download failed"}</Paragraph>
           </XStack>
         }
       </XStack>
@@ -242,7 +242,7 @@ const MainView = () => {
         return false
       }}
       disableItemSelection={true}
-      title={<Paragraph pl="$2" style={{ color: '#fff8e1', fontSize: '25px' }}>
+      title={<Paragraph pl="$2" color="$color12" style={{ fontSize: '25px' }}>
         Vento Projects
       </Paragraph>}
       dataTableGridProps={{
@@ -289,12 +289,21 @@ const MainView = () => {
 
 export default function Home() {
   const initParticles = useSetAtom(initParticlesAtom)
+  const themeName = useThemeName()
+  const isDark = typeof themeName === 'string' && themeName.toLowerCase().includes('dark')
 
   useEffect(() => {
     initParticles()
   }, [initParticles])
+  
+  const darkGradient =
+    'radial-gradient(1200px 700px at 50% 100%, rgba(0, 201, 87, 0.25) 0%, rgba(0, 120, 60, 0.15) 40%, rgba(10, 20, 15, 0.9) 100%), linear-gradient(180deg, #0A2F1D 0%, #0B1A13 100%)'
+
+  const lightGradient =
+    'radial-gradient(1200px 700px at 50% 100%, rgba(0, 201, 87, 0.35) 0%, rgba(105, 255, 165, 0.20) 40%, rgba(235, 255, 245, 0.9) 100%), linear-gradient(180deg, #E9FFF3 0%, #F5FFF9 100%)'
 
 
+  const background = isDark ? darkGradient : lightGradient
   return (
     <Page
       skipSessionManagement={true}
@@ -303,17 +312,16 @@ export default function Home() {
         margin: 0,
         padding: 0,
         fontFamily: "'Inter', sans-serif",
-        color: '#fff8e1',
         fontSize: '10px',
-        background: 'radial-gradient(circle at bottom,rgb(1, 13, 0) 0%,rgb(21, 21, 21) 100%)',
         overflow: 'auto',
         position: 'relative',
+        background,
       }}
     >
       <ParticlesView options={basicParticlesMask({ particleColors: ['rgb(0, 201, 87) ', 'rgb(105, 255, 165) '] })} />
       <MainView />
       <YStack position="absolute" bottom={10} right={10} opacity={0.6} pointerEvents="none">
-        <Paragraph style={{ color: '#fff8e1', fontSize: '10px' }}>Launcher v{rootPkg.version}</Paragraph>
+        <Paragraph color="$color12" style={{ fontSize: '10px' }}>Launcher v{rootPkg.version}</Paragraph>
       </YStack>
     </Page>
   )
