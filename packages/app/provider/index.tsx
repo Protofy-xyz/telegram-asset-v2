@@ -28,7 +28,7 @@ export function Provider({ children, ...rest }: Omit<TamaguiProviderProps, 'conf
         <CustomToast />
 
         <ToastViewport />
-        <ToastViewportOg name="warnings" flexDirection="column" bottom={50} left={0} right={0} />
+        <ToastViewportOg portalToRoot zIndex={110000} name="warnings" flexDirection="column" bottom={50} left={0} right={0} />
       </ToastProvider>
     </TamaguiProvider>
   )
