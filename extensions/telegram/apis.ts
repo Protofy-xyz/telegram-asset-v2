@@ -495,6 +495,7 @@ export default async (app, context) => {
   app.get('/api/v1/telegram/send/message', handler(async (req, res, session) => {
     const { chat_id, message } = req.query
     if (!chat_id || !message) {
+      logger.ui.error("Error sending Telegram message from api: missing chat_id or message")
       res.status(400).send({ error: `Missing ${chat_id ? 'message' : 'chat_id'}` })
       return
     }
@@ -507,7 +508,7 @@ export default async (app, context) => {
       await bot.telegram.sendMessage(chat_id.toString(), message.toString())
       res.send({ result: 'done', message: message, chat_id: chat_id })
     } catch (e) {
-      logger.error("TelegramAPI error", e)
+      logger.ui.error("Error sending Telegram message from api", e)
       res.status(500).send(e)
     }
   }))
