@@ -305,7 +305,8 @@ app.whenReady().then(async () => {
         const electronVersion = '29.4.6';
         const opts = {
           cwd: projectFolderPath,
-          stdio: 'inherit',
+          windowsHide: true,
+          stdio: 'pipe',
           shell: process.platform === 'win32'
         };
 
