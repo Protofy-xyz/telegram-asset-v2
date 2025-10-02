@@ -22,7 +22,7 @@ export const ActionRunner = ({ id = null, setData = (data, id) => { }, name, dat
     }, [actionParams]);
 
     return (
-        <YStack f={1} width="100%" alignItems="center" justifyContent="center">
+        <YStack h="100%" >
             {/* Si hay HTML, renderizarlo */}
             {html?.length > 0 && enableHTML && (
                 <HTMLView style={{ width: "100%", height: "100%" }}
