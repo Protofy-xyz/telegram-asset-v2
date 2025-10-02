@@ -62,7 +62,8 @@ export default (app, context) => {
                                 name: deviceInfo.data.name + ' ' + subsystem.name,
                                 description: monitor.description ?? "",
                                 rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
-                                type: 'value'
+                                type: 'value',
+                                icon: "scan-eye"
                             },
                             emitEvent: true
                         })
