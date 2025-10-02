@@ -68,7 +68,7 @@ export const ParamsForm = ({ data, children }) => {
     };
 
     return (
-            <YStack w={"100%"} ai="center" jc="center" f={1}>
+        <YStack h="100%" w={"100%"} ai="center">
             {children}
             <YStack w={"100%"} ai="center" jc="center" mt={data.buttonMode !== "full" ? "$5" : 0}>
                 {allKeys.map((key) => {
@@ -231,7 +231,7 @@ export const ParamsForm = ({ data, children }) => {
 
 export const ActionCard = ({ data, children }) => {
     return (
-        <YStack height="100%" justifyContent="center" alignItems="center" className="no-drag">
+        <YStack height="100%" className="no-drag">
             {children}
         </YStack>
     );
