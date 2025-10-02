@@ -61,7 +61,7 @@ export default (app, context) => {
                             defaults: {
                                 name: deviceInfo.data.name + ' ' + subsystem.name,
                                 description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}']`,
+                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
                                 type: 'value'
                             },
                             emitEvent: true
@@ -76,7 +76,7 @@ export default (app, context) => {
                             defaults: {
                                 name: deviceInfo.data.name + ' ' + monitor.name,
                                 description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${monitor.name}']`,
+                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
                                 type: 'value',
                                 icon: "scan-eye"
                             },
@@ -304,7 +304,7 @@ export default (app, context) => {
                 return
             }
             // const subsystem = deviceInfo.getSubsystem(req.params.subsystem)
-            context.state.set({ group: 'devices', tag: deviceName, name: monitor.data.name, value: parsedMessage, emitEvent: true });
+            context.state.set({ group: 'devices', tag: deviceName, name: monitor.subsystem+"_"+monitor.data.name, value: parsedMessage, emitEvent: true });
             generateEvent(
                 {
                     ephemeral: monitor.data.ephemeral??false,
