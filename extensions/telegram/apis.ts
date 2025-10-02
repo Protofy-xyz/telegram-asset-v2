@@ -278,26 +278,26 @@ const registerCards = async (context, botUsername) => {
   })
 
 
-  addCard({
-    group: 'telegram',
-    tag: "onboarding",
-    id: 'telegram_onboarding_link',
-    templateName: "Telegram onboarding link",
-    name: "link",
-    defaults: {
-      width: 3,
-      height: 10,
-      name: "telegram_onboarding_link",
-      icon: "send",
-      color: "#24A1DE",
-      html: await onboardingHtml(botUsername),
-      description: "Show a link to open the Telegram bot",
-      rulesCode: `return null;`,
-      type: 'value'
-    },
-    emitEvent: true,
-    token: await getServiceToken()
-  })
+  // addCard({
+  //   group: 'telegram',
+  //   tag: "onboarding",
+  //   id: 'telegram_onboarding_link',
+  //   templateName: "Telegram onboarding link",
+  //   name: "link",
+  //   defaults: {
+  //     width: 3,
+  //     height: 10,
+  //     name: "telegram_onboarding_link",
+  //     icon: "send",
+  //     color: "#24A1DE",
+  //     html: await onboardingHtml(botUsername),
+  //     description: "Show a link to open the Telegram bot",
+  //     rulesCode: `return null;`,
+  //     type: 'value'
+  //   },
+  //   emitEvent: true,
+  //   token: await getServiceToken()
+  // })
 
   addCard({
     group: 'telegram',
