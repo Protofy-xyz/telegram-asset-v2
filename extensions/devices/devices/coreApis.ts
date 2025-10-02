@@ -50,7 +50,9 @@ export default (app, context) => {
                 // console.log('subsystem: ', subsystem)
                 if(subsystem.name == "mqtt") continue
                 for (const monitor of subsystem.monitors ?? []) {
-                    console.log('monitor: ', monitor)
+                    // console.log('monitor: ', monitor)
+                    const monitorModel = deviceInfo.getMonitorByEndpoint(monitor.endpoint)
+                    const stateName = deviceInfo.getStateNameByMonitor(monitorModel)
                     if(subsystem.monitors.length == 1) {
                         addCard({
                             group: 'devices',
@@ -61,7 +63,7 @@ export default (app, context) => {
                             defaults: {
                                 name: deviceInfo.data.name + ' ' + subsystem.name,
                                 description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
+                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                                 type: 'value',
                                 icon: "scan-eye"
                             },
@@ -77,7 +79,7 @@ export default (app, context) => {
                             defaults: {
                                 name: deviceInfo.data.name + ' ' + monitor.name,
                                 description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${subsystem.name}_${monitor.name}']`,
+                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                                 type: 'value',
                                 icon: "scan-eye"
                             },
@@ -305,7 +307,8 @@ export default (app, context) => {
                 return
             }
             // const subsystem = deviceInfo.getSubsystem(req.params.subsystem)
-            context.state.set({ group: 'devices', tag: deviceName, name: monitor.subsystem+"_"+monitor.data.name, value: parsedMessage, emitEvent: true });
+            const stateName = deviceInfo.getStateNameByMonitor(monitor)
+            context.state.set({ group: 'devices', tag: deviceName, name: stateName, value: parsedMessage, emitEvent: true });
             generateEvent(
                 {
                     ephemeral: monitor.data.ephemeral??false,

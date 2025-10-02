@@ -156,6 +156,10 @@ export class DevicesModel extends ProtoModel<DevicesModel> {
     return monitor
   }
 
+  getStateNameByMonitor(monitor: DeviceSubsystemMonitor) {
+    return monitor.subsystem + "_" + monitor.data.name
+  }
+
   getSubsystem(name: string) {
     if(!this.data || !this.data.subsystem) {
       return
