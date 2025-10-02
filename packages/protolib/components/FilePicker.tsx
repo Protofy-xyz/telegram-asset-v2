@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
-import { Button, Input, XStack, Spinner, Dialog, Text, StackProps, YStack, ScrollView, TooltipSimple } from "@my/ui"
-import { Folder, X as CloseIcon } from '@tamagui/lucide-icons'
+import { useEffect, useState } from "react"
+import { Button, Input, XStack, Spinner, Dialog, Text, StackProps } from "@my/ui"
+import { Folder } from '@tamagui/lucide-icons'
 import { Tinted, } from './Tinted'
 import { Center } from './Center'
 import dynamic from 'next/dynamic'
+import { InputMultiple } from "./InputMultiple"
 
 const FileBrowser = dynamic<any>(() =>
     import('../adminpanel/next/components/FileBrowser').then(module => module.FileBrowser),
@@ -36,7 +37,7 @@ const parseTextToArray = (text: string) => {
     if (!text) return [] as string[];
     try {
         const parsed = JSON.parse(text);
-        if (Array.isArray(parsed)) {
+        ; if (Array.isArray(parsed)) {
             return parsed.map((entry) => typeof entry === 'string' ? entry.trim() : '').filter(Boolean);
         }
     } catch { }
@@ -46,72 +47,16 @@ const parseTextToArray = (text: string) => {
         .filter(Boolean);
 };
 
-const normalizeArray = (value: string | string[]) => {
-    const arr = toArray(value);
-    return Array.from(new Set(arr.map((entry) => entry.trim()).filter(Boolean)));
-};
-
-const CardContainer = ({ children }: { children: ReactNode }) => (
-    <XStack
-        f={1}
-        flexWrap="wrap"
-        rowGap="$2"
-        px="$2"
-        columnGap="$2"
-        borderRadius="$4"
-        width="100%"
-        borderWidth={0}
-        ai="center"
-    >
-        {children}
-    </XStack>
-);
-
-const FileChip = ({ path, onRemove }: { path: string; onRemove: () => void }) => {
-    const segments = path.split('/').filter(Boolean)
-    const fileName = segments[segments.length - 1] ?? path
-    const location = segments.length > 1 ? `/${segments.slice(0, -1).join('/')}` : '/'
-
-    return (
-        <XStack
-            alignItems="center"
-            gap="$1"
-            backgroundColor="$gray4"
-            borderRadius="$4"
-            paddingHorizontal="$2"
-            maxWidth="100%"
-            h={"$1.5"}
-        >
-            <YStack maxWidth={200} overflow="hidden">
-                <Text fontSize={12} fontWeight="700" numberOfLines={1}>{path}</Text>
-            </YStack>
-            <Button
-                size="$1"
-                mr={-4}
-                circular
-                chromeless
-                bc="transparent"
-                pressStyle={{ bc: "tr" }}
-                borderWidth={0}
-                onPress={onRemove}
-                icon={<CloseIcon size={12} color="var(--red8)" />}
-                aria-label={`Remove ${fileName}`}
-            />
-        </XStack>
-    )
-};
-
 export function FilePicker({ onFileChange, file, placeholder, initialPath = "", fileFilter, disabled, onPressOpen = () => { }, allowMultiple = false, ...props }: FilePickerProps & StackProps) {
     const [open, setOpen] = useState(false)
     const [value, setValue] = useState<string | string[]>(allowMultiple ? toArray(file) : toSingle(file))
     const [tmpFile, setTmpFile] = useState<string | string[]>(allowMultiple ? toArray(file) : toSingle(file))
-    const [draftValue, setDraftValue] = useState<string>("")
+    const [baseFiles, setBaseFiles] = useState<string[]>([])
 
     useEffect(() => {
         const nextValue = allowMultiple ? toArray(file) : toSingle(file)
         setValue(nextValue)
         setTmpFile(nextValue)
-        setDraftValue("")
     }, [file, allowMultiple])
 
 
@@ -130,102 +75,45 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
     }
 
     const currentValue = file !== undefined ? (allowMultiple ? toArray(file) : toSingle(file)) : value
-    const handleRemoveValue = useCallback((path: string) => {
-        if (!allowMultiple) return
-        const remaining = normalizeArray(currentValue).filter((entry) => entry !== path)
-        onChange(remaining)
-    }, [allowMultiple, currentValue, onChange])
 
-    const commitDraft = useCallback(() => {
-        if (!allowMultiple) return
-        if (!draftValue.trim()) {
-            setDraftValue("")
-            return
-        }
-        const entries = normalizeArray([...normalizeArray(currentValue), ...parseTextToArray(draftValue)])
-        setDraftValue("")
-        onChange(entries)
-    }, [allowMultiple, currentValue, draftValue, onChange])
-
-    const handleDraftKeyPress = useCallback((event: any) => {
-        if (!allowMultiple) return
-        const key = event?.nativeEvent?.key ?? event?.key
-        if (key === 'Enter' || key === ',' || key === 'Tab') {
-            event.preventDefault?.()
-            commitDraft()
-        }
-        if (key === 'Backspace' && draftValue === "") {
-            const entries = normalizeArray(currentValue)
-            if (entries.length) {
-                handleRemoveValue(entries[entries.length - 1])
-            }
-        }
-    }, [allowMultiple, draftValue, currentValue, commitDraft, handleRemoveValue])
-
-    const multiValueChips = useMemo(() => {
-        if (!allowMultiple) return null
-        const entries = normalizeArray(currentValue)
-        return entries.map((entry) => (
-            <FileChip
-                key={entry}
-                path={entry}
-                onRemove={() => handleRemoveValue(entry)}
+    return <XStack {...props}>
+        {allowMultiple
+            ? <InputMultiple
+                values={value as any}
+                setValues={setValue}
+                placeholder={placeholder ?? "Path or URL"}
             />
-        ))
-    }, [allowMultiple, currentValue, handleRemoveValue])
-
-    return (
+            : <Input
+                placeholder={placeholder ?? "Path or URL"}
+                value={Array.isArray(currentValue) ? toSingle(currentValue) : currentValue}
+                onChangeText={(e) => handleManualChange(e)}
+                f={1}
+                paddingRight={"50px"}
+                disabled={disabled}
+            />
+        }
         <Dialog open={open} onOpenChange={setOpen}>
-            <XStack {...props} >
-                {allowMultiple ? (
-                    <YStack h="$4" f={1} bw={"1px"} boc="$gray7" br="$4" overflow="hidden" p="$1">
-                        <ScrollView h f={1} boc="$red" bc="$gray1" horizontal={true} showsVerticalScrollIndicator={false}>
-                            <CardContainer>
-                                {multiValueChips}
-                                <Input
-                                    
-                                    bw={0}
-                                    unstyled
-                                    f={1}
-                                    placeholder={multiValueChips?.length ? "Add path" : placeholder ?? "Path or URL"}
-                                    value={draftValue}
-                                    onChangeText={setDraftValue}
-                                    onKeyPress={handleDraftKeyPress}
-                                    onBlur={commitDraft}
-                                />
-                            </CardContainer>
-                        </ScrollView>
-                    </YStack>
-                ) : (
-                    <Input
-                        placeholder={placeholder ?? "Path or URL"}
-                        value={Array.isArray(currentValue) ? toSingle(currentValue) : currentValue}
-                        onChangeText={(e) => handleManualChange(e)}
-                        f={1}
-                        paddingRight={"50px"}
-                        disabled={disabled}
-                    >
-                    </Input>
-                )}
-                <Dialog.Trigger >
-                    <Button
-                        h="$4"
-                        position="absolute"
-                        borderColor={"$color6"}
-                        borderTopLeftRadius={"$0"}
-                        borderBottomLeftRadius={"$0"}
-                        disabled={disabled}
-                        right={"$0"}
-                        onPress={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onPressOpen()
-                            setOpen(!open)
-                        }}
-                        icon={<Folder fillOpacity={0} color="gray" size={15} />}>
-                    </Button>
-                </Dialog.Trigger>
-            </XStack>
+
+            <Dialog.Trigger >
+                <Button
+                    h="$4"
+                    position="absolute"
+                    borderTopLeftRadius={"$0"}
+                    borderBottomLeftRadius={"$0"}
+                    disabled={disabled}
+                    right={"$0"}
+                    onPress={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onPressOpen()
+                        const current = allowMultiple ? toArray(currentValue) : toArray(currentValue)
+                        setBaseFiles(current)
+                        setTmpFile(allowMultiple ? current : toSingle(current))
+                        setOpen(!open)
+                    }}
+                    icon={<Folder fillOpacity={0} color="gray" size={15} />}>
+                </Button>
+            </Dialog.Trigger>
             <Dialog.Portal>
                 <Dialog.Content height={"80vh"} width={"80vw"} padding="$6" >
                     <Tinted>
@@ -245,7 +133,9 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
                         onOpenFile={(file) => {
                             setOpen(false)
                             if (allowMultiple) {
-                                onChange(file?.path ? [file.path] : [])
+                                const selected = file?.path ? [file.path] : []
+                                const merged = Array.from(new Set([...(Array.isArray(currentValue) ? currentValue : toArray(currentValue)), ...selected])).filter(Boolean)
+                                onChange(merged)
                             } else {
                                 onChange(file.path)
                             }
@@ -284,7 +174,15 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
                                 f={1}
                                 onPress={() => {
                                     setOpen(false)
-                                    onChange(tmpFile)
+                                    if (allowMultiple) {
+                                        const merged = Array.from(new Set([...
+                                            baseFiles,
+                                            ...(Array.isArray(tmpFile) ? tmpFile : toArray(tmpFile))
+                                        ])).filter(Boolean)
+                                        onChange(merged)
+                                    } else {
+                                        onChange(tmpFile)
+                                    }
                                 }}>
                                 Accept
                             </Button>
@@ -292,6 +190,6 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
                     </XStack>
                 </Dialog.Content>
             </Dialog.Portal>
-        </Dialog>
-    )
+        </Dialog >
+    </XStack>
 }
