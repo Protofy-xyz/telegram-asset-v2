@@ -57,6 +57,7 @@ import MPU6050Interrupt from './MPU6050Interrupt';
 import WK2168 from './WK2168';
 import GPS from './GPS';
 import TCS34725 from './TCS34725';
+import PIDClimate from './PIDClimate';
 
 const deviceMasks = [
   Wifi,
@@ -115,7 +116,8 @@ const deviceMasks = [
   MPU6050Interrupt,
   WK2168,
   GPS,
-  TCS34725
+  TCS34725,
+  PIDClimate
 ]
 
 const masksLength = deviceMasks.length
