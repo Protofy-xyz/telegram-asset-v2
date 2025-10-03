@@ -3,7 +3,7 @@ import { TextArea } from '@my/ui'
 import { XStack, YStack, Button, Spinner, Text } from '@my/ui'
 import { Trash, Plus, Mic } from '@tamagui/lucide-icons'
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
-import { useBoardStates } from '@extensions/boards/store/boardStore'
+import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
 
 const minHeight = 50;
 const maxHeight = 200;
@@ -19,16 +19,29 @@ function renderHighlightedHTML(text: string) {
 
   const withTags = escaped.replace(
     /&lt;([^&][\s\S]*?)&gt;/g,
-    (_m, inner) => `<span 
-    style="
-      background-color: var(--blue10); 
-      color: var(--gray3); 
-      width: fit-content; 
-      display: inline; 
-      padding: 2px 5px; 
-      margin: 0px 5px; 
-      border-radius: 5px; 
-      ">${inner}</span>`
+    (_m, inner) => {
+      if (inner.startsWith("#")) {
+        return `<span 
+          style="
+            background-color: var(--green10); 
+            color: var(--gray3); 
+            width: fit-content; 
+            display: inline; 
+            padding-block: 3px; 
+            border-radius: 5px; 
+          "><span style="color:transparent">&lt;</span>${inner ?? ""}<span style="color:transparent">&gt;</span></span>`
+      } else if (inner.startsWith("@")) {
+        return `<span 
+          style="
+            background-color: var(--blue10); 
+            color: var(--gray3); 
+            width: fit-content; 
+            display: inline; 
+            padding-block: 3px; 
+            border-radius: 5px; 
+          "><span style="color:transparent">&lt;</span>${inner ?? ""}<span style="color:transparent">&gt;</span></span>`
+      }
+    }
   );
 
   return withTags;
@@ -46,7 +59,17 @@ export const BoardTextArea = ({
   ...rest
 }: any) => {
   let states = useBoardStates()
+  let actions = useBoardActions()
+  const dropDownActions = Object.keys(actions)
   const dropDownStates = Object.keys(states)
+  const dropDown = {
+    states: dropDownStates, actions: dropDownActions
+  }
+  const tagsChars = {
+    states: "#",
+    actions: "@"
+  }
+
 
   const ref = useRef(null);
   const [speechRecognitionEnabled, setSpeechRecognitionEnabled] = useState(false);
@@ -67,9 +90,9 @@ export const BoardTextArea = ({
     }
   };
 
-  const [showStates, setShowStates] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(null)
   const [inputInsertIndex, setInputInsetIndex] = useState(0)
-  const [selectedState, setSelectedState] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const overlayRef = useRef<HTMLDivElement | null>(null);
 
@@ -78,16 +101,14 @@ export const BoardTextArea = ({
   }, [value]);
 
   useEffect(() => {
-    if (!showStates) {
-      setSelectedState(0)
+    if (!showDropdown) {
+      setSelectedIndex(0)
       return
     }
 
-    if (!dropDownStates.length) {
-      return
-    }
+    if (!dropDown[showDropdown]?.length) return
 
-    const el = itemRefs.current[selectedState];
+    const el = itemRefs.current[selectedIndex];
     el?.scrollIntoView({ block: 'nearest' });
 
 
@@ -95,30 +116,34 @@ export const BoardTextArea = ({
       e.stopPropagation()
       switch (e.key) {
         case 'ArrowUp':
-          if (showStates) {
-            if ((selectedState - 1) >= 0) {
-              setSelectedState(prev => prev - 1)
+          if (showDropdown) {
+            if ((selectedIndex - 1) >= 0) {
+              setSelectedIndex(prev => prev - 1)
             } else {
-              setSelectedState(dropDownStates.length - 1)
+              setSelectedIndex(dropDownStates.length - 1)
             }
           }
           break;
         case 'ArrowDown':
-          if (showStates) {
-            if ((selectedState + 1) < dropDownStates.length) {
-              setSelectedState(prev => prev + 1)
+          if (showDropdown) {
+            if ((selectedIndex + 1) < dropDownStates.length) {
+              setSelectedIndex(prev => prev + 1)
             } else {
-              setSelectedState(0)
+              setSelectedIndex(0)
             }
           }
           break;
         case 'Escape':
-          setShowStates(false)
+          setShowDropdown(null)
           break;
         case 'Tab':
           let value = ref.current.value
-          onChange({ target: { value: value.slice(0, inputInsertIndex - 1) + "<" + (dropDownStates[selectedState] || "unknown state") + ">" + value.slice(inputInsertIndex + 1) } })
-          setShowStates(false)
+          onChange({
+            target: {
+              value: value.slice(0, inputInsertIndex - 1) + "<" + (tagsChars[showDropdown]) + (dropDown[showDropdown][selectedIndex] || "unknown state") + "> " + value.slice(inputInsertIndex + 1)
+            }
+          })
+          setShowDropdown(null)
           break;
         default:
           break;
@@ -132,7 +157,52 @@ export const BoardTextArea = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showStates, selectedState]);
+  }, [showDropdown, selectedIndex, inputInsertIndex]);
+
+  // handle backspace
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.stopPropagation()
+      }
+
+      switch (e.key) {
+        case 'Backspace':
+        case 'Delete':
+          const input = e.target;
+          const start = input.selectionStart;
+          const end = input.selectionEnd;
+
+          if (start === end) {
+            const before = value.slice(0, start);
+            const after = value.slice(start);
+
+            const match = before.match(/<[@#][^>]+>$/);
+            if (match) {
+              e.preventDefault();
+
+              const tokenStart = start - match[0].length;
+              const newValue = value.slice(0, tokenStart) + after;
+              onChange({ target: { value: newValue } })
+
+              setTimeout(() => {
+                // set the cursor after tag remove
+                input.setSelectionRange(tokenStart, tokenStart);
+              }, 0);
+            }
+          }
+
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [inputInsertIndex]);
 
   // El hack: Espera a que se estabilice el DOM
   useEffect(() => {
@@ -151,7 +221,7 @@ export const BoardTextArea = ({
   return (
     <XStack pos='relative' f={1} gap="$3" ai="flex-end">
       {
-        showStates && <YStack
+        showDropdown && <YStack
           style={{
             position: "absolute",
             width: "100%",
@@ -166,14 +236,14 @@ export const BoardTextArea = ({
           borderColor={"$gray6"}
           gap="$2"
         >
-          <Text color="$gray9" pl="$2" fontSize={"$5"} >states</Text>
+          <Text color="$gray9" pl="$2" fontSize={"$5"} >{showDropdown}</Text>
           {
-            dropDownStates.length
-              ? dropDownStates.map((s, i) => <button
+            dropDown[showDropdown]?.length
+              ? dropDown[showDropdown].map((s, i) => <button
                 ref={el => (itemRefs.current[i] = el)}
                 key={s}
                 style={{
-                  backgroundColor: i === selectedState ? "var(--gray6)" : "transparent",
+                  backgroundColor: i === selectedIndex ? "var(--gray6)" : "transparent",
                   paddingBlock: "5px",
                   paddingInline: "10px",
                   borderRadius: "5px",
@@ -181,7 +251,7 @@ export const BoardTextArea = ({
                   scrollMarginBottom: '6px',
                 }}
               >{s}</button>)
-              : <div>no actions or states found</div>
+              : <div>no {showDropdown} found</div>
           }
         </YStack>}
       <YStack pos="relative" f={1} w="100%">
@@ -219,7 +289,8 @@ export const BoardTextArea = ({
           value={value}
           placeholder={placeholder}
           onChange={(prevText) => {
-            if (prevText.target.value.endsWith("#")) setShowStates(false);
+            if (prevText.target.value.endsWith(" #")) setShowDropdown("states");
+            if (prevText.target.value.endsWith(" @")) setShowDropdown("actions");
             onChange(prevText);
           }}
           onKeyUp={(e) => {
@@ -229,12 +300,14 @@ export const BoardTextArea = ({
               return;
             }
             const index = e.currentTarget.selectionStart;
-            if (e.currentTarget.value[index - 1] === "#") {
-              setShowStates(true);
-            } else {
-              setShowStates(false);
-            }
             setInputInsetIndex(index);
+            if (e.currentTarget.value[index - 1] === "#") {
+              setShowDropdown("states");
+            } else if (e.currentTarget.value[index - 1] === "@") {
+              setShowDropdown("actions");
+            } else {
+              setShowDropdown(null)
+            }
           }}
           onKeyDown={onKeyDown}
           onScroll={(e) => {

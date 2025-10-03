@@ -347,7 +347,7 @@ class NeopixelsBus {
                                 // if (i == 10) return ["Adressable flicker Effect With Custom Values"]
                                 return []
                             }).flat()) },
-                            "brightness": { "type": "int", "minimum": 0, "maximum": 255 }
+                            "brightness": { "type": "int", "minimum": 0, "maximum": 255, "default": 255 }
                         }
                     },
                 },
@@ -440,11 +440,11 @@ class NeopixelsBus {
                     payload: {
                         type: 'json-schema',
                         schema: {
-                            "from": { "type": "int", "minimum": 0, "maximum": this.numLeds - 1 },
-                            "to": { "type": "int", "minimum": 0, "maximum": this.numLeds - 1 },
-                            "red": { "type": "int", "minimum": 0, "maximum": 255 },
-                            "green": { "type": "int", "minimum": 0, "maximum": 255 },
-                            "blue": { "type": "int", "minimum": 0, "maximum": 255 }
+                            "from": { "type": "int", "minimum": 0, "maximum": this.numLeds - 1, "default": 0 },
+                            "to": { "type": "int", "minimum": 0, "maximum": this.numLeds - 1, "default": this.numLeds - 1 },
+                            "red": { "type": "int", "minimum": 0, "maximum": 255, "default": 0 },
+                            "green": { "type": "int", "minimum": 0, "maximum": 255, "default": 0 },
+                            "blue": { "type": "int", "minimum": 0, "maximum": 255, "default": 0 }
 
                           }
                     },
