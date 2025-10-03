@@ -130,6 +130,7 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
                     </Tinted>
                     <FileBrowser
                         initialPath={initialPath}
+                        explorer={{disableFileToolbar: true}}
                         onOpenFile={(file) => {
                             setOpen(false)
                             if (allowMultiple) {

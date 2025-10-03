@@ -137,7 +137,7 @@ const Layout = ({ input, previews, submitButton, dropzoneProps, files }) => {
 
 
 
-export const Uploader = ({ path, onUpload, setShowUploadDialog, accept = "image/*,audio/*,video/*,.zip" }) => {
+export const Uploader = ({ path, onUpload, setShowUploadDialog, accept = "image/*,audio/*,video/*,.zip,application/pdf,.pdf" }) => {
   // specify upload params and url for your files
   const getUploadParams = ({ meta }) => { return { url: '/api/core/v1/files/' + path } }
 
