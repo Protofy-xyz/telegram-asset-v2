@@ -6,7 +6,34 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { useBoardStates } from '@extensions/boards/store/boardStore'
 
 const minHeight = 50;
-const maxHeight = 300;
+const maxHeight = 200;
+
+function renderHighlightedHTML(text: string) {
+  // 1) escapar HTML
+  const esc = (s: string) => s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  const escaped = esc(text);
+
+  const withTags = escaped.replace(
+    /&lt;([^&][\s\S]*?)&gt;/g,
+    (_m, inner) => `<span 
+    style="
+      background-color: var(--blue10); 
+      color: var(--gray3); 
+      width: fit-content; 
+      display: inline; 
+      padding: 2px 5px; 
+      margin: 0px 5px; 
+      border-radius: 5px; 
+      ">${inner}</span>`
+  );
+
+  return withTags;
+}
+
 
 export const BoardTextArea = ({
   value,
@@ -44,6 +71,7 @@ export const BoardTextArea = ({
   const [inputInsertIndex, setInputInsetIndex] = useState(0)
   const [selectedState, setSelectedState] = useState(0)
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
     adjustHeight();
@@ -152,65 +180,105 @@ export const BoardTextArea = ({
               : <div>no actions or states found</div>
           }
         </YStack>}
-      <textarea
-        ref={ref}
-        readOnly={readOnly}
-        value={value}
-        placeholder={placeholder}
-        onChange={(prevText) => {
-          if (prevText.target.value.endsWith("#")) {
-            setShowStates(false)
-          }
-          onChange(prevText)
-        }}
-        onKeyUp={(e) => {
-          e.preventDefault()
-          if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-            e.stopPropagation()
-            return
-          }
-          const index = e.currentTarget.selectionStart;
-          if (e.currentTarget.value[index - 1] === "#") {
-            setShowStates(true)
+      <YStack pos="relative" f={1} w="100%">
+        <YStack
+          ref={overlayRef}
+          display="block"
+          aria-hidden
+          pointerEvents="none"
+          pos="absolute"
+          t={0}
+          l={0}
+          r={0}
+          b={0}
+          style={{
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'break-word',
+            wordBreak: 'normal',
+            boxSizing: 'border-box',
+            paddingTop: '14px',
+            padding: '10px',
+            borderRadius: '8px',
+            fontFamily: 'inherit',
+            fontSize: 'inherit',
+            fontWeight: 'inherit',
+            letterSpacing: 'inherit',
+            overflow: 'auto',
+            lineHeight: '1.4',
+          }}
+          dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(value) }}
+        />
+
+        <textarea
+          ref={ref}
+          readOnly={readOnly}
+          value={value}
+          placeholder={placeholder}
+          onChange={(prevText) => {
+            if (prevText.target.value.endsWith("#")) setShowStates(false);
+            onChange(prevText);
+          }}
+          onKeyUp={(e) => {
+            e.preventDefault();
+            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+              e.stopPropagation();
+              return;
+            }
+            const index = e.currentTarget.selectionStart;
+            if (e.currentTarget.value[index - 1] === "#") {
+              setShowStates(true);
+            } else {
+              setShowStates(false);
+            }
+            setInputInsetIndex(index);
+          }}
+          onKeyDown={onKeyDown}
+          onScroll={(e) => {
+            // sincroniza el scroll con la capa de resaltado
+            if (overlayRef.current) {
+              overlayRef.current.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
+              overlayRef.current.scrollLeft = (e.target as HTMLTextAreaElement).scrollLeft;
+            }
+          }}
+          spellCheck={false}
+          style={{
+            lineHeight: '1.4',
+            width: '100%',
+            resize: 'none',
+            overflowY: 'auto',
+            minHeight: `${minHeight}px`,
+            maxHeight: `${maxHeight}px`,
+            boxSizing: 'border-box',
+            border: '1px solid var(--color6)',
+            borderRadius: '8px',
+            paddingTop: "14px",
+            padding: '10px',
+            backgroundColor: 'var(--gray4)',
+            color: 'transparent',
+            caretColor: 'black',  // this caret, has color, to use for the overlay text
+            fontSize: "inherit",
+            ...style,
+          }}
+        />
+      </YStack>
+      {
+        speechRecognition && browserSupportsSpeechRecognition && <XStack cursor="pointer" onPress={() => {
+          if (speechRecognitionEnabled) {
+            setSpeechRecognitionEnabled(false);
+            SpeechRecognition.stopListening();
+            // Stop speech recognition logic here
           } else {
-            setShowStates(false)
+            resetTranscript();
+            setSpeechRecognitionEnabled(true);
+            SpeechRecognition.startListening({ continuous: true });
+            // Start speech recognition logic here
           }
-          setInputInsetIndex(index)
-        }}
-        onKeyDown={onKeyDown}
-        spellCheck={false}
-        style={{
-          lineHeight: '1.4',
-          width: '100%',
-          resize: 'none',
-          overflowY: 'hidden',
-          minHeight: `${minHeight}px`,
-          maxHeight: `${maxHeight}px`,
-          boxSizing: 'border-box',
-          border: '1px solid var(--color6)',
-          borderRadius: '8px',
-          padding: '10px',
-          backgroundColor: 'var(--color3)',
-          ...style,
-        }}
-        {...rest}
-      />
-      {speechRecognition && browserSupportsSpeechRecognition && <XStack cursor="pointer" onPress={() => {
-        if (speechRecognitionEnabled) {
-          setSpeechRecognitionEnabled(false);
-          SpeechRecognition.stopListening();
-          // Stop speech recognition logic here
-        } else {
-          resetTranscript();
-          setSpeechRecognitionEnabled(true);
-          SpeechRecognition.startListening({ continuous: true });
-          // Start speech recognition logic here
-        }
-      }} gap="$2" h="fit-content" w="fit-content" backgroundColor={speechRecognitionEnabled ? "$red6" : "$gray4"} p="$3" jc="center"
-        ai="center" hoverStyle={{ opacity: 0.9 }} pressStyle={{ opacity: 1.0 }}
-        br="$3">
-        <Mic size={"$1"} />
-      </XStack>}
-    </XStack>
+        }} gap="$2" h="fit-content" w="fit-content" backgroundColor={speechRecognitionEnabled ? "$red6" : "$gray4"} p="$3" jc="center"
+          ai="center" hoverStyle={{ opacity: 0.9 }} pressStyle={{ opacity: 1.0 }}
+          br="$3">
+          <Mic size={"$1"} />
+        </XStack>
+      }
+    </XStack >
   );
 };
