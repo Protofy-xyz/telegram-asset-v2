@@ -19,16 +19,31 @@ function renderHighlightedHTML(text: string) {
 
   const withTags = escaped.replace(
     /&lt;([^&][\s\S]*?)&gt;/g,
-    (_m, inner) => `<span 
-    style="
-      background-color: var(--blue10); 
-      color: var(--gray3); 
-      width: fit-content; 
-      display: inline; 
-      padding: 2px 5px; 
-      margin: 0px 5px; 
-      border-radius: 5px; 
-      ">${inner}</span>`
+    (_m, inner) => {
+      if (inner.startsWith("#")) {
+        return `<span 
+          style="
+            background-color: var(--green10); 
+            color: var(--gray3); 
+            width: fit-content; 
+            display: inline; 
+            padding: 2px 5px; 
+            margin: 0px 5px; 
+            border-radius: 5px; 
+          ">${inner}</span>`
+      } else if (inner.startsWith("@")) {
+        return `<span 
+          style="
+            background-color: var(--blue10); 
+            color: var(--gray3); 
+            width: fit-content; 
+            display: inline; 
+            padding: 2px 5px; 
+            margin: 0px 5px; 
+            border-radius: 5px; 
+          ">${inner}</span>`
+      }
+    }
   );
 
   return withTags;
@@ -133,6 +148,48 @@ export const BoardTextArea = ({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [showStates, selectedState]);
+
+  // handle backspace
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      e.stopPropagation()
+      switch (e.key) {
+        case 'Backspace':
+        case 'Delete':
+          const input = e.target;
+          const start = input.selectionStart;
+          const end = input.selectionEnd;
+
+          if (start === end) {
+            const before = value.slice(0, start);
+            const after = value.slice(start);
+
+            const match = before.match(/<[@#][^>]+>$/);
+            if (match) {
+              e.preventDefault();
+
+              const tokenStart = start - match[0].length;
+              const newValue = value.slice(0, tokenStart) + after;
+              onChange({ target: { value: newValue } })
+
+              setTimeout(() => {
+                // set the cursor after tag remove
+                input.setSelectionRange(tokenStart, tokenStart);
+              }, 0);
+            }
+          }
+
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [inputInsertIndex]);
 
   // El hack: Espera a que se estabilice el DOM
   useEffect(() => {
