@@ -83,6 +83,10 @@ export const BoardTextArea = ({
       return
     }
 
+    if (!dropDownStates.length) {
+      return
+    }
+
     const el = itemRefs.current[selectedState];
     el?.scrollIntoView({ block: 'nearest' });
 
@@ -113,7 +117,7 @@ export const BoardTextArea = ({
           break;
         case 'Tab':
           let value = ref.current.value
-          onChange({ target: { value: value.slice(0, inputInsertIndex - 1) + "<" + dropDownStates[selectedState] + ">" + value.slice(inputInsertIndex + 1) } })
+          onChange({ target: { value: value.slice(0, inputInsertIndex - 1) + "<" + (dropDownStates[selectedState] || "unknown state") + ">" + value.slice(inputInsertIndex + 1) } })
           setShowStates(false)
           break;
         default:
