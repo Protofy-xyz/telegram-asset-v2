@@ -80,7 +80,7 @@ export function FilePicker({ onFileChange, file, placeholder, initialPath = "", 
         {allowMultiple
             ? <InputMultiple
                 values={value as any}
-                setValues={setValue}
+                setValues={onChange}
                 placeholder={placeholder ?? "Path or URL"}
             />
             : <Input
