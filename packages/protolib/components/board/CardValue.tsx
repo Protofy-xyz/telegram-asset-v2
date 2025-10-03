@@ -1,9 +1,9 @@
-import { ScrollView, XStack, YStack, Button } from "tamagui";
+import { ScrollView, XStack } from "tamagui";
 import { JSONView } from "../JSONView";
 import { Markdown } from "../Markdown";
 import { useEffect, useState } from "react";
 
-export const CardValue = ({ value, style = {}, id = undefined, mode = undefined, readOnly = true, executeActionOnEdit= (val)=>{}}) => {
+export const CardValue = ({ value, style = {}, id = undefined, mode = undefined, readOnly = true, executeActionOnEdit = (val) => { } }) => {
     let fullHeight = false;
     const [markdownData, setMarkdownData] = useState(mode === 'markdown' ? value : '');
     useEffect(() => {
@@ -11,15 +11,13 @@ export const CardValue = ({ value, style = {}, id = undefined, mode = undefined,
             setMarkdownData(value);
         }
     }, [value, mode]);
-    if(mode === 'markdown') {
-        return (
-            <YStack  f={1} width={"100%"} height={"100%"}>
-                <Markdown readOnly={readOnly} data={markdownData} setData={(val)=>{setMarkdownData(val); if(executeActionOnEdit){ executeActionOnEdit(val)}}}/>
-            </YStack>
-        )  
+
+    if (mode === 'markdown') {
+        return <Markdown mih="160px" width={"100%"} readOnly={readOnly} data={markdownData} setData={(val) => { setMarkdownData(val); if (executeActionOnEdit) { executeActionOnEdit(val) } }} />
     }
+
     //check if value is string, number or boolean
-    if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
+    if (!['string', 'number', 'boolean'].includes(typeof value)) {
         return <ScrollView mt="20px" width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
             <JSONView src={value} />
         </ScrollView>

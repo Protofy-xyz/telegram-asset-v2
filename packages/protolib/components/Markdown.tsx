@@ -6,8 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import { Monaco } from "./Monaco";
 import { useThemeSetting } from "@tamagui/next-theme";
 import useKeypress from "react-use-keypress";
-import { YStack } from "tamagui";
+import { StackProps, XStack, YStack } from "@my/ui";
 import { v4 as uuid } from "uuid";
+import { InteractiveIcon } from "./InteractiveIcon";
 
 function escapeMarkdownForTemplate(md: string) {
   return md;
@@ -38,37 +39,25 @@ async function copyToClipboardSafe(text: string) {
   }
 }
 
-export function Markdown({
-  data,
-  readOnly = false,
-  copyToClipboardEnabled = true,
-  setData = undefined,
-}: {
+type MarkdownProps = {
   data: any;
   readOnly?: boolean;
   copyToClipboardEnabled?: boolean;
   setData?: (val: string) => void;
-}) {
+} & StackProps
+
+export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true, setData = undefined, ...props }: MarkdownProps) {
   const text = data ? (typeof data === "string" ? data : String(data)) : "";
   const [editing, setEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { resolvedTheme } = useThemeSetting();
   const id = uuid();
-
   const code = useRef(text);
   const originalBeforeEdit = useRef(text);
-
-  const [copied, setCopied] = useState(false);
-
-  // detecta si está en HTTP y no es localhost
   const isHttp = window.location.protocol === "http:";
   const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  const disableCopy = copyToClipboardEnabled ? isHttp && !isLocalhost: true;
-  useEffect(() => {
-    if (data) {
-      code.current = escapeMarkdownForTemplate(data);
-      if (!editing) originalBeforeEdit.current = code.current;
-    }
-  }, [data, editing]);
+  const disableCopy = copyToClipboardEnabled ? isHttp && !isLocalhost : true;
+  const normalizedText = text;
 
   const save = () => {
     if (setData) setData(escapeMarkdownForTemplate(code.current));
@@ -87,8 +76,6 @@ export function Markdown({
     }
   });
 
-  const normalizedText = text;
-
   const handleCopy = async () => {
     const toCopy = editing ? code.current : normalizedText;
     const ok = await copyToClipboardSafe(toCopy);
@@ -98,160 +85,101 @@ export function Markdown({
     }
   };
 
-  return (
-    <div
-      className="no-drag markdown-body"
-      style={{
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        padding: "1em",
-        overflow: "hidden",
-        fontFamily: "sans-serif",
-        fontSize: "14px",
-        color: "var(--color)",
-        backgroundColor: "var(--bg-color)",
-        gap: "0.5rem",
-      }}
-    >
-      {/* Toolbar */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "0.5rem",
-          flexShrink: 0,
-        }}
-      >
-        {(!disableCopy && !editing) && (
-          <Tinted>
-            <YStack
-              jc="center"
-              ai="center"
-              br="$4"
-              cursor="pointer"
-              onPress={handleCopy}
-            >
-              {copied ? (
-                <Check size={20} color="var(--green9)" />
-              ) : (
-                <ClipboardPaste size={20} color="var(--color8)" />
-              )}
-            </YStack>
-          </Tinted>
-        )}
+  useEffect(() => {
+    if (data) {
+      code.current = escapeMarkdownForTemplate(data);
+      if (!editing) originalBeforeEdit.current = code.current;
+    }
+  }, [data, editing]);
 
-        {!editing ? (
-          !readOnly ? (
-            <Tinted>
-              <YStack
-                jc="center"
-                ai="center"
-                br="$4"
-                cursor="pointer"
-                onPress={() => {
-                  if (readOnly) return;
-                  originalBeforeEdit.current = code.current; // snapshot para cancelar
-                  setEditing(true);
-                }}
-                title="Edit"
-              >
-                <Pencil size={20} color="var(--color8)" />
-              </YStack>
-            </Tinted>
-          ) : null
-        ) : (
-          <>
-            <Tinted>
-              <YStack
-                jc="center"
-                ai="center"
-                br="$4"
-                cursor="pointer"
-                onPress={cancel}
-                title="Cancel"
-              >
-                <X size={20} color="var(--red9)" />
-              </YStack>
-            </Tinted>
-            <Tinted>
-              <YStack
-                jc="center"
-                ai="center"
-                br="$4"
-                cursor="pointer"
-                onPress={save}
-                title="Save"
-              >
-                <Save size={20} color="var(--color8)" />
-              </YStack>
-            </Tinted>
-          </>
-        )}
-      </div>
-
-      {/* Contenido */}
-      <div style={{ flex: 1, overflow: "auto" }}>
-        {editing ? (
-          <Monaco
-            key={id}
-            height={"100%"}
-            path={id + "_markdown.md"}
-            darkMode={resolvedTheme === "dark"}
-            sourceCode={code.current}
-            onChange={(newCode) => {
-              code.current = newCode;
-            }}
-            autofocus={true}
-            options={{
-              folding: false,
-              lineDecorationsWidth: 0,
-              lineNumbersMinChars: 0,
-              lineNumbers: false,
-              minimap: { enabled: false },
-              suggestOnTriggerCharacters: false,
-              quickSuggestions: false,
-              wordBasedSuggestions: false,
-              parameterHints: { enabled: false },
-              tabCompletion: "off",
-            }}
-            // onMount={(editor, monaco) => {
-            //   editor.addCommand(monaco.KeyCode.Enter, () => {
-            //     const model = editor.getModel();
-            //     if (!model) return;
-            //     const selections = editor.getSelections() || [];
-            //     editor.executeEdits(
-            //       "hard-break",
-            //       selections.map((sel) => ({
-            //         range: sel,
-            //         text: "  \n",
-            //         forceMoveMarkers: true,
-            //       }))
-            //     );
-            //   });
-            // }}
+  return <YStack className="no-drag markdown-body" f={1} w="100%" p="$3" bc="var(--bg-color)" {...props}>
+    {/* Toolbar */}
+    <XStack jc="flex-end" gap="$0.5"  >
+      {
+        (!disableCopy && !editing)
+        && <InteractiveIcon
+          IconColor={copied ? 'var(--green10)' : 'var(--color10)'}
+          Icon={copied ? Check : ClipboardPaste}
+          hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
+          onPress={handleCopy}
+          title="Copy to clipboard"
+        />
+      }
+      {!editing ? (
+        !readOnly
+        && <InteractiveIcon
+          Icon={Pencil}
+          hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
+          onPress={() => {
+            if (readOnly) return;
+            originalBeforeEdit.current = code.current; // snapshot to cancel
+            setEditing(true);
+          }}
+        />
+      ) : (
+        <>
+          <InteractiveIcon
+            Icon={X}
+            IconColor="var(--red10)"
+            hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
+            onPress={cancel}
+            title="Cancel"
           />
-        ) : (
-          <Tinted>
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                a: ({ node, ...props }) => {
-                  const target = props.target ?? "_blank";
-                  const rel = target === "_blank" ? "noopener noreferrer" : undefined;
-                  return (
-                    <a {...props} target={target} rel={rel}>
-                      {props.children}
-                    </a>
-                  );
-                },
-              }}
-            >
-              {normalizedText}
-            </ReactMarkdown>
-          </Tinted>
-        )}
-      </div>
-    </div>
-  );
+          <InteractiveIcon
+            Icon={Save}
+            hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
+            onPress={save}
+            title="Save"
+          />
+        </>
+      )}
+    </XStack>
+    {/* Content */}
+    <YStack style={{ flex: 1, overflow: "auto" }}>
+      {editing ? (
+        <Monaco
+          key={id}
+          height={"100%"}
+          path={id + "_markdown.md"}
+          darkMode={resolvedTheme === "dark"}
+          sourceCode={code.current}
+          onChange={(newCode) => {
+            code.current = newCode;
+          }}
+          autofocus={true}
+          options={{
+            folding: false,
+            lineDecorationsWidth: 0,
+            lineNumbersMinChars: 0,
+            lineNumbers: false,
+            minimap: { enabled: false },
+            suggestOnTriggerCharacters: false,
+            quickSuggestions: false,
+            wordBasedSuggestions: false,
+            parameterHints: { enabled: false },
+            tabCompletion: "off",
+          }}
+        />
+      ) : (
+        <Tinted>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ node, ...props }) => {
+                const target = props.target ?? "_blank";
+                const rel = target === "_blank" ? "noopener noreferrer" : undefined;
+                return (
+                  <a {...props} target={target} rel={rel}>
+                    {props.children}
+                  </a>
+                );
+              },
+            }}
+          >
+            {normalizedText}
+          </ReactMarkdown>
+        </Tinted>
+      )}
+    </YStack>
+  </YStack>
 }
