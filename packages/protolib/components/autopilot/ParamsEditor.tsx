@@ -83,7 +83,7 @@ export const ParamsEditor = ({
 
 
   const handleChangeDefaultValue = useCallback((rowId, newValue) => {
-    if (newValue.startsWith("board.") || newValue.startsWith("@")) {
+    if (newValue.startsWith("board.") || newValue.startsWith("#")) {
       setStatesVisible(rowId)
     } else {
       setStatesVisible(undefined)
