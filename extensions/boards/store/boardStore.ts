@@ -27,6 +27,21 @@ export const useBoardStates = (boardName?: string) => {
     return state
 }
 
+export const useBoardActions = (boardName?: string) => {
+    const [state, setState] = useState({})
+    if (!boardName) {
+        boardName = useBoardName()
+    }
+
+    useEffect(() => {
+        if (window) {
+            setState(window["protoActions"]?.["boards"]?.[boardName] ?? {})
+        }
+    }, [window["protoActions"], boardName])
+
+    return state
+}
+
 export const useBoardName = () => {
     const [boardName, setBoardName] = useState(null)
 
