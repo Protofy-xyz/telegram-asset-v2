@@ -156,12 +156,12 @@ export const DashboardCard = ({
                         </XStack>
                     )}
                     {cardActions && <XStack
+                        w="100%"
+                        mt={"$3"}
+                        h={20}
+                        ai="center"
                         position="absolute"
-                        right={0}
-                        className="no-drag"
-                        pr="$3.5"
                         opacity={hovered ? 0.75 : 0}
-                        pressStyle={{ opacity: 0.9 }}
                         zi={999}
                     >
                         {cardActions}

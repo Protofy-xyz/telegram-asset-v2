@@ -3,7 +3,7 @@ import { API, getPendingResult } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
 import ErrorMessage from "protolib/components/ErrorMessage"
-import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Popover, Text, Stack, H1, H3 } from '@my/ui'
+import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Popover, Text, Stack, H1, H3, TooltipSimple } from '@my/ui'
 import { computeLayout } from '@extensions/autopilot/layout';
 import { DashboardGrid, gridSizes, getCurrentBreakPoint } from 'protolib/components/DashboardGrid';
 import { LogPanel } from 'protolib/components/LogPanel';
@@ -35,6 +35,7 @@ import { useLog } from '@extensions/logs/hooks/useLog'
 import { useIsHighlightedCard } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
+import { PublicIcon } from 'protolib/components/IconSelect'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -109,11 +110,12 @@ const FileWidget = dynamic<any>(() =>
   { loading: () => <Tinted><Center><Spinner size='small' color="$color7" scale={4} /></Center></Tinted> }
 );
 
-const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails }) => {
+const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails, states }) => {
   const [menuOpened, setMenuOpened] = useState(false)
+  const [cardStatesOpen, setCardStatesOpen] = useState(false)
   const MenuButton = ({ text, Icon, onPress }: { text: string, Icon: any, onPress: any }) => {
     return (
-      <XStack id={id} ml="$1" o={1} br="$5" p="$3" als="flex-start" cursor="pointer" pressStyle={{ opacity: 0.7 }} hoverStyle={{ backgroundColor: "$color5" }}
+      <XStack width="100%" id={id} o={1} br="$5" p="$3" als="flex-start" cursor="pointer" pressStyle={{ opacity: 0.7 }} hoverStyle={{ backgroundColor: "$color5" }}
         onPress={(e) => {
           onPress(e)
           setMenuOpened(false)
@@ -135,32 +137,70 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
     return true;
   })
 
-  return <Tinted>
-    <XStack pt={"$2"}>
-      {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
-      <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "config")} />
+  const isJSONView = states && typeof states !== 'string' && typeof states !== 'number' && typeof states !== 'boolean'
 
-      <Popover onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
+  return <Tinted>
+    <XStack pt="$1" f={1} pr="$4" jc="space-between" ai="center">
+      <Popover key="card-states" onOpenChange={setCardStatesOpen} open={cardStatesOpen} allowFlip={true} stayInFrame={true} placement='bottom-start'>
         <Popover.Trigger>
-          <CardIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
+          <CardIcon className='no-drag' Icon={Book} onPress={(e) => { e.stopPropagation(); setCardStatesOpen(true) }} />
         </Popover.Trigger>
-        <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$borderColor" bc={"$color1"} >
-          <Tinted>
-            <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"} onPress={(e) => e.stopPropagation()}>
-              <YStack>
-                {
-                  menuShortcuts.map((menu, index) => (
-                    <MenuButton key={index} text={menu.text} Icon={menu.icon} onPress={() => onEdit(menu.id)} />
-                  ))
-                }
-                <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
-                <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />
-                <MenuButton text="Delete" Icon={Trash2} onPress={() => onDelete()} />
-              </YStack>
-            </YStack>
-          </Tinted>
+
+        <Popover.Content gap="$2" padding={0} ai="flex-start" minWidth="300px" maxWidth="400px" minHeight="100px" maxHeight="500px" overflow='auto' space={0} l="$2" p="$2" bw={1} boc="$gray6" bc={"$gray1"} >
+          <XStack jc="center" ai="center" w="100%" gap="$2" flexWrap='wrap-reverse'>
+            <Text color="$gray10" ta="center">{data.name}</Text>
+            {data?.icon && <PublicIcon
+              name={data.icon}
+              color="var(--gray10)"
+              size={18}
+            />}
+          </XStack>
+          {data?.configParams && Object.keys(data.configParams).length > 0 && <YStack pl="$2" gap="$2">
+            <Text color="$color" fontSize="$3">Inputs</Text>
+            <XStack flexWrap="wrap" w="100%" gap="$2">
+              {Object.keys(data.configParams).map((param, index) => (
+                <TooltipSimple key={index} label={data.configParams[param]?.defaultValue || 'No default value'} delay={{ open: 200, close: 0 }} restMs={0}>
+                  <YStack cursor='help' hoverStyle={{ backgroundColor: "$gray5" }} px="$3" py="$1" br="$3" bw={1} boc="$gray4" bc={"$gray3"}>
+                    <Text fontWeight="500">{param}</Text>
+                  </YStack>
+                </TooltipSimple>
+              ))}
+            </XStack>
+          </YStack>
+          }
+          <YStack p="$2" gap="$2" w="100%" br="$2">
+            <Text color="$color" fontSize="$3">State</Text>
+            {isJSONView ? <JSONView src={states ?? {}} /> : <Text color={states ? "$color": "$gray10"}>{states ?? "N/A"}</Text>}
+          </YStack>
         </Popover.Content>
       </Popover>
+
+      <XStack className='no-drag'>
+        {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
+        <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "config")} />
+
+        <Popover key="card-menu" onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
+          <Popover.Trigger>
+            <CardIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
+          </Popover.Trigger>
+          <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} bw={1} boc="$gray6" bc={"$gray1"}>
+            <Tinted>
+              <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"} onPress={(e) => e.stopPropagation()}>
+                <YStack>
+                  {
+                    menuShortcuts.map((menu, index) => (
+                      <MenuButton key={index} text={menu.text} Icon={menu.icon} onPress={() => onEdit(menu.id)} />
+                    ))
+                  }
+                  <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
+                  <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />
+                  <MenuButton text="Delete" Icon={Trash2} onPress={() => onDelete()} />
+                </YStack>
+              </YStack>
+            </Tinted>
+          </Popover.Content>
+        </Popover>
+      </XStack>
     </XStack>
   </Tinted>
 }
@@ -183,6 +223,7 @@ const ActionCard = ({
   onDetails = () => { },
   onCopy = () => { },
   data = {} as any,
+  states = undefined,
   containerProps = {},
   setData = (data, id) => { }
 }) => {
@@ -249,6 +290,7 @@ const ActionCard = ({
         <CardActions
           id={id}
           data={data}
+          states={states}
           onDelete={onDelete}
           onDetails={onDetails}
           onEdit={onEdit}
@@ -674,6 +716,7 @@ const Board = ({ board, icons }) => {
         content: <ActionCard
           board={board}
           data={item}
+          states={states?.boards?.[board.name]?.[item.name]}
           html={item.html}
           displayResponse={item.displayResponse}
           name={item.name}
