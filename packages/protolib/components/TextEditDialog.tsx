@@ -2,6 +2,10 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { XStack, YStack, TextArea, StackProps } from "@my/ui";
 import { AlertDialog } from "./AlertDialog";
 import { Tinted } from "./Tinted";
+import { Monaco } from "./Monaco";
+import { v4 as uuid } from "uuid";
+import { useThemeSetting } from "@tamagui/next-theme";
+import { Markdown } from "./Markdown";
 
 type TextEditDialogContextValue = {
     open: boolean;
@@ -26,6 +30,7 @@ type EditorProps = {
     onChange: (value: string) => void;
     placeholder?: string;
     textAreaProps?: Partial<React.ComponentProps<typeof TextArea>>;
+    type: "text" | "markdown" | "html";
 };
 
 type TriggerProps = { children: React.ReactNode } & StackProps;
@@ -41,7 +46,7 @@ const Root = ({ children, ...props }: RootProps) => {
 
     return (
         <TextEditDialogContext.Provider value={ctx}>
-           {children}
+            {children}
         </TextEditDialogContext.Provider>
     );
 };
@@ -62,8 +67,10 @@ const Trigger = ({ children, ...props }: TriggerProps) => {
     );
 };
 
-const Editor = ({ value, readValue, onChange, placeholder = "", textAreaProps }: EditorProps) => {
+const Editor = ({ value, readValue, onChange, placeholder = "", textAreaProps, type = "text" }: EditorProps) => {
     const { open, setOpen, tempValue, setTempValue } = useTextEditDialogCtx();
+    const { resolvedTheme } = useThemeSetting()
+    const id = uuid();
 
     useEffect(() => {
         if (open) {
@@ -93,49 +100,72 @@ const Editor = ({ value, readValue, onChange, placeholder = "", textAreaProps }:
                     br="$4"
                     style={{ boxShadow: "rgba(0, 0, 0, 0.1) 0 1px 10px" }}
                 >
-                    <TextArea
-                        value={tempValue}
-                        onChangeText={setTempValue}
-                        size="$5"
-                        width="60vw"
-                        pl="$6"
-                        br="$4"
-                        pt="$6"
-                        h={"60vh"}
-                        fontSize="$7"
-                        borderColor="$gray8"
-                        outlineColor="$gray8"
-                        focusStyle={{ outlineColor: "transparent", borderColor: "$gray8" }}
-                        outlineWidth={0.5}
-                        borderWidth={1}
-                        ac="flex-start"
-                        style={{ transition: "all 0.2s ease-in-out", alignSelf: "flex-start" }}
-                        placeholder={placeholder}
-                        placeholderTextColor={"$gray8"}
-                        bc="$bgContent"
-                        hoverStyle={{ borderColor: "$gray8" }}
-                        onKeyPress={(e: any) => {
-                            const key = e.key;
-                            const mod = e.ctrlKey || e.metaKey;
-                            if ((key === "s" || key === "S") && mod) {
-                                handleSave();
-                                e.preventDefault();
-                                e.stopPropagation();
-                            } else if (key === "Enter" && !e.shiftKey) {
-                                handleSave();
-                                e.preventDefault();
-                                e.stopPropagation();
-                            } else if (key === "Escape") {
-                                handleClose();
-                            }
-                        }}
-                        autoFocus
-                        // selection={{
-                        //     start: tempValue.length,
-                        //     end: tempValue.length
-                        // }}
-                        {...textAreaProps}
-                    />
+                    {
+                        type === "html"
+                            ? <YStack width="70vw" maxWidth="90vw" height="70vh" pt="$4">
+                                <Monaco
+                                    path={`${id || 'html-editor'}.html`}
+                                    language="html"
+                                    height="100%"
+                                    darkMode={resolvedTheme === 'dark'}
+                                    sourceCode={tempValue}
+                                    onChange={setTempValue}
+                                    // onSave={onSave}
+                                    // onEscape={onCancel}
+                                    options={{
+                                        minimap: { enabled: false },
+                                        wordWrap: "on",
+                                        folding: false,
+                                    }}
+                                />
+                            </YStack>
+                            : type === "markdown"
+                                ? <YStack width="70vw" maxWidth="90vw" height="70vh" >
+                                    <Markdown data={tempValue} setData={setTempValue} />
+                                </YStack>
+                                : <TextArea
+                                    value={tempValue}
+                                    onChangeText={setTempValue}
+                                    size="$5"
+                                    width="60vw"
+                                    pl="$6"
+                                    br="$4"
+                                    pt="$6"
+                                    h={"60vh"}
+                                    fontSize="$7"
+                                    borderColor="$gray8"
+                                    outlineColor="$gray8"
+                                    focusStyle={{ outlineColor: "transparent", borderColor: "$gray8" }}
+                                    outlineWidth={0.5}
+                                    borderWidth={1}
+                                    ac="flex-start"
+                                    style={{ transition: "all 0.2s ease-in-out", alignSelf: "flex-start" }}
+                                    placeholder={placeholder}
+                                    placeholderTextColor={"$gray8"}
+                                    bc="$bgContent"
+                                    hoverStyle={{ borderColor: "$gray8" }}
+                                    onKeyPress={(e: any) => {
+                                        const key = e.key;
+                                        const mod = e.ctrlKey || e.metaKey;
+                                        if ((key === "s" || key === "S") && mod) {
+                                            handleSave();
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        } else if (key === "Enter" && !e.shiftKey) {
+                                            handleSave();
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        } else if (key === "Escape") {
+                                            handleClose();
+                                        }
+                                    }}
+                                    autoFocus
+                                    // selection={{
+                                    //     start: tempValue.length,
+                                    //     end: tempValue.length
+                                    // }}
+                                    {...textAreaProps}
+                                />}
                 </YStack>
             </AlertDialog>
         </Tinted>

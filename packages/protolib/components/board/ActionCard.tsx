@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { XStack, YStack, Text, Switch, Input, TextArea, Button } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
@@ -100,9 +100,9 @@ export const ParamsForm = ({ data, children }) => {
                             }}
                         >
                             <Text ml="20px" mb="$2">{key}</Text>
-                            {(type == 'text' || !['json', 'array', 'boolean', 'path'].includes(type)) &&
+                            {(!['json', 'array', 'boolean', 'path'].includes(type)) &&
                                 <TextEditDialog f={1}>
-                                    {type == 'text'
+                                    {["text"].includes(type)
                                         ? <TextArea
                                             className="no-drag"
                                             f={1}
@@ -113,6 +113,7 @@ export const ParamsForm = ({ data, children }) => {
                                             placeholder={placeholder}
                                             rows={6}
                                         />
+                                        // html, markdown, string, number
                                         : <Input
                                             className="no-drag"
                                             value={value}
@@ -122,14 +123,15 @@ export const ParamsForm = ({ data, children }) => {
                                             onChangeText={(val) => setParam(key, val)}
                                         />
                                     }
-                                    <TextEditDialog.Trigger bc="$backgroundColor" pos="absolute" right={"$2"} m="$3" bottom={0} cursor="pointer" >
+                                    <TextEditDialog.Trigger bc="$gray1" pl="$2" pos="absolute" right={"$2"} m="$3" bottom={0} cursor="pointer" >
                                         <Icon name="maximize-2" size={20} color={"var(--gray8)"} style={{}} />
                                     </TextEditDialog.Trigger>
                                     <TextEditDialog.Editor
                                         placeholder={key}
                                         value={value}
                                         readValue={() => paramsState[key] ?? ""}
-                                        onChange={(val) => setParam(key, val ?? "")}
+                                        onChange={(val) => setParam(key, val)}
+                                        type={type}
                                     />
                                 </TextEditDialog>
                             }
