@@ -315,6 +315,43 @@ class NeopixelsBus {
             type: this.type,
             actions: [
                 {
+                    name: 'manual_control',
+                    label: 'Manual control',
+                    description: 'Control the neopixels manually by setting the state, color, effect and brightness. State can be ON or OFF. Color is an object with r, g and b values between 0 and 255. Effect is a string with the name of the effect to use. Brightness is a value between 0 and 255',
+                    endpoint: "/" + this.type + "/" + this.name + "/command",
+                    connectionType: 'mqtt',
+                    payload: {
+                        type: 'json-schema',
+                        schema: {
+                            "state": { "type": "string", "enum": ["ON", "OFF"] },
+                            "color": {
+                                "type": "object",
+                                "properties": {
+                                    "r": { "type": "int", "minimum": 0, "maximum": 255 },
+                                    "g": { "type": "int", "minimum": 0, "maximum": 255 },
+                                    "b": { "type": "int", "minimum": 0, "maximum": 255 }
+                                },
+                                "required": ["r", "g", "b"]
+                            },
+                            "effect": { "type": "string", "enum": ["none"].concat(this.effects.filter(e => e).map((e, i) => {
+                                if (i == 0) return ["Fast Pulse", "Slow Pulse"]
+                                if (i == 1) return ["My Slow Random Effect", "My Fast Random Effect"]
+                                if (i == 2) return ["Strobe Effect With Custom Values"]
+                                if (i == 3) return ["Flicker Effect With Custom Values"]
+                                // if (i == 4) return ["Rainbow Effect With Custom Values"]
+                                // if (i == 5) return ["Color Wipe Effect With Custom Values"]
+                                // if (i == 6) return ["Scan Effect With Custom Values"]
+                                // if (i == 7) return ["Twinkle Effect With Custom Values"]
+                                // if (i == 8) return ["Random Twinkle Effect With Custom Values"]
+                                // if (i == 9) return ["Fireworks Effect With Custom Values"]
+                                // if (i == 10) return ["Adressable flicker Effect With Custom Values"]
+                                return []
+                            }).flat()) },
+                            "brightness": { "type": "int", "minimum": 0, "maximum": 255 }
+                        }
+                    },
+                },
+                {
                     name: 'red',
                     label: 'Red',
                     description: 'Turns on the neopixels in red',

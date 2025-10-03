@@ -3,7 +3,7 @@ import { API, getPendingResult } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
 import ErrorMessage from "protolib/components/ErrorMessage"
-import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Popover, Text, Stack, H1, H3 } from '@my/ui'
+import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Popover, Text, Stack, H1, H3, TooltipSimple } from '@my/ui'
 import { computeLayout } from '@extensions/autopilot/layout';
 import { DashboardGrid, gridSizes, getCurrentBreakPoint } from 'protolib/components/DashboardGrid';
 import { LogPanel } from 'protolib/components/LogPanel';
@@ -35,6 +35,7 @@ import { useLog } from '@extensions/logs/hooks/useLog'
 import { useIsHighlightedCard } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
+import { PublicIcon } from 'protolib/components/IconSelect'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -145,10 +146,31 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
           <CardIcon className='no-drag' Icon={Book} onPress={(e) => { e.stopPropagation(); setCardStatesOpen(true) }} />
         </Popover.Trigger>
 
-        <Popover.Content gap="$2" padding={0} ai="flex-start" minWidth="200px" maxWidth="500px" minHeight="100px" space={0} l="$2" p="$2" bw={1} boc="$gray6" bc={"$gray1"} >
-          <Text pl="$2" color="$gray10">{data.name}</Text>
-          <YStack p="$2" w="100%" br="$2">
-            {isJSONView ? <JSONView src={states ?? {}} /> : <Text>{states ?? "N/A"}</Text>}
+        <Popover.Content gap="$2" padding={0} ai="flex-start" minWidth="300px" maxWidth="400px" minHeight="100px" maxHeight="500px" overflow='auto' space={0} l="$2" p="$2" bw={1} boc="$gray6" bc={"$gray1"} >
+          <XStack jc="center" ai="center" w="100%" gap="$2" flexWrap='wrap-reverse'>
+            <Text color="$gray10" ta="center">{data.name}</Text>
+            {data?.icon && <PublicIcon
+              name={data.icon}
+              color="var(--gray10)"
+              size={18}
+            />}
+          </XStack>
+          {data?.configParams && Object.keys(data.configParams).length > 0 && <YStack pl="$2" gap="$2">
+            <Text color="$color" fontSize="$3">Inputs</Text>
+            <XStack flexWrap="wrap" w="100%" gap="$2">
+              {Object.keys(data.configParams).map((param, index) => (
+                <TooltipSimple key={index} label={data.configParams[param]?.defaultValue || 'No default value'} delay={{ open: 200, close: 0 }} restMs={0}>
+                  <YStack cursor='help' hoverStyle={{ backgroundColor: "$gray5" }} px="$3" py="$1" br="$3" bw={1} boc="$gray4" bc={"$gray3"}>
+                    <Text fontWeight="500">{param}</Text>
+                  </YStack>
+                </TooltipSimple>
+              ))}
+            </XStack>
+          </YStack>
+          }
+          <YStack p="$2" gap="$2" w="100%" br="$2">
+            <Text color="$color" fontSize="$3">State</Text>
+            {isJSONView ? <JSONView src={states ?? {}} /> : <Text color={states ? "$color": "$gray10"}>{states ?? "N/A"}</Text>}
           </YStack>
         </Popover.Content>
       </Popover>
