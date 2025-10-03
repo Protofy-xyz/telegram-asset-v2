@@ -11,7 +11,7 @@ import { Save } from '@tamagui/lucide-icons'
 import { ComponentCodeGeneration } from './ComponentCodeGeneration'
 
 export const UISideMenu = ({ leftIcons = <></>, icons = <></>, uiCode, boardRef, board, actions, states, resolvedTheme, onChange }) => {
-    const boardStates = states.boards ? states.boards[board.name] : {}
+    const boardStates = states?.boards ? states.boards[board.name] : {}
     const boardActions = actions.boards ? actions.boards[board.name] : {}
 
     const savedCode = useRef(uiCode.code)
