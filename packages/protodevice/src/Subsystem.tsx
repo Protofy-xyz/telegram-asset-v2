@@ -108,17 +108,38 @@ const Action = ({ deviceName, action }) => {
         }
     };
 
+    // ---- json-schema helpers (minimal) ----
+    const normalizeType = (t?: string) => (t === "int" || t === "integer" ? "integer" : (t || "string"));
+
+    const buildInitialFromSchema = (schema?: Record<string, any>) => {
+    if (!schema) return {};
+    const out: Record<string, any> = {};
+    Object.entries(schema).forEach(([k, f]: any) => {
+        const t = normalizeType(f?.type);
+        if (f?.default !== undefined) out[k] = f.default;
+        else if (t === "object") out[k] = buildInitialFromSchema(f?.properties || {});
+        else if (Array.isArray(f?.enum) && f.enum.length > 0) out[k] = f.enum[0];
+        else if (t === "integer" || t === "number") out[k] = "";
+        else out[k] = "";
+    });
+    return out;
+    };
+
+    const setNested = (obj: any, path: string[], val: any) => {
+    if (path.length === 0) return val;
+    const [h, ...r] = path;
+    return { ...obj, [h]: setNested(obj?.[h] ?? {}, r, val) };
+    };
+    const getNested = (obj: any, path: string[]) =>
+    path.reduce((acc, k) => (acc ? acc[k] : undefined), obj);
 
     const [value, setValue] = useState(
-        action?.payload?.type == "json-schema" ?
-
-            action?.payload?.schema ? Object.keys(action.payload.schema).reduce((acc, key) => {
-                acc[key] = "";
-                return acc;
-            }
-                , {}) : {}
-
-            : "");
+    action?.payload?.type == "json-schema"
+        ? buildInitialFromSchema(action?.payload?.schema)
+        : Array.isArray(action?.payload)
+        ? (action?.payload?.[0]?.value ?? "")
+        : ""
+);
 
     var type
     if (action?.payload?.value) {
@@ -164,8 +185,8 @@ const Action = ({ deviceName, action }) => {
                 </Button>
             </XStack>
         case "select":
-            const [selectedOption, setSelectedOption] = useState(action.payload[0].value);
-            const payloadOptions = Array.isArray(action.payload.value) ? action.payload.value : [];
+            const payloadOptions = Array.isArray(action.payload) ? action.payload : [];
+            const [selectedOption, setSelectedOption] = useState(payloadOptions[0]?.value ?? "");
             console.log("🤖 ~ Action ~ payloadOptions:", payloadOptions)
 
             console.log("🤖 ~ Action ~ selectedOption:", selectedOption)
@@ -173,8 +194,13 @@ const Action = ({ deviceName, action }) => {
             return <XStack gap="$3" width={'100%'} alignItems="center">
             <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" maxWidth="150px">{action.label ?? action.name}</Text>
             <Select value={selectedOption} onValueChange={setSelectedOption} disablePreventBodyScroll>
-                <Select.Trigger f={1} iconAfter={ChevronDown}>
-                    <Select.Value placeholder="Select an option" />
+                <Select.Trigger
+                    iconAfter={ChevronDown}
+                    width={180}
+                    maxWidth={220}
+                    flexShrink={0}
+                >
+                    <Select.Value placeholder="Select an option" numberOfLines={1} />
                 </Select.Trigger>
                 <Select.Content zIndex={9999999999}>
                     <Select.Viewport>
@@ -307,33 +333,116 @@ const Action = ({ deviceName, action }) => {
                 </XStack>
             );
         }
-        default:
+        default: {
             const schema = action?.payload?.schema;
-            return <XStack gap="$3" alignSelf='flex-start' alignItems="center" mt="10px" mb="10px" width="100%">
-                <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" maxWidth="150px">{action.label ?? action.name}</Text>
-                {
-                    Object.keys(value).map((key, index) => {
-                        const fieldEnum = schema?.[key]?.enum;
-                        if (Array.isArray(fieldEnum) && fieldEnum.length > 1) {
-                            // Render a <Select> for enum fields
-                            return (
+
+            const NumberInput = ({
+                current,
+                onCommit,
+                minimum,
+                maximum,
+                step,
+                placeholder
+            }: {
+                current: number | string;
+                onCommit: (n: number) => void;
+                minimum?: number;
+                maximum?: number;
+                step?: number;
+                placeholder?: string;
+            }) => {
+                const toStr = (v: any) =>
+                    v === undefined || v === null || Number.isNaN(v) ? "" : String(v);
+
+                const [text, setText] = React.useState<string>(toStr(current));
+
+                // keep in sync if parent changes value externally
+                React.useEffect(() => {
+                    setText(toStr(current));
+                }, [current]);
+
+                const clamp = (n: number) => {
+                    const lo = minimum ?? -Infinity;
+                    const hi = maximum ?? Infinity;
+                    return Math.min(hi, Math.max(lo, n));
+                };
+
+                const commit = (raw: string) => {
+                    if (raw.trim() === "") {
+                        const fallback = minimum ?? 0;
+                        onCommit(fallback);
+                        setText(String(fallback));
+                        return;
+                    }
+                    const n = Number(raw);
+                    if (isNaN(n)) {
+                        // do not commit invalid; restore previous rendered value
+                        setText(toStr(current));
+                        return;
+                    }
+                    const rounded = step && step > 0 ? Math.round(n / step) * step : n;
+                    const final = clamp(rounded);
+                    onCommit(final);
+                    setText(String(final));
+                };
+
+                return (
+                    <Input
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}        // no commit while typing
+                        onBlur={(e) => commit(e.target.value)}           // commit on blur
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") commit(text);           // optional: commit on Enter
+                        }}
+                        width="$8"
+                        inputMode="numeric"
+                        textAlign="center"
+                        placeholder={placeholder}
+                    />
+                );
+            };
+
+            const renderFields = (objSchema: Record<string, any>, basePath: string[] = []) =>
+                Object.entries(objSchema).map(([key, field]: any) => {
+                    const t = normalizeType(field?.type);
+                    const path = [...basePath, key];
+                    const cur = getNested(value, path);
+                    const label = field?.title ?? key;
+
+                    if (t === "object") {
+                        return (
+                            <YStack key={path.join(".")} gap="$2" width="100%" mt="$2">
+                                <Text fontWeight="600">{label}</Text>
+                                <XStack gap="$3" flexWrap="wrap">
+                                    {renderFields(field?.properties || {}, path)}
+                                </XStack>
+                            </YStack>
+                        );
+                    }
+
+                    if (Array.isArray(field?.enum) && field.enum.length > 0) {
+                        return (
+                            <XStack key={path.join(".")} gap="$2" alignItems="center" width="100%">
+                                <Text maxWidth="150px" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">{label}</Text>
                                 <Select
-                                    key={index}
-                                    value={value[key]}
-                                    onValueChange={(val) => {
-                                        setValue({ ...value, [key]: val });
-                                    }}
+                                    value={cur ?? ""}
+                                    onValueChange={(v) => setValue((prev) => setNested(prev, path, v))}
                                     disablePreventBodyScroll
                                 >
-                                    <Select.Trigger f={1} iconAfter={ChevronDown}>
-                                        <Select.Value placeholder={key} />
+                                    <Select.Trigger
+                                        iconAfter={ChevronDown}
+                                        width={180}          // or "$12" / any token you like
+                                        maxWidth={220}
+                                        flexShrink={0}
+                                    >
+                                        <Select.Value placeholder={label} numberOfLines={1} />
                                     </Select.Trigger>
                                     <Select.Content zIndex={9999999999}>
                                         <Select.Viewport>
                                             <Select.Group>
-                                                {fieldEnum.map((enumVal) => (
-                                                    <Select.Item key={enumVal} value={enumVal}>
-                                                        <Select.ItemText>{enumVal}</Select.ItemText>
+                                                {field.enum.map((ev) => (
+                                                    <Select.Item key={String(ev)} value={String(ev)}>
+                                                        <Select.ItemText>{String(ev)}</Select.ItemText>
                                                         <Select.ItemIndicator marginLeft="auto">
                                                             <Check size={16} />
                                                         </Select.ItemIndicator>
@@ -343,34 +452,69 @@ const Action = ({ deviceName, action }) => {
                                         </Select.Viewport>
                                     </Select.Content>
                                 </Select>
-                            );
-                        } else if (Array.isArray(fieldEnum) && fieldEnum.length === 1) {
-                            // Auto-set the single enum value and skip rendering
-                            value[key] = fieldEnum[0];
-                            return null;
-                        } else {
-                            return <Input
-                                key={index}
-                                value={value[key]}
-                                onChange={async (e) => {
-                                    setValue({ ...value, [key]: e.target.value })
-                                }}
-                                width="$10"
-                                placeholder={key}
+                            </XStack>
+                        );
+                    }
+
+                    if (t === "integer" || t === "number") {
+                        return (
+                            <XStack key={path.join(".")} gap="$2" alignItems="center">
+                                <Text maxWidth="150px" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">{label}</Text>
+                                <NumberInput
+                                    current={cur}
+                                    onCommit={(n) => setValue((prev) => setNested(prev, path, n))}
+                                    minimum={field?.minimum}
+                                    maximum={field?.maximum}
+                                    step={field?.step ?? (t === "integer" ? 1 : undefined)}
+                                    placeholder={label}
+                                />
+                            </XStack>
+                        );
+                    }
+
+                    return (
+                        <XStack key={path.join(".")} gap="$2" alignItems="center" width="100%">
+                            <Text maxWidth="150px" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">{label}</Text>
+                            <Input
+                                value={cur ?? ""}
+                                onChange={(e) => setValue((prev) => setNested(prev, path, e.target.value))}
+                                placeholder={label}
                                 flex={1}
                             />
-                        }
-                    })
-                }
-                <Button
-                    key={action.name} // Make sure to provide a unique key for each Button
-                    onPress={() => { buttonAction(action, value) }}
-                    color="$color10"
-                    title={"Description: " + action.description}
+                        </XStack>
+                    );
+                });
+            return (
+                <YStack
+                    gap="$3"
+                    alignSelf="stretch"
+                    width="100%"
+                    borderWidth="1px"
+                    borderRadius="$4"
+                    borderColor="$color8"
+                    padding="$3"
                 >
-                    Send
-                </Button>
-            </XStack>
+                    <Text whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" fow="600">
+                        {action.label ?? action.name}
+                    </Text>
+
+                    {/* recursive fields */}
+                    <XStack gap="$3" flexWrap="wrap">
+                        {renderFields(schema || {})}
+                        <Button
+                            key={action.name}
+                            onPress={() => { buttonAction(action, value); }}
+                            color="$color10"
+                            title={"Description: " + action.description}
+                            alignSelf="center"
+                            width="100%"
+                        >
+                            Send
+                        </Button>
+                    </XStack>
+                </YStack>
+            );
+        }
     }
 }
 
