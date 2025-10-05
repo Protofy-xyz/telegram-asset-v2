@@ -30,23 +30,23 @@ export default ({ boards, objects }) => {
         { "name": "Assets", "icon": Blocks, "href": "/workspace/assets" },
         { "name": "Tasks", "icon": Zap, "href": "/workspace/tasks" },
         { "name": "Devices", "icon": Router, "href": "/workspace/devices" },
-        { "name": "Events", "icon": "activity", "href": "/workspace/events" },
+        { "name": "Files", "icon": "folder", "href": "/workspace/files?path=/", "path": "" },
+        { "name": "Config", "icon": Cog, "href": "/workspace/config" }
     ]
     enableArduinos ? integrations.push({ "name": "Arduinos", "icon": Router, "href": "/workspace/arduinos" }) : null
 
     // const systemBoard = { "name": "System", "icon": LayoutDashboard, "href": "/workspace/dashboard" }
     const manageBoards = { "name": "Manage Boards", "icon": MonitorCog, "href": '/workspace/boards' }
 
-    const systemMenu = [
-        { "name": "Users", "icon": "users", "href": "/workspace/users" },
-        { "name": "Keys", "icon": Key, "href": "/workspace/keys" },
-        // { "name": "Settings", "icon": Wrench, "href": "/workspace/settings" },
-        { "name": "Services", "icon": HelpingHand, "href": "/workspace/services" },
-        { "name": "Databases", "icon": Database, href: "/workspace/databases" },
-        { "name": "Files", "icon": "folder", "href": "/workspace/files?path=/", "path": "" },
-        { "name": "Settings", "icon": Cog, "href": "/workspace/settings" },
-        { "name": "Themes", "icon": Palette, "href": "/workspace/themes" }
-    ]
+    // const systemMenu = [
+    //     { "name": "Users", "icon": "users", "href": "/workspace/users" },
+    //     { "name": "Keys", "icon": Key, "href": "/workspace/keys" },
+    //     // { "name": "Settings", "icon": Wrench, "href": "/workspace/settings" },
+    //     { "name": "Services", "icon": HelpingHand, "href": "/workspace/services" },
+    //     { "name": "Databases", "icon": Database, href: "/workspace/databases" },
+    //     { "name": "Settings", "icon": Cog, "href": "/workspace/settings" },
+    //     { "name": "Themes", "icon": Palette, "href": "/workspace/themes" }
+    // ]
 
     const objectsMenu = objectsWithPage.length ? objectsWithPage.map((obj) => {
         return { "name": obj.name.charAt(0).toUpperCase() + obj.name.slice(1), "icon": Box, "href": ('/workspace/') + obj.features.adminPage }
@@ -57,7 +57,7 @@ export default ({ boards, objects }) => {
         Boards: [],
         Storage: objectsMenu,
         Platform: integrations,
-        System: systemMenu
+        // System: systemMenu
     }
 
     const boardsGroupByCategory = boards ? boards.reduce((acc, board) => {
