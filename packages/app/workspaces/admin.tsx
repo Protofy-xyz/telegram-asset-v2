@@ -27,6 +27,7 @@ export default ({ boards, objects }) => {
     const objectsWithPage = objects ? objects.filter(o => o?.features?.adminPage) : []
 
     const integrations = [
+        { "name": "Assets", "icon": Blocks, "href": "/workspace/assets" },
         { "name": "Tasks", "icon": Zap, "href": "/workspace/tasks" },
         { "name": "Devices", "icon": Router, "href": "/workspace/devices" },
         { "name": "Events", "icon": "activity", "href": "/workspace/events" },
@@ -37,7 +38,6 @@ export default ({ boards, objects }) => {
     const manageBoards = { "name": "Manage Boards", "icon": MonitorCog, "href": '/workspace/boards' }
 
     const systemMenu = [
-        { "name": "Assets", "icon": Blocks, "href": "/workspace/assets" },
         { "name": "Users", "icon": "users", "href": "/workspace/users" },
         { "name": "Keys", "icon": Key, "href": "/workspace/keys" },
         // { "name": "Settings", "icon": Wrench, "href": "/workspace/settings" },
