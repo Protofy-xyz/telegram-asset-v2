@@ -193,7 +193,7 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
         }
 
         if (mode === "rules") {
-            return "<" + text + ">"
+            return "<@" + text + "> "
         }
 
         return text
@@ -202,10 +202,10 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
             {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
-                const path = 'board' + copy.namespace
+                const path = '<#' + copy.namespace
                     .filter(v => v)
-                    .map(k => `?.[${JSON.stringify(k)}]`)
-                    .join('')
+                    .map(k => `${JSON.stringify(k).replaceAll('"', '')}`)
+                    .join('.') + "> "
 
                 console.log('Key path:', path)
                 navigator.clipboard.writeText(path)
