@@ -177,7 +177,7 @@ function SignIn({ darkMode, isClient }: { darkMode: boolean, isClient: boolean }
                   No users have been created yet!<br/><br/>
                 </Paragraph>
                 <Paragraph>
-                  Create the first user from <strong>Settings → Users</strong> and press <strong>(+)</strong>, or run:<br/>
+                  Create the first user from <strong>Config → Users</strong> and press <strong>(+)</strong>, or run:<br/>
                 </Paragraph>
                 <Paragraph>
                   <code>yarn add-user &lt;email&gt; &lt;password&gt; &lt;type&gt;</code><br/><br/>
