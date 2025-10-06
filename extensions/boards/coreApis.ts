@@ -143,23 +143,37 @@ const processCards = async (boardId, cards, context, regenerate?) => {
 const getDB = (path, req, session, context?) => {
     const db = {
         async *iterator() {
-            // console.log("Iterator")
-            //check if boards folder exists
-            const boards = await getBoards()
-            // console.log("Files: ", files)
-            for (const file of boards) {
-                //read file content
-                await acquireLock(BoardsDir(getRoot()) + file);
-                try {
-                    const fileContent = await fs.readFile(BoardsDir(getRoot()) + file + '.json', 'utf8')
-                    const decodedContent = JSON.parse(fileContent)
-                    if (!decodedContent?.tags?.includes('system')) {
-                        yield [file.name, fileContent];
-                    }
-                } catch (e) {
 
+            const boards = await getBoards()
+            for (const boardId of boards) {
+                const lockKey = BoardsDir(getRoot(req)) + boardId;
+                await acquireLock(lockKey);
+                try {
+                    const filePath = `${BoardsDir(getRoot(req))}${boardId}.json`;
+                    const fileContent = await fs.readFile(filePath, 'utf8');
+                    const decodedContent = JSON.parse(fileContent);
+
+                    const userType = session?.user?.type;
+                    const isSystem = !!decodedContent?.tags?.includes('system');
+                    const usersList = Array.isArray(decodedContent?.users) ? decodedContent.users : null;
+
+                    let allowed: boolean;
+
+                    if (isSystem) {
+                        // System boards: show ONLY if a whitelist exists and includes this user type
+                        allowed = !!(usersList && userType && usersList.includes(userType));
+                    } else {
+                        // Non-system boards: if whitelist exists, enforce it; if not, allow
+                        allowed = usersList ? !!(userType && usersList.includes(userType)) : true;
+                    }
+
+                    if (!allowed) continue;
+
+                    yield [boardId, fileContent];
+                } catch (_e) {
+                    // ignore malformed/unreadable boards to keep behavior consistent
                 } finally {
-                    releaseLock(BoardsDir(getRoot()) + file);
+                    releaseLock(lockKey);
                 }
             }
         },
