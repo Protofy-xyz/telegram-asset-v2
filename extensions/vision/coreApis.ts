@@ -297,8 +297,8 @@ export default async (app: Application, context: typeof APIContext) => {
         templateName: 'describe image using AI',
         name: 'vision_describe',
         defaults: {
-            width: 2,
-            height: 10,
+            width: 3,
+            height: 14,
             type: "action",
             icon: 'camera',
             name: 'describe',
@@ -308,6 +308,7 @@ export default async (app: Application, context: typeof APIContext) => {
                 prompt: "prompt for the image model",
             },
             rulesCode: `return await execute_action("/api/core/v1/vision/describe", userParams)`,
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  const readme = `\n  ### 🔑 How to get your OpenAI API key?\n  1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n  2. Log in and click **\"Create new secret key\"**.\n  3. Copy and save your key securely, it won't be shown again.\n  > ⚠️ **Keep it secret!** Your API key is private and usage-based.\n  `;\n  \n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={['OPENAI_API_KEY']} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
             displayResponse: true
         },
         emitEvent: true,
