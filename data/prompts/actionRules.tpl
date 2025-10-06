@@ -36,6 +36,10 @@ The rules array is:
     if no other rule apply or dont know what to do, just return and do nothing
 </rules>
 
+Tags may appear in rules:
+@actionName → reference to an action, executed with await executeAction({ name: ‘actionName’, params: {...} }).
+#statePath → reference to a state, obtained with board?.foo?.bar.
+
 Remember: the rules are not avilable at runtime, while executing the code, are just for you to read and decide what code to generate.
 The available action list to execute is:
 

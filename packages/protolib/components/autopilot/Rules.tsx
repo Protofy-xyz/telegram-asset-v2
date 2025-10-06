@@ -4,15 +4,15 @@ import { XStack, YStack, Button, Spinner } from '@my/ui'
 import { Trash, Plus, RotateCcw } from '@tamagui/lucide-icons'
 import dynamic from 'next/dynamic';
 
-const AutoHeightTextArea = dynamic(() =>
-  import('../AutoHeightTextArea').then(mod => mod.AutoHeightTextArea),
+const BoardTextArea = dynamic(() =>
+  import('@extensions/boards/components/BoardTextArea').then(mod => mod.BoardTextArea),
   { ssr: false }
 );
 
 export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur, ...props }) => {
   return (
     <XStack ai="flex-end" gap="$2" mb="$2" width="100%" {...props}>
-      <AutoHeightTextArea
+      <BoardTextArea
         speechRecognition={true}
         readOnly={!onEdit}
         value={value}
@@ -141,7 +141,7 @@ export const Rules = ({
 
         {/* Input para nueva regla */}
         <XStack ai="flex-end" gap="$3" mb="$2" mt="$4" width="100%">
-          <AutoHeightTextArea
+          <BoardTextArea
             speechRecognition={true}
             placeholder={isLoadingOrGenerating ? "Generating rules..." : "Add new rule..."}
             value={newRule}
