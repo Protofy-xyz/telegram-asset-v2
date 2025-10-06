@@ -375,7 +375,18 @@ const extraCards = [
   - Real time updates.
   - Customize parameters.
   - Rule execution on each value change.
-  - Customize the card view (UI/render).`
+  - Customize the card view (UI/render).`,
+      params: {
+        input: "input to observe"
+      },
+      configParams: {
+        input: {
+          visible: true,
+          defaultValue: "",
+          type: "string"
+        }
+      },
+      rulesCode: "return params.input;\n",
     },
     name: 'Observer',
     id: 'value'

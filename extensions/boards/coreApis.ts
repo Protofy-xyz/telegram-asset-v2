@@ -1,5 +1,5 @@
 import { BoardModel } from "./boardsSchemas";
-import { AutoAPI, getRoot, handler } from 'protonode'
+import { AutoAPI, getRoot, handler, resolveBoardParam } from 'protonode'
 import { API, getLogger, ProtoMemDB, generateEvent } from 'protobase'
 import { promises as fs } from 'fs';
 import * as fsSync from 'fs';
@@ -464,6 +464,7 @@ export default async (app, context) => {
 
         // Iterate over cards to get the card content
         for (let i = 0; i < fileContent.cards.length; i++) {
+
             const card = fileContent.cards[i];
             if (!card) {
                 continue;
@@ -471,11 +472,6 @@ export default async (app, context) => {
 
             try {
                 if (card.type == 'value') {
-                    if (!card.rulesCode) {
-                        // logger.info({ card }, "No rulesCode for value card: " + card.key);
-                        continue;
-                    }
-
                     // logger.info({ card }, "Evaluating rulesCode for card: " + card.key);
                     if (!memory[card.key]) {
                         memory[card.key] = {}
@@ -488,11 +484,26 @@ export default async (app, context) => {
                     } else if (rulesCode.split("\n").length == 1 && !rulesCode.startsWith('return ')) {
                         rulesCode = 'return ' + rulesCode;
                     }
-                    const wrapper = new AsyncFunction('states', 'board', 'data', 'memory', `
+                    const wrapper = new AsyncFunction('params', 'states', 'board', 'data', 'memory', `
                         ${rulesCode}
                     `);
 
-                    let value = await wrapper(states, states?.boards?.[boardId] ?? {}, card, memory[card.key]);
+                    const params = card.params || {};
+                    
+                    for (const param in params) {
+                        if (card.configParams && card.configParams[param]) {
+          
+                            params[param] = await resolveBoardParam({
+                                states: await context.state.getStateTree(),
+                                boardId,
+                                defaultValue: card.configParams[param].defaultValue,
+                                value: undefined,
+                                type: card.configParams[param]?.type
+                            });
+
+                        }
+                    }
+                    let value = await wrapper(params, states, states?.boards?.[boardId] ?? {}, card, memory[card.key]);
                     // logger.info({ value }, "Value for card " + card.key);
                     // if (value !== states && value != states['boards'][boardId][card.name]) {
                     const prevValue = await context.state.get({ group: 'boards', tag: boardId, name: card.name, defaultValue: null });
