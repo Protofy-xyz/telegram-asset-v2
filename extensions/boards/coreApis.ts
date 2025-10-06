@@ -152,7 +152,10 @@ const getDB = (path, req, session, context?) => {
                 await acquireLock(BoardsDir(getRoot()) + file);
                 try {
                     const fileContent = await fs.readFile(BoardsDir(getRoot()) + file + '.json', 'utf8')
-                    yield [file.name, fileContent];
+                    const decodedContent = JSON.parse(fileContent)
+                    if (!decodedContent?.tags?.includes('system')) {
+                        yield [file.name, fileContent];
+                    }
                 } catch (e) {
 
                 } finally {
