@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Page } from 'protolib/components/Page'
-import { getPendingResult, ProtoModel, set, z } from 'protobase'
+import { getPendingResult, ProtoModel, z } from 'protobase'
 import { DataView } from 'protolib/components/DataView'
 import { Button, Paragraph, Popover, Spinner, useThemeName, XStack, YStack } from 'tamagui'
 import { useToastController } from '@my/ui'
@@ -8,7 +8,6 @@ import { AlertTriangle, Trash2, Bird, Download, MoreVertical, Play, FolderOpen }
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
 import { Tinted } from 'protolib/components/Tinted'
 import { ErrorMessage, useFetch } from 'protolib'
-import semver from 'semver'
 import rootPkg from '../../../package.json'
 import { useThemeSetting } from '@tamagui/next-theme'
 
@@ -289,9 +288,10 @@ const MainView = () => {
           .label("version")
           .after('name')
           .defaultValue(
-            versions
-              .filter((v: any) => v !== "latest")
-              .sort((a: any, b: any) => semver.rcompare(semver.coerce(a)!, semver.coerce(b)!))[0])
+            "latest")
+        // versions
+        //   .filter((v: any) => v !== "latest")
+        //   .sort((a: any, b: any) => semver.rcompare(semver.coerce(a)!, semver.coerce(b)!))[0]) // highest version
       }}
     />
   </YStack>
