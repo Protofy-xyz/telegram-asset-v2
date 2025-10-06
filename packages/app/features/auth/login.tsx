@@ -88,6 +88,7 @@ function SignIn({ darkMode, isClient }: { darkMode: boolean, isClient: boolean }
   const [authState, setAuthState] = useState<PendingResult>(getPendingResult('pending'))
   const [session, setSession] = useSession()
   const [sessionContext, setSessionContext] = useSessionContext()
+  const [hasUsers, setHasUsers] = useState<boolean | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const query = Object.fromEntries(searchParams.entries())
@@ -114,6 +115,22 @@ function SignIn({ darkMode, isClient }: { darkMode: boolean, isClient: boolean }
     Auth.login(email, password, setAuthState)
   }
 
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/core/v1/users/has', { credentials: 'include' })
+        if (!res.ok) throw new Error('users/has failed')
+        const data = await res.json()
+        if (!cancelled) setHasUsers(!!data?.hasUsers)
+      } catch {
+        // fail safe: assume there ARE users so login flow isn't blocked if the check fails
+        if (!cancelled) setHasUsers(true)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
+
   const logoStyle = {
     marginTop: '2.5rem',
     width: '460px',
@@ -134,6 +151,41 @@ function SignIn({ darkMode, isClient }: { darkMode: boolean, isClient: boolean }
             <img src="/public/vento-logo.png" alt="Vento logo" style={logoStyle} />
           </LogoIcon>
         </YStack>
+
+        {hasUsers === false && (
+          <Notice>
+            {SiteConfig.signupEnabled ? (
+              <YStack space="$2">
+                <Paragraph>
+                  No users have been created yet.<br/><br/>
+                </Paragraph>
+                <Paragraph>
+                  Please{' '}
+                  <Link
+                    id="first-user-register-link"
+                    href={`/auth/register${query.return ? `?return=${query.return}` : ''}`}
+                    style={{ fontWeight: 800 }}
+                  >
+                    register the first account
+                  </Link>
+                  .
+                </Paragraph>
+              </YStack>
+            ) : (
+              <YStack space="$2">
+                <Paragraph>
+                  No users have been created yet!<br/><br/>
+                </Paragraph>
+                <Paragraph>
+                  Create the first user from <strong>Settings → Users</strong> and press <strong>(+)</strong>, or run:<br/>
+                </Paragraph>
+                <Paragraph>
+                  <code>yarn add-user &lt;email&gt; &lt;password&gt; &lt;type&gt;</code><br/><br/>
+                </Paragraph>
+              </YStack>
+            )}
+          </Notice>
+        )}
 
         {Boolean(authState.isError) && (
           <Notice>

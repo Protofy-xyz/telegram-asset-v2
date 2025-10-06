@@ -30,7 +30,45 @@ const genNewSession = (data: any) => {
         token: genToken(data)
     }
 }
+async function usersExist(db?: any): Promise<boolean> {
+  const _db = db ?? getDB(dbPath)
 
+  if (typeof _db.list === 'function') {
+    try {
+      const out = await _db.list({ prefix: '', limit: 1 })
+      const arr =
+        (Array.isArray(out) ? out :
+        Array.isArray(out?.keys) ? out.keys :
+        Array.isArray(out?.items) ? out.items :
+        [])
+      return arr.length > 0
+    } catch {}
+  }
+
+  if (typeof _db.keys === 'function') {
+    try {
+      const out = await _db.keys({ limit: 1 })
+      return Array.isArray(out) ? out.length > 0 : !!out?.length
+    } catch {}
+  }
+
+  if (typeof _db.scan === 'function') {
+    try {
+      const out = await _db.scan({ limit: 1 })
+      return Array.isArray(out) ? out.length > 0 : !!out
+    } catch {}
+  }
+  if (typeof _db.iterator === 'function') {
+    try {
+      const it = _db.iterator({ limit: 1 })
+      if (typeof it?.next === 'function') {
+        const n = await it.next()
+        return !!n && n.done === false
+      }
+    } catch {}
+  }
+  return true
+}
 app.post('/api/core/v1/auth/login', handler(async (req: any, res: any) => {
     const request: LoginRequest = req.body
     const fail = (msg) => {
@@ -153,5 +191,12 @@ app.post('/api/core/v1/auth/register', handler(async (req: any, res: any) => {
         logger.info({ newSession }, "Session created: " + request.username)
     }
 }));
+
+app.get('/api/core/v1/users/has', handler(async (req: any, res: any) => {
+  const db = getDB(dbPath, req)
+  const has = await usersExist(db)
+  res.send({ hasUsers: has })
+}))
+
 
 export default 'auth'
