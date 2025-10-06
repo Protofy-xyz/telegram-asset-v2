@@ -202,19 +202,30 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
             {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
-                const path = '<#' + copy.namespace
-                    .filter(v => v)
-                    .map(k => `${JSON.stringify(k).replaceAll('"', '')}`)
-                    .join('.') + "> "
+                if (copyMode === "code" || copyMode === "flow") {
+                    const path = 'board' + copy.namespace
+                        .filter(v => v)
+                        .map(k => `?.[${JSON.stringify(k)}]`)
+                        .join('')
 
-                console.log('Key path:', path)
-                navigator.clipboard.writeText(path)
-                return false
+                    navigator.clipboard.writeText(path)
+                    return false
+                }
+
+                if (copyMode === "rules") {
+                    const path = '<#' + copy.namespace
+                        .filter(v => v)
+                        .map(k => `${JSON.stringify(k).replaceAll('"', '')}`)
+                        .join('.') + "> "
+
+                    navigator.clipboard.writeText(path)
+                    return false
+                }
             }} />
             }
             {!filteredStateData && <Text>No states found</Text>}
         </YStack>
-    }, [filteredStateData, board?.name]);
+    }, [filteredStateData, board?.name, copyMode]);
 
     const actionsPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
