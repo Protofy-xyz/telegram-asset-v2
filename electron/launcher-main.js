@@ -16,7 +16,7 @@ if (!fs.existsSync(PROJECTS_DIR)) {
 }
 
 function isValidProjectName(name) {
-  return name == '' ? false : /^[a-z_]*$/.test(name)
+  return name == '' ? false : /^[a-z0-9_-]+$/.test(name)
 }
 
 function notifyProjectStatus(name, status) {
