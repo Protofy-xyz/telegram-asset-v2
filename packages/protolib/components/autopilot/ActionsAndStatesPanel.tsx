@@ -5,6 +5,7 @@ import { JSONView } from "../JSONView";
 import { useCallback, useMemo, useState } from "react";
 import { AlignLeft, Braces, Copy, Globe, LayoutDashboard, Search, Settings } from "@tamagui/lucide-icons";
 import { TabBar } from "../../components/TabBar";
+import { generateActionCode, generateStateCode } from "@extensions/boards/utils/ActionsAndStates"
 
 function flattenObject(obj, prefix = "", maxDepth = undefined, currentDepth = 1) {
     let result = [];
@@ -185,17 +186,12 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
         }
 
         if (mode === "rules") {
-            return `await executeAction({name: "${copyVal}"})`
+            return generateActionCode(copyVal)
         }
 
         if (mode === "code" || mode === "flows") {
-            return `await executeAction({name: "${copyVal}", params: {
-${Object.entries(val.params || {}).map(([key, value]) => {
-                return `\t${key}: '', // ${value}`;
-            }).join('\n')}
-}})`
+            return generateActionCode(copyVal, val.params ?? {})
         }
-
 
         return text
     }
@@ -203,11 +199,7 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
             {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
-                const path = 'board' + copy.namespace
-                    .filter(v => v)
-                    .map(k => `?.[${JSON.stringify(k)}]`)
-                    .join('') + ' '
-
+                const path = generateStateCode(copy.namespace)
                 navigator.clipboard.writeText(path)
                 return false
             }} />
