@@ -386,6 +386,7 @@ const BoardStateView = ({ board }) => {
 
 const MAX_BUFFER_MSG = 1000
 const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardRef, actions, states, uicodeInfo, setUICodeInfo, onEditBoard }) => {
+  const { panelSide, setPanelSide } = useBoardControls()
   const [logs, setLogs] = useState([])
   useLog((log) => {
     setLogs(prev => {
@@ -451,10 +452,15 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
   }
 
   return <FloatingWindow
+    key={`fw-${panelSide}`}
     visible={Object.keys(tabs).includes(tabVisible)}
     selectedTab={tabVisible}
     onChangeTab={setTabVisible}
     tabs={tabs}
+    side={panelSide}
+    onToggleSide={() => setPanelSide(panelSide === 'right' ? 'left' : 'right')}
+    leftAnchorSelector="#app-sidemenu"
+    leftAnchorGap={40}
   />
 }
 

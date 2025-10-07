@@ -1,12 +1,15 @@
-import { createElement, useState, useRef } from 'react';
-import { XStack, YStack, Text } from '@my/ui';
+import { createElement, useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { XStack, YStack, Text, TooltipSimple } from '@my/ui';
 import { useThemeSetting } from '@tamagui/next-theme'
-import { X, Minimize2, Maximize2, Expand, Shrink } from '@tamagui/lucide-icons'
+import { X, Minimize2, Maximize2, Expand, Shrink, PanelLeft, PanelRight } from '@tamagui/lucide-icons'
 import { TabBar } from 'protolib/components/TabBar';
 
-export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs }) => {
+type Side = 'left' | 'right';
+
+export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs, side = 'right', onToggleSide, leftAnchorSelector, leftAnchorGap }) => {
     const openWindowSize = 1010
     const winRef = useRef(null)
+    const anchorElRef = useRef<HTMLElement | null>(null);
 
     const { resolvedTheme } = useThemeSetting()
     const [windowSize, setWindowSize] = useState(1010)
@@ -14,16 +17,80 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs }) => {
     const darkMode = resolvedTheme == 'dark'
 
     const isOpenSize = windowSize === openWindowSize;
+    const isLeft = side === 'left';
+    const [anchorWidth, setAnchorWidth] = useState<number | null>(null);
+    const [ready, setReady] = useState(false);
+
+    useLayoutEffect(() => {
+        if (!isLeft) {
+        setReady(true);
+        return;
+        }
+        const el = leftAnchorSelector
+        ? (document.querySelector(leftAnchorSelector) as HTMLElement | null)
+        : null;
+
+        anchorElRef.current = el || null;
+
+        if (anchorElRef.current) {
+        const rect = anchorElRef.current.getBoundingClientRect();
+        setAnchorWidth(rect.width);
+        } else {
+        setAnchorWidth(0);
+        }
+        setReady(true);
+    }, [isLeft, leftAnchorSelector]);
+
+    useEffect(() => {
+        if (!isLeft || !anchorElRef.current) return;
+
+        const el = anchorElRef.current;
+        const ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+            const cr = entry.contentRect;
+            // coalesce rapid changes with rAF
+            requestAnimationFrame(() => setAnchorWidth(cr.width));
+        }
+        });
+
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [isLeft]);
+
+    useEffect(() => {
+        if (!isLeft) return;
+
+        const measure = () => {
+        const el = anchorElRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        setAnchorWidth(rect.width);
+        };
+
+        const onResize = () => requestAnimationFrame(measure);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, [isLeft]);
+
+    const overlayStyle: React.CSSProperties = {
+        pointerEvents: "none",
+        width: "100vw",
+        height: "120vh",
+        position: "fixed",
+        ...(isLeft ? { left: visible ? 0 : "-100vw" } : { right: visible ? 0 : "-100vw" }),
+    };
+    
+    const leftOffset = (anchorWidth ?? 0) + leftAnchorGap;
 
     const baseStyle = fullScreen
         ? {
-            right: visible ? 0 : "-100vw",
+            ...(isLeft ? { left: visible ? 0 : "-100vw" } : { right: visible ? 0 : "-100vw" }),
             top: "0px",
             width: winRef.current ? winRef.current.offsetWidth : window.innerWidth,
             height: "calc(100vh)"
         }
         : {
-            right: visible ? 40 : -windowSize,
+            ...(isLeft ? { left: visible ? leftOffset : -windowSize } : { right: visible ? 40 : -windowSize }),
             top: "70px",
             width: windowSize,
             height: "calc(100vh - 100px)"
@@ -33,7 +100,7 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs }) => {
         <div
             ref={winRef}
             onClick={() => { }}
-            style={{ pointerEvents: "none", width: "100vw", height: "120vh", position: "fixed", right: visible ? 0 : "-100vw" }}
+            style={overlayStyle}
         ></div>
         {
             <YStack
@@ -54,6 +121,7 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs }) => {
             >
                 <XStack borderBottomColor={"$gray6"} borderBottomWidth="1px">
                     <XStack ai="center" gap="$3" p="$2.5" px="$3">
+                        {/* close */}
                         <XStack
                             cursor='pointer'
                             onPress={() => {
@@ -65,6 +133,28 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs }) => {
                         >
                             <X size={18} color="var(--color)" />
                         </XStack>
+
+                        {/* side toggle */}
+                        <TooltipSimple
+                            label={side === 'right' ? 'Move panel to left' : 'Move panel to right'}
+                            delay={{ open: 200, close: 0 }}
+                            restMs={0}
+                        >
+                            <XStack
+                                cursor='pointer'
+                                onPress={() => onToggleSide?.()}
+                                pressStyle={{ opacity: 0.8 }}
+                                hoverStyle={{ scale: 1.05 }}
+                            >
+                                {side === 'right' ? (
+                                    <PanelLeft size={18} color="var(--color)" />
+                                ) : (
+                                    <PanelRight size={18} color="var(--color)" />
+                                )}
+                            </XStack>
+                        </TooltipSimple>
+
+                        {/* maximize / restore */}
                         {!fullScreen && <XStack
                             cursor='pointer'
                             onPress={() => {
@@ -77,6 +167,7 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs }) => {
                         >
                             {isOpenSize ? <Maximize2 size={18} color="var(--color)" /> : <Minimize2 size={18} color="var(--color)" />}
                         </XStack>}
+                        {/* fullscreen toggle */}
                         <XStack
                             cursor='pointer'
                             onPress={() => setFullScreen(!fullScreen)}
