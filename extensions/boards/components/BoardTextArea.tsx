@@ -4,6 +4,7 @@ import { XStack, YStack, Button, Spinner, Text } from '@my/ui'
 import { Trash, Plus, Mic } from '@tamagui/lucide-icons'
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
+import { generateActionCode, generateStateCode } from '@extensions/boards/utils/ActionsAndStates';
 
 const minHeight = 50;
 const maxHeight = 200;
@@ -132,6 +133,7 @@ export const BoardTextArea = ({
   readOnly,
   placeholder,
   style,
+  enableShortcuts = false,
   ...rest
 }: any) => {
   let states = useBoardStates()
@@ -219,13 +221,13 @@ export const BoardTextArea = ({
             if ((selectedIndex - 1) >= 0) {
               setSelectedIndex(prev => prev - 1)
             } else {
-              setSelectedIndex(dropDownStates.length - 1)
+              setSelectedIndex(dropDown[showDropdown].length - 1)
             }
           }
           break;
         case 'ArrowDown':
           if (showDropdown) {
-            if ((selectedIndex + 1) < dropDownStates.length) {
+            if ((selectedIndex + 1) < dropDown[showDropdown].length) {
               setSelectedIndex(prev => prev + 1)
             } else {
               setSelectedIndex(0)
@@ -237,9 +239,14 @@ export const BoardTextArea = ({
           break;
         case 'Tab':
           let value = ref.current.value
+          let selection = dropDown[showDropdown][selectedIndex]
+          let text = showDropdown === "actions"
+            ? generateActionCode(selection)
+            : generateStateCode([selection])
+
           onChange({
             target: {
-              value: value.slice(0, inputInsertIndex - 1) + (dropDown[showDropdown][selectedIndex] || "unknown state") + value.slice(inputInsertIndex + 1)
+              value: value.slice(0, inputInsertIndex - 1) + (text + " ") + value.slice(inputInsertIndex + 1)
             }
           })
           setShowDropdown(null)
@@ -286,7 +293,7 @@ export const BoardTextArea = ({
 
               setTimeout(() => {
                 // set the cursor after tag remove
-                input.setSelectionRange(tokenStart, tokenStart);
+                input?.setSelectionRange(tokenStart, tokenStart);
               }, 0);
             }
           }
@@ -300,7 +307,7 @@ export const BoardTextArea = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [inputInsertIndex]);
+  }, [inputInsertIndex, dumpedValue]);
 
   // El hack: Espera a que se estabilice el DOM
   useEffect(() => {
@@ -319,8 +326,7 @@ export const BoardTextArea = ({
   return (
     <XStack pos='relative' f={1} gap="$3" ai="flex-end">
       {
-        // showDropdown: flagged feature
-        false && <YStack
+        enableShortcuts && showDropdown && <YStack
           style={{
             position: "absolute",
             width: "100%",

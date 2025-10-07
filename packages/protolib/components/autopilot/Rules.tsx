@@ -19,6 +19,7 @@ export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur, ...props })
         onChange={(e) => onEdit?.(e.target.value)}
         onBlur={onBlur}
         placeholder="Rule Value..."
+        enableShortcuts={false}
         style={{ width: '100%' }}
       />
       <Button
@@ -148,6 +149,7 @@ export const Rules = ({
             onChange={handleNewRuleChange}
             style={{ width: '100%' }}
             disabled={isLoadingOrGenerating}
+            enableShortcuts={true}
           />
           <TooltipSimple
             label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"}
