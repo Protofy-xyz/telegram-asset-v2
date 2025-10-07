@@ -9,15 +9,6 @@ import { AutoAPI, getRoot, requireAdmin } from 'protonode'
 const VersionsBaseDir = (root: string) => fspath.join(root, 'data', 'versions');
 
 export default async (app, context) => {
-    const VersionsAutoAPI = AutoAPI({
-        modelName: 'versions',
-        modelType: VersionModel,
-        prefix: '/api/core/v1/',
-        dbName: 'versions',
-        requiresAdmin: ['*']
-    })
-
-    VersionsAutoAPI(app, context)
     // List versions
     app.get('/api/core/v1/boards/:boardId/versions', requireAdmin(), async (req, res) => {
         const root = getRoot(req);
