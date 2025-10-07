@@ -1,9 +1,9 @@
 import { ObjectModel } from ".";
-import { getImport, getSourceFile, extractChainCalls, addImportToSourceFile, ImportType, addObjectLiteralProperty, getDefinition, AutoAPI, getRoot, removeFileWithImports, addFeature } from 'protonode'
+import { handler, requireAdmin, getSourceFile, extractChainCalls, getDefinition, AutoAPI, getRoot, addFeature, toSourceFile } from 'protonode'
 import { promises as fs } from 'fs';
 import syncFs from 'fs';
 import * as fspath from 'path';
-import { ObjectLiteralExpression, PropertyAssignment } from 'ts-morph';
+import { ObjectLiteralExpression, PropertyAssignment, Project, SyntaxKind, Node } from 'ts-morph';
 import { getServiceToken } from 'protonode'
 import { API } from 'protobase'
 import { APIModel } from '@extensions/apis/apisSchemas'
@@ -46,6 +46,24 @@ const getSchemas = async (req, displayAll?) => {
   return schemas;
 }
 
+const extractKeysFromSchema = (schema: ObjectLiteralExpression) => {
+  const keys: any = {}
+  schema.getProperties().forEach(prop => {
+    if (prop instanceof PropertyAssignment) {
+      const chain = extractChainCalls(prop.getInitializer())
+      if (chain.length) {
+        const typ = chain.shift()
+        keys[prop.getName()] = {
+          type: typ.name,
+          params: typ.params,
+          modifiers: chain
+        }
+      }
+    }
+  })
+  return keys
+}
+
 const getSchemaTS = async (filePath, idSchema, schemaName) => {
   let sourceFile
   try {
@@ -54,25 +72,7 @@ const getSchemaTS = async (filePath, idSchema, schemaName) => {
     return
   }
   const node = getDefinition(sourceFile, '"schema"')
-  let keys = {}
-  if (node) {
-    if (node instanceof ObjectLiteralExpression) {
-      node.getProperties().forEach(prop => {
-        if (prop instanceof PropertyAssignment) {
-          // obj[prop.getName()] = prop.getInitializer().getText();
-          const chain = extractChainCalls(prop.getInitializer())
-          if (chain.length) {
-            const typ = chain.shift()
-            keys[prop.getName()] = {
-              type: typ.name,
-              params: typ.params,
-              modifiers: chain
-            }
-          }
-        }
-      });
-    }
-  }
+  const keys = (node && node instanceof ObjectLiteralExpression) ? extractKeysFromSchema(node) : {}
   const featuresNode = getDefinition(sourceFile, '"features"')
   let features = {}
   if (featuresNode instanceof ObjectLiteralExpression) {
@@ -229,7 +229,7 @@ const getDB = (path, req, session) => {
   return db;
 }
 
-export default AutoAPI({
+const ObjectsAutoAPI = AutoAPI({
   modelName: 'objects',
   modelType: ObjectModel,
   prefix: '/api/core/v1/',
@@ -237,3 +237,26 @@ export default AutoAPI({
   connectDB: () => new Promise(resolve => resolve(null)),
   requiresAdmin: ['*']
 })
+
+export default (app, context) => {
+
+  app.post('/api/core/v1/objects/parseKeys', requireAdmin(), handler(async (req, res) => {
+    const { code } = req.body || {}
+    const project = new Project({ useInMemoryFileSystem: true });
+    const wrapped = `const __obj = ${code};`;
+    const source = project.createSourceFile("_temp1.ts", wrapped, { overwrite: true });
+
+    const obj = source
+      .getVariableDeclaration("__obj")
+      ?.getInitializerIfKind(SyntaxKind.ObjectLiteralExpression);
+
+    if (!obj) {
+      res.send({ keys: {}, node: source.getText(), message: "No literal object found" });
+      return;
+    }
+    const keys = extractKeysFromSchema(obj)
+    res.send({ keys, node: obj.getText() });
+  }))
+
+  ObjectsAutoAPI(app, context)
+}
