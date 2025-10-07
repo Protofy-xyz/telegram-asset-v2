@@ -1,4 +1,4 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput, FileOutput, ArrowDownRight, ArrowUpRight } from '@tamagui/lucide-icons'
+import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput, FileOutput, ArrowDownRight, ArrowUpRight, GitPullRequest } from '@tamagui/lucide-icons'
 import { Text, YStack, Paragraph, XStack } from '@my/ui'
 import { useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
@@ -13,6 +13,7 @@ import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
 import { OutputEditor } from './OutputEditor'
+import { TriggersEditor } from './TriggersEditor'
 import { TabContainer, TabTitle } from './Tab'
 
 function getAllPaths(obj, prefix = "", includeIntermediate = true) {
@@ -143,6 +144,20 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       content: <OutputEditor
         card={cardData}
         setCardData={setCardData}
+      />
+    },
+    {
+      id: 'triggers',
+      label: 'Triggers',
+      icon: <GitPullRequest size={"$1"} />,
+      content: <TriggersEditor
+        triggers={cardData.triggers || []}
+        setTriggers={(newTriggers) => {
+          setCardData((prev) => ({
+            ...prev,
+            triggers: newTriggers,
+          }))
+        }}
       />
     },
     {

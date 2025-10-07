@@ -87,8 +87,9 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
     }
 
 
-    for (const param in params) {
-        if (action.configParams && action.configParams[param]) {
+
+    if (action.configParams) {
+        for (const param in action.configParams) {
             params[param] = await resolveBoardParam({
                 states: await context.state.getStateTree(),
                 boardId,
@@ -98,6 +99,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
             });
         }
     }
+
     await generateEvent({
         path: `actions/boards/${boardId}/${action_or_card_id}/run`,
         from: 'system',
@@ -126,6 +128,18 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
     `);
 
     try {
+        if (action.triggers && Array.isArray(action.triggers)) {
+            const preTriggers = action.triggers.filter(t => t.type === 'pre' && t.name);
+            for (const trigger of preTriggers) {
+                //to call an action: /api/core/v1/boards/:boardId/actions/:action' using service token
+                try {
+                    await API.get(`/api/core/v1/boards/${boardId}/actions/${trigger.name}?token=${getServiceToken()}`);
+                } catch (error) {
+                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling pre trigger action: " + trigger.name);
+                }
+
+            }
+        }
         let response = null;
         try {
             response = await wrapper(boardId, action_or_card_id, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
@@ -200,6 +214,21 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
             const db = dbProvider.getDB('board_' + boardId);
             await db.put(action.name, response === undefined ? '' : JSON.stringify(response, null, 4));
         }
+
+
+        if (action.triggers && Array.isArray(action.triggers)) {
+            const postTriggers = action.triggers.filter(t => t.type === 'post' && t.name);
+            for (const trigger of postTriggers) {
+                //to call an action: /api/core/v1/boards/:boardId/actions/:action' using service token
+                try {
+                    await API.get(`/api/core/v1/boards/${boardId}/actions/${trigger.name}?token=${getServiceToken()}`);
+                } catch (error) {
+                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling post trigger action: " + trigger.name);
+                }
+            }
+        }
+
+
     } catch (err) {
         await generateEvent({
             path: `actions/boards/${boardId}/${action_or_card_id}/error`,

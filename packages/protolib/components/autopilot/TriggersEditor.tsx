@@ -5,13 +5,10 @@ import { Plus, Trash } from '@tamagui/lucide-icons';
 import { nanoid } from 'nanoid';
 import { useUpdateEffect } from 'usehooks-ts';
 
-export type TriggerType = 'mqtt' | 'event' | 'manual' | 'interval';
+export type TriggerType = 'pre' | 'post';
 export interface Trigger {
-  type: TriggerType;
-  topic?: string;
-  path?: string;
-  caption?: string;
-  interval?: string;
+  name?: string;
+  type?: TriggerType;
 }
 
 interface Row extends Trigger {
@@ -36,7 +33,7 @@ export const TriggersEditor: React.FC<TriggersEditorProps> = ({ triggers, setTri
   const addRow = useCallback(() => {
     setRows((prev) => [
       ...prev,
-      { rowId: nanoid(), type: 'mqtt', topic: '' },
+      { rowId: nanoid(), name: '', type: 'post' },
     ]);
   }, []);
 
@@ -55,33 +52,9 @@ export const TriggersEditor: React.FC<TriggersEditorProps> = ({ triggers, setTri
     []
   );
 
-  const updateType = useCallback(
-    (rowId: string, type: TriggerType) => {
-      let base: Row;
-      switch (type) {
-        case 'mqtt':
-          base = { rowId, type, topic: '' };
-          break;
-        case 'event':
-          base = { rowId, type, path: '' };
-          break;
-        case 'manual':
-          base = { rowId, type, caption: '' };
-          break;
-        case 'interval':
-          base = { rowId, type, interval: '' };
-          break;
-      }
-      setRows((prev) => prev.map((r) => (r.rowId === rowId ? base : r)));
-    },
-    []
-  );
-
   const typeOptions = [
-    { value: 'mqtt', caption: 'MQTT' },
-    { value: 'event', caption: 'Event' },
-    { value: 'manual', caption: 'Manual' },
-    { value: 'interval', caption: 'Interval' },
+    { value: 'pre', caption: 'Before' },
+    { value: 'post', caption: 'After' }
   ];
 
   return (
@@ -91,7 +64,7 @@ export const TriggersEditor: React.FC<TriggersEditorProps> = ({ triggers, setTri
         <Button icon={Plus} onPress={addRow}>Add</Button>
       </XStack>
       <ScrollView flex={1}>
-        {rows.map(({ rowId, type, topic, path, caption, interval }) => (
+        {rows.map(({ rowId, type, name }) => (
           <XStack
             key={rowId}
             alignItems="center"
@@ -104,46 +77,22 @@ export const TriggersEditor: React.FC<TriggersEditorProps> = ({ triggers, setTri
               title="Type"
               value={type}
               elements={typeOptions}
-              setValue={(val) => updateType(rowId, val as TriggerType)}
+              setValue={(val) => {
+                updateField(rowId, 'type', val as TriggerType);
+              }}
               triggerProps={{
                 borderWidth: 0,
                 width: '25%',
               }}
             />
 
-            {/* Input occupies 75% */}
-            {type === 'mqtt' && (
-              <Input
-                placeholder="Topic"
-                width="75%"
-                value={topic}
-                onChangeText={(text) => updateField(rowId, 'topic', text)}
-              />
-            )}
-            {type === 'event' && (
-              <Input
-                placeholder="Path"
-                width="75%"
-                value={path}
-                onChangeText={(text) => updateField(rowId, 'path', text)}
-              />
-            )}
-            {type === 'manual' && (
-              <Input
-                placeholder="Caption"
-                width="75%"
-                value={caption}
-                onChangeText={(text) => updateField(rowId, 'caption', text)}
-              />
-            )}
-            {type === 'interval' && (
-              <Input
-                placeholder="Interval"
-                width="75%"
-                value={interval}
-                onChangeText={(text) => updateField(rowId, 'interval', text)}
-              />
-            )}
+            <Input
+              placeholder="Name"
+              width="75%"
+              value={name}
+              onChangeText={(text) => updateField(rowId, 'name', text)}
+            />
+
 
             <Button ml={'$2'} icon={Trash} size="$2" onPress={() => removeRow(rowId)} />
           </XStack>
