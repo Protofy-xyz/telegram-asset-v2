@@ -503,6 +503,23 @@ const Board = ({ board, icons }) => {
 
   const states = useProtoStates({}, 'states/boards/' + board.name + '/#', 'states')
 
+
+  const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  const nextDuplicatedName = (existingNames: string[], currentName: string) => {
+    const base = currentName.replace(/(?:\s*_)?\d+$/, '');
+    const re = new RegExp(`^${escapeRegExp(base)}(?:_(\\d+))?$`);
+
+    const maxN = existingNames.reduce((max, name) => {
+      const m = name.match(re);
+      if (!m) return max;
+      const n = m[1] ? parseInt(m[1], 10) : 1;
+      return Math.max(max, n);
+    }, 0);
+
+    return `${base}_${maxN + 1}`;
+  };
+
   useUpdateEffect(() => {
     if (addOpened) {
       setErrors([]);
@@ -727,11 +744,15 @@ const Board = ({ board, icons }) => {
           params={item.params}
           containerProps={item.containerProps}
           onCopy={() => {
-            //duplicate the card, adding a _x to the name
+            const newName = nextDuplicatedName(
+              boardRef.current.cards.map(c => c.name),
+              item.name
+            );
+
             const newCard = {
               ...item,
               key: item.key.replace(/_vento_copy_.+$/, '') + '_vento_copy_' + generate_random_id(),
-              name: item.name.replace(/ _\d+$/, '') + ' _' + (parseInt(item.name.match(/_(\d+)$/)?.[1] || '1') + 1)
+              name: newName
             };
             const newItems = [...boardRef.current.cards, newCard].filter(i => i.key !== 'addwidget');
             boardRef.current.cards = newItems;
