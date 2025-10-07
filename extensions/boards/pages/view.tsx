@@ -111,7 +111,7 @@ const FileWidget = dynamic<any>(() =>
 );
 
 const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails, states }) => {
-  console.log("🤖 ~ CardActions ~ data:", data)
+  // console.log("🤖 ~ CardActions ~ data:", data)
   const [menuOpened, setMenuOpened] = useState(false)
   const [cardStatesOpen, setCardStatesOpen] = useState(false)
   const MenuButton = ({ text, Icon, onPress }: { text: string, Icon: any, onPress: any }) => {
