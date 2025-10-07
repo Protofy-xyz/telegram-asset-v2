@@ -1,4 +1,4 @@
-import { Cable, Copy, Plus, Trash2, Settings, MoreVertical, X, ArrowLeft, Book, FileJson, ClipboardList, Code, Activity, Bot, Presentation, FileCode, Sliders, FileInput } from '@tamagui/lucide-icons'
+import { Cable, Copy, Plus, Trash2, Settings, MoreVertical, X, ArrowLeft, Book, FileJson, ClipboardList, Code, Activity, Bot, Presentation, FileCode, Sliders, FileInput, ExternalLink, Globe } from '@tamagui/lucide-icons'
 import { API, getPendingResult } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
@@ -111,6 +111,7 @@ const FileWidget = dynamic<any>(() =>
 );
 
 const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails, states }) => {
+  console.log("🤖 ~ CardActions ~ data:", data)
   const [menuOpened, setMenuOpened] = useState(false)
   const [cardStatesOpen, setCardStatesOpen] = useState(false)
   const MenuButton = ({ text, Icon, onPress }: { text: string, Icon: any, onPress: any }) => {
@@ -138,6 +139,27 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
   })
 
   const isJSONView = states && typeof states !== 'string' && typeof states !== 'number' && typeof states !== 'boolean'
+  const origin =
+    typeof window !== 'undefined' ? window.location.origin : ''
+  const boardName =
+    typeof window !== 'undefined' ? (window as any)['protoBoardName'] : ''
+
+  const normalizeUrl = (u?: string) => {
+    if (!u) return undefined
+    if (/^https?:\/\//i.test(u)) return u
+    return `${origin}${u.startsWith('/') ? '' : '/'}${u}`
+  }
+
+  const makeReadUrl = () => {
+    if (data?.enableCustomPath && data?.customPath) return normalizeUrl(data.customPath)
+    return `${origin}/api/core/v1/boards/${boardName}/cards/${data?.name}`
+  }
+
+  const makeRunUrl = () => {
+    if (data?.enableCustomRunPath && data?.customRunPath) return normalizeUrl(data.customRunPath)
+    return `${origin}/api/core/v1/boards/${boardName}/cards/${data?.name}/run`
+  }
+
 
   return <Tinted>
     <XStack pt="$1" f={1} pr="$4" jc="space-between" ai="center">
@@ -192,6 +214,21 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
                       <MenuButton key={index} text={menu.text} Icon={menu.icon} onPress={() => onEdit(menu.id)} />
                     ))
                   }
+                  {data?.publicRead && (
+                    <MenuButton
+                      text="Visit public Read"
+                      Icon={Globe}
+                      onPress={() => window.open(makeReadUrl(), '_blank', 'noopener,noreferrer')}
+                    />
+                  )}
+                  {data?.publicRun && (
+                    <MenuButton
+                      text="Visit public Run"
+                      Icon={ExternalLink}
+                      onPress={() => window.open(makeRunUrl(), '_blank', 'noopener,noreferrer')}
+                    />
+                  )}
+
                   <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
                   <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />
                   <MenuButton text="Delete" Icon={Trash2} onPress={() => onDelete()} />
