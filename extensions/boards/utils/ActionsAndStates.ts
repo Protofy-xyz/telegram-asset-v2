@@ -3,7 +3,7 @@ export const generateStateCode = (properties) => {
         return 'board' + properties
             .filter(v => v)
             .map(k => `?.[${JSON.stringify(k)}]`)
-            .join('') + ' '
+            .join('')
     } catch (err) {
         console.error("cannot generate state code for " + properties + ", ", err)
         return ''
