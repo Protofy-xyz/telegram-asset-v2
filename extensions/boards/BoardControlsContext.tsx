@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { API } from 'protobase'
 
+type PanelSide = 'right' | 'left';
+
 interface Controls {
   isJSONView: boolean;
   toggleJson: () => void;
@@ -19,6 +21,9 @@ interface Controls {
   setViewMode: (mode: "board" | "json" | "ui") => void;
 
   saveJson: () => void;
+
+  panelSide: PanelSide;
+  setPanelSide: (side: PanelSide) => void;
 }
 
 const BoardControlsContext = createContext<Controls | null>(null);
@@ -34,6 +39,10 @@ export const BoardControlsProvider: React.FC<{
   const [autopilot, setAutopilot] = useState(autopilotRunning);
   const [tabVisible, setTabVisible] = useState<string>("");
   const [viewMode, setViewMode] = useState<"board" | "json" | "ui">('board');
+
+  const [panelSide, setPanelSide] = useState<PanelSide>(
+    (board?.settings?.panelSide as PanelSide) || 'right'
+  );
 
   const toggleJson = () => setIsJSONView(v => !v);
   const openAdd = () => setAddOpened(true);
@@ -62,7 +71,8 @@ export const BoardControlsProvider: React.FC<{
       autopilot, toggleAutopilot,
       saveJson, setAddOpened,
       viewMode, setViewMode,
-      setTabVisible, tabVisible
+      setTabVisible, tabVisible,
+      panelSide, setPanelSide
     }}>
       {children}
     </BoardControlsContext.Provider>

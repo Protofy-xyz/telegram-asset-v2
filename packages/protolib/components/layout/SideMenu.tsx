@@ -24,7 +24,7 @@ export const SideMenu = ({ sideBarColor = '$background', children, themeSwitcher
     const settingsTintSwitcherEnabled = settingsTintSwitcher === undefined ? true : settingsTintSwitcher
     const settingsThemeSwitcherEnabled = settingsTintSwitcher === undefined ? true : settingsThemeSwitcher
 
-    return <YStack bw={0} bc={sideBarColor} {...props} onDoubleClick={e => { setCollapsed(!collapsed); e.stopPropagation() }}>
+    return <YStack id="app-sidemenu" bw={0} bc={sideBarColor} {...props} onDoubleClick={e => { setCollapsed(!collapsed); e.stopPropagation() }}>
         <YStack
             animateOnly={["width"]}
             // @ts-ignore

@@ -176,15 +176,19 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
     const actionData = filteredData
 
     const copy = (text, mode) => {
-        if (mode === "code" || mode === "flow") {
-            const val = actions[board.name][text];
-            if (!val || !val.url) return '';
-            const targetBoard = getBoardIdFromActionUrl(val.url);
-            let copyVal = val.url;
-            if (targetBoard && targetBoard === board?.name) {
-                copyVal = val.name
-            }
+        const val = actions[board.name][text];
+        if (!val || !val.url) return '';
+        const targetBoard = getBoardIdFromActionUrl(val.url);
+        let copyVal = val.url;
+        if (targetBoard && targetBoard === board?.name) {
+            copyVal = val.name
+        }
 
+        if (mode === "rules") {
+            return `await executeAction({name: "${copyVal}"})`
+        }
+
+        if (mode === "code" || mode === "flows") {
             return `await executeAction({name: "${copyVal}", params: {
 ${Object.entries(val.params || {}).map(([key, value]) => {
                 return `\t${key}: '', // ${value}`;
@@ -192,9 +196,6 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
 }})`
         }
 
-        if (mode === "rules") {
-            return "<@" + text + "> "
-        }
 
         return text
     }
@@ -202,19 +203,18 @@ ${Object.entries(val.params || {}).map(([key, value]) => {
     const statesPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
             {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
-                const path = '<#' + copy.namespace
+                const path = 'board' + copy.namespace
                     .filter(v => v)
-                    .map(k => `${JSON.stringify(k).replaceAll('"', '')}`)
-                    .join('.') + "> "
+                    .map(k => `?.[${JSON.stringify(k)}]`)
+                    .join('') + ' '
 
-                console.log('Key path:', path)
                 navigator.clipboard.writeText(path)
                 return false
             }} />
             }
             {!filteredStateData && <Text>No states found</Text>}
         </YStack>
-    }, [filteredStateData, board?.name]);
+    }, [filteredStateData, board?.name, copyMode]);
 
     const actionsPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start">
