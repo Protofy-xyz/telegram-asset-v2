@@ -3,8 +3,8 @@ import * as fspath from 'path';
 import { promises as fs } from 'fs';
 import { snapshotBoardFiles, copyDirRecursive } from './versions';
 import { BoardsDir } from "../../extensions/boards/system/boards";
-import { VersionModel } from ".";
-import { AutoAPI, getRoot, requireAdmin } from 'protonode'
+import { API } from 'protobase'
+import { getRoot, requireAdmin,getServiceToken } from 'protonode'
 
 const VersionsBaseDir = (root: string) => fspath.join(root, 'data', 'versions');
 
@@ -34,7 +34,7 @@ export default async (app, context) => {
     });
 
     // Restore version
-    app.post('/api/core/v1/boards/:boardId/versions/:version/restore', requireAdmin(), async (req, res) => {
+    app.get('/api/core/v1/boards/:boardId/versions/:version/restore', requireAdmin(), async (req, res) => {
         const root = getRoot(req);
         const boardId = req.params.boardId;
         const version = req.params.version;
@@ -68,7 +68,7 @@ export default async (app, context) => {
             await copyDirRecursive(srcDir, dstDir);
         }
         // Re-registra acciones y estados derivados:
-        await context.events.emit('services/api/ready'); // o llama a tu registerActions/reloadBoard directamente
+        await API.get("/api/core/v1/reloadBoards?token=" + getServiceToken())
         res.send({ ok: true, restored: { boardId, version } });
     });
 };
