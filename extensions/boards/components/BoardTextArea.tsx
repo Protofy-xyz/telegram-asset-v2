@@ -17,36 +17,112 @@ function renderHighlightedHTML(text: string) {
 
   const escaped = esc(text);
 
-  const withTags = escaped.replace(
+  const tagged = escaped.replace(
     /&lt;([^&][\s\S]*?)&gt;/g,
     (_m, inner) => {
       if (inner.startsWith("#")) {
         return `<span 
           style="
-            background-color: var(--green10); 
-            color: var(--gray3); 
+            background-color: var(--green6); 
+            color: var(--green11); 
             width: fit-content; 
             display: inline; 
-            padding-block: 3px; 
+            paddingBlock: 3px; 
             border-radius: 5px; 
           "><span style="color:transparent">&lt;</span>${inner ?? ""}<span style="color:transparent">&gt;</span></span>`
       } else if (inner.startsWith("@")) {
         return `<span 
           style="
-            background-color: var(--blue10); 
-            color: var(--gray3); 
+            background-color: var(--blue6); 
+            color: var(--blue11); 
             width: fit-content; 
             display: inline; 
-            padding-block: 3px; 
+            paddingBlock: 3px; 
             border-radius: 5px; 
           "><span style="color:transparent">&lt;</span>${inner ?? ""}<span style="color:transparent">&gt;</span></span>`
       }
     }
   );
 
-  return withTags;
+  return tagged;
 }
 
+const sortEntriesByKeyLengthDesc = (obj: Record<string, string>) => Object.entries(obj).sort((a, b) => b[0].length - a[0].length);
+
+const dump = (text, symbols = {}) => {
+  let dumped = text;
+  for (const [key, value] of sortEntriesByKeyLengthDesc(symbols)) {
+    // key: await executeAction({....
+    // value: <@card 3>
+    dumped = dumped.replaceAll(key, value);
+  }
+
+  return dumped;
+}
+
+const dedump = (text, symbols = {}) => {
+  let dedumped = text;
+  for (const [key, value] of sortEntriesByKeyLengthDesc(symbols)) {
+    // key: await executeAction({....
+    // value: <@card 3>
+    dedumped = dedumped.replaceAll(value, key);
+  }
+  return dedumped;
+}
+
+const getSymbols = (text, pattern: RegExp, matchCb = (match) => { }) => {
+  const matches = [...text.matchAll(pattern)];
+  const symbols = {};
+
+  matches.forEach((match, i) => {
+    const key = match[0];
+    symbols[key] = matchCb(key) ?? "unknown";
+  });
+
+  return symbols;
+};
+
+
+const updateSymbols = (value, setSymbols) => {
+  // update the text symbols
+  let states = getSymbols(value, /\bboard(?:\?\.\[\s*"(?:[^"\\]|\\.)*"\s*\])+/g, (match) => {
+    // get the property access strings in "board?.["card"]?.["test"]... -> ["card", "test"]
+    let matches = [...match.matchAll(/\?\.\["([^"]+)"\]/g)]
+    let properties = matches.map((m) => m[1]);
+    return "<#" + properties.join(".") + ">"
+  })
+  let actions = getSymbols(value, /await\s+executeAction\(\{\s*name\s*:\s*"[^"]*"\s*\}\)/g, (match) => {
+    const name = match.match(/name\s*:\s*["']([^"']+)["']/);
+    return "<@" + name[1] + ">"
+  })
+  let _symbols = {
+    ...states,
+    ...actions
+  }
+  setSymbols(_symbols)
+}
+
+const removeUnknownTags = (value, symbols) => {
+  // replace raw manually setted tags for "unknown"
+  let cleanedText = value.replace(
+    /<([^&][\s\S]*?)>/g,
+    (_m, inner) => {
+      console.log("symbols:::", symbols, _m, inner)
+      if (!Object.values(symbols).includes(_m)) {
+        let prefix = ""
+        if (inner.startsWith("@")) {
+          prefix = "@"
+        } else {
+          prefix = "#"
+        }
+        return "<" + prefix + "unknown>"
+      }
+
+      return _m
+    }
+  );
+  return cleanedText
+}
 
 export const BoardTextArea = ({
   value,
@@ -65,11 +141,12 @@ export const BoardTextArea = ({
   const dropDown = {
     states: dropDownStates, actions: dropDownActions
   }
+  const [symbols, setSymbols] = useState({})
+  const [dumpedValue, setDumpedValue] = useState(value)
   const tagsChars = {
     states: "#",
     actions: "@"
   }
-
 
   const ref = useRef(null);
   const [speechRecognitionEnabled, setSpeechRecognitionEnabled] = useState(false);
@@ -95,6 +172,28 @@ export const BoardTextArea = ({
   const [selectedIndex, setSelectedIndex] = useState(0)
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // clean unknown tags (manually setted) -> dedump → recalc symbols → dump with new symbols
+    let cleaned = removeUnknownTags(value, symbols);
+    const dedumped = dedump(cleaned, symbols);
+    const nextSymbolsCollector = {};
+    updateSymbols(dedumped, (s) => Object.assign(nextSymbolsCollector, s));
+    const dumped = dump(dedumped, nextSymbolsCollector);
+
+    setSymbols(nextSymbolsCollector);
+    setDumpedValue(dumped);
+  }, []);
+
+  useEffect(() => {
+    let cleaned = removeUnknownTags(value, symbols);
+    const dedumped = dedump(cleaned, symbols);
+    const nextSymbolsCollector = {};
+    updateSymbols(dedumped, (s) => Object.assign(nextSymbolsCollector, s));
+
+    setSymbols(nextSymbolsCollector);
+    setDumpedValue(dump(value, nextSymbolsCollector));
+  }, [value]);
 
   useLayoutEffect(() => {
     adjustHeight();
@@ -140,7 +239,7 @@ export const BoardTextArea = ({
           let value = ref.current.value
           onChange({
             target: {
-              value: value.slice(0, inputInsertIndex - 1) + "<" + (tagsChars[showDropdown]) + (dropDown[showDropdown][selectedIndex] || "unknown state") + "> " + value.slice(inputInsertIndex + 1)
+              value: value.slice(0, inputInsertIndex - 1) + (dropDown[showDropdown][selectedIndex] || "unknown state") + value.slice(inputInsertIndex + 1)
             }
           })
           setShowDropdown(null)
@@ -174,15 +273,15 @@ export const BoardTextArea = ({
           const end = input.selectionEnd;
 
           if (start === end) {
-            const before = value.slice(0, start);
-            const after = value.slice(start);
+            const before = dumpedValue.slice(0, start);
+            const after = dumpedValue.slice(start);
 
             const match = before.match(/<[@#][^>]+>$/);
             if (match) {
               e.preventDefault();
 
               const tokenStart = start - match[0].length;
-              const newValue = value.slice(0, tokenStart) + after;
+              const newValue = dumpedValue.slice(0, tokenStart) + after;
               onChange({ target: { value: newValue } })
 
               setTimeout(() => {
@@ -191,7 +290,6 @@ export const BoardTextArea = ({
               }, 0);
             }
           }
-
           break;
         default:
           break;
@@ -221,7 +319,8 @@ export const BoardTextArea = ({
   return (
     <XStack pos='relative' f={1} gap="$3" ai="flex-end">
       {
-        showDropdown && <YStack
+        // showDropdown: flagged feature
+        false && <YStack
           style={{
             position: "absolute",
             width: "100%",
@@ -280,18 +379,25 @@ export const BoardTextArea = ({
             overflow: 'auto',
             lineHeight: '1.4',
           }}
-          dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(value) }}
+          dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(dumpedValue) }}
         />
 
         <textarea
           ref={ref}
           readOnly={readOnly}
-          value={value}
+          value={dumpedValue}
           placeholder={placeholder}
           onChange={(prevText) => {
             if (prevText.target.value.endsWith(" #")) setShowDropdown("states");
             if (prevText.target.value.endsWith(" @")) setShowDropdown("actions");
-            onChange(prevText);
+
+            // dedump and set the new symbols
+            let cleaned = removeUnknownTags(prevText.target.value, symbols);
+            let dedumped = dedump(cleaned, symbols);
+            updateSymbols(dedumped, setSymbols)
+
+            // set the dumped
+            onChange({ target: { value: dedumped } });
           }}
           onKeyUp={(e) => {
             e.preventDefault();
@@ -332,7 +438,7 @@ export const BoardTextArea = ({
             padding: '10px',
             backgroundColor: 'var(--gray4)',
             color: 'transparent',
-            caretColor: 'black',  // this caret, has color, to use for the overlay text
+            caretColor: 'var(--color)',  // this caret, has color, to use for the overlay text
             fontSize: "inherit",
             ...style,
           }}
