@@ -1,9 +1,30 @@
-import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot } from 'lucide-react';
+import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot, Undo, Redo } from 'lucide-react';
 import { useBoardControls } from './BoardControlsContext';
 import { ActionBarButton } from 'protolib/components/ActionBarWidget';
 import { Separator } from '@my/ui';
 import { useSubscription } from 'protolib/lib/mqtt';
 import { useEffect, useRef, useState } from 'react';
+import { useBoardVersions } from './utils/versions';
+import { useSearchParams } from 'next/navigation';
+
+function useBoardId() {
+  let param: string | null = null;
+  try {
+    const sp = useSearchParams?.();
+    param = sp?.get('board') ?? null;
+  } catch {
+    // noop
+  }
+  const [id, setId] = useState<string | null>(param);
+  useEffect(() => {
+    if (param !== null) return;
+    if (typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    setId(sp.get('board'));
+  }, [param]);
+  return id;
+}
+
 
 const AutopilotButton = ({ generateEvent, autopilot }) => <ActionBarButton
   tooltipText={autopilot ? "Pause Autopilot" : "Play Autopilot"}
@@ -39,6 +60,11 @@ const LogsButton = ({ selected, onPress, showDot }: { selected: boolean; onPress
 );
 
 const getActionBar = (generateEvent) => {
+  const boardId = useBoardId();
+
+  const { canUndo, canRedo, undo, redo, snapshot, current, refresh } = useBoardVersions(boardId || undefined);
+  // console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
+
   // Suscripción a errores nivel 50
   const coreError = useSubscription('logs/core/50');
   const apiError = useSubscription('logs/api/50');
@@ -81,7 +107,7 @@ const getActionBar = (generateEvent) => {
 
   const { isJSONView, autopilot, setViewMode, viewMode, tabVisible } = useBoardControls();
 
-    // Utils para no disparar atajos cuando escribes en inputs/textarea/etc.
+  // Utils para no disparar atajos cuando escribes en inputs/textarea/etc.
   const isEditableTarget = (t: EventTarget | null) => {
     if (!(t instanceof HTMLElement)) return false;
     const tag = t.tagName.toLowerCase();
@@ -118,7 +144,31 @@ const getActionBar = (generateEvent) => {
     return () => window.removeEventListener('keydown', onKeyDown);
     // deps: si cambian estas, re-registra el handler
   }, [isJSONView, generateEvent]);
-
+  const versions = false //TOGGLE TO ENABLE VERSIONS
+  const undoRedoButtons = versions ? [      <ActionBarButton 
+        tooltipText={`Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}`}
+        Icon={Undo}
+        disabled={!boardId || !canUndo}
+        onPress={async () => {
+          try {
+            await undo?.();
+            await refresh();
+            window.location.reload()
+          } catch (e) { console.error(e); }
+        }}
+      />,
+      <ActionBarButton
+        tooltipText={`Redo${current != null ? ` (→ v${Number(current) + 1})` : ''}`}
+        Icon={Redo}
+        disabled={!boardId || !canRedo}
+        onPress={async () => {
+          try {
+            await redo?.();
+            await refresh();
+            window.location.reload()
+          } catch (e) { console.error(e); }
+        }}
+      />,] : []
   const bars = {
     'JSONView': [
       <ActionBarButton Icon={X} iconProps={{ color: 'var(--gray9)' }} onPress={() => generateEvent({ type: "toggle-json" })} />,
@@ -126,9 +176,10 @@ const getActionBar = (generateEvent) => {
     ],
     'BoardView': [
       <ActionBarButton tooltipText="Add Card" Icon={Plus} onPress={() => generateEvent({ type: "open-add" })} />,
+      ...undoRedoButtons,
       <ActionBarButton tooltipText={tabVisible == "rules" ? "Close Automations" : "Open Automations"} selected={tabVisible == "rules"} Icon={Bot} onPress={() => generateEvent({ type: "toggle-rules" })} />,
-      <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
+      <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,
       <LogsButton selected={tabVisible == "logs"} showDot={showLogsDot} onPress={() => generateEvent({ type: "toggle-logs" })} />,
       <ActionBarButton tooltipText="Board Settings" selected={tabVisible == "board-settings"} Icon={Settings} onPress={() => generateEvent({ type: "board-settings" })} />,
       <>

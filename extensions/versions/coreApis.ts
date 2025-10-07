@@ -4,26 +4,47 @@ import { promises as fs } from 'fs';
 import { snapshotBoardFiles, copyDirRecursive } from './versions';
 import { BoardsDir } from "../../extensions/boards/system/boards";
 import { API } from 'protobase'
-import { getRoot, requireAdmin,getServiceToken } from 'protonode'
+import { getRoot, requireAdmin, getServiceToken } from 'protonode'
 
 const VersionsBaseDir = (root: string) => fspath.join(root, 'data', 'versions');
 
 const getNextVersion = async (root: string, boardId: string): Promise<number> => {
-  const dir = fspath.join(VersionsBaseDir(root), boardId);
+    const dir = fspath.join(VersionsBaseDir(root), boardId);
 
-  if (!fsSync.existsSync(dir)) return 1;
+    if (!fsSync.existsSync(dir)) return 1;
 
-  const entries = (await fs.readdir(dir))
-    .filter(n => /^\d+$/.test(n))
-    .map(n => Number(n));
+    const entries = (await fs.readdir(dir))
+        .filter(n => /^\d+$/.test(n))
+        .map(n => Number(n));
 
-  if (entries.length === 0) return 1;
+    if (entries.length === 0) return 1;
 
-  const maxVersion = Math.max(...entries);
-  return maxVersion + 1;
+    const maxVersion = Math.max(...entries);
+    return maxVersion + 1;
+};
+
+export const getCurrentVersionFromFS = (root: string, boardId: string): number | null => {
+    const jsonPath = fspath.join(BoardsDir(root), `${boardId}.json`);
+    if (!fsSync.existsSync(jsonPath)) return null;
+
+    try {
+        const board = JSON.parse(fsSync.readFileSync(jsonPath, 'utf8'));
+        const v = Number(board?.version);
+        return Number.isFinite(v) ? v : null;
+    } catch {
+        return null;
+    }
 };
 
 export default async (app, context) => {
+    // Get current version
+    app.get('/api/core/v1/boards/:boardId/version/current', requireAdmin(), (req, res) => {
+        const root = getRoot(req);
+        const { boardId } = req.params;
+        const v = getCurrentVersionFromFS(root, boardId);
+        if (v === null) return res.status(404).send({ error: 'board not found or invalid version' });
+        return res.send({ version: v });
+    });
     // List versions
     app.get('/api/core/v1/boards/:boardId/versions', requireAdmin(), async (req, res) => {
         const root = getRoot(req);
