@@ -93,17 +93,6 @@ export const Rules = ({
     else setErrorMsg(res.message || 'No se pudo añadir la regla.')
   }
 
-  const handleNewRuleChange = (e) => {
-    const val = e.target.value
-    setErrorMsg(null)
-    const newlineCount = (val.match(/\n/g) || []).length
-    if (val.endsWith("\n") && newlineCount === 1) {
-      addRule(e)
-    } else {
-      setNewRule(val)
-    }
-  }
-
   const reloadRules = async (e) => {
     e.stopPropagation()
     setGenerating(true)
@@ -146,7 +135,12 @@ export const Rules = ({
             speechRecognition={true}
             placeholder={isLoadingOrGenerating ? "Generating rules..." : "Add new rule..."}
             value={newRule}
-            onChange={handleNewRuleChange}
+            onChange={(e) => {
+              setNewRule(e.target.value)
+            }}
+            onEnter={(e) => {
+              addRule(e)
+            }}
             style={{ width: '100%' }}
             disabled={isLoadingOrGenerating}
             enableShortcuts={true}

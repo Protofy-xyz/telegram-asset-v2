@@ -1,25 +1,6 @@
 import { ProtoModel, z, SessionDataType } from "protobase";
 
-export const BaseObjectSchema = z.object({
-  id: z.string().search().id().generate((obj) => obj.name.charAt(0).toUpperCase() + obj.name.slice(1) + 'Model').hidden(),
-  name: z.string().search().static(),
-  features: z.any().generate({}, true).hidden(),
-  keys: z.record(
-    z.string().optional(),
-    z.object({
-      type: z.union([
-        z.literal("string"),
-        z.literal("number"),
-        z.literal("boolean"),
-        z.literal("array"),
-        z.literal("object"),
-        z.literal("record"),
-        z.literal("union"),
-        z.literal("date")
-      ]),
-      params: z.array(z.string()).optional(),
-      modifiers: z.array(z.object({
-        name: z.union([
+export const ModifiersNames = z.union([
           z.literal("id"),
           z.literal("search"),
           z.literal("filter"),
@@ -44,7 +25,28 @@ export const BaseObjectSchema = z.object({
           z.literal("name"),
           z.literal("picker"),
           z.literal("location")
-        ]),
+        ])
+
+export const BaseObjectSchema = z.object({
+  id: z.string().search().id().generate((obj) => obj.name.charAt(0).toUpperCase() + obj.name.slice(1) + 'Model').hidden(),
+  name: z.string().search().static(),
+  features: z.any().generate({}, true).hidden(),
+  keys: z.record(
+    z.string().optional(),
+    z.object({
+      type: z.union([
+        z.literal("string"),
+        z.literal("number"),
+        z.literal("boolean"),
+        z.literal("array"),
+        z.literal("object"),
+        z.literal("record"),
+        z.literal("union"),
+        z.literal("date")
+      ]),
+      params: z.array(z.string()).optional(),
+      modifiers: z.array(z.object({
+        name: ModifiersNames,
         params: z.array(z.string()).optional()
       }).name('name')).optional()
     }).name('name'))
