@@ -2,26 +2,53 @@ import { TooltipSimple, XStack, YStack } from "@my/ui"
 import { processActionBar } from "app/bundles/actionBar"
 import { useRouter } from 'next/router'
 import { useState } from "react"
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp } from "@tamagui/lucide-icons"
+import { ChevronDown, ChevronUp } from "@tamagui/lucide-icons"
 
-export const ActionBarButton = ({ Icon, selected = false, ...props }) => {
-  const size = 34
-  return <TooltipSimple disabled={!(props.tooltipText)} placement="top" delay={{ open: 500, close: 0 }} restMs={0} label={props.tooltipText}>
-    <YStack
-      jc="center"
-      ai="center"
-      br="$4"
-      cursor='pointer'
-      scaleIcon={1.8}
-      w={size}
-      h={size}
-      hoverStyle={{ bg: '$gray2', scale: 1.05 }}
-      {...props}
+export const ActionBarButton = ({ Icon, selected = false, disabled = false, ...props }) => {
+  const size = 34;
+
+  const handlePress = (e) => {
+    if (disabled) {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      return;
+    }
+    props.onPress?.(e);
+  };
+
+  return (
+    <TooltipSimple
+      disabled={!(props.tooltipText)}
+      placement="top"
+      delay={{ open: 500, close: 0 }}
+      restMs={0}
+      label={props.tooltipText}
     >
-      <Icon size={20} color={selected ? "var(--color8)" : "var(--color)"} fill={props.fill ? "var(--color)" : "transparent"} {...props.iconProps} />
-    </YStack>
-  </TooltipSimple>
-}
+      <YStack
+        jc="center"
+        ai="center"
+        br="$4"
+        cursor={disabled ? 'default' : 'pointer'}
+        scaleIcon={1.8}
+        w={size}
+        h={size}
+        hoverStyle={disabled ? undefined : { bg: '$gray2', scale: 1.05 }}
+        {...props}
+        onPress={handlePress}
+        role="button"
+        aria-disabled={disabled}
+        opacity={disabled ? 0.5 : 1}
+      >
+        <Icon
+          size={20}
+          color={disabled ? 'var(--gray8)' : (selected ? 'var(--color8)' : 'var(--color)')}
+          fill={props.fill ? 'var(--color)' : 'transparent'}
+          {...props.iconProps}
+        />
+      </YStack>
+    </TooltipSimple>
+  );
+};
 
 export const useActionBar = (actionBar?, onActionBarEvent?) => {
   const router = useRouter()
