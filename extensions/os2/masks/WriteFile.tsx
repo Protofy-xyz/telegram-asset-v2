@@ -8,6 +8,7 @@ const WriteFile = ({ node = {}, nodeData = {}, children }: any) => {
         <Node icon={Save} node={node} isPreview={!node.id} title='Write File' color={color} id={node.id} skipCustom={true}>
             <NodeParams id={node.id} params={[{ label: 'Path', field: 'mask-path', type: 'input' }]} />
             <NodeParams id={node.id} params={[{ label: 'Content', field: 'mask-content', type: 'input' }]} />
+            <NodeParams id={node.id} params={[{ label: 'Absolute Path', field: 'mask-absolutePath', type: 'boolean' }]} />
             <div style={{height: '3px'}} />
             <NodeOutput id={node.id} type={'input'} label={'Done'} handleId={'mask-done'} />
             <NodeOutput id={node.id} type={'input'} label={'Error'} vars={['err']} handleId={'mask-error'} />
@@ -27,12 +28,14 @@ export default {
     filterChildren: filterObject({keys: {
             path: 'input',
             content: 'input',
+            absolutePath: 'input',
             done: 'output',
             error: 'output'
     }}),
     restoreChildren: restoreObject({keys: {
         path: 'input',
         content: 'input',
+        absolutePath: 'input',
         done: 'output',
         error: { params: { 'param-error': { key: "err"}}}
     }}),
@@ -47,6 +50,10 @@ export default {
             "mask-content": {
                 value: "",
                 kind: "StringLiteral"
+            },
+            "mask-absolutePath": {
+                value: false,
+                kind: "BooleanLiteral"
             }
         }
     }
