@@ -63,7 +63,7 @@ const getActionBar = (generateEvent) => {
   const boardId = useBoardId();
 
   const { canUndo, canRedo, undo, redo, snapshot, current, refresh } = useBoardVersions(boardId || undefined);
-  // console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
+  //console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
 
   // Suscripción a errores nivel 50
   const coreError = useSubscription('logs/core/50');
@@ -144,31 +144,33 @@ const getActionBar = (generateEvent) => {
     return () => window.removeEventListener('keydown', onKeyDown);
     // deps: si cambian estas, re-registra el handler
   }, [isJSONView, generateEvent]);
+
   const versions = false //TOGGLE TO ENABLE VERSIONS
-  const undoRedoButtons = versions ? [      <ActionBarButton 
-        tooltipText={`Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}`}
-        Icon={Undo}
-        disabled={!boardId || !canUndo}
-        onPress={async () => {
-          try {
-            await undo?.();
-            await refresh();
-            window.location.reload()
-          } catch (e) { console.error(e); }
-        }}
-      />,
-      <ActionBarButton
-        tooltipText={`Redo${current != null ? ` (→ v${Number(current) + 1})` : ''}`}
-        Icon={Redo}
-        disabled={!boardId || !canRedo}
-        onPress={async () => {
-          try {
-            await redo?.();
-            await refresh();
-            window.location.reload()
-          } catch (e) { console.error(e); }
-        }}
-      />,] : []
+  const undoRedoButtons = versions ? [<ActionBarButton
+    tooltipText={canUndo?`Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}`: 'No Undo Available'}
+    Icon={Undo}
+    disabled={!boardId || !canUndo}
+    onPress={async () => {
+      try {
+        await undo?.();
+        await refresh();
+        window.location.reload()
+      } catch (e) { console.error(e); }
+    }}
+  />,
+  <ActionBarButton
+    tooltipText={canRedo?`Redo${current != null ? ` (→ v${Number(current) + 1})` : ''}`: 'No Redo Available'}
+    Icon={Redo}
+    disabled={!boardId || !canRedo}
+    onPress={async () => {
+      try {
+        await redo?.();
+        await refresh();
+        window.location.reload()
+      } catch (e) { console.error(e); }
+    }}
+  />,] : []
+  
   const bars = {
     'JSONView': [
       <ActionBarButton Icon={X} iconProps={{ color: 'var(--gray9)' }} onPress={() => generateEvent({ type: "toggle-json" })} />,
