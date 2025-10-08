@@ -152,6 +152,11 @@ export const BoardTextArea = ({
 
   const ref = useRef(null);
   const [speechRecognitionEnabled, setSpeechRecognitionEnabled] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(null)
+  const [inputInsertIndex, setInputInsetIndex] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   const {
     transcript,
     listening,
@@ -169,11 +174,22 @@ export const BoardTextArea = ({
     }
   };
 
-  const [showDropdown, setShowDropdown] = useState(null)
-  const [inputInsertIndex, setInputInsetIndex] = useState(0)
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const selectDropdownOption = (value) => {
+    let selection = dropDown[showDropdown][selectedIndex]
+    let text = showDropdown === "actions"
+      ? generateActionCode(selection)
+      : generateStateCode([selection])
+
+    onChange({
+      target: {
+        value: value.slice(0, inputInsertIndex - 1) + (text + " ") + value.slice(inputInsertIndex + 1)
+      }
+    })
+    setShowDropdown(null)
+    setTimeout(() => {
+      ref.current.focus()
+    }, 50)
+  }
 
   useEffect(() => {
     // clean unknown tags (manually setted) -> dedump → recalc symbols → dump with new symbols
@@ -238,25 +254,11 @@ export const BoardTextArea = ({
           setShowDropdown(null)
           break;
         case 'Tab':
-          let value = ref.current.value
-          let selection = dropDown[showDropdown][selectedIndex]
-          let text = showDropdown === "actions"
-            ? generateActionCode(selection)
-            : generateStateCode([selection])
-
-          onChange({
-            target: {
-              value: value.slice(0, inputInsertIndex - 1) + (text + " ") + value.slice(inputInsertIndex + 1)
-            }
-          })
-          setShowDropdown(null)
+          selectDropdownOption(dumpedValue)
           break;
         default:
           break;
       }
-      setTimeout(() => {
-        ref.current.focus()
-      }, 150)
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -347,6 +349,12 @@ export const BoardTextArea = ({
               ? dropDown[showDropdown].map((s, i) => <button
                 ref={el => (itemRefs.current[i] = el)}
                 key={s}
+                onClick={() => {
+                  selectDropdownOption(dumpedValue)
+                }}
+                onMouseEnter={(e) => {
+                  setSelectedIndex(i)
+                }}
                 style={{
                   backgroundColor: i === selectedIndex ? "var(--gray6)" : "transparent",
                   paddingBlock: "5px",
