@@ -129,6 +129,7 @@ export const BoardTextArea = ({
   value,
   speechRecognition,
   onChange,
+  onEnter,
   onKeyDown,
   readOnly,
   placeholder,
@@ -217,6 +218,7 @@ export const BoardTextArea = ({
     adjustHeight();
   }, [value]);
 
+  // events with dropdown open
   useEffect(() => {
     if (!showDropdown) {
       setSelectedIndex(0)
@@ -254,6 +256,8 @@ export const BoardTextArea = ({
           setShowDropdown(null)
           break;
         case 'Tab':
+        case 'Enter':
+          e.preventDefault()
           selectDropdownOption(dumpedValue)
           break;
         default:
@@ -265,9 +269,9 @@ export const BoardTextArea = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showDropdown, selectedIndex, inputInsertIndex]);
+  }, [showDropdown, selectedIndex, inputInsertIndex, dumpedValue]);
 
-  // handle backspace
+  // non dropdown events
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -300,6 +304,19 @@ export const BoardTextArea = ({
             }
           }
           break;
+        case 'Enter':
+          if (showDropdown) return;
+          e.preventDefault();
+          // dedump and set the new symbols
+          let cleaned = removeUnknownTags(dumpedValue, symbols);
+          let dedumped = dedump(cleaned, symbols);
+          updateSymbols(dedumped, setSymbols)
+
+          // set the dumped
+          if (typeof onEnter === 'function') {
+            onEnter({ target: { value: dedumped } });
+          }
+          break;
         default:
           break;
       }
@@ -309,7 +326,7 @@ export const BoardTextArea = ({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [inputInsertIndex, dumpedValue]);
+  }, [inputInsertIndex, dumpedValue, showDropdown, symbols, onEnter]);
 
   // El hack: Espera a que se estabilice el DOM
   useEffect(() => {
