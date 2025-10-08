@@ -1045,6 +1045,7 @@ const Board = ({ board, icons }) => {
                 }}
               />
               : <YStack f={1} p={"$6"}>{cards.length > 0 ? <DashboardGrid
+                extraScrollSpace={50}
                 items={cards}
                 settings={board.settings}
                 layouts={boardRef.current.layouts}
