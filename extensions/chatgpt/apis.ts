@@ -84,9 +84,13 @@ export default (app, context) => {
                         "type": "text"
                     },
                     "model": {
-                        "visible": false,
+                        "visible": true,
                         "defaultValue": "gpt-4o",
-                        "type": "string"
+                        "type": "string",
+                        "options": [
+                            "gpt-4o",
+                            "gpt-5"
+                        ]
                     },
                     "files": {
                         "visible": true,

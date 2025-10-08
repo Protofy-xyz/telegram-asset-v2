@@ -5,6 +5,7 @@ import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
+import { SelectList } from "../SelectList";
 
 export const Icon = ({ name, size, color, style }) => {
     return (
@@ -100,40 +101,59 @@ export const ParamsForm = ({ data, children }) => {
                             }}
                         >
                             <Text ml="20px" mb="$2">{key}</Text>
+
                             {(!['json', 'array', 'boolean', 'path'].includes(type)) &&
-                                <TextEditDialog f={1}>
-                                    {["text"].includes(type)
-                                        ? <TextArea
-                                            className="no-drag"
-                                            f={1}
-                                            mx="10px"
-                                            focusStyle={{ outlineWidth: "1px" }}
-                                            value={value}
-                                            onChangeText={(val) => setParam(key, val)}
-                                            placeholder={placeholder}
-                                            rows={6}
+                                (cfg?.options?.length
+                                    ? <YStack mx="10px">
+                                        <SelectList
+                                            title={key}
+                                            elements={cfg.options}
+                                            value={value ?? defaultValue}
+                                            onValueChange={(v) => setParam(key, v)}
+                                            selectorStyle={{
+                                                normal: {
+                                                    backgroundColor: "$gray1",
+                                                    borderColor: "$gray7"
+                                                },
+                                                hover: {
+                                                    backgroundColor: "$gray2",
+                                                }
+                                            }}
                                         />
-                                        // html, markdown, string, number
-                                        : <Input
-                                            className="no-drag"
+                                    </YStack>
+                                    : <TextEditDialog f={1}>
+                                        {["text"].includes(type)
+                                            ? <TextArea
+                                                className="no-drag"
+                                                f={1}
+                                                mx="10px"
+                                                focusStyle={{ outlineWidth: "1px" }}
+                                                value={value}
+                                                onChangeText={(val) => setParam(key, val)}
+                                                placeholder={placeholder}
+                                                rows={6}
+                                            />
+                                            // html, markdown, string, number
+                                            : <Input
+                                                className="no-drag"
+                                                value={value}
+                                                placeholder={placeholder}
+                                                minWidth={100}
+                                                mx="10px"
+                                                onChangeText={(val) => setParam(key, val)}
+                                            />
+                                        }
+                                        <TextEditDialog.Trigger bc="$gray1" pl="$2" pos="absolute" right={"$2"} m="$3" bottom={0} cursor="pointer" >
+                                            <Icon name="maximize-2" size={20} color={"var(--gray8)"} style={{}} />
+                                        </TextEditDialog.Trigger>
+                                        <TextEditDialog.Editor
+                                            placeholder={key}
                                             value={value}
-                                            placeholder={placeholder}
-                                            minWidth={100}
-                                            mx="10px"
-                                            onChangeText={(val) => setParam(key, val)}
+                                            readValue={() => paramsState[key] ?? ""}
+                                            onChange={(val) => setParam(key, val)}
+                                            type={type}
                                         />
-                                    }
-                                    <TextEditDialog.Trigger bc="$gray1" pl="$2" pos="absolute" right={"$2"} m="$3" bottom={0} cursor="pointer" >
-                                        <Icon name="maximize-2" size={20} color={"var(--gray8)"} style={{}} />
-                                    </TextEditDialog.Trigger>
-                                    <TextEditDialog.Editor
-                                        placeholder={key}
-                                        value={value}
-                                        readValue={() => paramsState[key] ?? ""}
-                                        onChange={(val) => setParam(key, val)}
-                                        type={type}
-                                    />
-                                </TextEditDialog>
+                                    </TextEditDialog>)
                             }
                             {(type == 'json' || type == 'array')
                                 && <XStack
