@@ -37,7 +37,7 @@ import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 import { PublicIcon } from 'protolib/components/IconSelect'
 import { useAtom as useJotaiAtom, atom } from 'jotai'
-import { atomWithDefault } from "jotai/utils";
+import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard} from '../utils/viewUtils'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -505,23 +505,7 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
   />
 }
 
-const itemsAtom = atom(null as any); //(board) => atomWithDefault(() => board.cards && board.cards.length ? board.cards : []);
-const automationInfoAtom = atom(null as any);
-const uiCodeInfoAtom = atom(null as any);
 
-const reloadBoard = async (board, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo) => {
-  const dataData = await API.get(`/api/core/v1/boards/${board.name}`)
-  const automationInfo = await API.get(`/api/core/v1/boards/${board.name}/automation`)
-  const UICodeInfo = await API.get(`/api/core/v1/boards/${board.name}/uicode`)
-  setAutomationInfo(automationInfo.data)
-  setUICodeInfo(UICodeInfo.data)
-  if (dataData.status == 'loaded') {
-    let newItems = (dataData.data?.cards || []).filter(card => card)
-    if (!newItems || newItems.length == 0) newItems = []
-    setItems(newItems)
-    setBoardVersion(dataData.data.version || 1)
-  }
-}
 
 const Board = ({ board, icons }) => {
   const {
@@ -679,7 +663,7 @@ const Board = ({ board, icons }) => {
   }, [actions])
 
   useEffectOnce(() => {
-    reloadBoard(board, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
+    reloadBoard(board.name, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
   })
 
   useEffect(() => {

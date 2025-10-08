@@ -7,7 +7,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useBoardVersions } from './utils/versions';
 import { useSearchParams } from 'next/navigation';
 import { useBoardVersion } from './store/boardStore';
+import {reloadBoard, itemsAtom, automationInfoAtom, uiCodeInfoAtom} from '@extensions/boards/utils/viewUtils'
+import { useAtom } from 'jotai';
 
+const toggleInstantUndoRedo = false; // disables reload when undo/redo, still buggy
 
 const AutopilotButton = ({ generateEvent, autopilot }) => <ActionBarButton
   tooltipText={autopilot ? "Pause Autopilot" : "Play Autopilot"}
@@ -108,6 +111,11 @@ const getActionBar = (generateEvent) => {
     };
   }, []);
 
+  const [items, setItems] = useAtom(itemsAtom);
+  const [automationInfo, setAutomationInfo] = useAtom(automationInfoAtom);
+  const [uicodeInfo, setUICodeInfo] = useAtom(uiCodeInfoAtom);
+  const [, setBoardVersion] = useBoardVersion();
+
   const { isJSONView, autopilot, setViewMode, viewMode, tabVisible } = useBoardControls();
 
   // Utils para no disparar atajos cuando escribes en inputs/textarea/etc.
@@ -157,7 +165,8 @@ const getActionBar = (generateEvent) => {
       try {
         await undo?.();
         await refresh();
-        window.location.reload()
+        if(toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
+        else document.location.reload();
       } catch (e) { console.error(e); }
     }}
   />,
@@ -169,7 +178,8 @@ const getActionBar = (generateEvent) => {
       try {
         await redo?.();
         await refresh();
-        window.location.reload()
+        if(toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
+        else document.location.reload();
       } catch (e) { console.error(e); }
     }}
   />,] : []
