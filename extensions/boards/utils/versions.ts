@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useBoardVersion } from '../store/boardStore';
 
 /* ---------- API calls (cliente) ---------- */
 
@@ -40,17 +41,12 @@ export const getCurrentVersion = async (boardId: string): Promise<number | null>
 
 export function useBoardVersions(boardId?: string) {
   const [versions, setVersions] = useState<number[]>([]);
-  const [current, setCurrent] = useState<number | null>(null);
+  const [current, setCurrent] = useBoardVersion();
   const [loading, setLoading] = useState(false);
   const busyRef = useRef(false);
 
-  const idx = useMemo(() => {
-    if (current == null) return -1;
-    return versions.indexOf(current);
-  }, [versions, current]);
-
-  const canUndo = idx > 0;
-  const canRedo = idx >= 0 && idx < versions.length - 1;
+  const canUndo = current > 1;
+  const canRedo = current >= 1 && current < versions.length;
 
   const refresh = useCallback(async () => {
     if (!boardId) return;
@@ -94,16 +90,16 @@ export function useBoardVersions(boardId?: string) {
   );
 
   const undo = useCallback(async () => {
-    if (!canUndo || idx < 0) return;
-    const target = versions[idx - 1];
+    if (!canUndo) return;
+    const target = versions[current - 2];
     await goToVersion(target);
-  }, [canUndo, idx, versions, goToVersion]);
+  }, [canUndo, current, versions, goToVersion]);
 
   const redo = useCallback(async () => {
-    if (!canRedo || idx < 0) return;
-    const target = versions[idx + 1];
+    if (!canRedo) return;
+    const target = versions[current];
     await goToVersion(target);
-  }, [canRedo, idx, versions, goToVersion]);
+  }, [canRedo, current, versions, goToVersion]);
 
   const snapshot = useCallback(async () => {
     if (!boardId || busyRef.current) return;
@@ -124,7 +120,6 @@ export function useBoardVersions(boardId?: string) {
   return {
     versions,         // lista ordenada
     current,          // versión actual (del JSON)
-    idx,              // índice derivado
     canUndo, canRedo,
     loading,
     refresh,          // fuerza relectura (por si hay cambios externos)

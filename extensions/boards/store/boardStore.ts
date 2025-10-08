@@ -2,6 +2,11 @@ import { atom, useAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
 export const highlightedCard = atom("")
+export const boardVersion = atom(1)
+
+export const useBoardVersion = () => {
+    return useAtom(boardVersion)
+} 
 
 export const useHighlightedCard = () => {
     return useAtom(highlightedCard)

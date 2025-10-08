@@ -3,6 +3,7 @@ import * as fsSync from 'fs';
 import { promises as fs } from 'fs';
 import { BoardsDir } from "../../extensions/boards/system/boards";
 import { acquireLock, releaseLock } from "../../extensions/boards/system/lock";
+import { json } from 'stream/consumers';
 
 const VersionsBaseDir = (root: string) => fspath.join(root, 'data', 'versions');
 
@@ -47,7 +48,10 @@ export async function snapshotBoardFiles(root: string, boardId: string, version:
   await acquireLock(jsonPath);
   try {
     await ensureDir(dstBase);
-    await copyFileIfExists(jsonPath, fspath.join(dstBase, `${boardId}.json`));
+    //force version number in JSON
+    const jsonData = JSON.parse(await fs.readFile(jsonPath, 'utf-8'));
+    jsonData.version = version;
+    await fs.writeFile(fspath.join(dstBase, `${boardId}.json`), JSON.stringify(jsonData, null, 2)); // pretty print
     await copyFileIfExists(logicPath, fspath.join(dstBase, `${boardId}.js`));
     await copyFileIfExists(uiPath,    fspath.join(dstBase, `${boardId}_ui.js`));
     await copyDirRecursive(boardFolder, fspath.join(dstBase, boardId));

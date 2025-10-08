@@ -6,24 +6,7 @@ import { useSubscription } from 'protolib/lib/mqtt';
 import { useEffect, useRef, useState } from 'react';
 import { useBoardVersions } from './utils/versions';
 import { useSearchParams } from 'next/navigation';
-
-function useBoardId() {
-  let param: string | null = null;
-  try {
-    const sp = useSearchParams?.();
-    param = sp?.get('board') ?? null;
-  } catch {
-    // noop
-  }
-  const [id, setId] = useState<string | null>(param);
-  useEffect(() => {
-    if (param !== null) return;
-    if (typeof window === 'undefined') return;
-    const sp = new URLSearchParams(window.location.search);
-    setId(sp.get('board'));
-  }, [param]);
-  return id;
-}
+import { useBoardVersion } from './store/boardStore';
 
 
 const AutopilotButton = ({ generateEvent, autopilot }) => <ActionBarButton
@@ -59,11 +42,31 @@ const LogsButton = ({ selected, onPress, showDot }: { selected: boolean; onPress
   </div>
 );
 
+function useBoardId() {
+  let param: string | null = null;
+  try {
+    const sp = useSearchParams?.();
+    param = sp?.get('board') ?? null;
+  } catch {
+    // noop
+  }
+  const [id, setId] = useState<string | null>(param);
+  useEffect(() => {
+    if (param !== null) return;
+    if (typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    setId(sp.get('board'));
+  }, [param]);
+  return id;
+}
+
 const getActionBar = (generateEvent) => {
   const boardId = useBoardId();
+  const [boardVersion] = useBoardVersion();
+  const current = boardVersion
 
-  const { canUndo, canRedo, undo, redo, snapshot, current, refresh } = useBoardVersions(boardId || undefined);
-  //console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
+  const { canUndo, canRedo, undo, redo, snapshot, refresh } = useBoardVersions(boardId || undefined);
+  console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
 
   // Suscripción a errores nivel 50
   const coreError = useSubscription('logs/core/50');
@@ -145,7 +148,7 @@ const getActionBar = (generateEvent) => {
     // deps: si cambian estas, re-registra el handler
   }, [isJSONView, generateEvent]);
 
-  const versions = false //TOGGLE TO ENABLE VERSIONS
+  const versions = true //TOGGLE TO ENABLE VERSIONS
   const undoRedoButtons = versions ? [<ActionBarButton
     tooltipText={canUndo?`Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}`: 'No Undo Available'}
     Icon={Undo}

@@ -31,4 +31,4 @@ Protofy("api", {
 })
 
 export type BoardType = z.infer<typeof BoardSchema>;
-export const BoardModel = AutoModel.createDerived<BoardType>("DeviceDefinitionModel", BoardSchema);
+export const BoardModel = AutoModel.createDerived<BoardType>("BoardModel", BoardSchema);

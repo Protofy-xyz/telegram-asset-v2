@@ -32,7 +32,7 @@ import { FloatingWindow } from '../components/FloatingWindow'
 import { useAtom } from 'protolib/lib/Atom'
 import { AppState } from 'protolib/components/AdminPanel'
 import { useLog } from '@extensions/logs/hooks/useLog'
-import { useIsHighlightedCard } from '@extensions/boards/store/boardStore'
+import { useIsHighlightedCard, useBoardVersion } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 import { PublicIcon } from 'protolib/components/IconSelect'
@@ -49,7 +49,7 @@ class ValidationError extends Error {
   }
 }
 
-const saveBoard = async (boardId, data, opts = { bumpVersion: true }) => {
+const saveBoard = async (boardId, data, setBoardVersion?, opts = { bumpVersion: true}) => {
   try {
     if (opts.bumpVersion) {
       if (!data.version) {
@@ -57,8 +57,10 @@ const saveBoard = async (boardId, data, opts = { bumpVersion: true }) => {
       } else {
         data.version += 1
       }
+
     }
     await API.post(`/api/core/v1/boards/${boardId}`, data);
+    setBoardVersion && setBoardVersion(data.version)
   } catch (error) {
     console.error("Error saving board:", error);
   }
@@ -192,7 +194,7 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
           }
           <YStack p="$2" gap="$2" w="100%" br="$2">
             <Text color="$color" fontSize="$3">State</Text>
-            {isJSONView ? <JSONView src={states ?? {}} /> : <Text color={states ? "$color": "$gray10"}>{states ?? "N/A"}</Text>}
+            {isJSONView ? <JSONView src={states ?? {}} /> : <Text color={states ? "$color" : "$gray10"}>{states ?? "N/A"}</Text>}
           </YStack>
         </Popover.Content>
       </Popover>
@@ -575,6 +577,8 @@ const Board = ({ board, icons }) => {
     }
   }, [isEditing]);
 
+  const [boardVersion, setBoardVersion] = useBoardVersion()
+
   //@ts-ignore store the states in the window object to be used in the cards htmls
   window['protoStates'] = states
 
@@ -599,6 +603,7 @@ const Board = ({ board, icons }) => {
       if (!newItems || newItems.length == 0) newItems = []
       boardRef.current.cards = newItems
       setItems(newItems)
+      setBoardVersion(dataData.data.version || 1)
     }
   }
 
@@ -649,7 +654,7 @@ const Board = ({ board, icons }) => {
           });
 
           board.cards = newItems;
-          saveBoard(board.name, board);
+          saveBoard(board.name, board, setBoardVersion)
           return newItems;
         } else {
           console.error('Card not found:', cardId);
@@ -670,7 +675,7 @@ const Board = ({ board, icons }) => {
     // if (newItems.length == 0) newItems.push(addCard) // non necessary
     setItems(newItems)
     boardRef.current.cards = newItems
-    await saveBoard(board.name, boardRef.current)
+    await saveBoard(board.name, boardRef.current, setBoardVersion)
     setIsDeleting(false)
     setCurrentCard(null)
   }
@@ -710,7 +715,7 @@ const Board = ({ board, icons }) => {
     const newItems = [...boardRef.current?.cards, newCard].filter(item => item.key !== 'addwidget');
     setItems(newItems)
     boardRef.current.cards = newItems;
-    await saveBoard(board.name, boardRef.current);
+    await saveBoard(board.name, boardRef.current, setBoardVersion);
 
     // animate to the bottom
     setTimeout(() => {
@@ -732,12 +737,12 @@ const Board = ({ board, icons }) => {
 
     setItems(newItems)
     boardRef.current.cards = newItems
-    saveBoard(board.name, boardRef.current);
+    saveBoard(board.name, boardRef.current, setBoardVersion);
   }
 
   const onEditBoard = async () => {
     try {
-      await saveBoard(board.name, boardRef.current)
+      await saveBoard(board.name, boardRef.current, setBoardVersion)
     } catch (err) {
       alert('Error editing board')
     }
@@ -809,7 +814,7 @@ const Board = ({ board, icons }) => {
               }
             })
             setItems(newItems);
-            saveBoard(board.name, boardRef.current);
+            saveBoard(board.name, boardRef.current, setBoardVersion);
           }}
           onDelete={() => {
             setIsDeleting(true);
@@ -929,7 +934,7 @@ const Board = ({ board, icons }) => {
       setErrors([]);
       setItems(newItems);
       boardRef.current.cards = newItems;
-      await saveBoard(board.name, boardRef.current);
+      await saveBoard(board.name, boardRef.current, setBoardVersion);
       setCurrentCard(null);
       setIsEditing(false);
     } catch (e) {
@@ -1072,7 +1077,7 @@ const Board = ({ board, icons }) => {
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
                     console.log('New layout: ', layout)
                     boardRef.current.layouts[breakpointRef.current] = layout
-                    saveBoard(board.name, boardRef.current, { bumpVersion: false })
+                    saveBoard(board.name, boardRef.current, setBoardVersion, { bumpVersion: false })
                   }, 100)
                 }}
                 onBreakpointChange={(bp) => {

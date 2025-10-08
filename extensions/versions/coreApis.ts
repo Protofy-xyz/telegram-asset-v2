@@ -8,21 +8,6 @@ import { getRoot, requireAdmin, getServiceToken } from 'protonode'
 
 const VersionsBaseDir = (root: string) => fspath.join(root, 'data', 'versions');
 
-const getNextVersion = async (root: string, boardId: string): Promise<number> => {
-    const dir = fspath.join(VersionsBaseDir(root), boardId);
-
-    if (!fsSync.existsSync(dir)) return 1;
-
-    const entries = (await fs.readdir(dir))
-        .filter(n => /^\d+$/.test(n))
-        .map(n => Number(n));
-
-    if (entries.length === 0) return 1;
-
-    const maxVersion = Math.max(...entries);
-    return maxVersion + 1;
-};
-
 export const getCurrentVersionFromFS = (root: string, boardId: string): number | null => {
     const jsonPath = fspath.join(BoardsDir(root), `${boardId}.json`);
     if (!fsSync.existsSync(jsonPath)) return null;
@@ -63,9 +48,9 @@ export default async (app, context) => {
         const boardId = req.params.boardId;
         const jsonPath = fspath.join(BoardsDir(root), `${boardId}.json`);
         if (!fsSync.existsSync(jsonPath)) return res.status(404).send({ error: 'board not found' });
-        const v = await getNextVersion(root, boardId);
-        await snapshotBoardFiles(root, boardId, v);
-        res.send({ ok: true, version: v });
+        const current = getCurrentVersionFromFS(root, boardId);
+        await snapshotBoardFiles(root, boardId, current);
+        res.send({ ok: true, version: current});
     });
 
     // Restore version
