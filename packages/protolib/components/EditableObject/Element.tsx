@@ -13,7 +13,7 @@ import { RecordComp } from "./RecordComponent";
 import { FilePicker } from "../FilePicker";
 import { Circle } from 'lucide-react'
 import { useRouter, useSearchParams, usePathname } from 'solito/navigation';
-import { SecretInput } from "../SecretInput";
+import { FormInput } from "../FormInput";
 
 export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields = {}, path = [], inArray = false, arrayName = "", URLTransform = (url) => url }) => {
     let elementDef = {
@@ -326,33 +326,9 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
         </FormElement>
     }
 
-    if (["ZodString", "ZodNumber"].includes(elementType) && ele._def.secret) {
-        return <Stack f={1}>
-            <SecretInput
-                id={"editable-object-input-" + ele?.name}
-                {...(mode != 'edit' && mode != 'add' ? { bw: 0, forceStyle: "hover" } : {})}
-                bc="$backgroundTransparent"
-                focusStyle={{ outlineWidth: 1 }}
-                disabled={(mode == 'view' || mode == 'preview' || (mode == 'edit' && ele._def.static) || (ele._def.dependsOn && !data[ele._def.dependsOn]))}
-                value={generatedOptions && !getFormData(ele.name) ? generatedOptions : getFormData(ele.name)}
-                onChangeText={(t) => setFormData(ele.name, elementDef.typeName == 'ZodNumber' ? t.replace(/[^0-9.-]/g, '') : t)}
-                placeholder={!data ? '' : ele._def.hint ?? ele._def.label ?? (typeof ele.name == "number" ? "..." : ele.name)}
-                autoFocus={x == 0 && i == 0}
-                onBlur={() => {
-                    if (elementDef.typeName == 'ZodNumber') {
-                        const numericValue = parseFloat(getFormData(ele.name));
-                        if (!isNaN(numericValue)) {
-                            setFormData(ele.name, numericValue);
-                        }
-                    }
-                }}
-            />
-        </Stack>
-    }
-
     return <FormElement ele={ele} icon={icon} i={i} inArray={inArray}>
         <Stack f={1}>
-            <Input
+            <FormInput
                 id={"editable-object-input-" + ele?.name}
                 {...(mode != 'edit' && mode != 'add' ? { bw: 0, forceStyle: "hover" } : {})}
                 focusStyle={{ outlineWidth: 1 }}
@@ -372,7 +348,7 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
                 }}
                 bc="$backgroundTransparent"
             >
-            </Input>
+            </FormInput>
         </Stack>
     </FormElement>
 }
