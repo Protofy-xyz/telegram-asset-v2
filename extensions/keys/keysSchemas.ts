@@ -6,7 +6,7 @@ Protofy("features", {
 
 export const KeySchema = Schema.object(Protofy("schema", {
 	name: z.string().id().search(),
-	value: z.string().display(['add', 'edit'])
+	value: z.string().display(['add', 'edit']).secret()
 }))
 
 Protofy("api", {
