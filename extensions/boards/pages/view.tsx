@@ -36,6 +36,8 @@ import { useIsHighlightedCard, useBoardVersion } from '@extensions/boards/store/
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 import { PublicIcon } from 'protolib/components/IconSelect'
+import { useAtom as useJotaiAtom, atom } from 'jotai'
+import { atomWithDefault } from "jotai/utils";
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -49,7 +51,7 @@ class ValidationError extends Error {
   }
 }
 
-const saveBoard = async (boardId, data, setBoardVersion?, opts = { bumpVersion: true}) => {
+const saveBoard = async (boardId, data, setBoardVersion?, opts = { bumpVersion: true }) => {
   try {
     if (opts.bumpVersion) {
       if (!data.version) {
@@ -503,6 +505,24 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
   />
 }
 
+const itemsAtom = atom(null as any); //(board) => atomWithDefault(() => board.cards && board.cards.length ? board.cards : []);
+const automationInfoAtom = atom(null as any);
+const uiCodeInfoAtom = atom(null as any);
+
+const reloadBoard = async (board, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo) => {
+  const dataData = await API.get(`/api/core/v1/boards/${board.name}`)
+  const automationInfo = await API.get(`/api/core/v1/boards/${board.name}/automation`)
+  const UICodeInfo = await API.get(`/api/core/v1/boards/${board.name}/uicode`)
+  setAutomationInfo(automationInfo.data)
+  setUICodeInfo(UICodeInfo.data)
+  if (dataData.status == 'loaded') {
+    let newItems = (dataData.data?.cards || []).filter(card => card)
+    if (!newItems || newItems.length == 0) newItems = []
+    setItems(newItems)
+    setBoardVersion(dataData.data.version || 1)
+  }
+}
+
 const Board = ({ board, icons }) => {
   const {
     addOpened,
@@ -514,7 +534,17 @@ const Board = ({ board, icons }) => {
 
   const breakpointCancelRef = useRef(null) as any
   const dedupRef = useRef() as any
-  const [items, setItems] = useState((board.cards && board.cards.length ? [...board.cards.filter(i => i).filter(key => key != 'addwidget')] : []))
+  const initialized = useRef(false)
+  const [items, setItems] = useJotaiAtom(itemsAtom);
+  const [automationInfo, setAutomationInfo] = useJotaiAtom(automationInfoAtom);
+  const [uicodeInfo, setUICodeInfo] = useJotaiAtom(uiCodeInfoAtom);
+  if(!initialized.current){
+    setItems(board.cards && board.cards.length ? board.cards : [])
+    setAutomationInfo(null)
+    setUICodeInfo(null)
+    initialized.current = true
+  }
+
   const [isDeleting, setIsDeleting] = useState(false)
   const [isApiDetails, setIsApiDetails] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -522,8 +552,7 @@ const Board = ({ board, icons }) => {
   const [editedCard, setEditedCard] = useState(null)
   const [editCode, setEditCode] = useState('')
   const [boardCode, setBoardCode] = useState(JSON.stringify(board))
-  const [automationInfo, setAutomationInfo] = useState();
-  const [uicodeInfo, setUICodeInfo] = useState();
+
   const [errors, setErrors] = useState<string[]>([])
   // const initialBreakPoint = useInitialBreakpoint()
   const breakpointRef = useRef('') as any
@@ -592,21 +621,6 @@ const Board = ({ board, icons }) => {
   const actions = useProtoStates({}, 'actions/boards/' + board.name + '/#', 'actions')
   window['protoActions'] = actions
 
-  const reloadBoard = async () => {
-    const dataData = await API.get(`/api/core/v1/boards/${board.name}`)
-    const automationInfo = await API.get(`/api/core/v1/boards/${board.name}/automation`)
-    const UICodeInfo = await API.get(`/api/core/v1/boards/${board.name}/uicode`)
-    setAutomationInfo(automationInfo.data)
-    setUICodeInfo(UICodeInfo.data)
-    if (dataData.status == 'loaded') {
-      let newItems = (dataData.data?.cards || []).filter(card => card)
-      if (!newItems || newItems.length == 0) newItems = []
-      boardRef.current.cards = newItems
-      setItems(newItems)
-      setBoardVersion(dataData.data.version || 1)
-    }
-  }
-
   const getParsedJSON = (rawJson) => {
     let result = rawJson
     try {
@@ -665,8 +679,12 @@ const Board = ({ board, icons }) => {
   }, [actions])
 
   useEffectOnce(() => {
-    reloadBoard()
+    reloadBoard(board, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
   })
+
+  useEffect(() => {
+    boardRef.current.cards = items
+  }, [items])
 
   const boardRef = useRef(board)
 
@@ -689,7 +707,7 @@ const Board = ({ board, icons }) => {
     // }
     const lyt = {}
     Object.keys(gridSizes).forEach(key => {
-      lyt[key] = computeLayout(items, gridSizes[key], { layout: boardRef.current?.layouts[key] ?? board?.layouts[key] });
+      lyt[key] = computeLayout(items || [], gridSizes[key], { layout: boardRef.current?.layouts[key] ?? board?.layouts[key] });
     });
     return lyt
   }, [items, board?.layouts])
@@ -749,7 +767,7 @@ const Board = ({ board, icons }) => {
   }
 
   //fill items with react content, addWidget should be the last item
-  const cards = items.map((item) => {
+  const cards = (items || []).map((item) => {
     if (item.type == 'addWidget') {
       return {
         ...item,
@@ -1090,11 +1108,11 @@ const Board = ({ board, icons }) => {
                     breakpointCancelRef.current = null //reset the cancel flag after 1 second
                   }, 1000)
                 }}
-              /> : <YStack f={1} top={-100} ai="center" jc="center" gap="$5" o={0.1} className="no-drag">
+              /> : (items !== null ? <YStack f={1} top={-100} ai="center" jc="center" gap="$5" o={0.1} className="no-drag">
                 {/* <Scan size="$15" /> */}
                 <H1>{board.name} is empty</H1>
                 <H3>Click on the + button to add a new card</H3>
-              </YStack>}</YStack>
+              </YStack> : null)}</YStack>
           }
         </YStack>
         <HTMLView style={{ display: viewMode == 'ui' ? 'block' : 'none', position: 'absolute', width: "100%", height: "100%", backgroundColor: "var(--bgContent)" }}
