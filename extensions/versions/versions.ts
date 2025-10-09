@@ -36,6 +36,8 @@ export async function copyDirRecursive(srcDir: string, dstDir: string) {
   }
 }
 
+export const VersionsDir = (root) => fspath.join(root, "/data/versions/");
+
 export async function snapshotBoardFiles(root: string, boardId: string, version: number) {
   const base = BoardsDir(root);
   const jsonPath = fspath.join(base, `${boardId}.json`);
