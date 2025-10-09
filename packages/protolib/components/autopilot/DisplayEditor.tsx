@@ -59,7 +59,10 @@ export const DisplayEditor = ({
 }) => {
     const [error, setError] = useState<string | null>(null)
 
-    const getCheckedDefault = useCallback((cd: any, key: string) => !!(cd?.[key]), [])
+    const getCheckedDefault = useCallback((cd: any, key: string, noValueIs: boolean = false) => {
+        if (cd[key] === undefined) return noValueIs
+        return cd[key]
+    }, [])
 
     const settings: Setting[] = [
         // ----- General -----
@@ -74,14 +77,14 @@ export const DisplayEditor = ({
         { label: 'Markdown display', key: 'markdownDisplay', type: 'checkbox', section: 'Display' },
         { label: 'Display value', key: 'displayResponse', type: 'checkbox', section: 'Display', get: (cd) => cd.displayResponse !== false, visible: ({ card }) => card.type === 'action' },
         { label: 'Display button', key: 'displayButton', type: 'checkbox', section: 'Display', get: (cd) => cd.displayButton !== false, visible: ({ card }) => card.type === 'action' },
-        { label: 'Button text', key: 'buttonLabel', type: 'text', section: 'Display', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton') },
+        { label: 'Button text', key: 'buttonLabel', type: 'text', section: 'Display', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true) },
         {
             label: 'Button Full',
             key: 'buttonMode',
             type: 'checkbox',
             section: 'Display',
             indent: 1,
-            visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton'),
+            visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true),
             get: (cd) => cd.buttonMode === 'full',
             set: (cd, checked) => {
                 if (checked) return { ...cd, buttonMode: 'full' }
@@ -95,7 +98,7 @@ export const DisplayEditor = ({
             type: 'checkbox',
             section: 'Display',
             indent: 1,
-            visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton'),
+            visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true),
             get: (cd) => cd.displayButtonIcon === true,
             set: (cd, checked) => ({ ...cd, displayButtonIcon: !!checked }),
         },
