@@ -159,7 +159,6 @@ export default {
             getCard: (element, width) => <BoardPreview
               onDelete={async () => {
                 await API.get(`${sourceUrl}/${element.name}/delete`);
-                document.location.reload?.() 
               }}
               onPress={(e) => {
                 const dialogContent = e.target.className.includes('DialogPopup')
