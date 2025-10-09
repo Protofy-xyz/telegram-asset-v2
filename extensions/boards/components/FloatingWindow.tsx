@@ -90,8 +90,8 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs, side =
             height: "calc(100vh)"
         }
         : {
-            ...(isLeft ? { left: visible ? leftOffset : -windowSize } : { right: visible ? 40 : -windowSize }),
-            top: "70px",
+            ...(isLeft ? { left: visible ? leftOffset : -windowSize } : { right: visible ? 25 : -windowSize }),
+            top: "25px",
             width: windowSize,
             height: "calc(100vh - 100px)"
         }
