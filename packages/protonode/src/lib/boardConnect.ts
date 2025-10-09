@@ -129,7 +129,7 @@ export function boardConnect(run) {
         //if the param is not visible, hardcode the param value to the value in the configParams defaultValue
         if (action.configParams) {
             for (const param in action.configParams) {
-                if (action.configParams && action.configParams[param]) {
+                if (action.configParams && action.configParams[param].visible === false) {
                     params[param] = await resolveBoardParam({
                         states: context.states,
                         boardId: context.boardId,
@@ -156,7 +156,20 @@ export function boardConnect(run) {
             done(response.data);
             return response.data
         } else {
-            const paramsStr = Object.keys(params).map(k => k + '=' + params[k]).join('&');
+            function toQueryString(params) {
+                return Object.entries(params)
+                    .filter(([, v]) => v !== undefined) // drop undefined
+                    .map(([k, v]) => {
+                    const val =
+                        v !== null && typeof v === 'object'
+                        ? JSON.stringify(v)
+                        : String(v ?? ''); // null -> '', primitives -> string
+                    return `${encodeURIComponent(k)}=${encodeURIComponent(val)}`;
+                    })
+                    .join('&');
+            }
+
+            const paramsStr = toQueryString(params);
             //console.log('url: ', url+'?token='+token+'&'+paramsStr)
             const response = await API.get(url + '?token=' + token + '&' + paramsStr);
             if (response.isError) {
