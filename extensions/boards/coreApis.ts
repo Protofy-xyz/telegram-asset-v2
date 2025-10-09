@@ -7,6 +7,7 @@ import * as fspath from 'path';
 import { getServiceToken, requireAdmin } from "protonode";
 import { addAction } from '@extensions/actions/coreContext/addAction';
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
+import { VersionsDir } from '@extensions/versions/versions'
 import fileActions from "@extensions/files/fileActions";
 import { Manager } from "./manager";
 import { dbProvider, getDBOptions } from 'protonode';
@@ -15,6 +16,7 @@ import { callModel } from "./system/ai";
 import { getExecuteAction } from "./system/getExecuteAction";
 import { registerCards } from "./system/cards";
 import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles } from "./system/boards";
+
 import { getActions, handleBoardAction } from "./system/actions";
 
 
@@ -222,6 +224,7 @@ const getDB = (path, req, session, context?) => {
             const logicPath = base + key + ".js"
             const uiPath = base + key + "_ui.js"
             const boardDir = base + key
+            const boardVersionsDir = VersionsDir(getRoot(req)) + '/' + key
 
             try {
                 await fs.unlink(jsonPath)
@@ -257,6 +260,14 @@ const getDB = (path, req, session, context?) => {
                 }
             } catch (error) {
                 console.log("Error deleting board dir: " + boardDir)
+            }
+
+            try {
+                if (fsSync.existsSync(boardVersionsDir)) {
+                    await fs.rm(boardVersionsDir, { recursive: true, force: true })
+                }
+            } catch (error) {
+                console.log("Error deleting versions dir: " + boardVersionsDir)
             }
         },
 
@@ -525,10 +536,10 @@ export default async (app, context) => {
                     `);
 
                     const params = card.params || {};
-                    
+
                     for (const param in params) {
                         if (card.configParams && card.configParams[param]) {
-          
+
                             params[param] = await resolveBoardParam({
                                 states: await context.state.getStateTree(),
                                 boardId,

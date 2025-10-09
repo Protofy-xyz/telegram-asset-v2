@@ -129,7 +129,7 @@ export const AutoActions = ({
         try {
             const result = await API.get(`${urlPrefix}/${id}?token=${session.token}`);
             if (result.isLoaded) {
-                fixValues(result.data, modelType);
+                fixParamsForModel(result.data, modelType);
                 res.json(result.data);
                 return
             }
@@ -177,22 +177,72 @@ export const AutoActions = ({
     })
 
     //create
-    const fixValues = (params, modelType) => {
-        Object.keys(params).forEach((key) => {
-            // checkea los tipos de parametros para convetiros a los tipos correctos
-            if (modelType.getObjectFieldsDefinition()[key]?.type === 'number') {
-                params[key] = Number(params[key]);
+
+    const isObject = (v: any) => v !== null && typeof v === 'object' && !Array.isArray(v);
+    const looksLikeJSON = (s: any) =>
+        typeof s === 'string' && s.length > 1 && ((s[0] === '{' && s.at(-1) === '}') || (s[0] === '[' && s.at(-1) === ']'));
+
+    const coerceByType = (raw: any, type?: string) => {
+        switch (type) {
+            case 'number': {
+                const n = typeof raw === 'number' ? raw : Number(raw);
+                return n;
             }
-            if (modelType.getObjectFieldsDefinition()[key]?.type === 'boolean') {
-                params[key] = Boolean(params[key]);
+            case 'boolean': {
+                let b: boolean;
+                if (typeof raw === 'boolean') b = raw;
+                else if (typeof raw === 'number') b = raw !== 0;
+                else if (typeof raw === 'string') b = (raw === 'true' || raw === '1' || raw === 'on' || raw === 'yes');
+                else b = Boolean(raw);
+                return b;
             }
-        })
-    }
+            case 'record': {
+                if (isObject(raw)) {
+                    return raw;
+                }
+                if (looksLikeJSON(raw)) {
+                    try {
+                        const parsed = JSON.parse(raw as string);
+                        return parsed;
+                    } catch (e) {
+                    }
+                } else {
+                }
+                return raw; // keep as-is if we can’t parse
+            }
+            case 'string':
+            default: {
+                const s = typeof raw === 'string' ? raw : String(raw);
+                return s;
+            }
+        }
+    };
+
+    const fixParamsForModel = (params: any, modelType: any) => {
+        const def = modelType.getObjectFieldsDefinition?.() ?? {};
+        for (const key of Object.keys(params)) {
+            const fieldType = def[key]?.type;
+            if (!fieldType) continue;
+            params[key] = coerceByType(params[key], fieldType);
+        }
+        return params;
+    };
+
+    const fixParamsForUpdate = (params: any, modelType: any) => {
+        const def = modelType.getObjectFieldsDefinition?.() ?? {};
+        if (typeof params.field === 'string' && 'value' in params) {
+            const fieldType = def[params.field]?.type;
+            if (fieldType) {
+                params.value = coerceByType(params.value, fieldType);
+            }
+        }
+        return params;
+    };
 
     app.post(actionUrlPrefix + '/create', handler(async (req, res, session) => {
         const params = req.body;
         // console.log("create params: ", JSON.stringify(params));
-        fixValues(params, modelType);
+        fixParamsForModel(params, modelType);
         try {
             const result = await API.post(`${urlPrefix}?token=${session.token}`, params);
             // console.log("create result: ", result)
@@ -313,7 +363,7 @@ export const AutoActions = ({
     //update
     app.get(actionUrlPrefix + '/update', handler(async (req, res, session) => {
         const params = req.query;
-        fixValues(params, modelType);
+        fixParamsForUpdate(params, modelType);
         const id = params.id;
         const field: any = params.field;
         const value = params.value;

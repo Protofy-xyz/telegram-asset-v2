@@ -52,9 +52,45 @@ async function execute_action(url_or_name, params={}) {
         }             
         return response.data
     } else {
-        const paramsStr = Object.keys(params).map(k => k + '=' + encodeURIComponent(params[k])).join('&');
-        //console.log('url: ', action.url+'?token='+token+'&'+paramsStr)
-        const response = await API.get(action.url+'?token='+token+'&'+paramsStr);
+        // Resolve token
+        var token = params && params.token;
+        if (action.token) token = action.token;
+        if (!token) token = '${getServiceToken()}';
+
+        // Clone params and drop token so we don't include it twice
+        var rest = {};
+        if (params && typeof params === 'object') {
+            for (var k in params) {
+            if (Object.prototype.hasOwnProperty.call(params, k) && k !== 'token') {
+                rest[k] = params[k];
+            }
+            }
+        }
+
+        // Normalize values for GET: objects/arrays -> JSON, Date -> ISO, others -> string
+        var entries = Object.keys(rest)
+            .filter(function (k) { return rest[k] !== undefined; })
+            .map(function (k) {
+            var v = rest[k];
+            var out;
+            if (v && typeof v === 'object') {
+                if (v instanceof Date) out = v.toISOString();
+                else out = JSON.stringify(v);
+            } else {
+                out = String(v);
+            }
+            return [k, out];
+            });
+
+        var paramsStr = entries
+            .map(function (pair) {
+            return pair[0] + '=' + encodeURIComponent(pair[1]);
+            })
+            .join('&');
+
+        var url = action.url + '?token=' + encodeURIComponent(token) + (paramsStr ? '&' + paramsStr : '');
+
+        var response = await API.get(url);
         if (response.isError) {
             throw new Error(JSON.stringify(response.error || 'Error executing action'));
         }
