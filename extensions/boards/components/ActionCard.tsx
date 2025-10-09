@@ -13,253 +13,253 @@ const ActionRunner = dynamic(() => import('protolib/components/ActionRunner').th
 
 
 const CardIcon = ({ Icon, onPress, ...props }) => {
-  return <Tinted>
-    <XStack {...props} right={-10} hoverStyle={{ backgroundColor: '$backgroundFocus' }} pressStyle={{ backgroundColor: '$backgroundPress' }} borderRadius="$5" alignItems="center" justifyContent="center" cursor="pointer" padding="$2" onPress={onPress}>
-      <Icon size={20} onPress={onPress} />
-    </XStack>
-  </Tinted>
+    return <Tinted>
+        <XStack {...props} right={-10} hoverStyle={{ backgroundColor: '$backgroundFocus' }} pressStyle={{ backgroundColor: '$backgroundPress' }} borderRadius="$5" alignItems="center" justifyContent="center" cursor="pointer" padding="$2" onPress={onPress}>
+            <Icon size={20} onPress={onPress} />
+        </XStack>
+    </Tinted>
 }
 
 const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails, states }) => {
-  // console.log("🤖 ~ CardActions ~ data:", data)
-  const [menuOpened, setMenuOpened] = useState(false)
-  const [cardStatesOpen, setCardStatesOpen] = useState(false)
-  const MenuButton = ({ text, Icon, onPress }: { text: string, Icon: any, onPress: any }) => {
-    return (
-      <XStack width="100%" id={id} opacity={1} borderRadius="$5" padding="$3" alignSelf="flex-start" cursor="pointer" pressStyle={{ opacity: 0.7 }} hoverStyle={{ backgroundColor: "$color5" }}
-        onPress={(e) => {
-          onPress(e)
-          setMenuOpened(false)
-        }}
-      >
-        <Icon size="$1" color="var(--color9)" strokeWidth={2} />
-        <Text marginLeft="$3">{text}</Text>
-      </XStack>
-    )
-  }
-
-  const menuShortcuts = [
-    { id: 'config', text: 'Edit Settings', icon: Settings },
-    { id: 'rules', text: 'Edit Rules', icon: ClipboardList },
-    { id: 'params', text: 'Edit Inputs', icon: FileInput },
-    { id: 'view', text: 'Edit UI', icon: FileCode }
-  ].filter(menu => {
-    if (data?.editorOptions?.hiddenTabs?.includes(menu.id)) return false;
-    return true;
-  })
-
-  const isJSONView = states && typeof states !== 'string' && typeof states !== 'number' && typeof states !== 'boolean'
-  const origin =
-    typeof window !== 'undefined' ? window.location.origin : ''
-  const boardName =
-    typeof window !== 'undefined' ? (window as any)['protoBoardName'] : ''
-
-  const normalizeUrl = (u?: string) => {
-    if (!u) return undefined
-    if (/^https?:\/\//i.test(u)) return u
-    return `${origin}${u.startsWith('/') ? '' : '/'}${u}`
-  }
-
-  const makeReadUrl = () => {
-    if (data?.enableCustomPath && data?.customPath) return normalizeUrl(data.customPath)
-    return `${origin}/api/core/v1/boards/${boardName}/cards/${data?.name}`
-  }
-
-  const makeRunUrl = () => {
-    if (data?.enableCustomRunPath && data?.customRunPath) return normalizeUrl(data.customRunPath)
-    return `${origin}/api/core/v1/boards/${boardName}/cards/${data?.name}/run`
-  }
-
-
-  return <Tinted>
-    <XStack paddingTop="$1" flex={1} paddingRight="$4" justifyContent="space-between" alignItems="center">
-      <Popover key="card-states" onOpenChange={setCardStatesOpen} open={cardStatesOpen} allowFlip={true} stayInFrame={true} placement='bottom-start'>
-        <Popover.Trigger>
-          <CardIcon className='no-drag' Icon={Book} onPress={(e) => { e.stopPropagation(); setCardStatesOpen(true) }} />
-        </Popover.Trigger>
-        {/* @ts-ignore */}
-        <Popover.Content gap="$2" padding={0} ai="flex-start" minWidth="300px" maxWidth="400px" minHeight="100px" maxHeight="500px" overflow='auto' space={0} l="$2" p="$2" bw={1} boc="$gray6" bc={"$gray1"} >
-          <XStack justifyContent="center" alignItems="center" width="100%" gap="$2" flexWrap='wrap-reverse'>
-            <Text color="$gray10" textAlign="center">{data.name}</Text>
-            {data?.icon && <PublicIcon
-              name={data.icon}
-              color="var(--gray10)"
-              size={18}
-            />}
-          </XStack>
-          {data?.configParams && Object.keys(data.configParams).length > 0 && <YStack paddingLeft="$2" gap="$2">
-            <Text color="$color" fontSize="$3">Inputs</Text>
-            <XStack flexWrap="wrap" width="100%" gap="$2">
-              {Object.keys(data.configParams).map((param, index) => (
-                <TooltipSimple key={index} label={data.configParams[param]?.defaultValue || 'No default value'} delay={{ open: 200, close: 0 }} restMs={0}>
-                  <YStack cursor='help' hoverStyle={{ backgroundColor: "$gray5" }} paddingHorizontal="$3" paddingVertical="$1" borderRadius="$3" borderWidth={1} borderColor="$gray4" backgroundColor={"$gray3"}>
-                    <Text fontWeight="500">{param}</Text>
-                  </YStack>
-                </TooltipSimple>
-              ))}
+    // console.log("🤖 ~ CardActions ~ data:", data)
+    const [menuOpened, setMenuOpened] = useState(false)
+    const [cardStatesOpen, setCardStatesOpen] = useState(false)
+    const MenuButton = ({ text, Icon, onPress }: { text: string, Icon: any, onPress: any }) => {
+        return (
+            <XStack width="100%" id={id} opacity={1} borderRadius="$5" padding="$3" alignSelf="flex-start" cursor="pointer" pressStyle={{ opacity: 0.7 }} hoverStyle={{ backgroundColor: "$color5" }}
+                onPress={(e) => {
+                    onPress(e)
+                    setMenuOpened(false)
+                }}
+            >
+                <Icon size="$1" color="var(--color9)" strokeWidth={2} />
+                <Text marginLeft="$3">{text}</Text>
             </XStack>
-          </YStack>
-          }
-          <YStack padding="$2" gap="$2" width="100%" borderRadius="$2">
-            <Text color="$color" fontSize="$3">State</Text>
-            {isJSONView ? <JSONView src={states ?? {}} /> : <Text color={states ? "$color" : "$gray10"}>{states ?? "N/A"}</Text>}
-          </YStack>
-        </Popover.Content>
-      </Popover>
+        )
+    }
 
-      <XStack className='no-drag'>
-        {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
-        <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "config")} />
+    const menuShortcuts = [
+        { id: 'config', text: 'Edit Settings', icon: Settings },
+        { id: 'rules', text: 'Edit Rules', icon: ClipboardList },
+        { id: 'params', text: 'Edit Inputs', icon: FileInput },
+        { id: 'view', text: 'Edit UI', icon: FileCode }
+    ].filter(menu => {
+        if (data?.editorOptions?.hiddenTabs?.includes(menu.id)) return false;
+        return true;
+    })
 
-        <Popover key="card-menu" onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
-          <Popover.Trigger>
-            <CardIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
-          </Popover.Trigger>
-          <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} borderWidth={1} borderColor="$gray6" backgroundColor={"$gray1"}>
-            <Tinted>
-              <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"} onPress={(e) => e.stopPropagation()}>
-                <YStack>
-                  {
-                    menuShortcuts.map((menu, index) => (
-                      <MenuButton key={index} text={menu.text} Icon={menu.icon} onPress={() => onEdit(menu.id)} />
-                    ))
-                  }
-                  {data?.publicRead && (
-                    <MenuButton
-                      text="Visit public Read"
-                      Icon={Globe}
-                      onPress={() => window.open(makeReadUrl(), '_blank', 'noopener,noreferrer')}
-                    />
-                  )}
-                  {data?.publicRun && (
-                    <MenuButton
-                      text="Visit public Run"
-                      Icon={ExternalLink}
-                      onPress={() => window.open(makeRunUrl(), '_blank', 'noopener,noreferrer')}
-                    />
-                  )}
+    const isJSONView = states && typeof states !== 'string' && typeof states !== 'number' && typeof states !== 'boolean'
+    const origin =
+        typeof window !== 'undefined' ? window.location.origin : ''
+    const boardName =
+        typeof window !== 'undefined' ? (window as any)['protoBoardName'] : ''
 
-                  <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
-                  <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />
-                  <MenuButton text="Delete" Icon={Trash2} onPress={() => onDelete()} />
-                </YStack>
-              </YStack>
-            </Tinted>
-          </Popover.Content>
-        </Popover>
-      </XStack>
-    </XStack>
-  </Tinted>
+    const normalizeUrl = (u?: string) => {
+        if (!u) return undefined
+        if (/^https?:\/\//i.test(u)) return u
+        return `${origin}${u.startsWith('/') ? '' : '/'}${u}`
+    }
+
+    const makeReadUrl = () => {
+        if (data?.enableCustomPath && data?.customPath) return normalizeUrl(data.customPath)
+        return `${origin}/api/core/v1/boards/${boardName}/cards/${data?.name}`
+    }
+
+    const makeRunUrl = () => {
+        if (data?.enableCustomRunPath && data?.customRunPath) return normalizeUrl(data.customRunPath)
+        return `${origin}/api/core/v1/boards/${boardName}/cards/${data?.name}/run`
+    }
+
+
+    return <Tinted>
+        <XStack paddingTop="$1" flex={1} paddingRight="$4" justifyContent="space-between" alignItems="center">
+            <Popover key="card-states" onOpenChange={setCardStatesOpen} open={cardStatesOpen} allowFlip={true} stayInFrame={true} placement='bottom-start'>
+                <Popover.Trigger>
+                    <CardIcon className='no-drag' Icon={Book} onPress={(e) => { e.stopPropagation(); setCardStatesOpen(true) }} />
+                </Popover.Trigger>
+                {/* @ts-ignore */}
+                <Popover.Content gap="$2" padding={0} ai="flex-start" minWidth="300px" maxWidth="400px" minHeight="100px" maxHeight="500px" overflow='auto' space={0} l="$2" p="$2" bw={1} boc="$gray6" bc={"$gray1"} >
+                    <XStack justifyContent="center" alignItems="center" width="100%" gap="$2" flexWrap='wrap-reverse'>
+                        <Text color="$gray10" textAlign="center">{data.name}</Text>
+                        {data?.icon && <PublicIcon
+                            name={data.icon}
+                            color="var(--gray10)"
+                            size={18}
+                        />}
+                    </XStack>
+                    {data?.configParams && Object.keys(data.configParams).length > 0 && <YStack paddingLeft="$2" gap="$2">
+                        <Text color="$color" fontSize="$3">Inputs</Text>
+                        <XStack flexWrap="wrap" width="100%" gap="$2">
+                            {Object.keys(data.configParams).map((param, index) => (
+                                <TooltipSimple key={index} label={data.configParams[param]?.defaultValue || 'No default value'} delay={{ open: 200, close: 0 }} restMs={0}>
+                                    <YStack cursor='help' hoverStyle={{ backgroundColor: "$gray5" }} paddingHorizontal="$3" paddingVertical="$1" borderRadius="$3" borderWidth={1} borderColor="$gray4" backgroundColor={"$gray3"}>
+                                        <Text fontWeight="500">{param}</Text>
+                                    </YStack>
+                                </TooltipSimple>
+                            ))}
+                        </XStack>
+                    </YStack>
+                    }
+                    <YStack padding="$2" gap="$2" width="100%" borderRadius="$2">
+                        <Text color="$color" fontSize="$3">State</Text>
+                        {isJSONView ? <JSONView src={states ?? {}} /> : <Text color={states ? "$color" : "$gray10"}>{states ?? "N/A"}</Text>}
+                    </YStack>
+                </Popover.Content>
+            </Popover>
+
+            <XStack className='no-drag'>
+                {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
+                <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "config")} />
+
+                <Popover key="card-menu" onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
+                    <Popover.Trigger>
+                        <CardIcon Icon={MoreVertical} onPress={(e) => { e.stopPropagation(); setMenuOpened(true) }} />
+                    </Popover.Trigger>
+                    <Popover.Content padding={0} space={0} left={"$7"} top={"$2"} borderWidth={1} borderColor="$gray6" backgroundColor={"$gray1"}>
+                        <Tinted>
+                            <YStack alignItems="center" justifyContent="center" padding={"$3"} paddingVertical={"$3"} onPress={(e) => e.stopPropagation()}>
+                                <YStack>
+                                    {
+                                        menuShortcuts.map((menu, index) => (
+                                            <MenuButton key={index} text={menu.text} Icon={menu.icon} onPress={() => onEdit(menu.id)} />
+                                        ))
+                                    }
+                                    {data?.publicRead && (
+                                        <MenuButton
+                                            text="Visit public Read"
+                                            Icon={Globe}
+                                            onPress={() => window.open(makeReadUrl(), '_blank', 'noopener,noreferrer')}
+                                        />
+                                    )}
+                                    {data?.publicRun && (
+                                        <MenuButton
+                                            text="Visit public Run"
+                                            Icon={ExternalLink}
+                                            onPress={() => window.open(makeRunUrl(), '_blank', 'noopener,noreferrer')}
+                                        />
+                                    )}
+
+                                    <MenuButton text="Duplicate" Icon={Copy} onPress={() => onCopy()} />
+                                    <MenuButton text="Api Details" Icon={FileJson} onPress={() => onDetails()} />
+                                    <MenuButton text="Delete" Icon={Trash2} onPress={() => onDelete()} />
+                                </YStack>
+                            </YStack>
+                        </Tinted>
+                    </Popover.Content>
+                </Popover>
+            </XStack>
+        </XStack>
+    </Tinted>
 }
 
 export const ActionCard = ({
-  board,
-  id,
-  displayResponse,
-  html,
-  value = undefined,
-  name,
-  title,
-  params,
-  icon = undefined,
-  color,
-  onRun = (name, params) => { },
-  onEditCode = () => { },
-  onDelete = () => { },
-  onEdit = (tab) => { },
-  onDetails = () => { },
-  onCopy = () => { },
-  data = {} as any,
-  states = undefined,
-  containerProps = {},
-  setData = (data, id) => { }
+    board,
+    id,
+    displayResponse,
+    html,
+    value = undefined,
+    name,
+    title,
+    params,
+    icon = undefined,
+    color,
+    onRun = (name, params) => { },
+    onEditCode = () => { },
+    onDelete = () => { },
+    onEdit = (tab) => { },
+    onDetails = () => { },
+    onCopy = () => { },
+    data = {} as any,
+    states = undefined,
+    containerProps = {},
+    setData = (data, id) => { }
 }) => {
-  const [status, setStatus] = useState<'idle' | 'running' | 'error'>('idle')
-  const lockRef = useRef(false)
-  const highlighted = useIsHighlightedCard(board?.name, data?.name)
-  const action = window["protoActions"]?.boards?.[board.name]?.[name]
-  console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
+    const [status, setStatus] = useState<'idle' | 'running' | 'error'>('idle')
+    const lockRef = useRef(false)
+    const highlighted = useIsHighlightedCard(board?.name, data?.name)
+    const action = window["protoActions"]?.boards?.[board.name]?.[name]
+    console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
 
-  useEventEffect((payload, msg) => {
-    try {
-      const parsedMessage = JSON.parse(msg.message)
-      const payload = parsedMessage.payload
-      console.log('Message: ', payload)
+    useEventEffect((payload, msg) => {
+        try {
+            const parsedMessage = JSON.parse(msg.message)
+            const payload = parsedMessage.payload
+            console.log('Message: ', payload)
 
-      const next = payload.status
-      if (next === 'running') {
-        console.log('Running action: ', name)
-        lockRef.current = true
-        setStatus('running')
-        requestAnimationFrame(() => {
-          lockRef.current = false
-        })
-      } else {
-        const apply = () => {
-          if (next === 'done') {
-            console.log('Done action: ', name)
-            setStatus('idle')
-          } else if (next === 'error' || next === 'code_error') {
-            console.log('Error action: ', name)
-            setStatus('error')
-            console.error('Error: ', payload.error)
-          }
+            const next = payload.status
+            if (next === 'running') {
+                console.log('Running action: ', name)
+                lockRef.current = true
+                setStatus('running')
+                requestAnimationFrame(() => {
+                    lockRef.current = false
+                })
+            } else {
+                const apply = () => {
+                    if (next === 'done') {
+                        console.log('Done action: ', name)
+                        setStatus('idle')
+                    } else if (next === 'error' || next === 'code_error') {
+                        console.log('Error action: ', name)
+                        setStatus('error')
+                        console.error('Error: ', payload.error)
+                    }
+                }
+
+                if (lockRef.current) {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(apply)
+                    })
+                } else {
+                    apply()
+                }
+            }
+        } catch (e) {
+            console.error(e)
         }
+    }, { path: "actions/boards/" + board.name + "/" + name + "/#" })
 
-        if (lockRef.current) {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(apply)
-          })
-        } else {
-          apply()
-        }
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }, { path: "actions/boards/" + board.name + "/" + name + "/#" })
+    useEffect(() => {
+        if (!action || !action.status) return;
+        setStatus(action.status);
+    }, [action?.status]);
 
-  useEffect(() => {
-    if (!action || !action.status) return;
-    setStatus(action.status);
-  }, [action?.status]);
-
-  return (
-    <CenterCard
-      highlighted={highlighted}
-      status={status}
-      hideTitle={data.displayTitle === false}
-      hideFrame={data.displayFrame === false}
-      title={title}
-      id={id}
-      containerProps={containerProps}
-      cardActions={
-        <CardActions
-          id={id}
-          data={data}
-          states={states}
-          onDelete={onDelete}
-          onDetails={onDetails}
-          onEdit={onEdit}
-          onEditCode={onEditCode}
-          onCopy={onCopy}
-        />
-      }
-    >
-      <ActionRunner
-        setData={setData}
-        id={id}
-        data={data}
-        displayResponse={displayResponse}
-        name={name}
-        description="Run action"
-        actionParams={params}
-        onRun={onRun}
-        icon={icon}
-        color={color}
-        html={html}
-        value={value}
-      />
-    </CenterCard>
-  )
+    return (
+        <CenterCard
+            highlighted={highlighted}
+            status={status}
+            hideTitle={data.displayTitle === false}
+            hideFrame={data.displayFrame === false}
+            title={title}
+            id={id}
+            containerProps={containerProps}
+            cardActions={
+                <CardActions
+                    id={id}
+                    data={data}
+                    states={states}
+                    onDelete={onDelete}
+                    onDetails={onDetails}
+                    onEdit={onEdit}
+                    onEditCode={onEditCode}
+                    onCopy={onCopy}
+                />
+            }
+        >
+            <ActionRunner
+                setData={setData}
+                id={id}
+                data={data}
+                displayResponse={displayResponse}
+                name={name}
+                description="Run action"
+                actionParams={params}
+                onRun={onRun}
+                icon={icon}
+                color={color}
+                html={html}
+                value={value}
+            />
+        </CenterCard>
+    )
 }
