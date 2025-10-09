@@ -354,9 +354,7 @@ export const ActionCard = ({
                     </div>
                 </Popover.Content>
             </Popover>
-            <div style={{ display: isCardMinimized ? 'none' : 'flex', flex: 1, width: '100%', flexDirection: 'column' }}>
-                {children}
-            </div>
+            {!isCardMinimized && children}
         </CenterCard>
     )
 }
