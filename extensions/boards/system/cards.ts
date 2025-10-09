@@ -323,6 +323,53 @@ return card({
                     "defaultValue": ""
                 }
             },
+            presets: {
+                pop: {
+                    description: "removes the oldest element from the queue",
+                    configParams: {
+                        action: {
+                            defaultValue: "pop"
+                        }
+                    }
+                },
+                reset: {
+                    description: "resets the queue state to empty",
+                    configParams: {
+                        action: {
+                            defaultValue: "clear"
+                        }
+                    }
+                },
+                remove: {
+                    description: "remove the element with the given index from the queue",
+                    configParams: {
+                        action: {
+                            defaultValue: "remove"
+                        },
+                        item: {
+                            visible: true,
+                            defaultValue: 0,
+                            type: "number"
+                        }
+                    }
+                },
+                push: {
+                    params: {
+                        item: "item to push"
+                    },
+                    description: "adds an element to the queue",
+                    configParams: {
+                        action: {
+                            defaultValue: "push"
+                        },
+                        item: {
+                            visible: true,
+                            defaultValue: "",
+                            type: "string"
+                        }
+                    }
+                }
+            },
             displayButton: false
         },
         emitEvent: true

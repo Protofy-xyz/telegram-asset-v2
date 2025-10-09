@@ -121,6 +121,42 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             emitEvent: true,
             persistValue: card.persistValue ?? false
         })
+    
+
+
+        // add preset actions if the card contains presets
+        if (card.presets && Object.keys(card.presets).length > 0) {
+            for (const presetName of Object.keys(card.presets)) {
+                const preset = card.presets[presetName];
+                if (preset && presetName) {
+                    const mergedConfigParams = {
+                        ...card.configParams
+                    }
+                    if (preset.configParams) {
+                        for (const paramKey of Object.keys(preset.configParams)) {
+                            mergedConfigParams[paramKey] = {
+                                ...(mergedConfigParams[paramKey] || {}),
+                                ...preset.configParams[paramKey]
+                            }
+                        }
+                    }
+
+                    await addAction({
+                        method: card.method || 'get',
+                        group: 'boards',
+                        name: card.name + '.' + presetName,
+                        url: "/api/core/v1/boards/" + boardId + "/actions/" + card.name,
+                        tag: boardId,
+                        description: (card.description ? card.description + ': ' : '') + (preset.description ?? ""),
+                        params: { ...(card.params || {}), ...(preset.params || {}) },
+                        configParams: mergedConfigParams,
+                        emitEvent: true,
+                        persistValue: preset.persistValue ?? false
+                    })
+                }
+            }
+        }
+
         if (!regenerate && card.persistValue && !card.autorun) {
             // if persistValue is true, save the board state
             const db = dbProvider.getDB('board_' + boardId);
@@ -863,7 +899,14 @@ export default async (app, context) => {
 
     // Aceptar GET
     app.get('/api/core/v1/boards/:boardId/actions/:action', requireAdmin(), (req, res) => {
+        console.log('---------------------------------------------------------------------------')
+        console.log('Handling action request for board:', req.params.boardId, ' action: ', req.params.action, ' query: ', req.query)
         handleBoardAction(context, Manager, req.params.boardId, req.params.action, res, req.query)
+    })
+
+    // Aceptar POST
+    app.post('/api/core/v1/boards/:boardId/actions/:action', requireAdmin(), (req, res) => {
+        handleBoardAction(context, Manager, req.params.boardId, req.params.action, res, req.body)
     })
 
     const hasAccessToken = async (tokenType, session, card, token) => {
@@ -980,11 +1023,6 @@ export default async (app, context) => {
             handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query, true);
         }
     }))
-
-    // Aceptar POST
-    app.post('/api/core/v1/boards/:boardId/actions/:action', requireAdmin(), (req, res) => {
-        handleBoardAction(context, Manager, req.params.boardId, req.params.action, res, req.body)
-    })
 
     app.get('/api/core/v1/boards/:boardId', requireAdmin(), async (req, res) => {
         try {
