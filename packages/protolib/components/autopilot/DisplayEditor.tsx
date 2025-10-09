@@ -102,6 +102,7 @@ export const DisplayEditor = ({
             get: (cd) => cd.displayButtonIcon === true,
             set: (cd, checked) => ({ ...cd, displayButtonIcon: !!checked }),
         },
+        { label: 'Auto Minimize', key: 'autoResponsive', type: 'checkbox', section: 'Display', get: (cd) => cd.autoResponsive !== false },
 
         // ----- Paths and Permissions -----
         {

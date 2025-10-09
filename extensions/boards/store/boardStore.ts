@@ -58,3 +58,10 @@ export const useBoardName = () => {
 
     return boardName
 }
+
+export const executeAction = async (action, params = {}) => {
+    if (!window || !window['executeAction']) {
+        return
+    }
+    return window['executeAction'](action, params)
+}

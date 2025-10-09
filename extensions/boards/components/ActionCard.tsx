@@ -1,16 +1,15 @@
-import { Cable, Copy, Trash2, Settings, MoreVertical, Book, FileJson, ClipboardList, FileCode, FileInput, ExternalLink, Globe } from '@tamagui/lucide-icons'
-import { YStack, XStack, Popover, Text, TooltipSimple, Paragraph } from '@my/ui'
+import { Cable, Copy, Trash2, Settings, MoreVertical, Book, FileJson, ClipboardList, FileCode, FileInput, ExternalLink, Globe, ArrowDownRight, Play } from '@tamagui/lucide-icons'
+import { YStack, XStack, Popover, Text, TooltipSimple, Paragraph, Button } from '@my/ui'
 import { CenterCard } from '@extensions/services/widgets'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Tinted } from 'protolib/components/Tinted'
 import dynamic from 'next/dynamic'
 import { useEventEffect } from '@extensions/events/hooks'
 import { JSONView } from 'protolib/components/JSONView'
-import { useIsHighlightedCard } from '@extensions/boards/store/boardStore'
+import { useIsHighlightedCard, executeAction } from '../store/boardStore'
 import { PublicIcon } from 'protolib/components/IconSelect'
 
 const ActionRunner = dynamic(() => import('protolib/components/ActionRunner').then(mod => mod.ActionRunner), { ssr: false })
-
 
 const CardIcon = ({ Icon, onPress, ...props }) => {
     return <Tinted>
@@ -69,7 +68,6 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
         if (data?.enableCustomRunPath && data?.customRunPath) return normalizeUrl(data.customRunPath)
         return `${origin}/api/core/v1/boards/${boardName}/cards/${data?.name}/run`
     }
-
 
     return <Tinted>
         <XStack paddingTop="$1" flex={1} paddingRight="$4" justifyContent="space-between" alignItems="center">
@@ -162,7 +160,7 @@ export const ActionCard = ({
     title,
     params,
     icon = undefined,
-    color,
+    color = "var(--color7)",
     onRun = (name, params) => { },
     onEditCode = () => { },
     onDelete = () => { },
@@ -181,6 +179,11 @@ export const ActionCard = ({
     const highlighted = useIsHighlightedCard(board?.name, data?.name)
     const action = window["protoActions"]?.boards?.[board.name]?.[name]
     console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
+    const cardRef = useRef(null);
+
+    const isAutoResponsive = data?.autoResponsive !== false;
+    const isCardMinimized = isAutoResponsive && cardRef.current?.offsetHeight < 200;
+    const valueString = JSON.stringify(value) ?? "N/A";
 
     useEventEffect((payload, msg) => {
         try {
@@ -226,9 +229,26 @@ export const ActionCard = ({
         setStatus(action.status);
     }, [action?.status]);
 
+    const children = useMemo(() => (
+        <ActionRunner
+            setData={setData}
+            id={id}
+            data={data}
+            displayResponse={displayResponse}
+            name={name}
+            description="Run action"
+            actionParams={params}
+            onRun={onRun}
+            icon={icon}
+            color={color}
+            html={html}
+            value={value}
+        />
+    ), [setData, id, data, displayResponse, name, params, onRun, icon, color, html, value])
 
     return (
         <CenterCard
+            ref={cardRef}
             highlighted={highlighted}
             containerProps={{
                 onHoverIn: () => setHovered(true),
@@ -288,20 +308,55 @@ export const ActionCard = ({
                 </>
             }
         >
-            <ActionRunner
-                setData={setData}
-                id={id}
-                data={data}
-                displayResponse={displayResponse}
-                name={name}
-                description="Run action"
-                actionParams={params}
-                onRun={onRun}
-                icon={icon}
-                color={color}
-                html={html}
-                value={value}
-            />
+            <Popover>
+                <Popover.Trigger
+                    cursor='pointer'
+                    display={isCardMinimized ? 'flex' : 'none'}
+                    className='no-drag'
+                    flex={1}
+                    width="100%"
+                    padding="$3"
+                    justifyContent="center"
+                    alignItems="center"
+                >
+                    <XStack gap="$2" flex={1} width="100%" height="100%" alignItems="center" justifyContent={"center"}>
+                        <TooltipSimple disabled={!value} label={valueString} delay={{ open: 1000, close: 0 }} restMs={0}>
+                            <Text opacity={hovered ? 0.7 : 1} flex={1} fontSize={valueString.length < 10 ? "$8" : "$6"} textAlign={"center"} fontWeight={"600"} overflow='hidden' textOverflow='ellipsis' whiteSpace='nowrap'>
+                                {valueString}
+                            </Text>
+                        </TooltipSimple>
+                        {(data.type == "action" && hovered) && <Button
+                            pressStyle={{ filter: "brightness(0.95)", backgroundColor: color }}
+                            hoverStyle={{ backgroundColor: color, filter: "brightness(1.1)" }}
+                            backgroundColor={color}
+                            position='absolute'
+                            right={"$1"}
+                            bottom={"$1"}
+                            size="$4"
+                            borderRadius="$5"
+                            aspectRatio={1}
+                            padding="$1"
+                            enterStyle={{ opacity: 0.4 }}
+                            animation="bouncy"
+                            scaleIcon={1.4}
+                            icon={<PublicIcon name={icon ?? "play"} />}
+                            onPress={e => {
+                                e.stopPropagation();
+                                executeAction(name, {})
+                            }}
+                        >
+                        </Button>}
+                    </XStack>
+                </Popover.Trigger>
+                <Popover.Content backgroundColor="$bgPanel" borderWidth={1} borderColor="$gray6" maxHeight={500} minWidth={300} overflow='auto' alignItems='stretch'>
+                    <div>
+                        {children}
+                    </div>
+                </Popover.Content>
+            </Popover>
+            <div style={{ display: isCardMinimized ? 'none' : 'flex', flex: 1, width: '100%', flexDirection: 'column' }}>
+                {children}
+            </div>
         </CenterCard>
     )
 }
