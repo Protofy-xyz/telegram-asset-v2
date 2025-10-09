@@ -1,5 +1,5 @@
 import { Cable, Copy, Trash2, Settings, MoreVertical, Book, FileJson, ClipboardList, FileCode, FileInput, ExternalLink, Globe } from '@tamagui/lucide-icons'
-import { YStack, XStack, Popover, Text, TooltipSimple } from '@my/ui'
+import { YStack, XStack, Popover, Text, TooltipSimple, Paragraph } from '@my/ui'
 import { CenterCard } from '@extensions/services/widgets'
 import { useEffect, useRef, useState } from 'react'
 import { Tinted } from 'protolib/components/Tinted'
@@ -175,7 +175,9 @@ export const ActionCard = ({
     setData = (data, id) => { }
 }) => {
     const [status, setStatus] = useState<'idle' | 'running' | 'error'>('idle')
+    const [hovered, setHovered] = useState(false)
     const lockRef = useRef(false)
+    const hideTitle = data.displayTitle === false
     const highlighted = useIsHighlightedCard(board?.name, data?.name)
     const action = window["protoActions"]?.boards?.[board.name]?.[name]
     console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
@@ -224,26 +226,66 @@ export const ActionCard = ({
         setStatus(action.status);
     }, [action?.status]);
 
+
     return (
         <CenterCard
             highlighted={highlighted}
+            containerProps={{
+                onHoverIn: () => setHovered(true),
+                onHoverOut: () => setHovered(false),
+                ...containerProps,
+            }}
             status={status}
-            hideTitle={data.displayTitle === false}
             hideFrame={data.displayFrame === false}
-            title={title}
             id={id}
-            containerProps={containerProps}
-            cardActions={
-                <CardActions
-                    id={id}
-                    data={data}
-                    states={states}
-                    onDelete={onDelete}
-                    onDetails={onDetails}
-                    onEdit={onEdit}
-                    onEditCode={onEditCode}
-                    onCopy={onCopy}
-                />
+            header={
+                <>
+                    {
+                        (title && !hideTitle) && (
+                            <XStack
+                                width="100%"
+                                btrr={9}
+                                btlr={9}
+                                mt={"$3"}
+                                h={20}
+                                ai="center"
+                                zIndex={1}
+                            >
+                                <Paragraph
+                                    flex={1}
+                                    fontWeight="500"
+                                    textOverflow={"ellipsis"}
+                                    textAlign="center"
+                                    overflow="hidden"
+                                    whiteSpace={"nowrap"}
+                                    fontSize={"$4"}
+                                >
+                                    {title}
+                                </Paragraph>
+                            </XStack>
+                        )
+                    }
+                    <XStack
+                        width="100%"
+                        marginTop={"$3"}
+                        height={20}
+                        alignItems="center"
+                        position="absolute"
+                        opacity={hovered ? 0.75 : 0}
+                        zIndex={999}
+                    >
+                        <CardActions
+                            id={id}
+                            data={data}
+                            states={states}
+                            onDelete={onDelete}
+                            onDetails={onDetails}
+                            onEdit={onEdit}
+                            onEditCode={onEditCode}
+                            onCopy={onCopy}
+                        />
+                    </XStack>
+                </>
             }
         >
             <ActionRunner

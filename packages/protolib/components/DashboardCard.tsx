@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect, useRef } from "react";
+import { ReactNode, useState, useEffect, useRef, forwardRef } from "react";
 import { Tinted } from './Tinted';
 import { StackProps, XStack, YStack, Paragraph } from '@my/ui';
 
@@ -11,23 +11,22 @@ interface DashboardCardProps {
     hideFrame?: boolean;
     titleProps?: StackProps;
     containerProps?: StackProps;
-    cardActions?: ReactNode;
+    header?: ReactNode;
     highlighted?: boolean;
 }
 
-export const DashboardCard = ({
+export const DashboardCard = forwardRef(({
     children,
     status,
     hideTitle,
     hideFrame,
     id,
     title,
-    cardActions = <></>,
+    header,
     titleProps = {},
     containerProps = {},
     highlighted = false,
-}: DashboardCardProps) => {
-    const [hovered, setHovered] = useState(false);
+}: DashboardCardProps, ref: any) => {
     const [showRunning, setShowRunning] = useState(false);
     const visualRunningUntil = useRef<number>(0);
 
@@ -62,11 +61,10 @@ export const DashboardCard = ({
 
             <Tinted>
                 <YStack
+                    ref={ref}
                     enterStyle={{ scale: 0.4, opacity: 0 }}
                     animation="quick"
                     cursor="default"
-                    onHoverIn={() => setHovered(true)}
-                    onHoverOut={() => setHovered(false)}
                     key={id}
                     id={id}
                     borderRadius="var(--radius-6)"
@@ -131,7 +129,9 @@ export const DashboardCard = ({
                         />
                     )}
 
-                    {(title && !hideTitle) && (
+                    {header}
+
+                    {(title && !hideTitle && !header) && (
                         <XStack
                             w="100%"
                             btrr={9}
@@ -155,18 +155,6 @@ export const DashboardCard = ({
                             </Paragraph>
                         </XStack>
                     )}
-                    {cardActions && <XStack
-                        w="100%"
-                        mt={"$3"}
-                        h={20}
-                        ai="center"
-                        position="absolute"
-                        opacity={hovered ? 0.75 : 0}
-                        zi={999}
-                    >
-                        {cardActions}
-                    </XStack>
-                    }
                     <YStack
                         flex={1}
                         style={{ overflowY: 'auto', maxHeight: '100%', zIndex: 1 }}
@@ -177,4 +165,4 @@ export const DashboardCard = ({
             </Tinted>
         </>
     );
-};
+});

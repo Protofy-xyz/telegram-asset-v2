@@ -1,8 +1,8 @@
-import { YStack, Text, XStack } from '@my/ui';
+import { YStack, Text } from '@my/ui';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { API } from 'protobase'
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef, forwardRef } from 'react';
 import { useRemoteStateList } from 'protolib/lib/useRemoteState';
 import { ServiceModel } from './servicesSchemas';
 import AsyncView from 'protolib/components/AsyncView';
@@ -10,7 +10,6 @@ import { DashboardCard } from 'protolib/components/DashboardCard';
 import { PieChart } from 'protolib/components/PieChart';
 import { LineChart, Cpu } from 'lucide-react'
 import React from 'react';
-import { useUpdateEffect } from 'usehooks-ts'
 import { v4 as uuidv4 } from 'uuid';
 import { useRootTheme } from '@tamagui/next-theme'
 
@@ -39,15 +38,15 @@ export const ServiceMemoryUsageChart = ({ title, id }) => {
     );
 };
 
-export const CenterCard = ({ highlighted = false, status, title, hideTitle, hideFrame, id, children, onPress = () => { }, ...props }) => {
+export const CenterCard = forwardRef(({ highlighted = false, status, title, hideTitle, hideFrame, id, children, onPress = () => { }, ...props }: any, ref: any) => {
     return (
-        <DashboardCard highlighted={highlighted} status={status} hideTitle={hideTitle} hideFrame={hideFrame} title={title} id={id} {...props}>
+        <DashboardCard ref={ref} highlighted={highlighted} status={status} hideTitle={hideTitle} hideFrame={hideFrame} title={title} id={id} {...props}>
             <YStack height="100%" onPress={onPress} borderRadius={10} backgroundColor="$bgColor" flex={1}>
-                    {children}
+                {children}
             </YStack>
-       </DashboardCard>
+        </DashboardCard>
     );
-}
+});
 
 export const BasicCard = ({ title, id, children }) => {
     return (
