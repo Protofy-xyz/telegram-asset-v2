@@ -190,7 +190,7 @@ const getActionBar = (generateEvent) => {
       <ActionBarButton Icon={Save} onPress={() => generateEvent({ type: "save-json" })} />
     ],
     'BoardView': [
-      <ActionBarButton tooltipText="Add Card" Icon={Plus} onPress={() => generateEvent({ type: "open-add" })} />,
+      <ActionBarButton tooltipText="Add" Icon={Plus} onPress={() => generateEvent({ type: "open-add" })} />,
       ...undoRedoButtons,
       <ActionBarButton tooltipText={tabVisible == "rules" ? "Close Automations" : "Open Automations"} selected={tabVisible == "rules"} Icon={Bot} onPress={() => generateEvent({ type: "toggle-rules" })} />,
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
