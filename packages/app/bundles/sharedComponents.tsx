@@ -7,6 +7,7 @@ import { LineChart } from 'protolib/components/LineChart';
 import { AreaChart } from 'protolib/components/AreaChart';
 import { RadarChart } from 'protolib/components/RadarChart';
 import { Markdown } from 'protolib/components/Markdown';
+import { Html } from 'protolib/components/Html';
 import { RadialBarChart } from 'protolib/components/RadialBartChart';
 import { KeySetter } from 'protolib/components/KeySetter';
 import { KeyGate } from 'protolib/components/KeyGate';
@@ -74,6 +75,7 @@ export const transferExtensionComponents = () => {
     TransferComponent(InteractiveIcon, 'InteractiveIcon');
     TransferComponent(CanvasDraw, 'CanvasDraw');
     TransferComponent(Markdown, 'Markdown');
+    TransferComponent(Html, 'Html');
     TransferComponent(ReactMarkdown, 'ReactMarkdown');
     TransferComponent(remarkGfm, 'remarkGfm')
     TransferComponent(API, 'API');

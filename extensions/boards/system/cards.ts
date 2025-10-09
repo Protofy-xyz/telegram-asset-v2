@@ -67,7 +67,7 @@ return card({
             name: "html",
             displayIcon: false,
             rulesCode: "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta name=\"color-scheme\" content=\"light dark\">\n    <title>Vento</title>\n    <meta name=\"description\" content=\"Agent Platform\">\n    <link\n      rel=\"stylesheet\"\n      href=\"/public/pico/css/pico.classless.min.css\"\n    >\n  </head>\n\n  <body>\n    <header>\n      <hgroup>\n        <h1>Vento</h1>\n        <p>Agent Plataform</p>\n      </hgroup>\n    </header>\n    <main>\n      <section id=\"typography\">\n        <h2>Typography</h2>\n        <p>\n          Aliquam lobortis vitae nibh nec rhoncus. Morbi mattis neque eget efficitur feugiat.\n          Vivamus porta nunc a erat mattis, mattis feugiat turpis pretium. Quisque sed tristique\n          felis.\n        </p>\n\n        <blockquote>\n          \"Maecenas vehicula metus tellus, vitae congue turpis hendrerit non. Nam at dui sit amet\n          ipsum cursus ornare.\"\n          <footer>\n            <cite>- Phasellus eget lacinia</cite>\n          </footer>\n        </blockquote>\n\n        <h3>Lists</h3>\n        <ul>\n          <li>Aliquam lobortis lacus eu libero ornare facilisis.</li>\n          <li>Nam et magna at libero scelerisque egestas.</li>\n          <li>Suspendisse id nisl ut leo finibus vehicula quis eu ex.</li>\n          <li>Proin ultricies turpis et volutpat vehicula.</li>\n        </ul>\n      </section>\n    </main>\n    <footer>\n      <small>\n        Built with <a href=\"https://protofy.xyz/vento\">Vento</a>\n        <a href=\"https://github.com/Protofy-xyz/Vento\">Github</a>\n      </small>\n    </footer>\n    <script src=\"/public/pico/js/minimal-theme-switcher.js\"></script>\n  </body>\n</html>",
-            html: "return iframeCard(data.value, data.domId)\n",
+            html: "//@card/react\nfunction Widget(card) {\nreturn <Html data={card.value} readOnly={true}/>\n}\n",
             value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
         },
         emitEvent: true
@@ -89,8 +89,46 @@ return card({
             name: "html",
             displayIcon: false,
             rulesCode: "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n    <meta name=\"color-scheme\" content=\"light dark\">\n    <title>Vento</title>\n    <meta name=\"description\" content=\"Agent Platform\">\n    <link\n      rel=\"stylesheet\"\n      href=\"/public/pico/css/pico.classless.min.css\"\n    >\n  </head>\n\n  <body>\n    <header>\n      <hgroup>\n        <h1>Vento</h1>\n        <p>Agent Plataform</p>\n      </hgroup>\n    </header>\n    <main>\n      <section id=\"typography\">\n        <h2>Typography</h2>\n        <p>\n          Aliquam lobortis vitae nibh nec rhoncus. Morbi mattis neque eget efficitur feugiat.\n          Vivamus porta nunc a erat mattis, mattis feugiat turpis pretium. Quisque sed tristique\n          felis.\n        </p>\n\n        <blockquote>\n          \"Maecenas vehicula metus tellus, vitae congue turpis hendrerit non. Nam at dui sit amet\n          ipsum cursus ornare.\"\n          <footer>\n            <cite>- Phasellus eget lacinia</cite>\n          </footer>\n        </blockquote>\n\n        <h3>Lists</h3>\n        <ul>\n          <li>Aliquam lobortis lacus eu libero ornare facilisis.</li>\n          <li>Nam et magna at libero scelerisque egestas.</li>\n          <li>Suspendisse id nisl ut leo finibus vehicula quis eu ex.</li>\n          <li>Proin ultricies turpis et volutpat vehicula.</li>\n        </ul>\n      </section>\n    </main>\n    <footer>\n      <small>\n        Built with <a href=\"https://protofy.xyz/vento\">Vento</a>\n        <a href=\"https://github.com/Protofy-xyz/Vento\">Github</a>\n      </small>\n    </footer>\n    <script src=\"/public/pico/js/minimal-theme-switcher.js\"></script>\n  </body>\n</html>",
-            html: "return iframeCard(data.value, data.domId)\n",
+            html: "//@card/react\nfunction Widget(card) {\nreturn <Html data={card.value} readOnly={true}/>\n}\n",
             value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n"
+        },
+        emitEvent: true
+    })
+
+    addCard({
+        group: 'board',
+        tag: 'html',
+        id: 'edit_html',
+        templateName: 'Edit HTML',
+        name: 'board_html_edit_html',
+        defaults: {
+            id: 'edit_html',
+            width: 4,
+            height: 18,
+            htmlDisplay: true,
+            icon: "scan-text",
+            type: "action",
+            name: "html",
+            displayIcon: false,
+            rulesCode: "if (userParams.editedValue) {\n  return userParams.editedValue;\n} else {\n  return userParams.state;\n}\n",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n    {card.icon && card.displayIcon !== false && (\n      <Icon name={card.icon} size={48} color={card.color} />\n    )}\n    {card.displayResponse !== false && (\n      <CardValue\n        mode={card.markdownDisplay? \"markdown\" : card.htmlDisplay ? 'html' : 'normal'}\n        value={value}\n        readOnly={false}\n        executeActionOnEdit={(val) => { executeAction(card.name, { editedValue: val }) }}\n      />\n    )}\n  </YStack>\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <ActionCard data={card}>\n          {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n        </ActionCard>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}\n",
+            value: "\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n  <title>Title of document</title>\n</head>\n<body>\n\n  some content here...\n\n</body>\n</html>\n",
+            params: {
+                "editedValue": "",
+                "state": ""
+            },
+            configParams: {
+                "editedValue": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "state": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
         },
         emitEvent: true
     })

@@ -75,6 +75,7 @@ export const DisplayEditor = ({
         { label: 'Display icon', key: 'displayIcon', type: 'checkbox', section: 'Display', get: (cd) => cd.displayIcon !== false },
         { label: 'Display frame', key: 'displayFrame', type: 'checkbox', section: 'Display', get: (cd) => cd.displayFrame !== false },
         { label: 'Markdown display', key: 'markdownDisplay', type: 'checkbox', section: 'Display' },
+        { label: 'Html display', key: 'htmlDisplay', type: 'checkbox', section: 'Display' },
         { label: 'Display value', key: 'displayResponse', type: 'checkbox', section: 'Display', get: (cd) => cd.displayResponse !== false, visible: ({ card }) => card.type === 'action' },
         { label: 'Display button', key: 'displayButton', type: 'checkbox', section: 'Display', get: (cd) => cd.displayButton !== false, visible: ({ card }) => card.type === 'action' },
         { label: 'Button text', key: 'buttonLabel', type: 'text', section: 'Display', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true) },
