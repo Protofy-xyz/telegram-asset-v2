@@ -36,14 +36,14 @@ export const CardValue = ({ value, style = {}, id = undefined, mode = undefined,
             }} />
     }
 
+    value = typeof value === 'string' ? value : String(value)
     //check if value is string, number or boolean
     if (!['string', 'number', 'boolean'].includes(typeof value)) {
         return <ScrollView mt="20px" width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
             <JSONView src={data} />
         </ScrollView>
     }
-
-    if (typeof data === 'string' && data.length > 20 || data.includes("\n")) {
+    if (typeof value === 'string' && value.length > 20 || value.includes("\n")) {
         return <XStack mt="20px" mb="10px" width="calc(100% - 20px)" f={1}><textarea
             className="no-drag"
             style={{
@@ -56,7 +56,7 @@ export const CardValue = ({ value, style = {}, id = undefined, mode = undefined,
                 boxSizing: "border-box",
                 resize: "none" // o "none" si no quieres que pueda cambiar el tamaño
             }}
-            value={data}
+            value={value}
             readOnly
         /></XStack>
     }
@@ -72,5 +72,5 @@ export const CardValue = ({ value, style = {}, id = undefined, mode = undefined,
         marginTop: '15px',
         whiteSpace: 'pre-wrap',
         ...style
-    }}>{data}</div>
+    }}>{value}</div>
 }
