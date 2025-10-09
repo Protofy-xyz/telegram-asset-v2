@@ -1,5 +1,5 @@
 import { Copy, Plus, Settings, X, Book, Activity, Bot, Presentation } from '@tamagui/lucide-icons'
-import { API, getPendingResult } from 'protobase'
+import { API, getPendingResult, set } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
 import ErrorMessage from "protolib/components/ErrorMessage"
@@ -266,7 +266,8 @@ const Board = ({ board, icons }) => {
   const breakpointCancelRef = useRef(null) as any
   const dedupRef = useRef() as any
   const initialized = useRef(false)
-  const [items, setItems] = useJotaiAtom(itemsAtom);
+  const [items, setItems] = useState(board.cards && board.cards.length ? board.cards : []);
+  const [globalItems, setGlobalItems] = useJotaiAtom(itemsAtom)
   const [automationInfo, setAutomationInfo] = useJotaiAtom(automationInfoAtom);
   const [uicodeInfo, setUICodeInfo] = useJotaiAtom(uiCodeInfoAtom);
   if(!initialized.current){
@@ -324,6 +325,12 @@ const Board = ({ board, icons }) => {
 
     return `${base}_${maxN + 1}`;
   };
+
+  useEffect(() => {
+    if(globalItems && globalItems.length){
+      setItems(globalItems)
+    }
+  }, [globalItems])
 
   useUpdateEffect(() => {
     if (addOpened) {
@@ -798,7 +805,7 @@ const Board = ({ board, icons }) => {
                   formatOnType: true
                 }}
               />
-              : <YStack f={1} p={"$6"}>{cards.length > 0 ? <DashboardGrid
+              : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
                 extraScrollSpace={50}
                 items={cards}
                 settings={board.settings}
