@@ -183,7 +183,7 @@ export const ActionCard = ({
 
     const isAutoResponsive = data?.autoResponsive !== false;
     const isCardMinimized = isAutoResponsive && cardRef.current?.offsetHeight < 200;
-    const valueString = JSON.stringify(value) ?? "N/A";
+    const valueString = (value === undefined || value == "") ? "N/A" : JSON.stringify(value);
 
     useEventEffect((payload, msg) => {
         try {
