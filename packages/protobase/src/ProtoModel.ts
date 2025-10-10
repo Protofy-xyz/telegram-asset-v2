@@ -68,8 +68,8 @@ export abstract class ProtoModel<T extends ProtoModel<T>> {
                 const trimmed = param.trim()
                 if (!trimmed.length) return param
                 try {
-                    // Evaluate literal/JSON-ish expressions (objects, arrays, numbers, booleans, strings, etc.)
-                    return Function(`"use strict"; return (${trimmed});`)()
+                    // Evaluate literals, arrays, objects, functions, and Zod expressions referencing `z`
+                    return Function('z', `"use strict"; return (${trimmed});`)(z)
                 } catch (error) {
                     return param
                 }
