@@ -61,17 +61,32 @@ export abstract class ProtoModel<T extends ProtoModel<T>> {
     }
 
     static getClassFromDefinition(definition: any) {
+
+        const normalizeParams = (params?: any) => {
+            return (params ?? []).map(param => {
+                if (typeof param !== 'string') return param
+                const trimmed = param.trim()
+                if (!trimmed.length) return param
+                try {
+                    // Evaluate literal/JSON-ish expressions (objects, arrays, numbers, booleans, strings, etc.)
+                    return Function(`"use strict"; return (${trimmed});`)()
+                } catch (error) {
+                    return param
+                }
+            })
+        }
+
         const schema = Schema.object(Object.keys(definition.keys).reduce((acc, key) => {
             const element = definition.keys[key];
             let schema = z;
             if(typeof schema[element.type] !== 'function') {
                 throw new Error(`Type ${element.type} does not exist on z`);
             }
-            schema = schema[element.type](...(element.params ?? []));
+            schema = schema[element.type](...normalizeParams(element.params));
             if(element.modifiers) {
                 element.modifiers.forEach(modifier => {
                     const methodName = modifier.name;
-                    const params = modifier.params || [];
+                    const params = normalizeParams(modifier.params);
 
                     if (typeof schema[methodName] === 'function') {
                         schema = schema[methodName](...params);
