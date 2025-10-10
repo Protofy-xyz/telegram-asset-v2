@@ -273,6 +273,8 @@ export const BoardTextArea = ({
 
   // non dropdown events
   useEffect(() => {
+    if (document.activeElement !== ref.current) return
+
     const handleKeyDown = (e) => {
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
         e.stopPropagation()
