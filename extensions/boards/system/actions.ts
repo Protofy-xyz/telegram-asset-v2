@@ -8,12 +8,45 @@ import { getLogger } from 'protobase';
 import { TypeParser } from "./types";
 
 const getBoardCardActions = async (boardId) => {
-    const board = await getBoard(boardId);
-    if (!board.cards || !Array.isArray(board.cards)) {
-        return [];
+  const board = await getBoard(boardId);
+  if (!board.cards || !Array.isArray(board.cards)) return [];
+
+  const base = board.cards.filter(c => c.type === 'action');
+  const result = [...base];
+
+  const isPlainObject = (o) =>
+    o && typeof o === 'object' && Object.prototype.toString.call(o) === '[object Object]';
+
+  const deepMerge = (a = {}, b = {}) => {
+    if (!isPlainObject(a)) a = {};
+    if (!isPlainObject(b)) return b; // si b no es objeto plano, reemplaza
+    const out = { ...a };
+    for (const k of Object.keys(b)) {
+      const av = a[k], bv = b[k];
+      if (isPlainObject(av) && isPlainObject(bv)) out[k] = deepMerge(av, bv);
+      else if (Array.isArray(bv)) out[k] = bv.slice(); // sustituye arrays; para concatenar: (Array.isArray(av)?av:[]).concat(bv)
+      else out[k] = bv;
     }
-    return board.cards.filter(c => c.type === 'action');
-}
+    return out;
+  };
+
+  for (const action of base) {
+    const presets = action?.presets;
+    if (presets && typeof presets === 'object') {
+      for (const [presetKey, preset] of Object.entries(presets)) {
+        result.push({
+          ...action,
+          aliasedName: action.name + '.' + presetKey,
+          description: preset?.description ?? action.description,
+          configParams: deepMerge(action.configParams || {}, preset?.configParams || {}),
+        });
+      }
+    }
+  }
+
+  return result;
+};
+
 const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
 const token = getServiceToken()
 
@@ -41,7 +74,9 @@ export const getActions = async (context) => {
 
 export const handleBoardAction = async (context, Manager, req, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
     const actions = await getBoardCardActions(boardId);
-    const action = actions.find(a => a.name === action_or_card_id);
+    console.log('Actions for board ', boardId, actions.map(a => a.name))
+    //aliasedName allows to call presets directly
+    const action = actions.find(a => a.name == action_or_card_id || a.aliasedName === action_or_card_id);
     const { _stackTrace, ...params } = rawParams;
     let stackTrace
     try {
@@ -54,20 +89,20 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
     }
     if (stackTrace.find((item) => item.name === action.name && item.board === boardId)) {
         await generateEvent({
-            path: `actions/boards/${boardId}/${action_or_card_id}/code/error`,
+            path: `actions/boards/${boardId}/${action.name}/code/error`,
             from: 'system',
             user: 'system',
             ephemeral: true,
             payload: {
                 status: 'code_error',
-                action: action_or_card_id,
+                action: action.name,
                 boardId: boardId,
                 params,
                 msg: "Recursive action call detected",
                 stackTrace
             },
         }, getServiceToken());
-        await updateActionStatus(context, boardId, action_or_card_id, 'error');
+        await updateActionStatus(context, boardId, action.name, 'error');
 
         getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: "Recursive action call detected" }, "Error executing card: ");
         res.status(500).send({ _err: "e_code", error: "Error executing action code", message: "Recursive action call detected" });
@@ -101,19 +136,19 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
     }
 
     await generateEvent({
-        path: `actions/boards/${boardId}/${action_or_card_id}/run`,
+        path: `actions/boards/${boardId}/${action.name}/run`,
         from: 'system',
         user: 'system',
         ephemeral: true,
         payload: {
             status: 'running',
-            action: action_or_card_id,
+            action: action.name,
             boardId: boardId,
             params,
             stackTrace
         },
     }, getServiceToken());
-    await updateActionStatus(context, boardId, action_or_card_id, 'running');
+    await updateActionStatus(context, boardId, action.name, 'running');
 
     const states = await context.state.getStateTree();
     let rulesCode = action.rulesCode.trim();
@@ -142,20 +177,20 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
         }
         let response = null;
         try {
-            response = await wrapper(req, res, boardId, action_or_card_id, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
+            response = await wrapper(req, res, boardId, action.name, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
             response = action.returnType && typeof TypeParser?.[action.returnType] === "function"
                 ? TypeParser?.[action.returnType](response, action.enableReturnCustomFallback, action.fallbackValue)
                 : response
             getLogger({ module: 'boards', board: boardId, card: action.name }).info({ value: response, stackTrace }, "New value for card: " + action.name);
         } catch (err) {
             await generateEvent({
-                path: `actions/boards/${boardId}/${action_or_card_id}/code/error`,
+                path: `actions/boards/${boardId}/${action.name}/code/error`,
                 from: 'system',
                 user: 'system',
                 ephemeral: true,
                 payload: {
                     status: 'code_error',
-                    action: action_or_card_id,
+                    action: action.name,
                     boardId: boardId,
                     params,
                     stack: err.stack,
@@ -165,7 +200,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
                     stackTrace
                 },
             }, getServiceToken());
-            await updateActionStatus(context, boardId, action_or_card_id, 'error');
+            await updateActionStatus(context, boardId, action.name, 'error');
 
             getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err }, "Error executing card: ");
             res.status(500).send({ _err: "e_code", error: "Error executing action code", message: err.message, stack: err.stack, stackTrace, name: err.name, code: err.code });
@@ -194,20 +229,20 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
 
 
         await generateEvent({
-            path: `actions/boards/${boardId}/${action_or_card_id}/done`,
+            path: `actions/boards/${boardId}/${action.name}/done`,
             from: 'system',
             user: 'system',
             ephemeral: true,
             payload: {
                 status: 'done',
-                action: action_or_card_id,
+                action: action.name,
                 boardId: boardId,
                 params,
                 response,
                 stackTrace
             },
         }, getServiceToken());
-        await updateActionStatus(context, boardId, action_or_card_id, 'idle');
+        await updateActionStatus(context, boardId, action.name, 'idle');
 
         // if persistValue is true
         if (action.persistValue) {
@@ -231,13 +266,13 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
 
     } catch (err) {
         await generateEvent({
-            path: `actions/boards/${boardId}/${action_or_card_id}/error`,
+            path: `actions/boards/${boardId}/${action.name}/error`,
             from: 'system',
             user: 'system',
             ephemeral: true,
             payload: {
                 status: 'error',
-                action: action_or_card_id,
+                action: action.name,
                 boardId: boardId,
                 params,
                 stack: err.stack,
@@ -247,7 +282,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
                 stackTrace
             },
         }, getServiceToken());
-        await updateActionStatus(context, boardId, action_or_card_id, 'error');
+        await updateActionStatus(context, boardId, action.name, 'error');
         console.error("Error executing action: ", err);
         res.status(500).send({ _err: "e_general", error: "Error executing action", message: err.message, stack: err.stack, name: err.name, code: err.code });
     }
