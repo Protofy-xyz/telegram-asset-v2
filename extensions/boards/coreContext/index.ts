@@ -2,6 +2,7 @@ import { getLogger } from "protobase";
 import { getRoot } from "protonode";
 
 const logger = getLogger()
+const memory = {}
 
 export const getStatesByType = async(options: {
     board: any,
@@ -22,6 +23,27 @@ export const getStatesByType = async(options: {
     return await done(result)
 }
 
+export const setVar = (key, value) => {
+    memory[key] = value
+}
+
+export const getVar = (key) => {
+    return memory[key]
+}
+
+export const hasVar = (key) => {
+    return memory[key] !== undefined
+}
+
+export const clearVar = (key) => {
+    delete memory[key]
+}
+
+
 export default {
-    getStatesByType
+    getStatesByType,
+    setVar,
+    getVar,
+    hasVar,
+    clearVar
 }
