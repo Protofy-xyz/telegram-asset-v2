@@ -810,10 +810,10 @@ const Board = ({ board, icons }) => {
                 items={cards}
                 settings={board.settings}
                 layouts={boardRef.current.layouts}
+                onWidthChange={(newLayoutWidth) => {
+                  breakpointRef.current = getCurrentBreakPoint(newLayoutWidth)
+                }}
                 onLayoutChange={(layout, layouts) => {
-                  if (!breakpointRef.current && typeof window !== 'undefined') {
-                    breakpointRef.current = getCurrentBreakPoint(window.innerWidth)
-                  }
                   if (breakpointCancelRef.current == breakpointRef.current) {
                     console.log('Layout change cancelled for breakpoint: ', breakpointRef.current, breakpointCancelRef.current)
                     breakpointCancelRef.current = null
