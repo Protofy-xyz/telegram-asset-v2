@@ -912,12 +912,12 @@ export default async (app, context) => {
     app.get('/api/core/v1/boards/:boardId/actions/:action', requireAdmin(), (req, res) => {
         console.log('---------------------------------------------------------------------------')
         console.log('Handling action request for board:', req.params.boardId, ' action: ', req.params.action, ' query: ', req.query)
-        handleBoardAction(context, Manager, req.params.boardId, req.params.action, res, req.query)
+        handleBoardAction(context, Manager, req, req.params.boardId, req.params.action, res, req.query)
     })
 
     // Aceptar POST
     app.post('/api/core/v1/boards/:boardId/actions/:action', requireAdmin(), (req, res) => {
-        handleBoardAction(context, Manager, req.params.boardId, req.params.action, res, req.body)
+        handleBoardAction(context, Manager, req, req.params.boardId, req.params.action, res, req.body)
     })
 
     const hasAccessToken = async (tokenType, session, card, token) => {
@@ -994,7 +994,7 @@ export default async (app, context) => {
             return
         }
 
-        handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query, false, (value) => {
+        handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, false, (value) => {
             res.json({
                 key: card.key,
                 displayResponse: card.displayResponse,
@@ -1021,7 +1021,11 @@ export default async (app, context) => {
         if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
-            handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query);
+            if(card.manualAPIResponse) {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, false, (value)=>{});
+            } else {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query);
+            }
         }
     }))
 
@@ -1031,7 +1035,12 @@ export default async (app, context) => {
         if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
-            handleBoardAction(context, Manager, req.params.boardId, req.params.cardId, res, req.query, true);
+            if(card.manualAPIResponse) {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, true, (value)=>{});
+            } else {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, true);
+            }
+
         }
     }))
 

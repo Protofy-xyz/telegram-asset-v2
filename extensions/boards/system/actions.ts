@@ -39,7 +39,7 @@ export const getActions = async (context) => {
     return flatActions
 }
 
-export const handleBoardAction = async (context, Manager, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
+export const handleBoardAction = async (context, Manager, req, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
     const actions = await getBoardCardActions(boardId);
     const action = actions.find(a => a.name === action_or_card_id);
     const { _stackTrace, ...params } = rawParams;
@@ -122,7 +122,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
         rulesCode = 'return `' + rulesCode.replace(/`/g, '\\`') + '`';
     }
 
-    const wrapper = new AsyncFunction('boardName', 'name', 'states', 'boardActions', 'board', 'userParams', 'params', 'token', 'context', 'API', 'fetch', 'logger', 'stackTrace', `
+    const wrapper = new AsyncFunction('req', 'res', 'boardName', 'name', 'states', 'boardActions', 'board', 'userParams', 'params', 'token', 'context', 'API', 'fetch', 'logger', 'stackTrace', `
         ${getExecuteAction(await getActions(context), boardId)}
         ${rulesCode}
     `);
@@ -142,7 +142,7 @@ export const handleBoardAction = async (context, Manager, boardId, action_or_car
         }
         let response = null;
         try {
-            response = await wrapper(boardId, action_or_card_id, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
+            response = await wrapper(req, res, boardId, action_or_card_id, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
             response = action.returnType && typeof TypeParser?.[action.returnType] === "function"
                 ? TypeParser?.[action.returnType](response, action.enableReturnCustomFallback, action.fallbackValue)
                 : response
