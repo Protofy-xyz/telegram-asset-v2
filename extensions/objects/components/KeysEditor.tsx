@@ -370,18 +370,18 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
 
 export const KeysEditor = ({ path, value, setValue, mode, formData }: KeysSchemaFieldProps) => {
     const dataObject = formData ?? {};
-    const [code, setCode] = useState(() => getKeysSource(dataObject, value));
+    const codeRef = useRef(getKeysSource(dataObject, value));
     const [loading, setLoading] = useState(false);
     const [parseError, setParseError] = useState<string | null>(null);
     const dataRef = useRef<any>({ ...dataObject, keys: value ?? {} });
     const readOnly = mode === 'view' || mode === 'preview';
     const [codeView, setCodeView] = useState(false);
-    const lastValueStringRef = useRef<string>(JSON.stringify(value ?? {}));
 
     const applyCodeToForm = async () => {
+        const currentCode = codeRef.current;
         if (readOnly) return;
         setLoading(true);
-        const parsedCode = code?.trim();
+        const parsedCode = currentCode?.trim();
         if (!parsedCode) {
             setParseError(null);
             dataRef.current = { ...dataObject, keys: {} };
@@ -393,20 +393,16 @@ export const KeysEditor = ({ path, value, setValue, mode, formData }: KeysSchema
         if (isError) setParseError('Could not parse the schema.');
         else {
             setParseError(null);
-            dataRef.current = { ...dataObject, keys: data?.keys ?? {} };
-            setValue(data?.keys ?? {});
+            const nextKeys = data?.keys ?? {};
+            dataRef.current = { ...dataObject, keys: nextKeys };
+            setValue(nextKeys);
         }
         setLoading(false);
     };
 
     useEffect(() => {
         if (!codeView) {
-            const nextString = JSON.stringify(value ?? {});
-            if (nextString !== lastValueStringRef.current) {
-                lastValueStringRef.current = nextString;
-                const nextCode = getKeysSource(dataObject, value);
-                setCode(nextCode);
-            }
+            codeRef.current = getKeysSource(dataObject, value);
         }
     }, [value, codeView]);
 
@@ -433,9 +429,13 @@ export const KeysEditor = ({ path, value, setValue, mode, formData }: KeysSchema
             <YStack minHeight="220px" gap="$2" display={(codeView && !loading) ? 'flex' : 'none'}>
                 <Monaco
                     language='typescript'
-                    sourceCode={code}
-                    onChange={setCode}
+                    sourceCode={codeRef.current}
+                    onChange={(val) => {
+                        const nextCode = val ?? '';
+                        codeRef.current = nextCode;
+                    }}
                     onSave={applyCodeToForm}
+                    onBlur={applyCodeToForm}
                     options={{
                         minimap: { enabled: false },
                         formatOnPaste: true,

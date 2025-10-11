@@ -93,6 +93,7 @@ interface DataViewProps {
     columns?: any;
     onEdit?: (data: any) => any;
     onDelete?: (data: any) => any;
+    onItemsChange?: (data: any) => any;
     onAdd?: (data: any) => any;
     onDataAvailable?: (total, currentItems) => any,
     views?: any;
@@ -240,6 +241,7 @@ const DataViewInternal = forwardRef(({
     model,
     extraFields = {},
     columns,
+    onItemsChange = (data) => data,
     onEdit = (data) => data,
     onDelete = (data) => data,
     onAdd = (data) => data,
@@ -347,6 +349,7 @@ const DataViewInternal = forwardRef(({
         if (items && items.isLoaded) {
             onDataAvailable(items.data?.total, items.data?.items)
             setCurrentItems(items)
+            onItemsChange(items)
         }
     }, [items])
 

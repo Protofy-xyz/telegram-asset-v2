@@ -129,6 +129,8 @@ return card({
                     "type": "string"
                 }
             },
+            displayButton: true,
+            buttonLabel: "Refresh from state",
         },
         emitEvent: true
     })
