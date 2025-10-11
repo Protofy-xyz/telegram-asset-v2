@@ -158,7 +158,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
     }
 
     const wrapper = new AsyncFunction('req', 'res', 'boardName', 'name', 'states', 'boardActions', 'board', 'userParams', 'params', 'token', 'context', 'API', 'fetch', 'logger', 'stackTrace', `
-        ${getExecuteAction(await getActions(context), boardId)}
+        ${getExecuteAction(await getActions(context), boardId, states)}
         ${rulesCode}
     `);
 
