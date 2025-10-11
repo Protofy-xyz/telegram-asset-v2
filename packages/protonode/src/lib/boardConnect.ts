@@ -67,7 +67,7 @@ export const resolveBoardParam = async ({ states, boardId, defaultValue, value, 
     // create boardStates due state value starts with board.
     const boardsStates = { board: states?.boards?.[boardId] ?? {} };
 
-    if (typeof value === 'string' && isState(value)) {
+    if (isState(value)) {
         const stateName = getStateName(value);
         if (states?.boards?.[boardId] && states.boards[boardId][stateName] !== undefined) {
             value = getByPath(boardsStates, value)
@@ -77,10 +77,7 @@ export const resolveBoardParam = async ({ states, boardId, defaultValue, value, 
         }
     }
 
-    if (type && !resolved) {
-        value = castValueToType(value, type, boardsStates);
-    }
-
+    value = castValueToType(value, type, boardsStates);
     return value;
 }
 
