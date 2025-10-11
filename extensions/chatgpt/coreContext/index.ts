@@ -417,7 +417,10 @@ export const prompt = async (options: {
 export const processResponse = async ({ response, execute_action, done = async (v) => v, error = (e) => e }) => {
     if (!response) return null;
     if (!execute_action) return null;
-    const parsedResponse = JSON.parse(response);
+
+    const parsedResponse = JSON.parse(response.replace(/^```[\w]*\n?/, '')  // elimina apertura ```json o ```any
+    .replace(/```$/, '')           // elimina cierre ```
+    .trim());
     parsedResponse.actions.forEach((action) => {
         execute_action(action.name, action.params);
     });

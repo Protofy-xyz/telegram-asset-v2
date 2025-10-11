@@ -1,6 +1,6 @@
 import { getServiceToken } from "protonode";
 
-export const getExecuteAction = (actions, board = '') => `
+export const getExecuteAction = (actions, board, states) => `
 const actions = ${JSON.stringify(actions)}
 async function execute_action(url_or_name, params={}) {
     console.log('Executing action from getExecuteAction.ts:', url_or_name, params);
@@ -27,8 +27,9 @@ async function execute_action(url_or_name, params={}) {
                 // compruba que el defaultValue es un string
                 if(typeof action.configParams[param].defaultValue === 'string' && action.configParams[param].defaultValue.startsWith('board.')) {
                         const stateName = action.configParams[param].defaultValue.substring(6);
-                        if(context.states[stateName] && context.states[stateName] !== undefined) {
-                            params[param] = context.states[stateName];
+                        // console.log('looking in: ', states, ' for state: ', stateName);
+                        if(states[stateName] && states[stateName] !== undefined) {
+                            params[param] = states[stateName];
                         } else {
                             console.warn('State ' + stateName + ' not found in board ' + context.boardId);
                         }

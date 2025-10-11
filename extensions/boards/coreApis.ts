@@ -13,7 +13,6 @@ import { Manager } from "./manager";
 import { dbProvider, getDBOptions } from 'protonode';
 import { acquireLock, releaseLock } from "./system/lock";
 import { callModel } from "./system/ai";
-import { getExecuteAction } from "./system/getExecuteAction";
 import { registerCards } from "./system/cards";
 import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles } from "./system/boards";
 
