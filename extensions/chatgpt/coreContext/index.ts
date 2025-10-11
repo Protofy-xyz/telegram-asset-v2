@@ -217,6 +217,7 @@ export const chatGPTSession = async ({
 };
 
 export const chatGPTPrompt = async ({
+    model = "gpt-4o",
     message,
     images = [],
     files = [],
@@ -315,6 +316,7 @@ export const chatGPTPrompt = async ({
     console.dir(messages, { depth: 10 });
 
     const response = await chatGPTSession({
+        model,
         messages,
         ...props,
         done: (response) => {
@@ -389,6 +391,7 @@ export const prompt = async (options: {
     images?: any[],
     files?: any[],
     conversation?: any[],
+    model?: string,
     done?: (result) => {},
     error?: (err) => {}
 }) => {
@@ -397,11 +400,13 @@ export const prompt = async (options: {
         images = [],
         files = [],
         conversation = [],
+        model = "gpt-4o-mini",
         done = () => { },
         error = () => { }
     } = options;
 
     const response = await chatGPTPrompt({
+        model,
         images: images || [],
         files: (files || []).map(file => getRoot() + file),
         message: message, done: (response, msg) => {
