@@ -317,6 +317,17 @@ const extraCards = [
       name: 'action',
       displayResponse: true,
       icon: 'rocket',
+      displayIcon: false,
+      params: {
+        input: "action input"
+      },
+      configParams: {
+        input: {
+          visible: true,
+          defaultValue: "",
+          type: "any"
+        }
+      },
       description: `Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.
 
   #### Key Features
