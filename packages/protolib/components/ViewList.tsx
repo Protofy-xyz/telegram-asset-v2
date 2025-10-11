@@ -1,13 +1,14 @@
 import { Info, X } from '@tamagui/lucide-icons'
 import { useEffect, useState } from 'react'
-import { Button, Paragraph, ScrollView, SizableText, View, XStack, YStack } from 'tamagui'
+import { Button, Paragraph, ScrollView, SizableText, Spinner, View, XStack, YStack } from 'tamagui'
 import { FlatList } from 'react-native'
 import { InteractiveIcon } from './InteractiveIcon'
 import { Input } from '@my/ui'
 import { Tinted } from './Tinted'
+import { JSONView } from './JSONView'
 
 
-export function ViewList({ items, onDeleteItem = (item, index) => { }, onClear = (items) => { }, onPush = (item) => { } }) {
+export function ViewList({ items, onDeleteItem = (item, index) => { }, emptyMessageProps={}, emptyMode='info', emptyMessage="Empty queue", disableManualPush = false, onClear = (items) => { }, onPush = (item) => { } }) {
   const [itemsList, setItemsList] = useState(items ?? [])
   const [addText, setAddText] = useState('')
   const renderItem = ({ item, index }) => (
@@ -39,11 +40,11 @@ export function ViewList({ items, onDeleteItem = (item, index) => { }, onClear =
           contentContainerStyle={{}}
           showsVerticalScrollIndicator={false}
         /></ScrollView> : <YStack jc="center" ai="center" height="100%" f={1} o={1}>
-        <Info color="$color7" size={50} />
-        <Paragraph mt={"$4"} fontSize={"$8"} fontWeight="600" color="$color">Empty queue</Paragraph>
+        {emptyMode === 'info' ? <Info color="$color7" size={50} /> : <Spinner color="$color7" size="large" />}
+        <Paragraph mt={"$4"} fontSize={"$8"} fontWeight="600" color="$color" {...emptyMessageProps}>{emptyMessage}</Paragraph>
       </YStack>}
 
-      <XStack m={"10px"}>
+      {disableManualPush ? <></> : <XStack m={"10px"}>
         <YStack f={1}>
           <Input
             value={addText}
@@ -71,6 +72,7 @@ export function ViewList({ items, onDeleteItem = (item, index) => { }, onClear =
           </Tinted>
         </YStack>
       </XStack>
+      }
 
     </YStack>
 
@@ -83,6 +85,13 @@ function ViewListItem({ item, index, onDeleteItem }) {
 
   const [isHover, setIsHover] = useState(false)
 
+  let content = <SizableText fontWeight={"500"} color="$color11">{item}</SizableText>
+  let stringMode = true
+  if (typeof item !== 'string') {
+    content = <JSONView src={item} />
+    stringMode = false
+  }
+
   return (
     <View
       p={"$2"}
@@ -91,7 +100,7 @@ function ViewListItem({ item, index, onDeleteItem }) {
       m={"$1"}
       marginHorizontal="10px"
       borderRadius="$5"
-      backgroundColor="$color6"
+      backgroundColor={stringMode ? "$color6" : "$bgContent"}
       flexDirection="row"
       // paddingVertical="$2"
       // gap="$4"
@@ -104,7 +113,7 @@ function ViewListItem({ item, index, onDeleteItem }) {
       alignItems="center"
     >
       <View f={1} flexDirection="column" flexShrink={1} justifyContent="center">
-        <SizableText fontWeight={"500"} color="$color11">{item}</SizableText>
+        {content}
         {/* <Text fontWeight="$2" theme="alt1">
           {item.status.status}
         </Text> */}
