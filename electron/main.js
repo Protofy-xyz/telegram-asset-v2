@@ -306,6 +306,9 @@ module.exports = function start(rootPath) {
           height: 1000,
           title: 'Main App',
           autoHideMenuBar: true,
+          fullscreenable: true,
+          resizable: true,
+          frame: true,      
           webPreferences: {
             preload: path.join(__dirname, 'preload-main.js'),
             additionalArguments: [`--session=${encoded}`],
