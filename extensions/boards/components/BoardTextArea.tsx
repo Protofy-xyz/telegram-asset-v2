@@ -1,7 +1,7 @@
 import React, { useRef, useState, useLayoutEffect, useEffect } from 'react'
 import { TextArea } from '@my/ui'
 import { XStack, YStack, Button, Spinner, Text } from '@my/ui'
-import { Trash, Plus, Mic } from '@tamagui/lucide-icons'
+import { Trash, Plus, Mic, Binary, ALargeSmall, Braces, ListTree, ArrowDown, ChevronDown, Zap } from '@tamagui/lucide-icons'
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
 import { generateActionCode, generateStateCode } from '@extensions/boards/utils/ActionsAndStates';
@@ -125,6 +125,89 @@ const removeUnknownTags = (value, symbols) => {
   return cleanedText
 }
 
+const ActionRow = ({ action, rowClick }) => {
+  return <XStack justifyContent="space-between" gap="$3" alignItems="center" onClick={rowClick}
+  >
+    <XStack justifyContent="flex-start" gap="$3" alignItems="center">
+      <Zap
+        style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
+      />
+      {action.name}
+    </XStack>
+    <Text color="$blue11">{(action?.description ?? "")?.length >= 30 ? (action?.description ?? "").slice(0, 30) + "..." : (action?.description ?? "")}</Text>
+  </XStack>
+}
+
+const StateRow = ({ state, rowClick }) => {
+  const type = typeof state.value
+  const [showProperties, setShowProperties] = useState(false)
+
+  if (type === "number") {
+    return <XStack onClick={() => rowClick()} justifyContent="space-between" gap="$3" alignItems="center">
+      <XStack justifyContent="flex-start" gap="$3" alignItems="center">
+        <Binary
+          style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
+        />
+        {state.name}
+      </XStack>
+      <Text color="$green11">{state.value}</Text>
+    </XStack>
+  }
+
+  if (type === "string") {
+    return <XStack onClick={() => rowClick()} justifyContent="space-between" gap="$3" alignItems="center">
+      <XStack justifyContent="flex-start" gap="$3" alignItems="center">
+        <ALargeSmall
+          style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
+        />
+        {state.name}
+      </XStack>
+      <Text color="$green11">{state.value}</Text>
+    </XStack>
+  }
+
+  if (type === "object") {
+    return <YStack onClick={() => setShowProperties(prev => !prev)} gap="$3">
+      <XStack justifyContent="space-between" gap="$3" alignItems="center">
+        <XStack justifyContent="flex-start" gap="$3" alignItems="center">
+          <ListTree
+            style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
+          />
+          {state.name}
+        </XStack>
+        <YStack br="$2" hoverStyle={{ backgroundColor: "$gray8" }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowProperties(prev => !prev)
+          }} >
+          <ChevronDown
+            height="20px"
+            color="$gray9"
+            rotate={showProperties ? "180deg" : "0deg"}
+            style={{
+              transition: "all ease-in-out 120ms"
+            }}
+          />
+        </YStack>
+      </XStack>
+      {
+        showProperties && <YStack px="$5" pb="$2">
+          {Object.keys(state.value).map(key => {
+            return <XStack gap="$3" br="$2" pl="$3" py="$1" hoverStyle={{ backgroundColor: "var(--gray8)" }} onClick={() => rowClick(key)}>
+              <Text>{key}</Text>
+              <Text color="$green11">{typeof state.value[key]}</Text>
+            </XStack>
+          })}
+        </YStack>
+      }
+    </YStack>
+  }
+
+  return <XStack justifyContent="flex-start" gap="$3" alignItems="center">
+    {state.name}
+  </XStack>
+}
+
 export const BoardTextArea = ({
   value,
   speechRecognition,
@@ -175,12 +258,17 @@ export const BoardTextArea = ({
     }
   };
 
-  const selectDropdownOption = (value) => {
+  const getDropdownSelection = () => {
     let selection = dropDown[showDropdown][selectedIndex]
+    if (selection === undefined || selection === null) return
+    return selection
+  }
+
+  const selectDropdownOption = (selection: String | String[], value: String) => {
     if (selection === undefined || selection === null) return
     let text = showDropdown === "actions"
       ? generateActionCode(selection)
-      : generateStateCode([selection])
+      : generateStateCode(Array.isArray(selection) ? selection : [selection])
 
     onChange({
       target: {
@@ -250,7 +338,7 @@ export const BoardTextArea = ({
             width: "100%",
             bottom: "120%",
           }}
-          maxHeight={"150px"}
+          maxHeight={"200px"}
           overflowBlock="scroll"
           p="10px"
           br="$4"
@@ -293,16 +381,9 @@ export const BoardTextArea = ({
           </XStack>
           {
             dropDown[showDropdown]?.length
-              ? dropDown[showDropdown].map((s, i) => <button
+              ? dropDown[showDropdown].map((v, i) => <button
                 ref={el => (itemRefs.current[i] = el)}
-                key={s}
-                onClick={() => {
-                  selectDropdownOption(dumpedValue)
-                  setShowDropdown(null)
-                  setTimeout(() => {
-                    ref.current.focus()
-                  }, 50)
-                }}
+                key={v}
                 onMouseEnter={(e) => {
                   setSelectedIndex(i)
                 }}
@@ -314,7 +395,29 @@ export const BoardTextArea = ({
                   scrollMarginTop: '50px',
                   scrollMarginBottom: '6px',
                 }}
-              >{s}</button>)
+              >{
+                  showDropdown === "actions"
+                    ? <ActionRow action={actions[v]} rowClick={() => {
+                      selectDropdownOption(getDropdownSelection(), dumpedValue)
+                      setShowDropdown(null)
+                      setTimeout(() => {
+                        ref.current.focus()
+                      }, 50)
+                    }} />
+                    : <StateRow state={{ name: v, value: states[v], }} rowClick={(k = null) => {
+                      let selection = getDropdownSelection()
+                      // property access of object selection 
+                      if (k !== null) {
+                        selection = [selection, k]
+                      }
+                      selectDropdownOption(selection, dumpedValue)
+                      setShowDropdown(null)
+                      setTimeout(() => {
+                        ref.current.focus()
+                      }, 50)
+                    }}
+                    />
+                }</button>)
               : <div
                 style={{
                   backgroundColor: "var(--gray6)",
@@ -462,7 +565,7 @@ export const BoardTextArea = ({
                 case 'Tab':
                 case 'Enter':
                   e.preventDefault()
-                  selectDropdownOption(dumpedValue)
+                  selectDropdownOption(getDropdownSelection(), dumpedValue)
                   setShowDropdown(null)
                   setTimeout(() => {
                     ref.current.focus()
