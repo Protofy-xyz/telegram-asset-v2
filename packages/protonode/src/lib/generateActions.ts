@@ -39,8 +39,8 @@ export const AutoActions = ({
         try {
             const result = await API.get(`${urlPrefix}?token=${getServiceToken()}`);
             if (result.isLoaded && result.data && result.data.total) {
-                context.state.set({ group: 'objects', tag: modelName, name: 'total', value: result.data.total });
-                context.state.set({ group: 'objects', tag: modelName, name: 'lastEntries', value: result.data.items });
+                context.state.set({ group: 'storages', tag: modelName, name: 'total', value: result.data.total });
+                context.state.set({ group: 'storages', tag: modelName, name: 'lastEntries', value: result.data.items });
             }
         } catch (e) {
             console.error("Error loading total for " + modelName, e);
@@ -68,7 +68,7 @@ export const AutoActions = ({
     }))
 
     await context.actions.add({
-        group: 'objects',
+        group: 'storages',
         name: 'exists', //get last path element
         url: actionUrlPrefix + '/exists',
         tag: modelName,
@@ -78,10 +78,10 @@ export const AutoActions = ({
     })
 
     await context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'exists',
-        id: 'object_' + modelName + '_exists',
+        id: 'storage_' + modelName + '_exists',
         templateName: 'Check if a ' + modelName + ' exists in the storage',
         defaults: {
             html: getHTML('exists'),
@@ -102,10 +102,10 @@ export const AutoActions = ({
     })
 
     await context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'table',
-        id: 'object_' + modelName + '_last_table',
+        id: 'storage_' + modelName + '_last_table',
         templateName: "Last " + modelName + " table",
 
         defaults: {
@@ -143,7 +143,7 @@ export const AutoActions = ({
 
 
     await context.actions.add({
-        group: 'objects',
+        group: 'storages',
         name: 'read', //get last path element
         url: actionUrlPrefix + '/read',
         tag: modelName,
@@ -153,10 +153,10 @@ export const AutoActions = ({
     })
 
     await context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'read',
-        id: 'object_' + modelName + '_read',
+        id: 'storage_' + modelName + '_read',
         templateName: 'Read ' + modelName + ' from the storage',
         defaults: {
             html: getHTML('read'),
@@ -266,7 +266,7 @@ export const AutoActions = ({
     }).reduce((acc, val) => ({ ...acc, ...val }), {});
 
     await context.actions.add({
-        group: 'objects',
+        group: 'storages',
         name: 'create', //get last path element
         url: actionUrlPrefix + '/create',
         tag: modelName,
@@ -278,10 +278,10 @@ export const AutoActions = ({
     })
 
     await context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'create',
-        id: 'object_' + modelName + '_create',
+        id: 'storage_' + modelName + '_create',
         templateName: 'Create ' + modelName + ' in the storage',
         defaults: {
             html: getHTML('create'),
@@ -305,7 +305,7 @@ export const AutoActions = ({
         context,
         async (event) => {
             loadTotal();
-            context.state.set({ group: 'objects', tag: modelName, name: 'lastDeleteddId', value: event?.payload?.id });
+            context.state.set({ group: 'storages', tag: modelName, name: 'lastDeleteddId', value: event?.payload?.id });
         },
         notiName + "/delete/#"
     )
@@ -327,7 +327,7 @@ export const AutoActions = ({
     }))
 
     await context.actions.add({
-        group: 'objects',
+        group: 'storages',
         name: 'delete', //get last path element
         url: actionUrlPrefix + '/delete',
         tag: modelName,
@@ -337,10 +337,10 @@ export const AutoActions = ({
     })
 
     await context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'delete',
-        id: 'object_' + modelName + '_delete',
+        id: 'storage_' + modelName + '_delete',
         templateName: 'Delete ' + modelName + ' from the storage',
         defaults: {
             width: 2,
@@ -391,7 +391,7 @@ export const AutoActions = ({
     }
 
     await context.actions.add({
-        group: 'objects',
+        group: 'storages',
         name: 'update', //get last path element
         url: actionUrlPrefix + '/update',
         tag: modelName,
@@ -401,10 +401,10 @@ export const AutoActions = ({
     })
 
     await context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'update',
-        id: 'object_' + modelName + '_update',
+        id: 'storage_' + modelName + '_update',
         templateName: 'Updates ' + modelName + ' in the storage',
         defaults: {
             html: getHTML('update'),
@@ -427,19 +427,19 @@ export const AutoActions = ({
         context,
         async (event) => {
             loadTotal();
-            context.state.set({ group: 'objects', tag: modelName, name: 'lastCreated', value: event?.payload?.data });
-            context.state.set({ group: 'objects', tag: modelName, name: 'lastCreatedMetadata', value: event });
-            context.state.set({ group: 'objects', tag: modelName, name: 'lastCreatedId', value: event?.payload?.id });
+            context.state.set({ group: 'storages', tag: modelName, name: 'lastCreated', value: event?.payload?.data });
+            context.state.set({ group: 'storages', tag: modelName, name: 'lastCreatedMetadata', value: event });
+            context.state.set({ group: 'storages', tag: modelName, name: 'lastCreatedId', value: event?.payload?.id });
         },
         notiName + "/create/#"
     )
 
     context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'lastCreated',
         templateName: 'Last created ' + modelName,
-        id: 'object_' + modelName + '_lastCreated',
+        id: 'storage_' + modelName + '_lastCreated',
         defaults: {
             html: getHTML('lastCreated'),
             type: "value",
@@ -456,19 +456,19 @@ export const AutoActions = ({
         context.mqtt,
         context,
         async (event) => {
-            context.state.set({ group: 'objects', tag: modelName, name: 'lastUpdated', value: event?.payload?.data });
-            context.state.set({ group: 'objects', tag: modelName, name: 'lastUpdatedMetadata', value: event });
-            context.state.set({ group: 'objects', tag: modelName, name: 'lastUpdatedId', value: event?.payload?.id });
+            context.state.set({ group: 'storages', tag: modelName, name: 'lastUpdated', value: event?.payload?.data });
+            context.state.set({ group: 'storages', tag: modelName, name: 'lastUpdatedMetadata', value: event });
+            context.state.set({ group: 'storages', tag: modelName, name: 'lastUpdatedId', value: event?.payload?.id });
         },
         notiName + "/update/#"
     )
 
     context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'lastUpdated',
         templateName: 'Last updated ' + modelName,
-        id: 'object_' + modelName + '_lastUpdated',
+        id: 'storage_' + modelName + '_lastUpdated',
         defaults: {
             html: getHTML('lastUpdated'),
             type: "value",
@@ -482,11 +482,11 @@ export const AutoActions = ({
     })
 
     context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'totalItems',
         templateName: 'Total ' + plurName,
-        id: 'object_' + modelName + '_totalitems',
+        id: 'storage_' + modelName + '_totalitems',
         defaults: {
             html: getHTML('totalItems'),
             type: "value",
@@ -524,7 +524,7 @@ export const AutoActions = ({
     }))
 
     await context.actions.add({
-        group: 'objects',
+        group: 'storages',
         name: 'list', //get last path element
         url: actionUrlPrefix + '/list',
         tag: modelName,
@@ -540,10 +540,10 @@ export const AutoActions = ({
     })
 
     await context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: modelName,
         name: 'list',
-        id: 'object_' + modelName + '_list',
+        id: 'storage_' + modelName + '_list',
         templateName: modelName + ' storage',
         defaults: {
             width: 4,

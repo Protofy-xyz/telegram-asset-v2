@@ -21,7 +21,7 @@ export default (app, context) => {
     })
 
     context.cards.add({
-        group: 'objects',
+        group: 'storages',
         tag: 'services',
         name: 'list',
         id: 'services_list',
