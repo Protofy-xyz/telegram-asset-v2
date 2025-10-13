@@ -154,7 +154,7 @@ export const BoardTextArea = ({
   const ref = useRef(null);
   const [speechRecognitionEnabled, setSpeechRecognitionEnabled] = useState(false);
   const [showDropdown, setShowDropdown] = useState(null)
-  const [inputInsertIndex, setInputInsetIndex] = useState(0)
+  const [inputInsertIndex, setInputInsertIndex] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -177,6 +177,7 @@ export const BoardTextArea = ({
 
   const selectDropdownOption = (value) => {
     let selection = dropDown[showDropdown][selectedIndex]
+    if (selection === undefined || selection === null) return
     let text = showDropdown === "actions"
       ? generateActionCode(selection)
       : generateStateCode([selection])
@@ -186,10 +187,6 @@ export const BoardTextArea = ({
         value: value.slice(0, inputInsertIndex - 1) + (text + " ") + value.slice(inputInsertIndex + 1)
       }
     })
-    setShowDropdown(null)
-    setTimeout(() => {
-      ref.current.focus()
-    }, 50)
   }
 
   useEffect(() => {
@@ -220,115 +217,15 @@ export const BoardTextArea = ({
 
   // events with dropdown open
   useEffect(() => {
-    if (!showDropdown) {
-      setSelectedIndex(0)
-      return
-    }
-
-    if (!dropDown[showDropdown]?.length) return
-
     const el = itemRefs.current[selectedIndex];
     el?.scrollIntoView({ block: 'nearest' });
+  }, [selectedIndex])
 
-
-    const handleKeyDown = (e) => {
-      e.stopPropagation()
-      switch (e.key) {
-        case 'ArrowUp':
-          if (showDropdown) {
-            if ((selectedIndex - 1) >= 0) {
-              setSelectedIndex(prev => prev - 1)
-            } else {
-              setSelectedIndex(dropDown[showDropdown].length - 1)
-            }
-          }
-          break;
-        case 'ArrowDown':
-          if (showDropdown) {
-            if ((selectedIndex + 1) < dropDown[showDropdown].length) {
-              setSelectedIndex(prev => prev + 1)
-            } else {
-              setSelectedIndex(0)
-            }
-          }
-          break;
-        case 'Escape':
-          setShowDropdown(null)
-          break;
-        case 'Tab':
-        case 'Enter':
-          e.preventDefault()
-          selectDropdownOption(dumpedValue)
-          break;
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showDropdown, selectedIndex, inputInsertIndex, dumpedValue]);
-
-  // non dropdown events
   useEffect(() => {
-    if (document.activeElement !== ref.current) return
-
-    const handleKeyDown = (e) => {
-      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.stopPropagation()
-      }
-
-      switch (e.key) {
-        case 'Backspace':
-        case 'Delete':
-          const input = e.target;
-          const start = input.selectionStart;
-          const end = input.selectionEnd;
-
-          if (start === end) {
-            const before = dumpedValue.slice(0, start);
-            const after = dumpedValue.slice(start);
-
-            const match = before.match(/<[@#][^>]+>$/);
-            if (match) {
-              e.preventDefault();
-
-              const tokenStart = start - match[0].length;
-              const newValue = dumpedValue.slice(0, tokenStart) + after;
-              onChange({ target: { value: newValue } })
-
-              setTimeout(() => {
-                // set the cursor after tag remove
-                input?.setSelectionRange(tokenStart, tokenStart);
-              }, 0);
-            }
-          }
-          break;
-        case 'Enter':
-          if (showDropdown) return;
-          e.preventDefault();
-          // dedump and set the new symbols
-          let cleaned = removeUnknownTags(dumpedValue, symbols);
-          let dedumped = dedump(cleaned, symbols);
-          updateSymbols(dedumped, setSymbols)
-
-          // set the dumped
-          if (typeof onEnter === 'function') {
-            onEnter({ target: { value: dedumped } });
-          }
-          break;
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [inputInsertIndex, dumpedValue, showDropdown, symbols, onEnter]);
+    if (showDropdown) {
+      ref.current.focus()
+    }
+  }, [showDropdown, selectedIndex])
 
   // El hack: Espera a que se estabilice el DOM
   useEffect(() => {
@@ -362,7 +259,38 @@ export const BoardTextArea = ({
           borderColor={"$gray6"}
           gap="$2"
         >
-          <Text color="$gray9" pl="$2" fontSize={"$5"} >{showDropdown}</Text>
+          <XStack gap="$1">
+            <Text
+              color={showDropdown === "actions" ? "$blue11" : "$gray9"}
+              bg={showDropdown === "actions" ? "$blue6" : "transparent"}
+              px="$3"
+              py="$1"
+              br="$2"
+              fontSize={"$5"}
+              textAlign="center"
+              alignSelf="center"
+              cursor="pointer"
+              onClick={() => { setShowDropdown("actions"); setSelectedIndex(0) }}
+              style={{
+                transition: "all ease-in-out 80ms"
+              }}
+            >actions</Text>
+            <Text
+              color={showDropdown === "states" ? "$green11" : "$gray9"}
+              bg={showDropdown === "states" ? "$green6" : "transparent"}
+              px="$3"
+              py="$1"
+              br="$2"
+              fontSize={"$5"}
+              textAlign="center"
+              alignSelf="center"
+              cursor="pointer"
+              style={{
+                transition: "all ease-in-out 80ms"
+              }}
+              onClick={() => { setShowDropdown("states"); setSelectedIndex(0) }}
+            >states</Text>
+          </XStack>
           {
             dropDown[showDropdown]?.length
               ? dropDown[showDropdown].map((s, i) => <button
@@ -370,6 +298,10 @@ export const BoardTextArea = ({
                 key={s}
                 onClick={() => {
                   selectDropdownOption(dumpedValue)
+                  setShowDropdown(null)
+                  setTimeout(() => {
+                    ref.current.focus()
+                  }, 50)
                 }}
                 onMouseEnter={(e) => {
                   setSelectedIndex(i)
@@ -379,11 +311,20 @@ export const BoardTextArea = ({
                   paddingBlock: "5px",
                   paddingInline: "10px",
                   borderRadius: "5px",
-                  scrollMarginTop: '40px',
+                  scrollMarginTop: '50px',
                   scrollMarginBottom: '6px',
                 }}
               >{s}</button>)
-              : <div>no {showDropdown} found</div>
+              : <div
+                style={{
+                  backgroundColor: "var(--gray6)",
+                  paddingBlock: "5px",
+                  paddingInline: "10px",
+                  borderRadius: "5px",
+                  scrollMarginTop: '40px',
+                  scrollMarginBottom: '6px',
+                }}
+              >no {showDropdown} found</div>
           }
         </YStack>}
       <YStack pos="relative" f={1} w="100%">
@@ -420,26 +361,10 @@ export const BoardTextArea = ({
           readOnly={readOnly}
           value={dumpedValue}
           placeholder={placeholder}
-          onChange={(prevText) => {
-            if (prevText.target.value.endsWith(" #")) setShowDropdown("states");
-            if (prevText.target.value.endsWith(" @")) setShowDropdown("actions");
-
-            // dedump and set the new symbols
-            let cleaned = removeUnknownTags(prevText.target.value, symbols);
-            let dedumped = dedump(cleaned, symbols);
-            updateSymbols(dedumped, setSymbols)
-
-            // set the dumped
-            onChange({ target: { value: dedumped } });
-          }}
-          onKeyUp={(e) => {
-            e.preventDefault();
-            if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-              e.stopPropagation();
-              return;
-            }
+          onChange={(e) => {
             const index = e.currentTarget.selectionStart;
-            setInputInsetIndex(index);
+
+            setInputInsertIndex(index);
             if (e.currentTarget.value[index - 1] === "#") {
               setShowDropdown("states");
             } else if (e.currentTarget.value[index - 1] === "@") {
@@ -447,8 +372,108 @@ export const BoardTextArea = ({
             } else {
               setShowDropdown(null)
             }
+
+            // dedump and set the new symbols
+            let cleaned = removeUnknownTags(e.currentTarget.value, symbols);
+            let dedumped = dedump(cleaned, symbols);
+            updateSymbols(dedumped, setSymbols)
+
+            // set the dumped
+            onChange({ target: { value: dedumped } });
           }}
-          onKeyDown={onKeyDown}
+          onKeyUp={(e) => { }}
+          onKeyDown={(e) => {
+            if (showDropdown === null) { // text mode
+              const input = e.currentTarget;
+              switch (e.key) {
+                case 'Backspace':
+                case 'Delete':
+                  const start = input.selectionStart;
+                  const end = input.selectionEnd;
+
+                  if (start === end) {
+                    const before = dumpedValue.slice(0, start);
+                    const after = dumpedValue.slice(start);
+
+                    const match = before.match(/<[@#][^>]+>$/);
+                    if (match) {
+                      e.preventDefault();
+
+                      const tokenStart = start - match[0].length;
+                      const newValue = dumpedValue.slice(0, tokenStart) + after;
+                      onChange({ target: { value: newValue } })
+
+                      setTimeout(() => {
+                        // set the cursor after tag remove
+                        input?.setSelectionRange(tokenStart, tokenStart);
+                      }, 0);
+                    }
+                  }
+                  break;
+                case 'Enter':
+                  e.preventDefault();
+                  // dedump and set the new symbols
+                  let cleaned = removeUnknownTags(dumpedValue, symbols);
+                  let dedumped = dedump(cleaned, symbols);
+                  updateSymbols(dedumped, setSymbols)
+
+                  // set the dumped
+                  if (typeof onEnter === 'function') {
+                    onEnter({ target: { value: dedumped } });
+                  }
+                  break;
+              }
+            } else { // dropdown mode
+              const triggerKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Escape", "Enter", "Tab"]
+              if (!triggerKeys.includes(e.key)) {
+                return
+              }
+
+              e.preventDefault()
+              e.stopPropagation()
+
+              // custom key handle for dropdown navigation
+              switch (e.key) {
+                case 'ArrowLeft':
+                  setShowDropdown("actions")
+                  setSelectedIndex(0)
+                  break;
+                case 'ArrowRight':
+                  setShowDropdown("states")
+                  setSelectedIndex(0)
+                  break;
+                case 'ArrowUp':
+                  if ((selectedIndex - 1) >= 0) {
+                    setSelectedIndex(prev => prev - 1)
+                  } else {
+                    setSelectedIndex(dropDown[showDropdown].length - 1)
+                  }
+                  break;
+                case 'ArrowDown':
+                  if ((selectedIndex + 1) < dropDown[showDropdown].length) {
+                    setSelectedIndex(prev => prev + 1)
+                  } else {
+                    setSelectedIndex(0)
+                  }
+                  break;
+                case 'Escape':
+                  setShowDropdown(null)
+                  break;
+                case 'Tab':
+                case 'Enter':
+                  e.preventDefault()
+                  selectDropdownOption(dumpedValue)
+                  setShowDropdown(null)
+                  setTimeout(() => {
+                    ref.current.focus()
+                  }, 50)
+                  break;
+                default:
+                  break;
+              }
+              return
+            }
+          }}
           onScroll={(e) => {
             // sincroniza el scroll con la capa de resaltado
             if (overlayRef.current) {
