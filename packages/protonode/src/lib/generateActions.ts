@@ -5,7 +5,7 @@ import { getServiceToken } from "./serviceToken";
 type AutoActionsParams = {
     modelName: string;
     modelType: any; // should be an instance of AutoModel
-    apiUrl?: string;  
+    apiUrl?: string;
     prefix?: string; // where the API for the actions will be created
     object?: string; // what to display to the user in the list view
     notificationsName?: string; // name of the notifications to listen to
@@ -22,7 +22,7 @@ export const AutoActions = ({
     notificationsName = undefined,
     pluralName = undefined,
     html = {}
-} : AutoActionsParams) => async (app, context) => {
+}: AutoActionsParams) => async (app, context) => {
     const plurName = pluralName ?? modelName
     const urlPrefix = apiUrl ?? `${prefix}${modelName}`;
     const actionUrlPrefix = `${prefix}actions/${modelName}`;
@@ -543,15 +543,15 @@ export const AutoActions = ({
         group: 'storages',
         tag: modelName,
         name: 'list',
-        id: 'storage_' + modelName + '_list',
-        templateName: modelName + ' storage',
+        id: 'storage_' + modelName + '_manager',
+        templateName: modelName + ' storage manager',
         defaults: {
             width: 4,
             height: 10,
             icon: 'search',
             displayResponse: true,
-            name: `list ${modelName}`,
-            html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\""+ (object ?? modelName) +"\" onItemsChange={() => execute_action(card.name, {})}/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
+            name: `${modelName} storage manager`,
+            html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\"" + (object ?? modelName) + "\" onItemsChange={() => execute_action(card.name, {})}/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
             type: 'action',
             description: `Returns a list of ${modelName} objects. You can filter the results by passing itemsPerPage, page, search, orderBy and orderDirection parameters.`,
             params: {
@@ -559,9 +559,11 @@ export const AutoActions = ({
                 page: 'page number to retrieve (optional)',
                 search: 'search term to filter the results (optional)',
                 orderBy: 'field to order the results by (optional)',
-                orderDirection: 'direction to order the results by (asc or desc) (optional)'
+                orderDirection: 'direction to order the results by (asc or desc) (optional)',
+                action: "action to perform in the storage: list, read, create, update, delete, exists",
+                id: "id (required for actions: read, create, update, delete, exists)"
             },
-            rulesCode: `return execute_action("/api/v1/actions/${modelName}/list", userParams)`
+            rulesCode: `const action = userParams.action;\n\ndelete userParams[\"action\"];\n\nif (action == \"create\") {\n  return execute_action(\"/api/v1/actions/${modelName}/create\", userParams);\n} else if (action == \"update\") {\n  return execute_action(\"/api/v1/actions/${modelName}/update\", userParams);\n} else if (action == \"read\") {\n  return execute_action(\"/api/v1/actions/${modelName}/read\", userParams);\n} else if (action == \"delete\") {\n  return execute_action(\"/api/v1/actions/${modelName}/delete\", userParams);\n} else if (action == \"exists\") {\n  return execute_action(\"/api/v1/actions/${modelName}/exists\", userParams);\n} else {\n  return execute_action(\"/api/v1/actions/${modelName}/list\", userParams);\n}\n`,
         },
         token: getServiceToken(),
         emitEvent: true
