@@ -1,4 +1,4 @@
-import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot, Undo, Redo } from 'lucide-react';
+import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot, Undo, Redo, FileClock } from 'lucide-react';
 import { useBoardControls } from './BoardControlsContext';
 import { ActionBarButton } from 'protolib/components/ActionBarWidget';
 import { Separator } from '@my/ui';
@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useBoardVersions } from './utils/versions';
 import { useSearchParams } from 'next/navigation';
 import { useBoardVersion } from './store/boardStore';
-import {reloadBoard, itemsAtom, automationInfoAtom, uiCodeInfoAtom} from '@extensions/boards/utils/viewUtils'
+import { reloadBoard, itemsAtom, automationInfoAtom, uiCodeInfoAtom } from '@extensions/boards/utils/viewUtils'
 import { useAtom } from 'jotai';
 
 const toggleInstantUndoRedo = false; // disables reload when undo/redo, still buggy
@@ -156,34 +156,44 @@ const getActionBar = (generateEvent) => {
     // deps: si cambian estas, re-registra el handler
   }, [isJSONView, generateEvent]);
 
-  const versions = true //TOGGLE TO ENABLE VERSIONS
-  const undoRedoButtons = versions ? [<ActionBarButton
-    tooltipText={canUndo?`Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}`: 'No Undo Available'}
+  const undoRedoButtons = [<ActionBarButton
+    tooltipText={canUndo ? `Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}` : 'No Undo Available'}
     Icon={Undo}
     disabled={!boardId || !canUndo}
     onPress={async () => {
       try {
         await undo?.();
         await refresh();
-        if(toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
+        if (toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
         else document.location.reload();
       } catch (e) { console.error(e); }
     }}
   />,
   <ActionBarButton
-    tooltipText={canRedo?`Redo${current != null ? ` (→ v${Number(current) + 1})` : ''}`: 'No Redo Available'}
+    tooltipText={canRedo ? `Redo${current != null ? ` (→ v${Number(current) + 1})` : ''}` : 'No Redo Available'}
     Icon={Redo}
     disabled={!boardId || !canRedo}
     onPress={async () => {
       try {
         await redo?.();
         await refresh();
-        if(toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
+        if (toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
         else document.location.reload();
       } catch (e) { console.error(e); }
     }}
-  />,] : []
-  
+  />,
+  ]
+
+
+  const versions = false //TOGGLE TO ENABLE HISTORY
+  const historyVersion = versions ? [  <ActionBarButton
+    tooltipText={tabVisible == "history" ? "Close History" : "Open History"}
+    selected={tabVisible == "history"}
+    Icon={FileClock}
+    disabled={!boardId}
+    onPress={() => generateEvent({ type: "toggle-history" })}
+  />,
+  ] : []
   const bars = {
     'JSONView': [
       <ActionBarButton Icon={X} iconProps={{ color: 'var(--gray9)' }} onPress={() => generateEvent({ type: "toggle-json" })} />,
@@ -192,6 +202,7 @@ const getActionBar = (generateEvent) => {
     'BoardView': [
       <ActionBarButton tooltipText="Add" Icon={Plus} onPress={() => generateEvent({ type: "open-add" })} />,
       ...undoRedoButtons,
+      ...historyVersion,
       <ActionBarButton tooltipText={tabVisible == "rules" ? "Close Automations" : "Open Automations"} selected={tabVisible == "rules"} Icon={Bot} onPress={() => generateEvent({ type: "toggle-rules" })} />,
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
       <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,

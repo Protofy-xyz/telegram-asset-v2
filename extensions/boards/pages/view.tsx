@@ -910,6 +910,9 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     if (event.type === 'toggle-rules') {
       setTabVisible(tabVisible === 'rules' ? "" : 'rules');
     }
+        if (event.type === 'toggle-history') {
+      setTabVisible(tabVisible === 'history' ? "" : 'history');
+    }
     if (event.type === 'toggle-logs') {
       setTabVisible(tabVisible === 'logs' ? "" : 'logs');
     }
