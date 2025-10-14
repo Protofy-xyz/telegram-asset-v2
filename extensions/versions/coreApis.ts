@@ -42,6 +42,43 @@ export default async (app, context) => {
         res.send(entries);
     });
 
+    // Get history
+    app.get('/api/core/v1/boards/:boardId/history', requireAdmin(), async (req, res) => {
+        try {
+            const root = getRoot(req);
+            const dir = fspath.join(VersionsBaseDir(root), req.params.boardId);
+            if (!fsSync.existsSync(dir)) return res.send([]);
+
+            const entries = (await fs.readdir(dir))
+                .filter(n => /^\d+$/.test(n))
+                .map(n => Number(n))
+                .sort((a, b) => a - b);
+
+            const boardName = `${req.params.boardId}.json`;
+
+            const versions = await Promise.all(entries.map(async (version) => {
+                const filePath = fspath.join(dir, String(version), boardName);
+                if (!fsSync.existsSync(filePath)) return null;
+
+                try {
+                    const data = JSON.parse(await fs.readFile(filePath, 'utf8'));
+                    return {
+                        version: data.version ?? version,
+                        savedAt: data.savedAt ?? null,
+                    };
+                } catch (err) {
+                    console.warn(`Error reading version ${version}:`, err);
+                    return null;
+                }
+            }));
+
+            res.send(versions.filter(Boolean));
+        } catch (err) {
+            console.error(err);
+            res.status(500).send({ error: 'Error reading versions' });
+        }
+    });
+    
     // Save version
     app.post('/api/core/v1/boards/:boardId/version', requireAdmin(), async (req, res) => {
         const root = getRoot(req);
@@ -50,7 +87,7 @@ export default async (app, context) => {
         if (!fsSync.existsSync(jsonPath)) return res.status(404).send({ error: 'board not found' });
         const current = getCurrentVersionFromFS(root, boardId);
         await snapshotBoardFiles(root, boardId, current);
-        res.send({ ok: true, version: current});
+        res.send({ ok: true, version: current });
     });
 
     // Restore version
