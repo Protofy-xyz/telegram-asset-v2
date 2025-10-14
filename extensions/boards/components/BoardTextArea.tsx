@@ -1,4 +1,4 @@
-import React, { useRef, useState, useLayoutEffect, useEffect } from 'react'
+import React, { useRef, useState, useLayoutEffect, useEffect, useMemo } from 'react'
 import { TextArea } from '@my/ui'
 import { XStack, YStack, Button, Spinner, Text } from '@my/ui'
 import { Trash, Plus, Mic, Binary, ALargeSmall, Braces, ListTree, ArrowDown, ChevronDown, Zap } from '@tamagui/lucide-icons'
@@ -10,7 +10,7 @@ const minHeight = 50;
 const maxHeight = 200;
 
 function renderHighlightedHTML(text: string) {
-  // 1) escapar HTML
+  // scape html
   const esc = (s: string) => s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -162,7 +162,7 @@ const StateRow = ({ state, rowClick }) => {
         />
         {state.name}
       </XStack>
-      <Text color="$green11">{state.value}</Text>
+      <Text color="$green11" textAlign="right">{state.value.length > 30 ? state.value.slice(0, 30) + "..." : state.value}</Text>
     </XStack>
   }
 
@@ -229,10 +229,6 @@ export const BoardTextArea = ({
   }
   const [symbols, setSymbols] = useState({})
   const [dumpedValue, setDumpedValue] = useState(value)
-  const tagsChars = {
-    states: "#",
-    actions: "@"
-  }
 
   const ref = useRef(null);
   const [speechRecognitionEnabled, setSpeechRecognitionEnabled] = useState(false);
@@ -259,7 +255,7 @@ export const BoardTextArea = ({
   };
 
   const getDropdownSelection = () => {
-    let selection = dropDown[showDropdown][selectedIndex]
+    let selection = filteredOptions[selectedIndex]
     if (selection === undefined || selection === null) return
     return selection
   }
@@ -270,11 +266,23 @@ export const BoardTextArea = ({
       ? generateActionCode(selection)
       : generateStateCode(Array.isArray(selection) ? selection : [selection])
 
-    onChange({
-      target: {
-        value: value.slice(0, inputInsertIndex - 1) + (text + " ") + value.slice(inputInsertIndex + 1)
-      }
-    })
+    const dropdownFilter = dumpedValue
+      .slice(0, inputInsertIndex) // get the left side of the cursor
+      .replace(/<[^>]*>/g, '') // remove tags to avoid collisions
+      .match(/[@#]([^\s@#]+)(?!.*[@#][^\s@#]+)/)?.[1] // get the last #filter-string
+    if (!dropdownFilter) {
+      onChange({
+        target: {
+          value: value.slice(0, inputInsertIndex - 1) + (text + " ") + value.slice(inputInsertIndex + 1)
+        }
+      })
+    } else {
+      onChange({
+        target: {
+          value: value.slice(0, inputInsertIndex - dropdownFilter.length - 1) + (text + " ") + value.slice(inputInsertIndex + 1)
+        }
+      })
+    }
   }
 
   useEffect(() => {
@@ -329,6 +337,26 @@ export const BoardTextArea = ({
     }
   }, [transcript, speechRecognitionEnabled]);
 
+  const filteredOptions = useMemo(() => {
+    if (!dropDown || !showDropdown) return []
+    const dropdownFilter = dumpedValue
+      .slice(0, inputInsertIndex) // get the left side of the cursor
+      .replace(/<[^>]*>/g, '') // remove tags to avoid collisions
+      .match(/[@#]([^\s@#]+)(?!.*[@#][^\s@#]+)/)?.[1] // get the last #filter-string
+    if (!dropdownFilter) return dropDown[showDropdown]
+
+    // set the index to 0 on each update, to avoid, hidden indexes in 
+    // the dropdown
+    return dropDown[showDropdown]
+      .filter(key => {
+        return key.toLowerCase().startsWith(dropdownFilter.toLowerCase())
+      })
+  }, [showDropdown, dumpedValue, inputInsertIndex]);
+
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [filteredOptions])
+
   return (
     <XStack pos='relative' f={1} gap="$3" ai="flex-end">
       {
@@ -380,8 +408,8 @@ export const BoardTextArea = ({
             >states</Text>
           </XStack>
           {
-            dropDown[showDropdown]?.length
-              ? dropDown[showDropdown].map((v, i) => <button
+            filteredOptions?.length
+              ? filteredOptions.map((v, i) => <button
                 ref={el => (itemRefs.current[i] = el)}
                 key={v}
                 onMouseEnter={(e) => {
@@ -468,11 +496,13 @@ export const BoardTextArea = ({
             const index = e.currentTarget.selectionStart;
 
             setInputInsertIndex(index);
-            if (e.currentTarget.value[index - 1] === "#") {
+            // shortcut to trigger dropdown
+            let end = e.currentTarget.value[index - 1];
+            if (end === "#") {
               setShowDropdown("states");
-            } else if (e.currentTarget.value[index - 1] === "@") {
+            } else if (end === "@") {
               setShowDropdown("actions");
-            } else {
+            } else if (end === " ") {
               setShowDropdown(null)
             }
 
@@ -495,6 +525,7 @@ export const BoardTextArea = ({
                   const end = input.selectionEnd;
 
                   if (start === end) {
+                    // check if a tag must be removed 
                     const before = dumpedValue.slice(0, start);
                     const after = dumpedValue.slice(start);
 
@@ -527,6 +558,19 @@ export const BoardTextArea = ({
                   break;
               }
             } else { // dropdown mode
+              // handle backspaces, without preventing default behaviour
+              if (e.key === "Backspace") {
+                const input = e.currentTarget;
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                if (start === end) {
+                  if (dumpedValue[start - 1] === "@" || dumpedValue[start - 1] === "#") {
+                    setShowDropdown(null)
+                  }
+                }
+                return
+              }
+
               const triggerKeys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Escape", "Enter", "Tab"]
               if (!triggerKeys.includes(e.key)) {
                 return
@@ -549,11 +593,11 @@ export const BoardTextArea = ({
                   if ((selectedIndex - 1) >= 0) {
                     setSelectedIndex(prev => prev - 1)
                   } else {
-                    setSelectedIndex(dropDown[showDropdown].length - 1)
+                    setSelectedIndex(filteredOptions.length - 1)
                   }
                   break;
                 case 'ArrowDown':
-                  if ((selectedIndex + 1) < dropDown[showDropdown].length) {
+                  if ((selectedIndex + 1) < filteredOptions.length) {
                     setSelectedIndex(prev => prev + 1)
                   } else {
                     setSelectedIndex(0)
