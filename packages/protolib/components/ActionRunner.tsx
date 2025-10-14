@@ -8,6 +8,8 @@ export const ActionRunner = ({ id = null, setData = (data, id) => { }, name, dat
     useEffect(() => {
         if (!window['onRunListeners']) window['onRunListeners'] = {}
         window['onRunListeners'][name] = onRun
+        if (!window['onChangeCardData']) window['onChangeCardData'] = {}
+        window['onChangeCardData'][name] = (data) => setData(data, name)
     }, [name])
     const [params, setParams] = useState({});
     const [loading, setLoading] = useState(false);

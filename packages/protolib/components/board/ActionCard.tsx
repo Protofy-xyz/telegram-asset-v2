@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
-import { XStack, YStack, Text, Switch, Input, TextArea, Button } from "@my/ui";
+import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
 import { SelectList } from "../SelectList";
+import { Pin } from "@tamagui/lucide-icons";
 
 export const Icon = ({ name, size, color, style }) => {
     return (
@@ -27,6 +28,29 @@ export const Icon = ({ name, size, color, style }) => {
         />
     );
 };
+
+ function setIn<T>(obj: T, path: any, value: unknown): T {
+  if (!Array.isArray(path) || path.length === 0) return obj;
+
+  const [k, ...rest] = path;
+  const key = String(k);
+
+  const base: any =
+    obj == null
+      ? (typeof rest[0] === 'number' ? [] : {})
+      : Array.isArray(obj)
+      ? obj.slice()
+      : { ...(obj as any) };
+
+  if (rest.length === 0) {
+    (base as any)[k] = value;
+    return base;
+  }
+
+  const next = (base as any)[k];
+  (base as any)[k] = setIn(next, rest, value);
+  return base;
+}
 
 export const ParamsForm = ({ data, children }) => {
     const allKeys = Object.keys(data.params || {});
@@ -68,6 +92,15 @@ export const ParamsForm = ({ data, children }) => {
         }
     };
 
+    const editCardField = async (path, value) => {
+        const newData = setIn(data, path, value);
+        try {
+            await window['onChangeCardData'][data.name](newData);
+        } catch (error) {
+            console.error("Error editing card:", error);
+        }
+    }
+
     return (
         <YStack h="100%" w={"100%"} ai="center">
             {children}
@@ -100,8 +133,25 @@ export const ParamsForm = ({ data, children }) => {
                                 flexDirection: "column",
                             }}
                         >
-                            <Text ml="20px" mb="$2">{key}</Text>
-
+                            <XStack ai="center" jc="space-between" px="20px" pb="$2">
+                                <Text>{key}</Text>
+                                <TooltipSimple label={"set as default"} delay={{ open: 500, close: 0 }} restMs={0}>
+                                    <Button
+                                        color={value == defaultValue ? "transparent" : "$gray10"}
+                                        onPress={() => editCardField(["configParams", key, "defaultValue"], value)}
+                                        cursor="pointer"
+                                        disabled={value == defaultValue}
+                                        size="$2"
+                                        icon={Pin}
+                                        opacity={0.4}
+                                        hoverStyle={{ opacity: 1 }}
+                                        scaleIcon={1.3}
+                                        p="$0"
+                                        circular
+                                        backgroundColor="transparent"
+                                    />
+                                </TooltipSimple>
+                            </XStack>
                             {(!['json', 'array', 'boolean', 'path'].includes(type)) &&
                                 (cfg?.options?.length
                                     ? <YStack mx="10px">

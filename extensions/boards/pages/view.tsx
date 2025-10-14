@@ -494,7 +494,7 @@ const Board = ({ board, icons }) => {
 
   const setCardContent = (key, content) => {
     const newItems = items.map(item => {
-      if (item.key === key) {
+      if (item.key === key || item.name === key) {
         return { ...item, ...content };
       }
       return item;
@@ -512,7 +512,7 @@ const Board = ({ board, icons }) => {
       alert('Error editing board')
     }
   }
-
+  
   //fill items with react content, addWidget should be the last item
   const cards = (items || []).map((item) => {
     if (item.type == 'addWidget') {
