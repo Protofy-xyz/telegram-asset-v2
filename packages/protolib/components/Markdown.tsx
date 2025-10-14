@@ -50,6 +50,7 @@ export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true
   const text = data ? (typeof data === "string" ? data : String(data)) : "";
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const { resolvedTheme } = useThemeSetting();
   const id = uuid();
   const code = useRef(text);
@@ -92,12 +93,13 @@ export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true
     }
   }, [data, editing]);
 
-  return <YStack className="no-drag markdown-body" f={1} w="100%" p="$3" bc="var(--bg-color)" {...props}>
+  return <YStack className="no-drag markdown-body" f={1} w="100%" p="$3" bc="var(--bg-color)" onHoverIn={() => setIsHovered(true)} onHoverOut={() => setIsHovered(false)} {...props}>
     {/* Toolbar */}
     <XStack jc="flex-end" gap="$0.5"  >
       {
         (!disableCopy && !editing)
         && <InteractiveIcon
+          opacity={isHovered ? 1 : 0}
           IconColor={copied ? 'var(--green10)' : 'var(--color10)'}
           Icon={copied ? Check : ClipboardPaste}
           hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
