@@ -1,4 +1,4 @@
-import { Copy, Plus, Settings, X, Book, Activity, Bot, Presentation } from '@tamagui/lucide-icons'
+import { Copy, Plus, Settings, X, Book, Activity, Bot, Presentation, FileClock } from '@tamagui/lucide-icons'
 import { API, getPendingResult, set } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
@@ -35,8 +35,9 @@ import { useBoardVersion } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 import { useAtom as useJotaiAtom } from 'jotai'
-import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard} from '../utils/viewUtils'
+import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard } from '../utils/viewUtils'
 import { ActionCard } from '../components/ActionCard'
+import { VersionTimeline } from '../VersionTimeline'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -58,7 +59,7 @@ const saveBoard = async (boardId, data, setBoardVersion?, opts = { bumpVersion: 
       } else {
         data.version += 1
       }
-
+      data.savedAt = Date.now()
     }
     await API.post(`/api/core/v1/boards/${boardId}`, data);
     setBoardVersion && setBoardVersion(data.version)
@@ -186,6 +187,7 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
     })
   })
 
+  const showHistory = false
   const tabs = {
     "states": {
       "label": "States",
@@ -226,6 +228,13 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
       "icon": Activity,
       "content": <LogPanel AppState={AppState} logs={logs} setLogs={setLogs} />
     },
+    ...(showHistory && {
+      history: {
+        label: "History",
+        icon: FileClock,
+        content: <VersionTimeline boardId={board.name} />
+      }
+    }),
     "board-settings": {
       "label": "Settings",
       "icon": Settings,
@@ -270,7 +279,7 @@ const Board = ({ board, icons }) => {
   const [globalItems, setGlobalItems] = useJotaiAtom(itemsAtom)
   const [automationInfo, setAutomationInfo] = useJotaiAtom(automationInfoAtom);
   const [uicodeInfo, setUICodeInfo] = useJotaiAtom(uiCodeInfoAtom);
-  if(!initialized.current){
+  if (!initialized.current) {
     setItems(board.cards && board.cards.length ? board.cards : [])
     setAutomationInfo(null)
     setUICodeInfo(null)
@@ -327,7 +336,7 @@ const Board = ({ board, icons }) => {
   };
 
   useEffect(() => {
-    if(globalItems && globalItems.length){
+    if (globalItems && globalItems.length) {
       setItems(globalItems)
     }
   }, [globalItems])
