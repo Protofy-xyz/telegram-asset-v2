@@ -1,6 +1,9 @@
-export const generateStateCode = (properties) => {
+export const generateStateCode = (properties, target?: "boards" | "state") => {
     try {
-        return 'board' + properties
+        const root = target === "boards"
+            ? `states?.boards`
+            : 'board'
+        return root + properties
             .filter(v => v)
             .map(k => `?.[${JSON.stringify(k)}]`)
             .join('')

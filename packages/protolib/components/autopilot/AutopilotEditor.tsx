@@ -139,7 +139,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
     return (
         <PanelGroup direction="horizontal">
-            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} />
+            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} showActionsTabs showStatesTabs />
 
             <CustomPanelResizeHandle direction="vertical" />
 

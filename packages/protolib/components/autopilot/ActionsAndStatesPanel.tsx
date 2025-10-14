@@ -1,9 +1,9 @@
 import { Panel, PanelGroup } from "react-resizable-panels";
-import { YStack, ScrollView, Text, Input, XStack, Button } from "@my/ui";
+import { YStack, ScrollView, Text, Input, XStack, Button, Label, Accordion, Square } from "@my/ui";
 import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
 import { JSONView } from "../JSONView";
 import { useCallback, useMemo, useState } from "react";
-import { AlignLeft, Braces, Copy, Globe, LayoutDashboard, Search, Settings } from "@tamagui/lucide-icons";
+import { AlignLeft, Braces, ChevronDown, Copy, Globe, LayoutDashboard, Search } from "@tamagui/lucide-icons";
 import { TabBar } from "../../components/TabBar";
 import { generateActionCode, generateStateCode } from "@extensions/boards/utils/ActionsAndStates"
 
@@ -31,10 +31,40 @@ function flattenObject(obj, prefix = "", maxDepth = undefined, currentDepth = 1)
     return result;
 }
 
-const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hideValue = false, onCopy = (text) => text }) => {
+const BoardsAccordion = ({ boards, children, selectedBoard, onSelectBoard }) => {
+
+    const categoryList = useMemo(() => Object.keys(boards ?? {}), [boards]);
+
+
+    return <YStack gap="$2"> {
+        categoryList.map((category => {
+            return <XStack key={category} f={1}>
+                <Accordion value={selectedBoard} onValueChange={onSelectBoard} collapsible onPress={(e) => e.stopPropagation()} type="single" flex={1}>
+                    <Accordion.Item value={category} boc="$gray6">
+                        <Accordion.Trigger bc="$gray2" unstyled p={"$3"} flexDirection="row" ai="center" br="$4">
+                            {({ open }) => (
+                                <XStack flex={1} flexDirection="row" ai="center" jc="space-between">
+                                    <Text fos="$4" ml={"$2"} fow={100}>{category}</Text>
+                                    <Square o={0.8} animation="quick" rotate={open ? '180deg' : '0deg'} mr={"$1.5"}>
+                                        <ChevronDown size="$1" />
+                                    </Square>
+                                </XStack>
+                            )}
+                        </Accordion.Trigger>
+                        <Accordion.Content bc="transparent" p={0}>
+                            {children}
+                        </Accordion.Content>
+                    </Accordion.Item>
+                </Accordion>
+            </XStack>
+        }))
+    }
+    </YStack>
+}
+
+const ActionsList = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hideValue = false, onCopy = (text) => text }) => {
     const [showCopied, setShowCopied] = useState<number | null>(null)
 
-    // Evita recalcular si `data` no cambia
     const list = useMemo(() => {
         if (!data || typeof data !== 'object') return [];
         return flattenObject(data, "", maxDepth);
@@ -49,33 +79,29 @@ const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hi
 
 
     return (
-        <>
+        <YStack width={"100%"} gap="$2" p="$3">
             {list.map((line, index) => {
                 const isCopied = showCopied === index
                 const keyLabel = line[0]
                 const value = line[copyIndex]
 
                 return (
-                    <XStack
+                    <Button
                         key={keyLabel + index}
-                        cursor="pointer"
-                        p="$2"
-                        px="$4"
-                        bg="transparent"
-                        gap="$2"
-                        br="$4"
-                        hoverStyle={{ backgroundColor: "$color5" }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--gray5)'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        bc={isCopied ? "transparent" : "$gray6"}
+                        alignSelf="flex-start"
+                        width="auto"
+                        size="$2"
+                        iconAfter={<Copy color={isCopied ? "transparent" : "$color8"} />}
+                        hoverStyle={{ backgroundColor: isCopied ? "transparent" : "$color5" }}
                         onPress={() => handleCopy(value, index)}
                     >
-                        {isCopied && (
-                            <Text fos="$4" color="$gray10" pos="absolute" left="$4" >
+                        {isCopied
+                            && <Text numberOfLines={1} overflow="visible" fos="$4" color="$color">
                                 copied to clipboard!
                             </Text>
-                        )}
-
-                        <XStack opacity={isCopied ? 0 : 1} mr="$5">
+                        }
+                        <XStack opacity={isCopied ? 0 : 1}>
                             <Text fos="$4">
                                 {keyLabel + (hideValue ? '' : ' : ')}
                             </Text>
@@ -85,14 +111,54 @@ const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hi
                                 </Text>
                             )}
                         </XStack>
-
-                        <YStack flex={1} hoverStyle={{ opacity: 1 }} opacity={0}>
-                            <Copy display="flex" color="$blue8" pos="absolute" r="$1" top={2} size={14} />
-                        </YStack>
-                    </XStack>
+                    </Button>
                 )
             })}
-        </>
+        </YStack>
+    )
+}
+
+const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hideValue = false, copyMode = "rules", format = "actions", boardName = "" }) => {
+    const [selectedBoard, setSelectedCategory] = useState(boardName)
+
+    const copy = (text) => {
+        const val = format === "boards" ? data?.[selectedBoard]?.[text] : data?.[text];
+        if (!val || !val.url) return '';
+        const targetBoard = getBoardIdFromActionUrl(val.url);
+        let copyVal = val.url;
+
+        if (targetBoard && targetBoard === boardName) {
+            copyVal = val.name
+        }
+
+        if (copyMode === "rules") {
+            return generateActionCode(copyVal)
+        }
+
+        if (copyMode === "code" || copyMode === "flows") {
+            return generateActionCode(copyVal, val.params ?? {})
+        }
+
+        return text
+    }
+
+    return (
+        <YStack width={"100%"} >
+            {
+                format === "boards"
+                    ? <BoardsAccordion boards={data} selectedBoard={selectedBoard} onSelectBoard={setSelectedCategory} >
+                        <ActionsList
+                            maxDepth={maxDepth}
+                            copyIndex={copyIndex}
+                            displayIndex={displayIndex}
+                            data={data?.[selectedBoard] ?? {}}
+                            hideValue={hideValue}
+                            onCopy={copy}
+                        />
+                    </BoardsAccordion>
+                    : <ActionsList maxDepth={maxDepth} copyIndex={copyIndex} displayIndex={displayIndex} data={data} hideValue={hideValue} onCopy={copy} />
+            }
+        </YStack>
     )
 }
 
@@ -134,18 +200,12 @@ function filterObjectBySearch(data, search) {
     return Object.keys(result).length > 0 ? result : undefined;
 }
 
-export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode, colors = {} }) => {
-
+export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode, colors = {}, showActionsTabs = false, showStatesTabs = false }) => {
     const [inputMode, setInputMode] = useState<"json" | "formatted">("formatted")
     const [search, setSearch] = useState('')
+    const [selectedStatesTab, setSelectedStatesTab] = useState(board.name)
     const [stateSearch, setStateSearch] = useState('')
-    const [selectedActionTab, setSelectedActionTab] = useState('board')
-    const [selectedStateTab, setSelectedStateTab] = useState('board')
-
-    // Show/hide action and state tabs
-    const showActionsTabs = false
-    const showStatesTabs = false
-
+    const [selectedActionsTab, setSelectedActionsTab] = useState(board.name)
     console.log("ActionsAndStatesPanel:", { actions, states });
 
     const cleanedActions = useMemo(() => {
@@ -163,106 +223,85 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
         return cleaned;
     }, [actions]);
 
-    const filteredData = useMemo(() => {
-        const filtered = filterObjectBySearch(cleanedActions?.[board.name] ?? {}, search)
+    const filteredActionData = useMemo(() => {
+        const visibleActions = selectedActionsTab === "otherBoards"
+            ? Object.entries(cleanedActions ?? {})
+                .filter(([boardId]) => boardId !== board?.name)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .reduce((acc, [id, content]) => ({ ...acc, [id]: content }), {})
+            : cleanedActions?.[selectedActionsTab]
+        const filtered = filterObjectBySearch(visibleActions ?? {}, search)
         return filtered
-    }, [cleanedActions, search]);
+    }, [cleanedActions, search, selectedActionsTab]);
 
     const filteredStateData = useMemo(() => {
-        const filtered = filterObjectBySearch(states?.[board.name] ?? {}, stateSearch)
+        const visibleStates = selectedStatesTab === "otherBoards"
+            ? Object.entries(states ?? {})
+                .filter(([boardId]) => boardId !== board?.name)
+                .reduce((acc, [id, content]) => ({ ...acc, [id]: content }), {})
+            : states?.[selectedStatesTab]
+        const filtered = filterObjectBySearch(visibleStates ?? {}, stateSearch)
         return filtered
-    }, [states, stateSearch]);
+    }, [states, stateSearch, selectedStatesTab]);
 
-    console.log("filteredStateData:", filteredStateData);
-    const actionData = filteredData
-
-    const copy = (text, mode) => {
-        const val = actions[board.name][text];
-        if (!val || !val.url) return '';
-        const targetBoard = getBoardIdFromActionUrl(val.url);
-        let copyVal = val.url;
-        if (targetBoard && targetBoard === board?.name) {
-            copyVal = val.name
-        }
-
-        if (mode === "rules") {
-            return generateActionCode(copyVal)
-        }
-
-        if (mode === "code" || mode === "flows") {
-            return generateActionCode(copyVal, val.params ?? {})
-        }
-
-        return text
-    }
 
     const statesPanel = useMemo(() => {
-        return <YStack gap="$2" ai="flex-start">
-            {filteredStateData && <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
-                const path = generateStateCode(copy.namespace)
-                navigator.clipboard.writeText(path)
-                return false
-            }} />
+        return <YStack gap="$2" ai="flex-start" f={1} >
+            {
+                filteredStateData
+                    ? <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
+                        const path = generateStateCode(copy.namespace, selectedStatesTab !== board?.name ? "boards" : "state")
+                        navigator.clipboard.writeText(path)
+                        return false
+                    }} />
+                    : <YStack f={1} w="100%" ai="center" mt="$10">
+                        <Text fos="$4" col="$gray8">No states found</Text>
+                    </YStack>
             }
-            {!filteredStateData && <Text>No states found</Text>}
         </YStack>
     }, [filteredStateData, board?.name, copyMode]);
 
     const actionsPanel = useMemo(() => {
-        return <YStack gap="$2" ai="flex-start">
-            {inputMode === "formatted" && <FormattedView hideValue={true} onCopy={(text) => copy(text, copyMode)} data={actionData} />}
-            {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'transparent' }} src={filteredData} />}
+        return <YStack gap="$2" ai="flex-start" f={1}>
+            {inputMode === "formatted" && <FormattedView hideValue={true} data={filteredActionData} copyMode={copyMode} boardName={board?.name} />}
+            {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'transparent' }} src={filteredActionData} />}
         </YStack>
-    }, [filteredData, actionData, inputMode, board?.name, copyMode]);
+    }, [filteredActionData, filteredActionData, inputMode, board?.name, copyMode]);
+
+    const otherBoardsPanel = useMemo(() => {
+        return <YStack gap="$2" ai="flex-start" f={1}>
+            {inputMode === "formatted" && <FormattedView hideValue={true} data={filteredActionData} format={"boards"} copyMode={copyMode} boardName={board?.name} />}
+            {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'transparent' }} src={filteredActionData} />}
+        </YStack>
+    }, [filteredActionData, filteredActionData, inputMode, board?.name, copyMode]);
 
 
-    const actionsTab = [
-        { id: 'board', label: 'Board', icon: <LayoutDashboard size={"$1"} />, content: actionsPanel },
-        { id: 'global', label: 'Global', icon: <Globe size={"$1"} />, content: <h1>Global actions panel (todo)</h1> },
-        { id: 'system', label: 'System', icon: <Settings size={"$1"} />, content: <h1>System actions panel (todo)</h1> }
+    const actionsTabs = [
+        { id: board.name, label: board.name, icon: <LayoutDashboard size={"$1"} />, content: actionsPanel },
+        { id: "otherBoards", label: "Other boards", icon: <Globe size={"$1"} />, content: otherBoardsPanel },
     ]
 
-    const statesTab = [
-        { id: 'board', label: 'Board', icon: <LayoutDashboard size={"$1"} />, content: statesPanel },
-        { id: 'global', label: 'Global', icon: <Globe size={"$1"} />, content: <h1>Global states panel (todo)</h1> },
-        { id: 'system', label: 'System', icon: <Settings size={"$1"} />, content: <h1>System states panel (todo)</h1> }
+    const statesTabs = [
+        { id: board.name, label: board.name, content: statesPanel, icon: <LayoutDashboard size={"$1"} /> },
+        { id: "otherBoards", label: "Other boards", content: statesPanel, icon: <Globe size={"$1"} /> },
     ]
 
     const selectedAction = useMemo(
-        () => actionsTab.find(t => t.id === selectedActionTab),
-        [actionsTab, selectedActionTab]
+        () => actionsTabs.find(t => t.id === selectedActionsTab),
+        [actionsTabs, selectedActionsTab]
     );
 
     const selectedState = useMemo(
-        () => statesTab.find(t => t.id === selectedStateTab),
-        [statesTab, selectedStateTab]
+        () => statesTabs.find(t => t.id === selectedStatesTab),
+        [statesTabs, selectedStatesTab]
     );
-
 
     return <Panel defaultSize={30}>
         <PanelGroup direction="vertical">
             {panels && panels?.includes('actions') && <Panel defaultSize={50} minSize={20} maxSize={80}>
                 <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor={colors["bgColor"] ?? "$gray3"} overflow="hidden" >
-                    <XStack pb={8}>
-                        <Search pos="absolute" left="$3" top={14} size={16} />
-                        <Input
-                            bg={colors["inputBgColor"] ?? "$gray1"}
-                            color="$gray12"
-                            paddingLeft="$7"
-                            bw={0}
-                            h="47px"
-                            boc="$gray6"
-                            // br={100}
-                            w="100%"
-                            placeholder="search..."
-                            placeholderTextColor="$gray9"
-                            outlineColor={"$gray8"}
-                            value={search}
-                            onChangeText={setSearch}
-                        />
-                    </XStack>
                     <XStack jc="space-between" width="100%">
-                        <p>Actions</p>
+                        <Label pl="$3" lineHeight={"$4"} >Actions</Label>
                         <XStack gap="$2">
                             <Button
                                 icon={AlignLeft}
@@ -280,28 +319,51 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
                             />
                         </XStack>
                     </XStack>
-                    <ScrollView flex={1} width="100%" height="100%" overflow="auto">
-                        {showActionsTabs ? (
-                            <>
+                    <XStack gap="$2">
+                        <Search pos="absolute" left="$3" top={14} size={16} />
+                        <Input
+                            bg={colors["inputBgColor"] ?? "$gray1"}
+                            color="$gray12"
+                            paddingLeft="$7"
+                            bw={0}
+                            h="47px"
+                            boc="$gray6"
+                            w="100%"
+                            placeholder="search..."
+                            placeholderTextColor="$gray9"
+                            outlineColor={"$gray8"}
+                            value={search}
+                            onChangeText={setSearch}
+                        />
+                    </XStack>
+                    {
+                        showActionsTabs
+                            ? <>
                                 <TabBar
-                                    tabs={actionsTab}
-                                    selectedId={selectedActionTab}
-                                    onSelect={setSelectedActionTab}
+                                    tabs={actionsTabs}
+                                    selectedId={selectedActionsTab}
+                                    onSelect={setSelectedActionsTab}
                                 />
+                                <ScrollView flex={1} width="100%" height="100%" overflow="auto">
+                                    <XStack mt="$2">
+                                        {selectedAction?.content ?? null}
+                                    </XStack>
+                                </ScrollView>
+                            </>
+                            : <ScrollView flex={1} width="100%" height="100%" overflow="auto">
                                 <XStack mt="$2">
                                     {selectedAction?.content ?? null}
                                 </XStack>
-                            </>
-                        ) : (
-                            actionsPanel
-                        )}
-                    </ScrollView>
+                            </ScrollView>
+                    }
+
                 </YStack>
             </Panel>}
             <CustomPanelResizeHandle direction="horizontal" />
             <Panel defaultSize={50} minSize={20} maxSize={80}>
                 <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor={colors["bgColor"] ?? "$gray3"} overflow="hidden" >
-                    <XStack pb={8}>
+                    <Label pl="$3" lineHeight={"$4"} >States</Label>
+                    <XStack>
                         <Search pos="absolute" left="$3" top={14} size={16} />
                         <Input
                             bg={colors["inputBgColor"] ?? "$gray1"}
@@ -310,7 +372,6 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
                             bw={0}
                             h="47px"
                             boc="$gray6"
-                            // br={100}
                             w="100%"
                             placeholder="search..."
                             placeholderTextColor="$gray9"
@@ -319,26 +380,26 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
                             onChangeText={setStateSearch}
                         />
                     </XStack>
-                    <XStack jc="space-between" width="100%">
-                        <p>State</p>
-                    </XStack>
-                    <ScrollView flex={1} width="100%" height="100%" overflow="auto" >
-                        {showStatesTabs ? (
-                            <>
+                    {
+                        showStatesTabs
+                            ? <>
                                 <TabBar
-                                    tabs={statesTab}
-                                    selectedId={selectedStateTab}
-                                    onSelect={setSelectedStateTab}
+                                    tabs={statesTabs}
+                                    selectedId={selectedStatesTab}
+                                    onSelect={setSelectedStatesTab}
                                 />
-                                <XStack mt="$2">
+                                <ScrollView flex={1} width="100%" height="100%" overflow="auto">
+                                    <XStack mt="$2" f={1}>
+                                        {selectedState?.content ?? null}
+                                    </XStack>
+                                </ScrollView>
+                            </>
+                            : <ScrollView flex={1} width="100%" height="100%" overflow="auto">
+                                <XStack mt="$2" f={1}>
                                     {selectedState?.content ?? null}
                                 </XStack>
-                            </>
-                        ) : (
-                            statesPanel
-                        )}
-                    </ScrollView>
-
+                            </ScrollView>
+                    }
                 </YStack>
             </Panel>
         </PanelGroup>
