@@ -31,13 +31,39 @@ function flattenObject(obj, prefix = "", maxDepth = undefined, currentDepth = 1)
     return result;
 }
 
+const StatesBoardsView = ({ data, boardName }) => {
+    const [selectedBoard, setSelectedBoard] = useState(boardName)
+
+    return <YStack gap="$2" ai="flex-start" f={1} width="100%">
+        {Object.keys(data ?? {}).length > 0
+            ? <BoardsAccordion boards={data} selectedBoard={selectedBoard} onSelectBoard={setSelectedBoard}>
+                <JSONView
+                    collapsed={1}
+                    style={{ backgroundColor: 'transparent' }}
+                    src={data?.[selectedBoard]}
+                    collapseStringsAfterLength={100}
+                    enableClipboard={(copy) => {
+                        const path = generateStateCode([selectedBoard, ...copy.namespace], "boards")
+                        navigator.clipboard.writeText(path)
+                        return false
+                    }}
+                />
+
+            </BoardsAccordion>
+            : <YStack f={1} w="100%" ai="center" mt="$10">
+                <Text fos="$4" col="$gray8">No states found</Text>
+            </YStack>
+        }
+    </YStack>
+}
+
 const BoardsAccordion = ({ boards, children, selectedBoard, onSelectBoard }) => {
 
-    const categoryList = useMemo(() => Object.keys(boards ?? {}), [boards]);
+    const boardsList = useMemo(() => Object.keys(boards ?? {}), [boards]);
 
 
-    return <YStack gap="$2"> {
-        categoryList.map((category => {
+    return <YStack gap="$2" width={"100%"}> {
+        boardsList.map((category => {
             return <XStack key={category} f={1}>
                 <Accordion value={selectedBoard} onValueChange={onSelectBoard} collapsible onPress={(e) => e.stopPropagation()} type="single" flex={1}>
                     <Accordion.Item value={category} boc="$gray6">
@@ -250,7 +276,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
             {
                 filteredStateData
                     ? <JSONView collapsed={1} style={{ backgroundColor: 'transparent' }} src={filteredStateData} collapseStringsAfterLength={100} enableClipboard={(copy) => {
-                        const path = generateStateCode(copy.namespace, selectedStatesTab !== board?.name ? "boards" : "state")
+                        const path = generateStateCode(copy.namespace, "state")
                         navigator.clipboard.writeText(path)
                         return false
                     }} />
@@ -275,6 +301,10 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
         </YStack>
     }, [filteredActionData, filteredActionData, inputMode, board?.name, copyMode]);
 
+    const statesOtherBoardsPanel = useMemo(() => {
+        return <StatesBoardsView data={filteredStateData ?? {}} boardName={board?.name} />
+    }, [filteredStateData])
+
 
     const actionsTabs = [
         { id: board.name, label: board.name, icon: <LayoutDashboard size={"$1"} />, content: actionsPanel },
@@ -283,7 +313,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
 
     const statesTabs = [
         { id: board.name, label: board.name, content: statesPanel, icon: <LayoutDashboard size={"$1"} /> },
-        { id: "otherBoards", label: "Other boards", content: statesPanel, icon: <Globe size={"$1"} /> },
+        { id: "otherBoards", label: "Other boards", content: statesOtherBoardsPanel, icon: <Globe size={"$1"} /> },
     ]
 
     const selectedAction = useMemo(
