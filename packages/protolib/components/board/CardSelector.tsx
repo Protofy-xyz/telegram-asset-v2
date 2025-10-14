@@ -402,7 +402,7 @@ const extraCards = [
       },
       rulesCode: "return params.input;\n",
     },
-    name: 'Observer',
+    name: 'Value',
     id: 'value'
   }
 ]
