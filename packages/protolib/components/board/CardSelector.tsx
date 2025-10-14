@@ -315,6 +315,8 @@ const extraCards = [
     defaults: {
       type: 'action',
       name: 'action',
+      width: 2,
+      height: 7,
       displayResponse: true,
       icon: 'rocket',
       displayIcon: false,
@@ -328,6 +330,7 @@ const extraCards = [
           type: "any"
         }
       },
+      rulesCode: "return params.input",
       description: `Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.
 
   #### Key Features
@@ -399,7 +402,7 @@ const extraCards = [
       },
       rulesCode: "return params.input;\n",
     },
-    name: 'Observer',
+    name: 'Value',
     id: 'value'
   }
 ]
