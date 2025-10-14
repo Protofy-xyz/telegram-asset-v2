@@ -33,6 +33,7 @@ import { MqttWrapper } from 'protolib/components/MqttWrapper';
 import { BasicPlaceHolder } from 'protolib/visualui/visualuiWrapper';
 import { StorageView } from 'protolib/components/StorageView';
 import { useEventEffect } from '@extensions/events/hooks';
+import { useKeyState } from 'protolib/components/KeySetter';
 
 const layoutMetadata = {
     visualui: {
@@ -122,6 +123,7 @@ export const transferExtensionComponents = () => {
     TransferComponent(ProtoModel, 'ProtoModel');
     TransferComponent(useEventEffect, 'useEventEffect');
     TransferComponent(MqttWrapper, 'MqttWrapper');
+    TransferComponent(useKeyState, 'useKeyState');
 }
 
 
