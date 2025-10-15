@@ -22,8 +22,9 @@ export default async function loadDBProvider(customProvider?: string): Promise<b
         const dbProviderConfigContent = await fs.promises.readFile(dbProviderConfigPath, 'utf8');
         providerName = JSON.parse(dbProviderConfigContent)
     } catch {
-        providerName = customProvider ?? 'sqlite'; // Default db provider
+        providerName = 'sqlite'; // Default db provider if no config
     }
+    providerName = customProvider ?? providerName;
 
     const fullPath = findModule(path.join(extensionsPath, providerName));
     if (!fullPath) {
