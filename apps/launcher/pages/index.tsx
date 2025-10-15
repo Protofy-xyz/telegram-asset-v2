@@ -145,7 +145,7 @@ function CardElement({ element, onDeleted }: any) {
         <Paragraph f={1} style={{ color: 'var(--color)', fontSize: '14px', fontWeight: '600' }} numberOfLines={1} ellipsizeMode="tail">
           {element.name}
         </Paragraph>
-        <CardMenu disabled={isDeleting || !["downloaded", "pending"].includes(element.status)} options={[
+        <CardMenu disabled={isDeleting || !["downloaded", "pending", "error"].includes(element.status)} options={[
           { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
           ...(element.status === "downloaded" ? [{ icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder }] : [])
         ]} />
@@ -180,10 +180,14 @@ function CardElement({ element, onDeleted }: any) {
             <Spinner m="$2" color="var(--color8)" />
           </Tinted>
         }
-        {(element.status === 'error' || deleteError || openError)
+        {((element.status === 'error' || deleteError || openError) && !isDeleting)
           && <XStack ai="center" space="$2">
             <AlertTriangle col="$red8" size={16} />
             <Paragraph style={{ color: 'var(--color)' }}>{openError ?? deleteError ?? "Download failed"}</Paragraph>
+            <InteractiveIcon size={20} IconColor="var(--color8)" Icon={Download} onPress={async () => {
+              const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
+              const result = await fetch(url)
+            }} />
           </XStack>
         }
       </XStack>

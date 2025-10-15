@@ -27,7 +27,13 @@ export const setVar = (key, value) => {
     memory[key] = value
 }
 
-export const getVar = (key) => {
+export const getVar = (key, deleteOnRead=false) => {
+    if(deleteOnRead) {
+        const val = memory[key]
+        delete memory[key]
+        return val
+    }
+    
     return memory[key]
 }
 
