@@ -89,6 +89,14 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             });
         }
 
+        if (card.enableCustomRunPathInputParam && card.customRunPathInputParam && card.configParams[card.customRunPathInputParam]?.defaultValue) {
+            const customRunPath = card.configParams[card.customRunPathInputParam]?.defaultValue;
+            proxyDB.set('boards', boardId, card.name, {
+                alias: customRunPath,
+                target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name + '/run/raw'
+            });
+        }
+
         if (card.customCardViewPath) {
             proxyDB.set('boards', boardId, card.name + '_view', {
                 alias: card.customCardViewPath,

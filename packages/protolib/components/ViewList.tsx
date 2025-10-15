@@ -8,7 +8,7 @@ import { Tinted } from './Tinted'
 import { JSONView } from './JSONView'
 
 
-export function ViewList({ items, onDeleteItem = (item, index) => { }, emptyMessageProps={}, emptyMode='info', emptyMessage="Empty queue", disableManualPush = false, onClear = (items) => { }, onPush = (item) => { } }) {
+export function ViewList({ enableManualPop = false, emptyDescription = undefined, items, current = undefined, onDeleteItem = (item, index) => { }, emptyMessageProps = {}, emptyMode = 'info', emptyMessage = "Empty queue", disableManualPush = false, onPop = (items) => { }, onClear = (items) => { }, onPush = (item) => { } }) {
   const [itemsList, setItemsList] = useState(items ?? [])
   const [addText, setAddText] = useState('')
   const renderItem = ({ item, index }) => (
@@ -21,9 +21,18 @@ export function ViewList({ items, onDeleteItem = (item, index) => { }, emptyMess
 
   return (
     <YStack className='no-drag' height="100%" f={1}>
-      {itemsList.length ? <XStack>
+      {current && <YStack>
+        <Paragraph mt={"$2"} ml={"$4"} color="$color">Current</Paragraph>
+        <XStack>
+          <ScrollView p="$2" mt="20px" mb={"10px"} mx="$3" width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
+            <JSONView src={current} enableClipboard={false} />
+          </ScrollView>
+        </XStack>
+      </YStack>}
+      {itemsList.length || current ? <XStack>
         <XStack f={1} ml={"$3"}>
-          <InteractiveIcon onPress={() => onClear(items)} Icon="trash"><SizableText mr="$2">Clear all</SizableText></InteractiveIcon>
+          {enableManualPop && <InteractiveIcon IconPosition='left' onPress={() => onPop(items)} Icon="arrow-up-narrow-wide"><SizableText ml="$2">Next</SizableText></InteractiveIcon>}
+          <InteractiveIcon IconPosition='left' onPress={() => onClear(items)} Icon="trash"><SizableText ml="$2">Reset</SizableText></InteractiveIcon>
         </XStack>
         <XStack mr={"$4"} ai="center" gap={"$2"}>
           <SizableText fontWeight={"500"} o={0.8}>Total: {itemsList.length}</SizableText>
@@ -42,6 +51,7 @@ export function ViewList({ items, onDeleteItem = (item, index) => { }, emptyMess
         /></ScrollView> : <YStack jc="center" ai="center" height="100%" f={1} o={1}>
         {emptyMode === 'info' ? <Info color="$color7" size={50} /> : <Spinner color="$color7" size="large" />}
         <Paragraph mt={"$4"} fontSize={"$8"} fontWeight="600" color="$color" {...emptyMessageProps}>{emptyMessage}</Paragraph>
+        {emptyDescription && emptyDescription}
       </YStack>}
 
       {disableManualPush ? <></> : <XStack m={"10px"}>
@@ -88,7 +98,7 @@ function ViewListItem({ item, index, onDeleteItem }) {
   let content = <SizableText fontWeight={"500"} color="$color11">{item}</SizableText>
   let stringMode = true
   if (typeof item !== 'string') {
-    content = <JSONView src={item} />
+    content = <JSONView src={item} enableClipboard={false} />
     stringMode = false
   }
 
