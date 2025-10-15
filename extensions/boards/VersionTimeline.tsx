@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react"
 import { VerticalTimeline, VerticalTimelineElement } from "react-vertical-timeline-component"
 import "react-vertical-timeline-component/style.min.css"
-import { useTheme, Paragraph, ScrollView } from "@my/ui"
-import { ArchiveRestore, Calendar, FileClock } from "@tamagui/lucide-icons"
+import { useTheme, Paragraph, ScrollView, XStack } from "@my/ui"
+import { ArchiveRestore, CheckCircle, Clock } from "@tamagui/lucide-icons"
 import { Tinted } from 'protolib/components/Tinted'
 import { InteractiveIcon } from "protolib/components/InteractiveIcon"
 import { useBoardVersions } from "./utils/versions"
@@ -59,7 +59,7 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
             <VerticalTimelineElement
               key={v.version}
               date={fmt(v.savedAt)}
-              icon={<FileClock size={16} />}
+              icon={current === v.version ? <CheckCircle /> : <Clock />}
               iconStyle={{
                 background: current === v.version ? "var(--color6)" : "var(--gray6)",
                 color: "var(--color8)",
@@ -74,22 +74,30 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
               }}
               contentArrowStyle={{ borderRightColor: "var(--bgContent)" }}
             >
- <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-    <h3 style={{ margin: 0, fontWeight: 700 }}>Version {v.version}</h3>
-    {current !== v.version ? (
-      <InteractiveIcon
-        Icon={ArchiveRestore}
-        size={24}
-        onPress={async () => {
-          try {
-            await goToVersion(v.version);
-            await refresh();
-            document.location.reload();
-          } catch (e) { console.error(e); }
-        }}
-      />
-    ) : null}
-  </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <h3 style={{ margin: 0, fontWeight: 700 }}>Version {v.version}</h3>
+                {current !== v.version ? (
+                  <InteractiveIcon
+                    Icon={ArchiveRestore}
+                    size={24}
+                    onPress={async () => {
+                      try {
+                        await goToVersion(v.version);
+                        await refresh();
+                        document.location.reload();
+                      } catch (e) { console.error(e); }
+                    }}
+                  />
+                ) : null}
+              </div>
+              <Paragraph size="$3" mt={8} mb={0} color={current === v.version ? "var(--color8)" : "var(--color)"}>
+                <XStack>
+                  Total cards: {v.cards.length}
+                </XStack>
+                <XStack>
+                  Changes: {v.change}
+                </XStack>
+              </Paragraph>
 
             </VerticalTimelineElement>
           ))}
