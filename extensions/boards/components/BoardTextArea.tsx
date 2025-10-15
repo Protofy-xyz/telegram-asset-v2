@@ -490,11 +490,10 @@ export const BoardTextArea = ({
         <textarea
           ref={ref}
           readOnly={readOnly}
-          value={dumpedValue}
+          value={dump(value, symbols)}
           placeholder={placeholder}
           onChange={(e) => {
             const index = e.currentTarget.selectionStart;
-
             setInputInsertIndex(index);
             // shortcut to trigger dropdown
             let end = e.currentTarget.value[index - 1];
@@ -609,11 +608,13 @@ export const BoardTextArea = ({
                 case 'Tab':
                 case 'Enter':
                   e.preventDefault()
-                  selectDropdownOption(getDropdownSelection(), dumpedValue)
+                  let selection = getDropdownSelection()
+                  selectDropdownOption(selection, dumpedValue)
                   setShowDropdown(null)
                   setTimeout(() => {
+                    ref.current.setSelectionRange(inputInsertIndex + selection.length + 3, inputInsertIndex + selection.length + 3)
                     ref.current.focus()
-                  }, 50)
+                  }, 1)
                   break;
                 default:
                   break;
