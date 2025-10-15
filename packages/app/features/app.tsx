@@ -17,6 +17,7 @@ import 'protolib/styles/dashboard.css';
 import 'protolib/styles/dashboardcard.css';
 import 'protolib/styles/markdown.css';
 import 'protolib/styles/map.css';
+import 'react-vertical-timeline-component/style.min.css';
 import 'app/styles/app.css';
 import "@blueprintjs/table/lib/css/table.css";
 import 'react-dropzone-uploader/dist/styles.css'
