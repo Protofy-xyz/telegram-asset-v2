@@ -10566,7 +10566,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-vertical-timeline-component@npm:^3":
+"@types/react-vertical-timeline-component@npm:3":
   version: 3.3.6
   resolution: "@types/react-vertical-timeline-component@npm:3.3.6"
   dependencies:
@@ -24596,7 +24596,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.0"
     "@types/react-grid-layout": "npm:^1"
     "@types/react-syntax-highlighter": "npm:15.5.11"
-    "@types/react-vertical-timeline-component": "npm:^3"
+    "@types/react-vertical-timeline-component": "npm:3"
     archiver: "npm:7.0.1"
     autoprefixer: "npm:^10.4.16"
     chonky: "npm:latest"
