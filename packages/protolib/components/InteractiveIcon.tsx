@@ -1,6 +1,6 @@
 import { XStack, StackProps } from '@my/ui';
 
-export const InteractiveIcon = ({ Icon, IconColor = 'var(--color10)', DisabledIconColor = 'var(--gray9)', disabled = false, size = 18, ...props }: { IconColor?: string, DisabledIconColor?: string, Icon: any, size?: number } & StackProps) => {
+export const InteractiveIcon = ({ IconPosition = 'right', Icon, IconColor = 'var(--color10)', DisabledIconColor = 'var(--gray9)', disabled = false, size = 18, ...props }: { IconPosition?: 'right' | 'left', IconColor?: string, DisabledIconColor?: string, Icon: any, size?: number } & StackProps) => {
   let mode = "react"
   if (typeof Icon == 'string') {
     mode = "string"
@@ -8,18 +8,18 @@ export const InteractiveIcon = ({ Icon, IconColor = 'var(--color10)', DisabledIc
 
   return (
     <XStack
-    cursor={disabled ? 'default' : 'pointer'}
-    ai="center"
-    jc="center"
-    br="$5"
-    p="$2"
-    o={0.8}
-    als="flex-start"
-    hoverStyle={!disabled ? { o: 1, bc: '$color5' } : {}}
-    pressStyle={!disabled ? { o: 0.7 } : {}}
-    {...props}
+      cursor={disabled ? 'default' : 'pointer'}
+      ai="center"
+      jc="center"
+      br="$5"
+      p="$2"
+      o={0.8}
+      als="flex-start"
+      hoverStyle={!disabled ? { o: 1, bc: '$color5' } : {}}
+      pressStyle={!disabled ? { o: 0.7 } : {}}
+      {...props}
     >
-      {props.children}
+      {IconPosition == 'right' && props.children}
 
       {mode === 'react' && (
         <Icon size={size} color={disabled ? DisabledIconColor : IconColor} strokeWidth={2} />
@@ -42,6 +42,8 @@ export const InteractiveIcon = ({ Icon, IconColor = 'var(--color10)', DisabledIc
           }}
         />
       )}
+
+      {IconPosition == 'left' && props.children}
     </XStack>
   );
 };
