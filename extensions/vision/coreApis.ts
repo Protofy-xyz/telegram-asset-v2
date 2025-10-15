@@ -167,7 +167,12 @@ export default async (app: Application, context: typeof APIContext) => {
             
                     `
             const url = params.url;
-            const response = parseFloat(await sendPromptWithImage(preprompt + params.prompt, url));
+            let response;
+            if(params.llmProvider === 'lmstudio') {
+                response = parseFloat(await sendPromptWithImageLmStudio(preprompt + params.prompt, url));
+            } else {
+                response = parseFloat(await sendPromptWithImage(preprompt + params.prompt, url));
+            }
             console.log('CONFIDENCE:', response);
             res.json(response);
         } catch (e) {
@@ -231,6 +236,7 @@ export default async (app: Application, context: typeof APIContext) => {
         params: {
             url: "image url",
             prompt: "what to detect in the image",
+            llmProvider: "llm provider to use (openai or lmstudio)",
         },
         emitEvent: true
     })
@@ -251,6 +257,7 @@ export default async (app: Application, context: typeof APIContext) => {
             params: {
                 url: "camera stream url",
                 prompt: "what to detect in the image",
+                llmProvider: "llm provider to use (openai or lmstudio)",
             },
             rulesCode: `return await execute_action("/api/core/v1/vision/detect", userParams)`,
             displayResponse: true
@@ -266,7 +273,13 @@ export default async (app: Application, context: typeof APIContext) => {
             const params = req.query;
             const preprompt = `    `
             const url = params.url;
-            const response = await sendPromptWithImage(preprompt + params.prompt, url);
+            let response;
+            if(params.llmProvider === 'lmstudio') {
+                response = await sendPromptWithImageLmStudio(preprompt + params.prompt, url);
+            } else {
+                response = await sendPromptWithImage(preprompt + params.prompt, url);
+            }
+            console.log('DESCRIPTION:', response, typeof response);
             res.json(response);
         } catch (e) {
             console.error(e);
@@ -285,7 +298,8 @@ export default async (app: Application, context: typeof APIContext) => {
         params: {
             url: "image url",
             prompt: "promt for the image model",
-            stateName: "state name to store the result"
+            stateName: "state name to store the result",
+            llmProvider: "llm provider to use (openai or lmstudio)",
         },
         emitEvent: true
     })
@@ -306,6 +320,7 @@ export default async (app: Application, context: typeof APIContext) => {
             params: {
                 url: "image url",
                 prompt: "prompt for the image model",
+                llmProvider: "llm provider to use (openai or lmstudio)",
             },
             rulesCode: `return await execute_action("/api/core/v1/vision/describe", userParams)`,
             html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  const readme = `\n  ### 🔑 How to get your OpenAI API key?\n  1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n  2. Log in and click **\"Create new secret key\"**.\n  3. Copy and save your key securely, it won't be shown again.\n  > ⚠️ **Keep it secret!** Your API key is private and usage-based.\n  `;\n  \n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={['OPENAI_API_KEY']} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
