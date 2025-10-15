@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { VerticalTimeline, VerticalTimelineElement } from "react-vertical-timeline-component"
 import "react-vertical-timeline-component/style.min.css"
-import { useTheme, Paragraph } from "tamagui"
+import { useTheme, Paragraph, ScrollView } from "@my/ui"
 import { ArchiveRestore, Calendar, FileClock } from "@tamagui/lucide-icons"
 import { Tinted } from 'protolib/components/Tinted'
 import { InteractiveIcon } from "protolib/components/InteractiveIcon"
@@ -49,42 +49,52 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
   }
 
   return (
-    <Tinted>
-      <VerticalTimeline
-        //layout="1-column-left" //'1-column-left' or '1-column-right' or '2-columns' (default: '2-columns')
-        lineColor={"var(--gray6)"}
-      >
-        {versions.map((v) => (
-          <VerticalTimelineElement
-            key={v.version}
-            date={fmt(v.savedAt)}
-            icon={<FileClock size={16} />}
-            iconStyle={{
-              background: current === v.version ? "var(--color6)" : "var(--gray6)",
-              color: "var(--color8)",
-              boxShadow: "none",
-            }}
-            contentStyle={{
-              background: "var(--bgContent)",
-              color: "var(--color)",
-              borderRadius: 12,
-              boxShadow: "0 4px 18px rgba(0,0,0,.15)",
-              padding: "14px 16px",
-            }}
-            contentArrowStyle={{ borderRightColor: "var(--bgContent)" }}
-          >
-            <h3 style={{ margin: 0, fontWeight: 700 }}>Versión {v.version}</h3>
-            <InteractiveIcon Icon={ArchiveRestore} size={24} onPress={async () => {
-              try {
-                await goToVersion(v.version);
-                await refresh();
-                document.location.reload();
-              } catch (e) { console.error(e); }
-            }} />
+    <ScrollView flex={1} width="100%" height="100%" overflow="auto">
+      <Tinted>
+        <VerticalTimeline
+          //layout="1-column-left" //'1-column-left' or '1-column-right' or '2-columns' (default: '2-columns')
+          lineColor={"var(--gray6)"}
+        >
+          {versions.map((v) => (
+            <VerticalTimelineElement
+              key={v.version}
+              date={fmt(v.savedAt)}
+              icon={<FileClock size={16} />}
+              iconStyle={{
+                background: current === v.version ? "var(--color6)" : "var(--gray6)",
+                color: "var(--color8)",
+                boxShadow: "none",
+              }}
+              contentStyle={{
+                background: "var(--bgContent)",
+                color: current === v.version ? "var(--color8)" : "var(--color)",
+                borderRadius: 12,
+                boxShadow: "0 4px 18px rgba(0,0,0,.15)",
+                padding: "14px 16px",
+              }}
+              contentArrowStyle={{ borderRightColor: "var(--bgContent)" }}
+            >
+ <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <h3 style={{ margin: 0, fontWeight: 700 }}>Version {v.version}</h3>
+    {current !== v.version ? (
+      <InteractiveIcon
+        Icon={ArchiveRestore}
+        size={24}
+        onPress={async () => {
+          try {
+            await goToVersion(v.version);
+            await refresh();
+            document.location.reload();
+          } catch (e) { console.error(e); }
+        }}
+      />
+    ) : null}
+  </div>
 
-          </VerticalTimelineElement>
-        ))}
-      </VerticalTimeline>
-    </Tinted>
+            </VerticalTimelineElement>
+          ))}
+        </VerticalTimeline>
+      </Tinted>
+    </ScrollView>
   )
 }

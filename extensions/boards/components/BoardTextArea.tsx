@@ -5,7 +5,7 @@ import { Trash, Plus, Mic, Binary, ALargeSmall, Braces, ListTree, ArrowDown, Che
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
 import { generateActionCode, generateStateCode } from '@extensions/boards/utils/ActionsAndStates';
-import { isElectron } from 'protobase';
+import { isElectron } from 'protolib/lib/isElectron';
 
 const minHeight = 50;
 const maxHeight = 200;
@@ -368,7 +368,7 @@ export const BoardTextArea = ({
             bottom: "120%",
           }}
           maxHeight={"200px"}
-          overflowBlock="scroll"
+          overflowY="scroll"
           p="10px"
           br="$4"
           bg="$gray4"
