@@ -108,7 +108,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
         res.status(500).send({ _err: "e_code", error: "Error executing action code", message: "Recursive action call detected" });
         return;
     } else {
-        stackTrace = [{ name: action.name, board: boardId }, ...stackTrace];
+        stackTrace = [{ name: action?.name, board: boardId }, ...stackTrace];
     }
 
     if (!action) {
