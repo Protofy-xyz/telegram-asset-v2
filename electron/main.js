@@ -272,6 +272,8 @@ module.exports = function start(rootPath) {
       // useContentSize: true,
       resizable: true,
       scrollBounce: false,
+      fullscreenable: false,        // ⬅️ prevent entering macOS fullscreen
+      backgroundColor: '#111111', 
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
       }
@@ -316,7 +318,9 @@ module.exports = function start(rootPath) {
           autoHideMenuBar: true,
           fullscreenable: true,
           resizable: true,
-          frame: true,      
+          frame: true,
+          show: false,                  // ⬅️ show after ready
+          simpleFullScreen: true,       // ⬅️ avoids creating a new Space on macOS      
           webPreferences: {
             preload: path.join(__dirname, 'preload-main.js'),
             additionalArguments: [`--session=${encoded}`],
