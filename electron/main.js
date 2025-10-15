@@ -105,7 +105,7 @@ module.exports = function start(rootPath) {
     return ALLOWLIST_ORIGINS.has(o);
   }
 
-  function wireMediaPermissions(ses) {
+  function wirePermissions(ses) {
     ipcMain.handle('webcam:arm-permission', (event, { durationMs = 8000 } = {}) => {
       const wc = event.sender;
       webcamGrants.set(wc.id, Date.now() + durationMs);
@@ -125,6 +125,10 @@ module.exports = function start(rootPath) {
           armedPeek
         });
         return allowed && armedPeek;
+      }
+      if (['clipboard-sanitized-write', 'clipboard-read', 'clipboard-write', 'clipboard'].includes(permission)) {
+        const allowed = isAllowed(details, requestingOrigin);
+        return allowed;
       }
       return false;
     });
@@ -147,6 +151,10 @@ module.exports = function start(rootPath) {
         });
 
         return callback(!!ok);
+      }
+      if (['clipboard-sanitized-write', 'clipboard-read', 'clipboard-write', 'clipboard'].includes(permission)) {
+        const originOk = isAllowed(details, details?.requestingOrigin);
+        return callback(!!originOk);
       }
       return callback(false);
     });
@@ -348,7 +356,7 @@ module.exports = function start(rootPath) {
 
   app.whenReady().then(async () => {
     try {
-      wireMediaPermissions(session.defaultSession);
+      wirePermissions(session.defaultSession);
 
       let resolveWhenCoreReady;
       const coreStarted = new Promise(resolve => {
