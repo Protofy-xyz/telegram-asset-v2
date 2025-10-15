@@ -17,7 +17,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'
 import { API, ProtoModel } from 'protobase';
 import { FileBrowser } from 'protolib/adminpanel/next/components/FileBrowser';
-import { Button, Spinner, XStack, YStack, Text, View, Input } from '@my/ui'
+import { Button, Spinner, XStack, YStack, Text, View, Input, Paragraph } from '@my/ui'
 import { ViewList } from 'protolib/components/ViewList';
 import { ViewObject } from 'protolib/components/ViewObject';
 import { JSONView } from 'protolib/components/JSONView';
@@ -34,6 +34,7 @@ import { BasicPlaceHolder } from 'protolib/visualui/visualuiWrapper';
 import { StorageView } from 'protolib/components/StorageView';
 import { useEventEffect } from '@extensions/events/hooks';
 import { useKeyState } from 'protolib/components/KeySetter';
+
 
 const layoutMetadata = {
     visualui: {
@@ -63,6 +64,7 @@ const textMetadata = {
 export const transferExtensionComponents = () => {
     TransferComponent(XStack, 'XStack', layoutMetadata);
     TransferComponent(YStack, 'YStack', layoutMetadata);
+    TransferComponent(Paragraph, 'Paragraph');
     TransferComponent(UsersView, 'UsersView');
     TransferComponent(ServicesView, 'ServicesView');
     TransferComponent(PieChart, 'PieChart');
