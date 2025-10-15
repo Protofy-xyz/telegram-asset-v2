@@ -8,9 +8,10 @@ import { Tinted } from './Tinted'
 import { JSONView } from './JSONView'
 
 
-export function ViewList({ enableManualPop = false, emptyDescription = undefined, items, current = undefined, onDeleteItem = (item, index) => { }, emptyMessageProps = {}, emptyMode = 'info', emptyMessage = "Empty queue", disableManualPush = false, onPop = (items) => { }, onClear = (items) => { }, onPush = (item) => { } }) {
+export function ViewList({ enableReply = false, enableManualPop = false, emptyDescription = undefined, items, current = undefined, onReply = (item, response) => { }, onDeleteItem = (item, index) => { }, emptyMessageProps = {}, emptyMode = 'info', emptyMessage = "Empty queue", disableManualPush = false, onPop = (items) => { }, onClear = (items) => { }, onPush = (item) => { } }) {
   const [itemsList, setItemsList] = useState(items ?? [])
   const [addText, setAddText] = useState('')
+  const [responseText, setResponseText] = useState('')
   const renderItem = ({ item, index }) => (
     <ViewListItem item={item} index={index} onDeleteItem={onDeleteItem} />
   )
@@ -28,6 +29,25 @@ export function ViewList({ enableManualPop = false, emptyDescription = undefined
             <JSONView src={current} enableClipboard={false} />
           </ScrollView>
         </XStack>
+        {enableReply && <XStack ai="center" mx={"$3"} mb={"$4"} gap={"$2"}>
+          <Input
+            value={responseText}
+            width="100%"
+            placeholder="Response to send"
+            onChangeText={(text) => {
+              setResponseText(text)
+            }} />
+          <Button
+            bc={"$color6"}
+            disabledStyle={{ bc: "$gray6" }}
+            onPress={() => {
+              if (current) {
+                onReply(current, responseText)
+                setResponseText('')
+              }
+            }}><SizableText color={"$color"}>Reply</SizableText>
+          </Button>
+        </XStack>}
       </YStack>}
       {itemsList.length || current ? <XStack>
         <XStack f={1} ml={"$3"}>
