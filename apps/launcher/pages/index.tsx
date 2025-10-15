@@ -184,6 +184,10 @@ function CardElement({ element, onDeleted }: any) {
           && <XStack ai="center" space="$2">
             <AlertTriangle col="$red8" size={16} />
             <Paragraph style={{ color: 'var(--color)' }}>{openError ?? deleteError ?? "Download failed"}</Paragraph>
+            <InteractiveIcon size={20} IconColor="var(--color8)" Icon={Download} onPress={async () => {
+              const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
+              const result = await fetch(url)
+            }} />
           </XStack>
         }
       </XStack>
