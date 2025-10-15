@@ -110,6 +110,13 @@ export const startCore = (ready?) => {
   try {
     import(pathToFileURL(require.resolve('app/bundles/dbProviders')).href).then(async (DBBundle) => {
       DBBundle.default().then(async () => {
+        try {
+          const { connectDB } = await import(pathToFileURL(require.resolve('app/bundles/storageProviders')).href)
+          await connectDB('__healthcheck__')
+        } catch (e) {
+          logger.warn({ error: (e as any)?.toString?.() || e }, 'DB provider healthcheck failed, switching to sqlite')
+          await DBBundle.default('sqlite')
+        }
         const adminModules = await import(pathToFileURL(require.resolve('./api/index')).href)
         logger.debug({ adminModules }, 'Admin modules: ', JSON.stringify(adminModules))
         import(pathToFileURL(require.resolve('app/bundles/coreApis')).href).then((BundleAPI) => {

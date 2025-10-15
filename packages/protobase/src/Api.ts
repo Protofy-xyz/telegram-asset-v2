@@ -50,6 +50,13 @@ const _fetch = async (urlOrData, data?, update?, plain?, retryNum=10):Promise<Pe
             }
 
             if (!res.ok) {
+                const isHTML = res.headers.get('content-type').includes('text/html') || (typeof resData === 'string' && resData.trim().toLowerCase().startsWith('<!doctype'))
+                const reqOrigin = new URL(realUrl, getApiUrl()).origin
+                const apiOrigin = new URL(getApiUrl()).origin
+                const isInternalApi = reqOrigin === apiOrigin
+                if (isHTML && isInternalApi &&  res.status === 404 ) {
+                    resData = '404 API unavailable or address not found. The API service may be down or failed to start. Check API logs and database settings.'
+                }
 
                 if(retryNum > 0 && (res.status < 400 || res.status > 499) && res.status !== 500) {
                     console.error('API retry: ', res.status, realUrl)
