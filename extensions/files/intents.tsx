@@ -315,7 +315,7 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
     }
     if (mode == 'rules') {
       return <PanelGroup direction="vertical">
-        <Panel defaultSize={50}>
+        <Panel defaultSize={40}>
           <YStack flex={1} height="100%" alignItems="center" justifyContent="center" borderRadius="$3">
             <Rules
               rules={savedRules}
@@ -346,9 +346,9 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
           </YStack>
         </Panel>
         <CustomPanelResizeHandle direction="horizontal" />
-        <Panel defaultSize={50} minSize={33} style={{  }}>
+        <Panel defaultSize={60} minSize={33} style={{  }}>
           <YStack f={1} h="100%">
-            {getFlows()}
+            {monaco}
           </YStack>
         </Panel>
       </PanelGroup>
