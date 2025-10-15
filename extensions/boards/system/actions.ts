@@ -163,14 +163,14 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
     `);
 
     try {
-        if (action.triggers && Array.isArray(action.triggers)) {
-            const preTriggers = action.triggers.filter(t => t.type === 'pre' && t.name);
-            for (const trigger of preTriggers) {
+        if (action.links && Array.isArray(action.links)) {
+            const preLinks = action.links.filter(t => t.type === 'pre' && t.name);
+            for (const link of preLinks) {
                 //to call an action: /api/core/v1/boards/:boardId/actions/:action' using service token
                 try {
-                    await API.get(`/api/core/v1/boards/${boardId}/actions/${trigger.name}?token=${getServiceToken()}`);
+                    await API.get(`/api/core/v1/boards/${boardId}/actions/${link.name}?token=${getServiceToken()}`);
                 } catch (error) {
-                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling pre trigger action: " + trigger.name);
+                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling pre link action: " + link.name);
                 }
 
             }
@@ -251,14 +251,14 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
         }
 
 
-        if (action.triggers && Array.isArray(action.triggers)) {
-            const postTriggers = action.triggers.filter(t => t.type === 'post' && t.name);
-            for (const trigger of postTriggers) {
+        if (action.links && Array.isArray(action.links)) {
+            const postLinks = action.links.filter(t => t.type === 'post' && t.name);
+            for (const link of postLinks) {
                 //to call an action: /api/core/v1/boards/:boardId/actions/:action' using service token
                 try {
-                    await API.get(`/api/core/v1/boards/${boardId}/actions/${trigger.name}?token=${getServiceToken()}`);
+                    await API.get(`/api/core/v1/boards/${boardId}/actions/${link.name}?token=${getServiceToken()}`);
                 } catch (error) {
-                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling post trigger action: " + trigger.name);
+                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling post link action: " + link.name);
                 }
             }
         }

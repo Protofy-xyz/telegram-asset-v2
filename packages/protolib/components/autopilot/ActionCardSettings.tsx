@@ -13,7 +13,7 @@ import { DisplayEditor, SettingsTitle } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
 import { OutputEditor } from './OutputEditor'
-import { TriggersEditor } from './TriggersEditor'
+// import { LinkedActions } from './LinkedActions'
 import { TabContainer, TabTitle } from './Tab'
 
 function getAllPaths(obj, prefix = "", includeIntermediate = true) {
@@ -109,6 +109,13 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
             params: newParams,
           }))
         }}
+        links={cardData.links || []}
+        setLinks={(newLinks) => {
+          setCardData((prev) => ({
+            ...prev,
+            links: newLinks,
+          }))
+        }}
         configParams={cardData.configParams || {}}
         setConfigParams={(newConfigParams) => {
           console.log("hacemos setConfigParams", newConfigParams)
@@ -144,22 +151,29 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       content: <OutputEditor
         card={cardData}
         setCardData={setCardData}
-      />
-    },
-    {
-      id: 'triggers',
-      label: 'Triggers',
-      icon: <GitPullRequest size={"$1"} />,
-      content: <TriggersEditor
-        triggers={cardData.triggers || []}
-        setTriggers={(newTriggers) => {
+        links={cardData.links || []}
+        setLinks={(newLinks) => {
           setCardData((prev) => ({
             ...prev,
-            triggers: newTriggers,
+            links: newLinks,
           }))
         }}
       />
     },
+    // {
+    //   id: 'triggers',
+    //   label: 'Triggers',
+    //   icon: <GitPullRequest size={"$1"} />,
+    //   content: <TriggersEditor
+    //     triggers={cardData.triggers || []}
+    //     setTriggers={(newTriggers) => {
+    //       setCardData((prev) => ({
+    //         ...prev,
+    //         triggers: newTriggers,
+    //       }))
+    //     }}
+    //   />
+    // },
     {
       id: 'config',
       label: 'Settings',
