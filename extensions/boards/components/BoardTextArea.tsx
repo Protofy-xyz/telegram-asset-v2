@@ -368,7 +368,7 @@ export const BoardTextArea = ({
             bottom: "120%",
           }}
           maxHeight={"200px"}
-          overflowBlock="scroll"
+          overflowY="scroll"
           p="10px"
           br="$4"
           bg="$gray4"
