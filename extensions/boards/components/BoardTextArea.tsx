@@ -5,6 +5,7 @@ import { Trash, Plus, Mic, Binary, ALargeSmall, Braces, ListTree, ArrowDown, Che
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
 import { generateActionCode, generateStateCode } from '@extensions/boards/utils/ActionsAndStates';
+import { isElectron } from 'protobase';
 
 const minHeight = 50;
 const maxHeight = 200;
@@ -651,7 +652,7 @@ export const BoardTextArea = ({
         />
       </YStack>
       {
-        speechRecognition && browserSupportsSpeechRecognition && <XStack cursor="pointer" onPress={() => {
+        !isElectron() && speechRecognition && browserSupportsSpeechRecognition && <XStack cursor="pointer" onPress={() => {
           if (speechRecognitionEnabled) {
             setSpeechRecognitionEnabled(false);
             SpeechRecognition.stopListening();
