@@ -21,6 +21,28 @@ export const getCurrentVersionFromFS = (root: string, boardId: string): number |
     }
 };
 
+const indexByKey = (cards = []) =>
+    Object.fromEntries(cards.map(c => [c.key, c]));
+
+const getChange = (prevData = { cards: [] }, currData = { cards: [] }) => {
+    const prev = indexByKey(prevData.cards ?? []);
+    const curr = indexByKey(currData.cards ?? []);
+
+    const prevKeys = Object.keys(prev);
+    const currKeys = Object.keys(curr);
+
+    const addedKey = currKeys.find(k => !prev[k]);
+    if (addedKey) return { type: "Added", card: curr[addedKey] };
+
+    const removedKey = prevKeys.find(k => !curr[k]);
+    if (removedKey) return { type: "Removed", card: prev[removedKey] };
+
+    const editedKey = currKeys.find(k => prev[k] && JSON.stringify(prev[k]) !== JSON.stringify(curr[k]));
+    if (editedKey) return { type: "Edited", card: curr[editedKey] };
+
+    return { type: "No changes", card: null };
+};
+
 export default async (app, context) => {
     // Get current version
     app.get('/api/core/v1/boards/:boardId/version/current', requireAdmin(), (req, res) => {
@@ -48,37 +70,40 @@ export default async (app, context) => {
             const root = getRoot(req);
             const dir = fspath.join(VersionsBaseDir(root), req.params.boardId);
             if (!fsSync.existsSync(dir)) return res.send([]);
-
+            const boardName = `${req.params.boardId}.json`;
             const entries = (await fs.readdir(dir))
                 .filter(n => /^\d+$/.test(n))
-                .map(n => Number(n))
+                .map(Number)
                 .sort((a, b) => a - b);
 
-            const boardName = `${req.params.boardId}.json`;
+            const readJson = async p => JSON.parse(await fs.readFile(p, "utf8"));
 
-            const versions = await Promise.all(entries.map(async (version) => {
+            const versions = await Promise.all(entries.map(async version => {
                 const filePath = fspath.join(dir, String(version), boardName);
                 if (!fsSync.existsSync(filePath)) return null;
+                const prevPath = fspath.join(dir, String(version - 1), boardName);
+                const prevData = (version > 1 && fsSync.existsSync(prevPath))
+                    ? await readJson(prevPath)
+                    : { cards: [] };
+                const currData = await readJson(filePath);
+                const { type, card } = getChange(prevData, currData);
+                const change = card ? `${type} card ${card.name}` : "no changes";
 
-                try {
-                    const data = JSON.parse(await fs.readFile(filePath, 'utf8'));
-                    return {
-                        version: data.version ?? version,
-                        savedAt: data.savedAt ?? null,
-                    };
-                } catch (err) {
-                    console.warn(`Error reading version ${version}:`, err);
-                    return null;
-                }
+                return {
+                    version: currData.version ?? version,
+                    savedAt: currData.savedAt ?? null,
+                    cards: (currData.cards ?? []).map(c => `${c.name}.card`),
+                    change,
+                };
             }));
-
             res.send(versions.filter(Boolean));
         } catch (err) {
             console.error(err);
             res.status(500).send({ error: 'Error reading versions' });
         }
     });
-    
+
+
     // Save version
     app.post('/api/core/v1/boards/:boardId/version', requireAdmin(), async (req, res) => {
         const root = getRoot(req);
