@@ -14,4 +14,15 @@ export default (app, context) => {
         });
         res.send({ success: true });
     });
+
+    app.post('/api/core/v1/cards/:group/:tag/:name/delete', async (req, res) => {
+        const { group, tag, name } = req.params;
+        context.cards.delete({
+            group,
+            tag,
+            name,
+            emitEvent: true,
+        });
+        res.send({ success: true });
+    });
 }

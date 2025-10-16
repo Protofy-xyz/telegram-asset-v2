@@ -25,10 +25,8 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
 
     const [currentSettings, setCurrentSettings] = useState(settings)
     const [loading, setLoading] = useState(false)
-    const { resolvedTheme } = useThemeSetting()
-    const darkMode = resolvedTheme == 'dark'
 
-    const BG_COLOR = darkMode ? "$gray1" : "$gray3"
+    const BG_COLOR = "$bgPanel"
 
     const clearSettings = (stt) => {
         const cleaned = { ...stt }
@@ -68,6 +66,8 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                 <ColInput
                     backgroundColor={BG_COLOR}
                     f={1}
+                    borderColor={"$gray6"}
+                    borderWidth={1}
                     placeholder="URL or path to background image"
                     value={currentSettings?.backgroundImage}
                     onChangeText={(text) => setCurrentSettings({ ...currentSettings, backgroundImage: text })}
@@ -82,7 +82,7 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                     checked={currentSettings?.autoplay ?? false}
                     onCheckedChange={(checked) => setCurrentSettings({ ...currentSettings, autoplay: checked })}
                     className="no-drag"
-                    borderColor={"transparent"}
+                    borderColor={"$gray6"}
                     backgroundColor={BG_COLOR}
                 >
                     <Checkbox.Indicator>
@@ -100,7 +100,7 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                     onCheckedChange={(checked) => setCurrentSettings({ ...currentSettings, showBoardUIOnPlay: checked })}
                     className="no-drag"
                     backgroundColor={BG_COLOR}
-                    borderColor={"transparent"}
+                    borderColor={"$gray6"}
                 >
                     <Checkbox.Indicator>
                         <Check size={16} />
@@ -116,8 +116,9 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                     checked={currentSettings?.showBoardUIWhilePlaying ?? false}
                     onCheckedChange={(checked) => setCurrentSettings({ ...currentSettings, showBoardUIWhilePlaying: checked })}
                     className="no-drag"
+                    borderWidth={1}
                     backgroundColor={BG_COLOR}
-                    borderColor={"transparent"}
+                    borderColor={"$gray6"}
                 >
                     <Checkbox.Indicator>
                         <Check size={16} />
@@ -131,12 +132,16 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                     w={60}
                     mr="$2"
                     maxLength={3}
+                    borderWidth={1}
+                    borderColor={"$gray6"}
                     placeholder="X"
                     value={currentSettings?.margin?.[0]?.toString() || ""}
                     onChangeText={(text) => setCurrentSettings({ ...currentSettings, margin: [text != "" && !isNaN(parseInt(text)) ? parseInt(text).toString() : "", currentSettings?.margin?.[1] || ""] })}
                 />
                 <ColInput
                     backgroundColor={BG_COLOR}
+                    borderColor={"$gray6"}
+                    borderWidth={1}
                     w={60}
                     maxLength={3}
                     placeholder="Y"
@@ -148,7 +153,7 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                 <ColumnTitle>Overlap</ColumnTitle>
                 <YStack w={127}>
                     <SelectList
-                        triggerProps={{ backgroundColor: BG_COLOR, borderWidth: 0 }}
+                        triggerProps={{ backgroundColor: BG_COLOR, borderWidth: 1, borderColor: "$gray6" }}
                         title={"Overlap"}
                         value={currentSettings?.allowOverlap == true ? "yes" : currentSettings?.allowOverlap == false ? "no" : "default"}
                         elements={[{ value: "default", caption: "default" }, { value: true, caption: "yes" }, { value: false, caption: "no" }]}
@@ -160,7 +165,7 @@ export const BoardSettingsEditor = ({ settings, onSave }) => {
                 <ColumnTitle>{"Compact type"}</ColumnTitle>
                 <YStack w={127}>
                     <SelectList
-                        triggerProps={{ backgroundColor: BG_COLOR, borderWidth: 0 }}
+                        triggerProps={{ backgroundColor: BG_COLOR, borderWidth: 1, borderColor: "$gray6"}}
                         title={"Compact Type"}
                         value={currentSettings?.compactType || "default"}
                         placeholder="Select compact type"

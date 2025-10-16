@@ -35,7 +35,7 @@ export const ComponentCodeGeneration = ({ htmlCode, setHTMLCode }) => {
         placeholder="Describe the changes you want in your component..."
         value={query}
         onChangeText={setQuery}                // funciona en web y native
-        bc="$gray2"
+        bc="$bgPanel"
         borderColor="$gray3"
         br="$4"
         placeholderTextColor="$gray9"

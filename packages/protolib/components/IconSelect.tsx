@@ -110,7 +110,7 @@ export const IconSelect = ({ icons, onSelect, selected }) => {
         styles={{
           control: (provided, state) => ({
             ...provided,
-            backgroundColor: "transparent",
+            backgroundColor: "var(--bgPanel)",
             borderColor: "var(--gray6)",
             height: "44px",
             borderRadius: "9px",

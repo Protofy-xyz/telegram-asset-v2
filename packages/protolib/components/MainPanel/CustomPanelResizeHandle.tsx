@@ -4,11 +4,12 @@ import { PanelResizeHandle } from "react-resizable-panels"
 type Props = {
     direction: 'horizontal' | 'vertical'
     borderLess?: boolean
+    borderColor?: string
     visible?: boolean
     resizable?: boolean
 }
 
-const CustomPanelResizeHandle = ({ direction, borderLess = true, visible = true, resizable = true }: Props) => {
+const CustomPanelResizeHandle = ({ direction, borderLess = true, visible = true, resizable = true, borderColor = "#252526" }: Props) => {
     const resizerRef = useRef<any>()
     const resizerBarRef = useRef<any>()
     const hoverTimer = useRef<any>(null)
@@ -45,12 +46,15 @@ const CustomPanelResizeHandle = ({ direction, borderLess = true, visible = true,
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={onHoverLeave}
                 style={{
-                    backgroundColor: borderLess ? 'transparent' : '#252526',
                     display: visible && resizable ? 'flex' : 'none',
-                    width: direction === 'vertical' ? '4px' : '100%',
-                    height: direction === 'vertical' ? '100%' : '4px',
+                    width: direction === 'vertical' ? '6px' : '100%',
+                    height: direction === 'vertical' ? '100%' : '6px',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    backgroundImage:
+                        direction === 'vertical'
+                            ? `linear-gradient(to right, ${borderColor} 0px, ${borderColor} 1px, transparent 1px)`
+                            : `linear-gradient(to bottom, ${borderColor} 0px, ${borderColor} 1px, transparent 1px)`,
                 }}
             >
                 <div

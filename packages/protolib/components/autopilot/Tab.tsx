@@ -3,7 +3,7 @@ import { YStack, Text } from "@my/ui"
 export const TabTitle = ({ tabname, tabDescription }: { tabname: String, tabDescription?: string }) => {
   return <YStack h="fit-content" w="fit-content">
     <Text fontSize={"$8"} fontWeight={"400"}>{tabname}</Text>
-    <Text fontSize={"$5"} fontWeight={"300"} color="$gray8">{tabDescription}</Text>
+    <Text fontSize={"$5"} fontWeight={"300"} color="$gray10">{tabDescription}</Text>
   </YStack>
 }
 

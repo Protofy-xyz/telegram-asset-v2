@@ -151,7 +151,6 @@ const Action = ({ deviceName, action }) => {
     } else if (action?.payload?.type != "json-schema") {
         type = "input"
     }
-    console.log("🤖 ~ Action ~ type:", type)
 
     switch (type) {
         case "button":

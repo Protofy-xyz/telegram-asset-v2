@@ -10,7 +10,7 @@ export const OutputEditor = ({ card, setCardData, links, setLinks }: any) => {
   const [isAuto, setIsAuto] = useState(true)
 
   const borderColor = "$gray6"
-  const inputBgColor = "$gray1"
+  const inputBgColor = "$bgContent"
 
   useEffect(() => {
     if (selectedType === "auto") {
@@ -28,7 +28,7 @@ export const OutputEditor = ({ card, setCardData, links, setLinks }: any) => {
   return <TabContainer >
     <TabTitle tabname="Output Configuration" tabDescription='Configure all the possible behaviours that your card' />
     <YStack gap="$3" f={1} w="100%">
-      <YStack bc="$gray3" p="$3" borderRadius="$4" >
+      <YStack bc="$bgPanel" p="$3" borderRadius="$4" >
         <YStack pb="$3">
           <Label pl="$2">Return Type</Label>
           <XStack gap="$2" flexWrap='wrap'>
@@ -76,7 +76,7 @@ export const OutputEditor = ({ card, setCardData, links, setLinks }: any) => {
           />}
         </YStack>
       </YStack>
-      <YStack bc="$gray3" p="$3" borderRadius="$4" >
+      <YStack bc="$bgPanel" p="$3" borderRadius="$4" >
         <Label pl="$2">Actions after run</Label>
         <LinksEditor
           mode={"post"}
