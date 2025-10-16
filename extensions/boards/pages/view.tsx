@@ -755,6 +755,7 @@ const Board = ({ board, icons }) => {
               gap="$4"
               p="$0"
               w={"90vw"}
+              bc="$bgContent"
               h={"95vh"}
               maw={1600}
             >

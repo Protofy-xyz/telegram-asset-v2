@@ -34,7 +34,7 @@ export const HTMLEditor = ({ htmlCode, setHTMLCode, data }) => {
         height="100%"
         alignItems="center"
         justifyContent="center"
-        backgroundColor="$gray3"
+        backgroundColor="$bgPanel"
         borderRadius="$3"
         p="$3"
       >

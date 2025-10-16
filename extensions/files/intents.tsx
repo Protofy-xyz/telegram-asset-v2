@@ -1,4 +1,4 @@
-import { Spinner, XStack, YStack, useTheme, Button, Text, Input, TextArea } from '@my/ui'
+import { Spinner, XStack, YStack, useTheme, Button, Text, Input, TextArea, Label } from '@my/ui'
 import React, { useEffect, useRef, useCallback, useState, useContext, useMemo } from 'react';
 import { useSearchParams, usePathname } from 'solito/navigation';
 import { DataCard } from 'protolib/components/DataCard'
@@ -315,7 +315,7 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
     }
     if (mode == 'rules') {
       return <PanelGroup direction="vertical">
-        <Panel defaultSize={40}>
+        <Panel defaultSize={50}>
           <YStack flex={1} height="100%" alignItems="center" justifyContent="center" borderRadius="$3">
             <Rules
               rules={savedRules}
@@ -335,19 +335,17 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
               onEditRule={async (index, rule) => {
                 const newRules = [...savedRules]
                 newRules[index] = rule
+                await onApplyRules(newRules)
                 setSavedRules(newRules)
               }}
               loadingIndex={-1}
               disabledConfig={rulesConfig}
             />
-            <YStack mt="auto" pt="$3">
-
-            </YStack>
           </YStack>
         </Panel>
-        <CustomPanelResizeHandle direction="horizontal" />
-        <Panel defaultSize={60} minSize={33} style={{  }}>
-          <YStack f={1} h="100%">
+        <CustomPanelResizeHandle direction="horizontal" borderLess={false} borderColor="var(--gray4)" />
+        <Panel defaultSize={50} minSize={0}>
+          <YStack flex={1} h="100%" paddingTop="$3">
             {monaco}
           </YStack>
         </Panel>
@@ -361,6 +359,7 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
     {/* <Theme name={tint as any}> */}
     <XStack justifyContent="space-between" alignItems="center">
       <XStack>
+        <Label paddingLeft="$3">Rules</Label>
         {leftIcons}
       </XStack>
       <XStack alignItems="center" mb="$2">

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useLayoutEffect, useEffect, useMemo } from 'react'
+import React, { useRef, useState, useLayoutEffect, useEffect, useMemo, useCallback } from 'react'
 import { TextArea } from '@my/ui'
 import { XStack, YStack, Button, Spinner, Text } from '@my/ui'
 import { Trash, Plus, Mic, Binary, ALargeSmall, Braces, ListTree, ArrowDown, ChevronDown, Zap } from '@tamagui/lucide-icons'
@@ -6,9 +6,6 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
 import { generateActionCode, generateStateCode } from '@extensions/boards/utils/ActionsAndStates';
 import { isElectron } from 'protolib/lib/isElectron';
-
-const minHeight = 50;
-const maxHeight = 200;
 
 function renderHighlightedHTML(text: string) {
   // scape html
@@ -126,6 +123,84 @@ const removeUnknownTags = (value, symbols) => {
   return cleanedText
 }
 
+const CARET_STYLE_PROPERTIES = [
+  'box-sizing',
+  'width',
+  'height',
+  'overflow-x',
+  'overflow-y',
+  'border-top-width',
+  'border-right-width',
+  'border-bottom-width',
+  'border-left-width',
+  'border-top-style',
+  'border-right-style',
+  'border-bottom-style',
+  'border-left-style',
+  'padding-top',
+  'padding-right',
+  'padding-bottom',
+  'padding-left',
+  'font-style',
+  'font-variant',
+  'font-weight',
+  'font-stretch',
+  'font-size',
+  'line-height',
+  'font-family',
+  'text-align',
+  'text-transform',
+  'text-indent',
+  'text-decoration',
+  'letter-spacing',
+  'word-spacing',
+  'tab-size',
+  'direction'
+];
+
+const getCaretMetrics = (textarea: HTMLTextAreaElement, position: number) => {
+  if (typeof window === 'undefined' || !textarea) return null;
+
+  const computed = window.getComputedStyle(textarea);
+  const mirror = document.createElement('div');
+
+  CARET_STYLE_PROPERTIES.forEach((prop) => {
+    const value = computed.getPropertyValue(prop);
+    if (value) {
+      mirror.style.setProperty(prop, value);
+    }
+  });
+
+  mirror.style.position = 'absolute';
+  mirror.style.visibility = 'hidden';
+  mirror.style.whiteSpace = 'pre-wrap';
+  mirror.style.wordWrap = 'break-word';
+  mirror.style.overflow = 'hidden';
+
+  const value = textarea.value;
+  mirror.textContent = value.slice(0, position);
+
+  const marker = document.createElement('span');
+  marker.textContent = value.slice(position) || '.';
+  mirror.appendChild(marker);
+
+  document.body.appendChild(mirror);
+  const top = marker.offsetTop;
+  const left = marker.offsetLeft;
+  const lineHeight = parseFloat(computed.lineHeight || '') || parseFloat(computed.fontSize || '') || 16;
+  const borderTop = parseFloat(computed.borderTopWidth || '') || 0;
+  const borderLeft = parseFloat(computed.borderLeftWidth || '') || 0;
+  document.body.removeChild(mirror);
+
+  return {
+    top,
+    left,
+    lineHeight,
+    borderTop,
+    borderLeft,
+  };
+};
+
 const ActionRow = ({ action, rowClick }) => {
   return <XStack justifyContent="space-between" gap="$3" alignItems="center" onClick={rowClick}
   >
@@ -210,7 +285,7 @@ const StateRow = ({ state, rowClick }) => {
 }
 
 export const BoardTextArea = ({
-  value,
+  value = "",
   speechRecognition,
   onChange,
   onEnter,
@@ -219,6 +294,8 @@ export const BoardTextArea = ({
   placeholder,
   style,
   enableShortcuts = false,
+  disabled = false,
+  footer = null,
   ...rest
 }: any) => {
   let states = useBoardStates()
@@ -231,29 +308,52 @@ export const BoardTextArea = ({
   const [symbols, setSymbols] = useState({})
   const [dumpedValue, setDumpedValue] = useState(value)
 
-  const ref = useRef(null);
+  const containerRef = useRef<HTMLElement | null>(null);
+  const ref = useRef<HTMLTextAreaElement | null>(null);
   const [speechRecognitionEnabled, setSpeechRecognitionEnabled] = useState(false);
   const [showDropdown, setShowDropdown] = useState(null)
   const [inputInsertIndex, setInputInsertIndex] = useState(0)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const dropdownRef = useRef<HTMLElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 50, left: 0 });
   const {
     transcript,
     listening,
     resetTranscript,
     browserSupportsSpeechRecognition
   } = useSpeechRecognition();
-
-  const adjustHeight = () => {
+  const updateDropdownPosition = useCallback(() => {
+    if (!showDropdown) return;
     const textarea = ref.current;
-    if (textarea) {
-      textarea.style.height = `${minHeight}px`;
-      const scrollHeight = textarea.scrollHeight;
-      textarea.style.height = `${Math.min(Math.max(scrollHeight, minHeight), maxHeight)}px`;
-      textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
-    }
-  };
+    const container = containerRef.current;
+
+    if (!textarea || !container) return;
+
+    const selection = typeof textarea.selectionStart === 'number'
+      ? textarea.selectionStart
+      : inputInsertIndex;
+
+    const caret = getCaretMetrics(textarea, selection ?? 0);
+    if (!caret) return;
+
+    const textareaRect = textarea.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    const caretTop = textareaRect.top - containerRect.top + caret.top - textarea.scrollTop + caret.lineHeight + caret.borderTop;
+    const caretLeft = textareaRect.left - containerRect.left + caret.left - textarea.scrollLeft + caret.borderLeft;
+    const dropdownWidth = dropdownRef.current?.offsetWidth ?? 0;
+    const estimatedWidth = dropdownWidth > 0 ? dropdownWidth : Math.min(containerRect.width, 320);
+    const maxLeft = containerRect.width - estimatedWidth;
+    const safeLeft = maxLeft <= 0 ? 0 : Math.min(caretLeft, maxLeft);
+    const safeTop = Math.max(0, caretTop + 4);
+
+    setDropdownPosition({
+      top: safeTop,
+      left: Math.max(0, safeLeft),
+    });
+  }, [showDropdown, inputInsertIndex]);
 
   const getDropdownSelection = () => {
     let selection = filteredOptions[selectedIndex]
@@ -308,10 +408,6 @@ export const BoardTextArea = ({
     setDumpedValue(dump(value, nextSymbolsCollector));
   }, [value]);
 
-  useLayoutEffect(() => {
-    adjustHeight();
-  }, [value]);
-
   // events with dropdown open
   useEffect(() => {
     const el = itemRefs.current[selectedIndex];
@@ -320,31 +416,37 @@ export const BoardTextArea = ({
 
   useEffect(() => {
     if (showDropdown) {
-      ref.current.focus()
+      ref.current?.focus()
     }
   }, [showDropdown, selectedIndex])
 
-  // El hack: Espera a que se estabilice el DOM
   useEffect(() => {
-    setTimeout(() => {
-      adjustHeight();
-    }, 0);
-  }, []);
+    if (showDropdown) {
+      updateDropdownPosition();
+    }
+  }, [showDropdown, dumpedValue, inputInsertIndex, updateDropdownPosition]);
 
   useEffect(() => {
     if (speechRecognitionEnabled && transcript) {
       onChange({ target: { value: transcript } });
-      adjustHeight();
     }
   }, [transcript, speechRecognitionEnabled]);
 
   const filteredOptions = useMemo(() => {
     if (!dropDown || !showDropdown) return []
-    const dropdownFilter = dumpedValue
+    const left = dumpedValue
       .slice(0, inputInsertIndex) // get the left side of the cursor
-      .replace(/<[^>]*>/g, '') // remove tags to avoid collisions
-      .match(/[@#]([^\s@#]+)(?!.*[@#][^\s@#]+)/)?.[1] // get the last #filter-string
-    if (!dropdownFilter) return dropDown[showDropdown]
+      .replace(/<[^>]*>/g, '');   // remove tags to avoid collisions
+
+    const dropdownFilter =
+      /[@#]\s*$/.test(left)
+        ? null
+        : (() => {
+          const all = [...left.matchAll(/[@#]([^\s@#]+)/g)];
+          return all.length ? all[all.length - 1][1] : null; // last match
+        })();
+
+    if (!dropdownFilter) return dropDown[showDropdown];
 
     // set the index to 0 on each update, to avoid, hidden indexes in 
     // the dropdown
@@ -359,13 +461,28 @@ export const BoardTextArea = ({
   }, [filteredOptions])
 
   return (
-    <XStack pos='relative' f={1} gap="$3" ai="flex-end">
+    <XStack
+      ref={containerRef}
+      position='relative'
+      flex={1}
+      gap="$3"
+      height="100%"
+      opacity={disabled ? 0.7 : 1}
+      backgroundColor="$bgPanel"
+      padding="$6"
+      flexDirection='column'
+    >
       {
         enableShortcuts && showDropdown && <YStack
+          ref={dropdownRef}
           style={{
             position: "absolute",
-            width: "100%",
-            bottom: "120%",
+            minWidth: "220px",
+            maxWidth: "100%",
+            width: "max-content",
+            zIndex: 10,
+            top: dropdownPosition.top,
+            left: dropdownPosition.left,
           }}
           maxHeight={"200px"}
           overflowY="scroll"
@@ -430,7 +547,7 @@ export const BoardTextArea = ({
                       selectDropdownOption(getDropdownSelection(), dumpedValue)
                       setShowDropdown(null)
                       setTimeout(() => {
-                        ref.current.focus()
+                        ref.current?.focus()
                       }, 50)
                     }} />
                     : <StateRow state={{ name: v, value: states[v], }} rowClick={(k = null) => {
@@ -442,7 +559,7 @@ export const BoardTextArea = ({
                       selectDropdownOption(selection, dumpedValue)
                       setShowDropdown(null)
                       setTimeout(() => {
-                        ref.current.focus()
+                        ref.current?.focus()
                       }, 50)
                     }}
                     />
@@ -475,14 +592,12 @@ export const BoardTextArea = ({
             overflowWrap: 'break-word',
             wordBreak: 'normal',
             boxSizing: 'border-box',
-            paddingTop: '14px',
-            padding: '10px',
             borderRadius: '8px',
             fontFamily: 'inherit',
             fontSize: 'inherit',
             fontWeight: 'inherit',
             letterSpacing: 'inherit',
-            overflow: 'auto',
+            overflow: 'hidden',
             lineHeight: '1.4',
           }}
           dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(dumpedValue) }}
@@ -493,8 +608,20 @@ export const BoardTextArea = ({
           readOnly={readOnly}
           value={dump(value, symbols)}
           placeholder={placeholder}
+          disabled={disabled}
+          onSelect={(e) => {
+            const index = e.currentTarget.selectionStart ?? 0;
+            setInputInsertIndex(index);
+            if (showDropdown) {
+              if (typeof window !== 'undefined') {
+                window.requestAnimationFrame(() => updateDropdownPosition());
+              } else {
+                updateDropdownPosition();
+              }
+            }
+          }}
           onChange={(e) => {
-            const index = e.currentTarget.selectionStart;
+            const index = e.currentTarget.selectionStart ?? 0;
             setInputInsertIndex(index);
             // shortcut to trigger dropdown
             let end = e.currentTarget.value[index - 1];
@@ -514,7 +641,17 @@ export const BoardTextArea = ({
             // set the dumped
             onChange({ target: { value: dedumped } });
           }}
-          onKeyUp={(e) => { }}
+          onKeyUp={(e) => {
+            const index = e.currentTarget.selectionStart ?? 0;
+            setInputInsertIndex(index);
+            if (showDropdown) {
+              if (typeof window !== 'undefined') {
+                window.requestAnimationFrame(() => updateDropdownPosition());
+              } else {
+                updateDropdownPosition();
+              }
+            }
+          }}
           onKeyDown={(e) => {
             if (showDropdown === null) { // text mode
               const input = e.currentTarget;
@@ -545,6 +682,7 @@ export const BoardTextArea = ({
                   }
                   break;
                 case 'Enter':
+                  if (e.shiftKey) return
                   e.preventDefault();
                   // dedump and set the new symbols
                   let cleaned = removeUnknownTags(dumpedValue, symbols);
@@ -613,8 +751,9 @@ export const BoardTextArea = ({
                   selectDropdownOption(selection, dumpedValue)
                   setShowDropdown(null)
                   setTimeout(() => {
-                    ref.current.setSelectionRange(inputInsertIndex + selection.length + 3, inputInsertIndex + selection.length + 3)
-                    ref.current.focus()
+                    const textarea = ref.current;
+                    textarea?.setSelectionRange(inputInsertIndex + selection.length + 3, inputInsertIndex + selection.length + 3)
+                    textarea?.focus()
                   }, 1)
                   break;
                 default:
@@ -629,6 +768,9 @@ export const BoardTextArea = ({
               overlayRef.current.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
               overlayRef.current.scrollLeft = (e.target as HTMLTextAreaElement).scrollLeft;
             }
+            if (showDropdown) {
+              updateDropdownPosition();
+            }
           }}
           spellCheck={false}
           style={{
@@ -636,14 +778,8 @@ export const BoardTextArea = ({
             width: '100%',
             resize: 'none',
             overflowY: 'auto',
-            minHeight: `${minHeight}px`,
-            maxHeight: `${maxHeight}px`,
+            height: "100%",
             boxSizing: 'border-box',
-            border: '1px solid var(--color6)',
-            borderRadius: '8px',
-            paddingTop: "14px",
-            padding: '10px',
-            backgroundColor: 'var(--gray4)',
             color: 'transparent',
             caretColor: 'var(--color)',  // this caret, has color, to use for the overlay text
             fontSize: "inherit",
@@ -651,8 +787,9 @@ export const BoardTextArea = ({
           }}
         />
       </YStack>
+      {footer}
       {
-        !isElectron() && speechRecognition && browserSupportsSpeechRecognition && <XStack cursor="pointer" onPress={() => {
+        !isElectron() && !footer && speechRecognition && browserSupportsSpeechRecognition && <XStack cursor="pointer" onPress={() => {
           if (speechRecognitionEnabled) {
             setSpeechRecognitionEnabled(false);
             SpeechRecognition.stopListening();
