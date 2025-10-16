@@ -38,7 +38,37 @@ export default (app, context) => {
         devices/patata/button/relay/actions/status
         ...
     */
+    const deleteDeviceCards = async (deviceName: string) => {
+        try {
+            const token = getServiceToken();
+            // fetch the full cards tree
+            const cardsTree = await API.get(`/api/core/v1/cards?token=${token}`);
 
+            // cardsTree structure: { [group]: { [tag]: { [name]: {...} } } }
+            const deviceCards = cardsTree?.data?.devices?.[deviceName] || {};
+            const names = Object.keys(deviceCards);
+
+            if (!names.length) return;
+
+            // POST-based delete per card: /api/core/v1/cards/:group/:tag/:name/delete
+            await Promise.all(
+                names.map((name) =>
+                    API.post(
+                        `/api/core/v1/cards/devices/${encodeURIComponent(
+                            deviceName
+                        )}/${encodeURIComponent(name)}/delete?token=${token}`,
+                        {}
+                    ).catch((err) => {
+                        logger.error({ deviceName, name, err }, 'Failed deleting device card');
+                    })
+                )
+            );
+
+            logger.info({ deviceName, count: names.length }, 'Deleted device cards');
+        } catch (err) {
+            logger.error({ err }, 'Failed deleting cards for device');
+        }
+    };
     // iterate over all devices and register an action for each subsystem action
     const registerActions = async () => {
         const db = getDB('devices')
@@ -46,6 +76,9 @@ export default (app, context) => {
         for await (const [key, value] of db.iterator()) {
             // console.log('device: ', value)
             const deviceInfo = DevicesModel.load(JSON.parse(value))
+            // 🔴 delete all existing cards for this device before adding new ones
+            await deleteDeviceCards(deviceInfo.data.name)
+
             for (const subsystem of deviceInfo.data.subsystem) {
                 // console.log('subsystem: ', subsystem)
                 if(subsystem.name == "mqtt") continue
