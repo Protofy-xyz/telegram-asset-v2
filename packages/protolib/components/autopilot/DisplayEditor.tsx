@@ -22,7 +22,7 @@ export const SettingsTitle = ({ children, error = "", ...props }) => {
 
 const SettingsSection = ({ children, title, ...props }) => {
     return (
-        <YStack f={1} borderRadius="$3" p="$3" bc="$gray3">
+        <YStack f={1} borderRadius="$3" p="$3" bc="$bgPanel">
             <SettingsTitle>{title}</SettingsTitle>
             <YStack {...props}>{children}</YStack>
         </YStack>
@@ -189,7 +189,7 @@ export const DisplayEditor = ({
                         checked={checked}
                         onCheckedChange={onCheckedChange}
                         className="no-drag"
-                        bc={"$gray1"}
+                        bc="$bgContent"
                         boc="$gray6"
                     >
                         <Checkbox.Indicator>
@@ -214,7 +214,7 @@ export const DisplayEditor = ({
                             if (s.set) setCardData(s.set(cardData, t))
                             else setCardData({ ...cardData, [s.key]: t })
                         }}
-                        bc="$gray1"
+                        bc="$bgContent"
                         placeholderTextColor="$gray9"
                         boc="$gray6"
                     />
@@ -235,7 +235,7 @@ export const DisplayEditor = ({
                     <Input
                         br={"8px"}
                         value={cardData.name}
-                        bc="transparent"
+                        bc="$bgPanel"
                         boc="$gray6"
                         color={error ? '$red9' : undefined}
                         onChangeText={(t) => {
@@ -251,6 +251,7 @@ export const DisplayEditor = ({
                     <SettingsTitle>Icon</SettingsTitle>
                     <IconSelect
                         br={"8px"}
+                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
                         icons={icons}
                         onSelect={(icon) => setCardData({ ...cardData, icon })}
                         selected={cardData.icon}
@@ -263,7 +264,7 @@ export const DisplayEditor = ({
                         br={"8px"}
                         color={cardData.color}
                         onChange={(e) => setCardData({ ...cardData, color: e.hex })}
-                        inputProps={{ backgroundColor: 'transparent', borderColor: error ? '$red9' : '$gray6' }}
+                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
                     />
                 </YStack>
             </XStack>
