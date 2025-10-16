@@ -2,7 +2,7 @@ import { DatePicker } from './datepickers';
 import { Tinted } from './Tinted'
 import { SelectList } from './SelectList'
 import { Filter, Check, X } from '@tamagui/lucide-icons'
-import { XStack, Button, Popover, Text, Label, YStack, Checkbox, Tooltip } from '@my/ui'
+import { XStack, Button, Popover, Text, Label, YStack, Checkbox, Tooltip, Input } from '@my/ui'
 import { Fragment, useState } from 'react';
 import { usePageParams } from '../next';
 import { Chip } from './Chip';
@@ -70,7 +70,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
         const def = shape[key]?._def?.innerType?._def ?? shape[key]?._def
         if (!def) return false
         if (customFilters?.[key]?.component) return true
-        return ['ZodBoolean', 'ZodDate', 'ZodUnion'].includes(def?.typeName)
+        return ['ZodBoolean', 'ZodDate', 'ZodUnion', 'ZodNumber'].includes(def?.typeName)
     }) || extraFilters.length
     
     if (!hasAnyFilterable) return null  // Hide Filters menu if no filterable fields or extra filters
@@ -151,6 +151,42 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                     setValue={(val) => onFilter(val)}
                 />
             </Fragment>
+        } else if (def?.typeName === 'ZodNumber') {
+            const fromKey = `filter[${key}][from]`
+            const toKey = `filter[${key}][to]`
+            const fromValue = query[fromKey]
+            const toValue = query[toKey]
+
+            const onFilterFrom = (val) => {
+                val !== undefined && val !== ''
+                    ? push(fromKey, val)
+                    : removePush(fromKey)
+            }
+            const onFilterTo = (val) => {
+                val !== undefined && val !== ''
+                    ? push(toKey, val)
+                    : removePush(toKey)
+            }
+
+            return <YStack maw="$20" key={key}>
+                <Label>{key}</Label>
+                <XStack gap={'$2'}>
+                    <Input
+                        type="number"
+                        placeholder="From"
+                        value={fromValue ?? ''}
+                        onChange={(e: any) => onFilterFrom(e?.target?.value)}
+                        onChangeText={(t: any) => onFilterFrom(t)}
+                    />
+                    <Input
+                        type="number"
+                        placeholder="To"
+                        value={toValue ?? ''}
+                        onChange={(e: any) => onFilterTo(e?.target?.value)}
+                        onChangeText={(t: any) => onFilterTo(t)}
+                    />
+                </XStack>
+            </YStack>
         }
     }
 
@@ -180,7 +216,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                         <QueryFilters state={state} extraFilters={extraFilters} />
                     </XStack>
                 </Tinted>
-                <YStack overflow='scroll' overflowX='hidden' p="2px" maxHeight="300px">
+                <YStack overflow='scroll' p="2px" maxHeight="300px">
                     {schemaKeys.map((key) => {
                         const def = schema.shape[key]._def?.innerType?._def ?? schema.shape[key]._def
                         return <Fragment key={key}>
