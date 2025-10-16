@@ -277,6 +277,12 @@ export const DevicesAutoAPI = AutoAPI({
         }
         // before deleting a device, remove all actions and cards associated with it
         await deleteDeviceActions(data.name)
+        //also delete the folder in data/devices/[deviceName]
+        const devicePath = path.join(process.cwd(), getRoot(req), "data", "devices", data.name)
+        if(fs.existsSync(devicePath)){
+            fs.rmSync(devicePath, { recursive: true, force: true });
+            // console.log("🤖 ~ Deleted device path:", devicePath)
+        }
         return data;
     }
 
