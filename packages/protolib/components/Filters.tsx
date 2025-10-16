@@ -1,11 +1,12 @@
 import { DatePicker } from './datepickers';
 import { Tinted } from './Tinted'
 import { SelectList } from './SelectList'
-import { Filter, Check, X, RefreshCcw } from '@tamagui/lucide-icons'
-import { XStack, Button, Popover, Text, Label, YStack, Checkbox, Tooltip, Input } from '@my/ui'
+import { Filter, X, RefreshCcw } from '@tamagui/lucide-icons'
+import { XStack, Button, Popover, Text, Label, YStack, Tooltip, Input, Stack, Switch, Circle } from '@my/ui'
 import { Fragment, useState } from 'react';
 import { usePageParams } from '../next';
 import { Chip } from './Chip';
+import { InteractiveIcon } from './InteractiveIcon';
 
 type FiltersType = {
     model: any,
@@ -100,7 +101,8 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
         var value: any = query[`filter[${key}]`]
 
         if (def?.typeName === 'ZodBoolean') {
-            value = value == "true"
+            if (value === "true") value = true
+            else if (value === "false") value = false
         }
 
         const onFilter = (value) => {
@@ -121,16 +123,20 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
         }
 
         if (def?.typeName === 'ZodBoolean') {
+            const isUndefined = value === undefined
             return <>
                 <Label>{key}</Label>
-                <Checkbox
-                    checked={value}
-                    onCheckedChange={(val) => onFilter(val)}
-                >
-                    <Checkbox.Indicator>
-                        <Check></Check>
-                    </Checkbox.Indicator>
-                </Checkbox>
+                <Tinted>
+                    <Stack flexDirection="row" gap="$2" alignItems="center">
+                        <Switch cursor="pointer" checked={value === true} onCheckedChange={onFilter} size="$2" bc="$color7">
+                            {/*@ts-ignore*/}
+                            <Switch.Thumb style={{ width: isUndefined ? '100%' : '50%' }} animation="quick">
+                                {isUndefined ? <Stack enterStyle={{ opacity: 0 }} alignSelf="center"><Circle size={18} fillOpacity={1} fill="var(--color)"></Circle></Stack> : null}
+                            </Switch.Thumb>
+                        </Switch>
+                        <InteractiveIcon IconColor='$gray10' Icon={RefreshCcw} onPress={() => removePush(`filter[${key}]`)} />
+                    </Stack>
+                </Tinted>
             </>
         } else if (def?.typeName === 'ZodDate') {
             return <>
@@ -147,7 +153,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                 <SelectList
                     triggerProps={{ bc: "$bgContent" }}
                     titleStyle={{ normal: { bc: "$bgContent" } }}
-                    rowStyle={{ normal: { bc: "$bgContent" }, hover: { bc: "$bgPanel" } }}
+                    rowStyle={{ normal: { bc: "$bgContent" }, hover: { filter: "brightness(0.5)", bc: "$bgContent" } }}
 
                     value={value}
                     title={key}
