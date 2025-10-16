@@ -184,6 +184,33 @@ export const ActionCard = ({
     const isAutoResponsive = data?.autoResponsive !== false;
     const isCardMinimized = isAutoResponsive && cardRef.current?.offsetHeight < 200;
     const valueString = (value === undefined || value == "") ? "N/A" : JSON.stringify(value);
+    const POPOVER_MAX_HEIGHT = 500
+    const [popoverOpen, setPopoverOpen] = useState(false)
+    const [popoverPlacement, setPopoverPlacement] = useState<'top' | 'bottom'>('bottom')
+
+    useEffect(() => {
+        if (!popoverOpen) return
+        const updatePlacement = () => {
+            if (!cardRef.current || typeof window === 'undefined') return
+            const rect = (cardRef.current as any).getBoundingClientRect()
+            const viewportH = window.innerHeight
+            const spaceBelow = viewportH - rect.bottom
+            const spaceAbove = rect.top
+            // include a small margin so it doesn't feel cramped
+            const needed = POPOVER_MAX_HEIGHT + 16
+            // choose top if below is tight and above has more room
+            const shouldTop = spaceBelow < needed && spaceAbove > spaceBelow
+            setPopoverPlacement(shouldTop ? 'top' : 'bottom')
+        }
+
+        updatePlacement()
+        window.addEventListener('resize', updatePlacement)
+        window.addEventListener('scroll', updatePlacement, true) // capture scrolls in parents too
+        return () => {
+            window.removeEventListener('resize', updatePlacement)
+            window.removeEventListener('scroll', updatePlacement, true)
+        }
+    }, [popoverOpen])
 
     useEventEffect((payload, msg) => {
         try {
@@ -308,7 +335,13 @@ export const ActionCard = ({
                 </>
             }
         >
-            <Popover>
+            <Popover
+                open={popoverOpen}
+                onOpenChange={setPopoverOpen}
+                placement={`${popoverPlacement}-start`}
+                allowFlip={false}
+                stayInFrame
+            >
                 <Popover.Trigger
                     cursor='pointer'
                     display={isCardMinimized ? 'flex' : 'none'}
@@ -348,7 +381,7 @@ export const ActionCard = ({
                         </Button>}
                     </XStack>
                 </Popover.Trigger>
-                <Popover.Content backgroundColor="$bgPanel" borderWidth={1} borderColor="$gray6" maxHeight={500} minWidth={300} overflow='auto' alignItems='stretch'>
+                <Popover.Content backgroundColor="$bgPanel" borderWidth={1} borderColor="$gray6" maxHeight={POPOVER_MAX_HEIGHT} minWidth={300} overflow='auto' alignItems='stretch'>
                     <div>
                         {children}
                     </div>
