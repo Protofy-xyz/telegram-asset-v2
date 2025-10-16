@@ -9,7 +9,8 @@ export const useRemoteStateList = (
   topic,
   model,
   quickRefresh = false,
-  disableNotifications?
+  disableNotifications?,
+  maxItems = 0
 ) => {
   const [dataState, setDataState] = useState<PendingResult | undefined>(items);
   const lastSeenId = useRef<number>(0);
@@ -50,11 +51,18 @@ export const useRemoteStateList = (
             const list = currentData.items || [];
 
             switch (action) {
-              case 'create':
+              case 'create': {
+                let nextItems = [mqttData, ...list];
+
+                if (typeof maxItems === 'number' && maxItems > 0 && nextItems.length > maxItems) {
+                  nextItems = nextItems.slice(0, maxItems);
+                }
+
                 return {
                   ...prev,
-                  data: { ...currentData, items: [mqttData, ...list] },
+                  data: { ...currentData, items: nextItems },
                 };
+              }
               case 'delete': {
                 const newItemsDelete = list.filter(
                   (it) =>
