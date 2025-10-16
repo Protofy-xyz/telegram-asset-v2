@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Text, TooltipSimple } from '@my/ui'
 import { XStack, YStack, Button, Spinner } from '@my/ui'
-import { Trash, Plus, ArrowUp } from '@tamagui/lucide-icons'
+import { Trash, Plus, ArrowUp, X } from '@tamagui/lucide-icons'
 import dynamic from 'next/dynamic';
 
 const BoardTextArea = dynamic(() =>
@@ -90,7 +90,7 @@ export const Rules = ({
     const res = await normalizeAdd(onAddRule, e, newRule)
     setGenerating(false)
     if (res.ok) setNewRule('')
-    else setErrorMsg(res.message || 'No se pudo añadir la regla.')
+    else setErrorMsg(res.message || 'Error adding rule.')
   }
 
   const reloadRules = async (e) => {
@@ -98,6 +98,16 @@ export const Rules = ({
     setGenerating(true)
     setErrorMsg(null)
     await onReloadRules(draftRules)
+    setGenerating(false)
+  }
+
+  const editFirstRule = async () => {
+    setGenerating(true)
+    try {
+      await onEditRule?.(0, draftRules[0])
+    } catch (e) {
+      setErrorMsg(e?.message || 'Error editing rule.')
+    }
     setGenerating(false)
   }
 
@@ -139,19 +149,24 @@ export const Rules = ({
             value={draftRules[0]}
             onChange={(e) => {
               // setNewRule(e.target.value)
+              setErrorMsg(null)
               setDraftAt(0, e.target.value)
             }}
-            onEnter={async (e) => {
-              // addRule(e)
-              setGenerating(true)
-              await onEditRule?.(0, draftRules[0])
-              setGenerating(false)
-            }}
+            onEnter={editFirstRule}
             style={{ width: '100%', paddingBottom: 30 }}
             disabled={isLoadingOrGenerating}
             enableShortcuts={true}
             footer={
-              <XStack justifyContent='flex-end'>
+              <XStack justifyContent='space-between' w="100%" ai="center">
+                <XStack>
+                  {errorMsg && (
+                    <YStack mt="$1" mb="$2" px="$1">
+                      <Text color="$red10" fontSize="$2">
+                        {errorMsg}
+                      </Text>
+                    </YStack>
+                  )}
+                </XStack>
                 <TooltipSimple
                   label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"}
                   delay={{ open: 500, close: 0 }}
@@ -162,15 +177,15 @@ export const Rules = ({
                     p="$0"
                     disabled={isLoadingOrGenerating || !ruleHasChanged}
                     onMouseDown={(e) => e.stopPropagation()}
-                    bg={ruleHasChanged ? '$color' : '$gray3'}
+                    bg={ruleHasChanged ? '$color' : 'transparent'}
                     color={ruleHasChanged ? "$gray3" : '$color'}
                     hoverStyle={{ backgroundColor: '$gray11' }}
                     pressStyle={{ backgroundColor: '$gray10' }}
                     circular
                     icon={isLoadingOrGenerating ? Spinner : (newRule.trim().length ? Plus : ArrowUp)}
                     scaleIcon={1.4}
-                    onPress={async () => await onEditRule?.(0, draftRules[0])}
-                    // onPress={newRule.trim().length > 1 ? addRule : reloadRules}
+                    onPress={editFirstRule}
+                  // onPress={newRule.trim().length > 1 ? addRule : reloadRules}
                   />
                 </TooltipSimple>
               </XStack>
@@ -178,14 +193,6 @@ export const Rules = ({
           />
 
         </XStack>
-
-        {errorMsg && (
-          <YStack mt="$1" mb="$2" px="$1">
-            <Text color="$red9" fontSize="$2">
-              {errorMsg}
-            </Text>
-          </YStack>
-        )}
       </> : disabledConfig?.["disabledView"]?.()}
     </YStack>
   )
