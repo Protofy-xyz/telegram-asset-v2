@@ -10,7 +10,7 @@ import { InteractiveIcon } from "protolib/components/InteractiveIcon"
 import { useBoardVersions } from "./utils/versions"
 import { useBoardVersion } from './store/boardStore';
 
-type VersionInfo = { version: number; savedAt: number | string }
+type VersionInfo = { version: number; savedAt: number | string, cards: string[]; change: { type?: string; card?: string } }
 
 export function VersionTimeline({ boardId }: { boardId: string }) {
   const [versions, setVersions] = useState<VersionInfo[]>([])
@@ -95,7 +95,7 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
                   Total cards: {v.cards.length}
                 </XStack>
                 <XStack>
-                  Changes: {v.change}
+                  Changes: {`${v.change.type} card ${v.change.card}`}
                 </XStack>
               </Paragraph>
 
