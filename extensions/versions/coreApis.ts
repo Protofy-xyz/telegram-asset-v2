@@ -32,13 +32,13 @@ const getChange = (prevData = { cards: [] }, currData = { cards: [] }) => {
     const currKeys = Object.keys(curr);
 
     const addedKey = currKeys.find(k => !prev[k]);
-    if (addedKey) return { type: "Added", card: curr[addedKey] };
+    if (addedKey) return { type: "Adds", card: curr[addedKey] };
 
     const removedKey = prevKeys.find(k => !curr[k]);
-    if (removedKey) return { type: "Removed", card: prev[removedKey] };
+    if (removedKey) return { type: "Removes", card: prev[removedKey] };
 
     const editedKey = currKeys.find(k => prev[k] && JSON.stringify(prev[k]) !== JSON.stringify(curr[k]));
-    if (editedKey) return { type: "Edited", card: curr[editedKey] };
+    if (editedKey) return { type: "Edits", card: curr[editedKey] };
 
     return { type: "No changes", card: null };
 };
@@ -87,7 +87,7 @@ export default async (app, context) => {
                     : { cards: [] };
                 const currData = await readJson(filePath);
                 const { type, card } = getChange(prevData, currData);
-                const change = card ? `${type} card ${card.name}` : "no changes";
+                const change = card ? {type: type, card: card.name} : {};
 
                 return {
                     version: currData.version ?? version,

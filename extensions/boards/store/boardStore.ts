@@ -3,10 +3,17 @@ import { useEffect, useState } from 'react'
 
 export const highlightedCard = atom("")
 export const boardVersion = atom(1)
+export const versions = atom<number[]>([]);
+export const loading = atom(false);
+export const busy = atom(false);
 
 export const useBoardVersion = () => {
     return useAtom(boardVersion)
 } 
+
+export const useVersions = () => useAtom(versions);
+export const useLoading  = () => useAtom(loading);
+export const useBusy = () => useAtom(busy);
 
 export const useHighlightedCard = () => {
     return useAtom(highlightedCard)

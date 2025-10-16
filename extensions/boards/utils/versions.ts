@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useBoardVersion } from '../store/boardStore';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useBoardVersion, useBusy, useLoading, useVersions } from '../store/boardStore';
+import { atom, useAtom } from 'jotai'
 
 /* ---------- API calls (cliente) ---------- */
 
@@ -39,11 +40,12 @@ export const getCurrentVersion = async (boardId: string): Promise<number | null>
 };
 
 
+
 export function useBoardVersions(boardId?: string) {
-  const [versions, setVersions] = useState<number[]>([]);
+  const [versions, setVersions] = useVersions();
   const [current, setCurrent] = useBoardVersion();
-  const [loading, setLoading] = useState(false);
-  const busyRef = useRef(false);
+  const [loading, setLoading] = useLoading();
+  const [busy, setBusy] = useBusy();
 
   const canUndo = current > 1;
   const canRedo = current >= 1 && current < versions.length;
@@ -76,14 +78,14 @@ export function useBoardVersions(boardId?: string) {
 
   const goToVersion = useCallback(
     async (target: number) => {
-      if (!boardId || busyRef.current) return;
+      if (!boardId || busy) return;
       if (!versions.includes(target)) return; // sanity
-      busyRef.current = true;
+      setBusy(true);
       try {
         await restoreVersion(boardId, target);
         setCurrent(target);
       } finally {
-        busyRef.current = false;
+        setBusy(false);
       }
     },
     [boardId, versions]
@@ -101,21 +103,6 @@ export function useBoardVersions(boardId?: string) {
     await goToVersion(target);
   }, [canRedo, current, versions, goToVersion]);
 
-  const snapshot = useCallback(async () => {
-    if (!boardId || busyRef.current) return;
-    busyRef.current = true;
-    try {
-      const { version: newV } = await createVersion(boardId);
-      setVersions(prev => {
-        if (prev.includes(newV)) return prev;
-        const next = [...prev, newV].sort((a, b) => a - b);
-        return next;
-      });
-      setCurrent(newV);
-    } finally {
-      busyRef.current = false;
-    }
-  }, [boardId]);
 
   return {
     versions,         // lista ordenada
@@ -123,7 +110,7 @@ export function useBoardVersions(boardId?: string) {
     canUndo, canRedo,
     loading,
     refresh,          // fuerza relectura (por si hay cambios externos)
-    undo, redo, snapshot,
+    undo, redo,
     goToVersion,      // por si quieres saltar a una versión concreta desde UI
   };
 }

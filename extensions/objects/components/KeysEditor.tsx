@@ -51,9 +51,11 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
     const hasModifier = (k: string, v: string) => data?.[k]?.modifiers?.some((m: any) => m.name === v) ?? false
 
     const setType = useCallback(
-        (k: string, v: "string" | "number" | "boolean") => {
+        (k: string, v: "string" | "number" | "boolean" | "array") => {
             const next = { ...data }
-            next[k] = { ...next[k], type: v }
+            const prev = next[k]
+            const params = v === 'array' ? ["z.any()"] : prev.params
+            next[k] = { ...prev, type: v, ...(params ? { params } : {}) }
             setData(next)
         },
         [data, setData]
