@@ -6,6 +6,7 @@ import { Code, List, LayoutList, ChevronUp, ChevronDown, Check, Lock, Unlock, Tr
 import { XStack, Text, YStack, ToggleGroup, Label, Paragraph, Spinner, Input, Button, Checkbox, TooltipSimple, Popover } from "@my/ui";
 import { API } from 'protobase'
 import { Tinted } from 'protolib/components/Tinted';
+import { InputMultiple } from 'protolib/components/InputMultiple';
 
 type KeysSchemaFieldProps = { path: string[], value: any, setValue: (value: any) => void, mode: string, formData: any }
 
@@ -51,10 +52,22 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
     const hasModifier = (k: string, v: string) => data?.[k]?.modifiers?.some((m: any) => m.name === v) ?? false
 
     const setType = useCallback(
-        (k: string, v: "string" | "number" | "boolean" | "array") => {
+        (k: string, v: "string" | "number" | "boolean" | "array" | "union") => {
             const next = { ...data }
             const prev = next[k]
-            const params = v === 'array' ? ["z.any()"] : prev.params
+            let params = prev.params
+            switch (v) {
+                case 'array': {
+                    params = ["z.any()"]
+                    break
+                } case 'union': {
+                    const hasUnionParams = Array.isArray(prev.params) && prev.params.length > 0 && /z\.literal\(/.test(prev.params.join(','))
+                    params = hasUnionParams ? prev.params : ["[z.literal(\"option1\"), z.literal(\"option2\")]"]
+                    break
+                } default:
+                    break
+            }
+
             next[k] = { ...prev, type: v, ...(params ? { params } : {}) }
             setData(next)
         },
@@ -111,7 +124,7 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
         const isId = hasModifier(k, "id")
         const isOptional = hasModifier(k, "optional")
         const [isHovered, setIsHovered] = useState(false)
-        const isEditableType = ["string", "number", "boolean", "array"].includes(data[k]?.type)
+        const isEditableType = ["string", "number", "boolean", "array", "union"].includes(data[k]?.type)
 
         const commitName = () => {
             if (draftName.trim() && draftName !== k) renameKey(k, draftName)
@@ -176,12 +189,12 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
                                     {data[k]?.type || "string"}
                                 </Button>
                             </Popover.Trigger>
-                            <Popover.Content maxHeight={200} padding="$2" gap="$1" bc="$gray1" borderColor="$gray5" borderWidth={1}>
-                                {["string", "number", "boolean", "array"].map((typeOption) => (
+                            <Popover.Content maxHeight={240} padding="$2" gap="$1" bc="$gray1" borderColor="$gray5" borderWidth={1}>
+                                {["string", "number", "boolean", "array", "union"].map((typeOption) => (
                                     <Button
                                         key={typeOption}
                                         onPress={() => {
-                                            setType(k, typeOption as "string" | "number" | "boolean" | "array")
+                                            setType(k, typeOption as "string" | "number" | "boolean" | "array" | "union")
                                             setShowModifiers("")
                                         }}
                                         backgroundColor={data[k]?.type === typeOption ? "$color2" : "transparent"}
@@ -227,70 +240,122 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
                 </XStack>
 
                 {showModifiers == k && (
-                    <YStack p="$4" borderTopColor={"$gray6"} borderTopWidth={1}>
-                        <Text color="$gray11" fontSize="$3">modifiers</Text>
-                        <XStack flexWrap="wrap" gap="$2" width="100%">
-                            {modifiersOptions.map((mod) => {
-                                const isSelected = data[k]?.modifiers?.some((m: any) => m.name === mod)
-                                return (
-                                    <Tinted key={mod}>
-                                        <XStack
-                                            width="130px"
-                                            alignItems="center"
-                                            gap="$2"
-                                            flexDirection="row"
-                                        >
-                                            <Checkbox
-                                                checked={isSelected}
-                                                onCheckedChange={() => toggleModifier(k, mod)}
-                                                backgroundColor="$gray1"
-                                                borderColor="$gray6"
+                    <YStack p="$4" borderTopColor={"$gray6"} borderTopWidth={1} gap="$4">
+                        {data[k]?.type === 'union' && (
+                            <YStack gap="$3">
+                                <Text ml="$2" color="$gray11" fontSize="$3">union options</Text>
+                                <UnionValuesEditor k={k} data={data} setData={setData} mode={mode} />
+                            </YStack>
+                        )}
+                        <YStack>
+                            <Text ml="$2" color="$gray11" fontSize="$3">modifiers</Text>
+                            <XStack flexWrap="wrap" gap="$2" width="100%">
+                                {modifiersOptions.map((mod) => {
+                                    const isSelected = data[k]?.modifiers?.some((m: any) => m.name === mod)
+                                    return (
+                                        <Tinted key={mod}>
+                                            <XStack
+                                                width="130px"
+                                                alignItems="center"
+                                                gap="$2"
+                                                flexDirection="row"
                                             >
-                                                <Checkbox.Indicator>
-                                                    <Check color="$color9" />
-                                                </Checkbox.Indicator>
-                                            </Checkbox>
-                                            <Label>{mod}</Label>
-                                        </XStack>
-                                    </Tinted>
-                                )
-                            })}
-                            {(data[k]?.modifiers ?? [])
-                                .filter((m: any) =>
-                                    !modifiersOptions.includes(m.name) &&
-                                    (allModifiers?.some((opt: any) => opt === m.name)) &&
-                                    !["optional", "id"].includes(m.name)
-                                )
-                                .map((m: any) => (
-                                    <TooltipSimple key={m.name} placement='bottom-start' label={"Only editable in code view"} delay={{ open: 500, close: 0 }} restMs={0}>
-                                        <XStack
-                                            key={m.name}
-                                            width="130px"
-                                            alignItems="center"
-                                            gap="$2"
-                                            flexDirection="row"
-                                        >
-                                            <Checkbox
-                                                checked={true}
-                                                disabled={true}
-                                                backgroundColor="$gray1"
-                                                borderColor="transparent"
+                                                <Checkbox
+                                                    checked={isSelected}
+                                                    onCheckedChange={() => toggleModifier(k, mod)}
+                                                    backgroundColor="$gray1"
+                                                    borderColor="$gray6"
+                                                >
+                                                    <Checkbox.Indicator>
+                                                        <Check color="$color9" />
+                                                    </Checkbox.Indicator>
+                                                </Checkbox>
+                                                <Label>{mod}</Label>
+                                            </XStack>
+                                        </Tinted>
+                                    )
+                                })}
+                                {(data[k]?.modifiers ?? [])
+                                    .filter((m: any) =>
+                                        !modifiersOptions.includes(m.name) &&
+                                        (allModifiers?.some((opt: any) => opt === m.name)) &&
+                                        !["optional", "id"].includes(m.name)
+                                    )
+                                    .map((m: any) => (
+                                        <TooltipSimple key={m.name} placement='bottom-start' label={"Only editable in code view"} delay={{ open: 500, close: 0 }} restMs={0}>
+                                            <XStack
+                                                key={m.name}
+                                                width="130px"
+                                                alignItems="center"
+                                                gap="$2"
+                                                flexDirection="row"
                                             >
-                                                <Checkbox.Indicator>
-                                                    <Code color="$color10" />
-                                                </Checkbox.Indicator>
-                                            </Checkbox>
-                                            <Label>{m.name}</Label>
-                                        </XStack>
-                                    </TooltipSimple>
-                                ))
-                            }
-                        </XStack>
+                                                <Checkbox
+                                                    checked={true}
+                                                    disabled={true}
+                                                    backgroundColor="$gray1"
+                                                    borderColor="transparent"
+                                                >
+                                                    <Checkbox.Indicator>
+                                                        <Code color="$color10" />
+                                                    </Checkbox.Indicator>
+                                                </Checkbox>
+                                                <Label>{m.name}</Label>
+                                            </XStack>
+                                        </TooltipSimple>
+                                    ))
+                                }
+                            </XStack>
+                        </YStack>
                     </YStack>
                 )}
 
             </YStack>
         )
+    }
+
+
+    const UnionValuesEditor = ({ k, data, setData, mode }: { k: string, data: any, setData: (v: any) => void, mode: string }) => {
+
+        const extractUnionLiterals = (params?: string[]) => {
+            if (!params || !params.length) return [] as string[]
+            const joined = params.join(',')
+            const re = /z\.literal\((['"])(.*?)\1\)/g
+            const values: string[] = []
+            let m: RegExpExecArray | null
+            while ((m = re.exec(joined)) !== null) {
+                values.push(m[2])
+            }
+            return values
+        }
+
+        const buildUnionParams = (values: string[]) => {
+            const body = values.map(v => `z.literal(${JSON.stringify(v)})`).join(', ')
+            return [`[${body}]`]
+        }
+        const values = useMemo(() => extractUnionLiterals(data?.[k]?.params), [data?.[k]?.params, data])
+
+        const commit = (nextValues: string[]) => {
+            const next = { ...data }
+            const prev = next[k] || {}
+            next[k] = { ...prev, params: buildUnionParams(nextValues) }
+            setData(next)
+        }
+
+        const handleSet = (arr: string[]) => {
+            if (!(mode === 'add' || mode === 'edit')) return
+            commit(arr)
+        }
+
+        const invalid = values.length < 2
+        return <YStack gap="$2">
+            <Tinted>
+                <InputMultiple values={values} setValues={handleSet} placeholder="Add options (comma, enter or newline)" />
+            </Tinted>
+            {invalid && (
+                <Text color="$red9" fontSize="$2">At least 2 options are required for a union.</Text>
+            )}
+        </YStack>
     }
 
     const AddKeyForm = () => {
