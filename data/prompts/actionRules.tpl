@@ -30,6 +30,14 @@ The board object has the following shape:
 {{{states}}}
 </board_object>
 
+{{#if previousRules}}
+The system has this previous rules array:
+<previus_rules>
+    {{{previousRules}}}
+</previus_rules>
+these rules must be replaced by the following new rules
+{{/if}}
+
 The rules array is:
 <rules>
     {{{rules}}}
