@@ -38,6 +38,7 @@ import { useAtom as useJotaiAtom } from 'jotai'
 import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard } from '../utils/viewUtils'
 import { ActionCard } from '../components/ActionCard'
 import { VersionTimeline } from '../VersionTimeline'
+import { useBoardVersions } from '../utils/versions'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -51,7 +52,7 @@ class ValidationError extends Error {
   }
 }
 
-const saveBoard = async (boardId, data, setBoardVersion?, opts = { bumpVersion: true }) => {
+const saveBoard = async (boardId, data, setBoardVersion?, refresh?, opts = { bumpVersion: true }) => {
   try {
     if (opts.bumpVersion) {
       if (!data.version) {
@@ -62,6 +63,9 @@ const saveBoard = async (boardId, data, setBoardVersion?, opts = { bumpVersion: 
       data.savedAt = Date.now()
     }
     await API.post(`/api/core/v1/boards/${boardId}`, data);
+    if (opts.bumpVersion && refresh) {
+      refresh();
+    }
     setBoardVersion && setBoardVersion(data.version)
   } catch (error) {
     console.error("Error saving board:", error);
@@ -70,8 +74,8 @@ const saveBoard = async (boardId, data, setBoardVersion?, opts = { bumpVersion: 
 
 const checkCard = async (cards, newCard) => {
   const errors = []
-  console.log("cards: ", cards)
-  console.log("newCard: ", newCard)
+  //console.log("cards: ", cards)
+  //console.log("newCard: ", newCard)
   const existingCard = cards.find(item => item.name === newCard.name && item.key !== newCard.key);
   if (existingCard) {
     console.error('A card with the same name already exists')
@@ -354,6 +358,7 @@ const Board = ({ board, icons }) => {
   }, [isEditing]);
 
   const [boardVersion, setBoardVersion] = useBoardVersion()
+  const { refresh } = useBoardVersions(board.name);
 
   //@ts-ignore store the states in the window object to be used in the cards htmls
   window['protoStates'] = states
@@ -415,7 +420,7 @@ const Board = ({ board, icons }) => {
           });
 
           board.cards = newItems;
-          saveBoard(board.name, board, setBoardVersion)
+          saveBoard(board.name, board, setBoardVersion, refresh)
           return newItems;
         } else {
           console.error('Card not found:', cardId);
@@ -440,7 +445,7 @@ const Board = ({ board, icons }) => {
     // if (newItems.length == 0) newItems.push(addCard) // non necessary
     setItems(newItems)
     boardRef.current.cards = newItems
-    await saveBoard(board.name, boardRef.current, setBoardVersion)
+    await saveBoard(board.name, boardRef.current, setBoardVersion, refresh)
     setIsDeleting(false)
     setCurrentCard(null)
   }
@@ -480,7 +485,7 @@ const Board = ({ board, icons }) => {
     const newItems = [...boardRef.current?.cards, newCard].filter(item => item.key !== 'addwidget');
     setItems(newItems)
     boardRef.current.cards = newItems;
-    await saveBoard(board.name, boardRef.current, setBoardVersion);
+    await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
 
     // animate to the bottom
     setTimeout(() => {
@@ -502,12 +507,12 @@ const Board = ({ board, icons }) => {
 
     setItems(newItems)
     boardRef.current.cards = newItems
-    saveBoard(board.name, boardRef.current, setBoardVersion);
+    saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
   }
 
   const onEditBoard = async () => {
     try {
-      await saveBoard(board.name, boardRef.current, setBoardVersion)
+      await saveBoard(board.name, boardRef.current, setBoardVersion, refresh)
     } catch (err) {
       alert('Error editing board')
     }
@@ -579,7 +584,7 @@ const Board = ({ board, icons }) => {
               }
             })
             setItems(newItems);
-            saveBoard(board.name, boardRef.current, setBoardVersion);
+            saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
           }}
           onDelete={() => {
             setIsDeleting(true);
@@ -699,7 +704,7 @@ const Board = ({ board, icons }) => {
       setErrors([]);
       setItems(newItems);
       boardRef.current.cards = newItems;
-      await saveBoard(board.name, boardRef.current, setBoardVersion);
+      await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
       setCurrentCard(null);
       setIsEditing(false);
     } catch (e) {
@@ -843,7 +848,7 @@ const Board = ({ board, icons }) => {
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
                     console.log('New layout: ', layout)
                     boardRef.current.layouts[breakpointRef.current] = layout
-                    saveBoard(board.name, boardRef.current, setBoardVersion, { bumpVersion: false })
+                    saveBoard(board.name, boardRef.current, setBoardVersion, refresh, { bumpVersion: false })
                   }, 100)
                 }}
                 onBreakpointChange={(bp) => {
@@ -883,7 +888,7 @@ const Board = ({ board, icons }) => {
 }
 
 const BoardViewLoader = ({ workspace, boardData, iconsData, params, pageSession }) => {
-  console.log('BoardViewLoader', boardData, iconsData, params)
+  //console.log('BoardViewLoader', boardData, iconsData, params)
   return <AsyncView ready={boardData.status != 'loading' && iconsData.status != 'loading'}>
     <BoardControlsProvider board={boardData?.data} autopilotRunning={boardData?.data?.autopilot} boardName={params.board} >
       <BoardViewAdmin
@@ -960,7 +965,13 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
 export const BoardView = ({ workspace, pageState, initialItems, itemData, pageSession, extraData, board, icons }: any) => {
   const { params } = useParams()
   const [boardData, setBoardData] = useState(board ?? getPendingResult('pending'))
+  const {refresh} = useBoardVersions(params.board)
+
   usePendingEffect((s) => { API.get({ url: `/api/core/v1/boards/${params.board}/` }, s) }, setBoardData, board)
+  useEffect(() => {
+    refresh()
+    console.log('Board param changed, refreshing board version*************************')
+  }, [params.board])
 
   const [iconsData, setIconsData] = useState(icons ?? getPendingResult('pending'))
   usePendingEffect((s) => { API.get({ url: `/api/core/v1/icons` }, s) }, setIconsData, icons)

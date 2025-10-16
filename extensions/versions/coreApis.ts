@@ -52,17 +52,6 @@ export default async (app, context) => {
         if (v === null) return res.status(404).send({ error: 'board not found or invalid version' });
         return res.send({ version: v });
     });
-    // List versions
-    app.get('/api/core/v1/boards/:boardId/versions', requireAdmin(), async (req, res) => {
-        const root = getRoot(req);
-        const dir = fspath.join(VersionsBaseDir(root), req.params.boardId);
-        if (!fsSync.existsSync(dir)) return res.send([]);
-        const entries = (await fs.readdir(dir))
-            .filter(n => /^\d+$/.test(n))
-            .map(n => Number(n))
-            .sort((a, b) => a - b);
-        res.send(entries);
-    });
 
     // Get history
     app.get('/api/core/v1/boards/:boardId/history', requireAdmin(), async (req, res) => {
