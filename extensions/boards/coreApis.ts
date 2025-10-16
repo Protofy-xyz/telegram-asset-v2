@@ -798,7 +798,17 @@ export default async (app, context) => {
             const serializedContext = safeDump(cleanContext);
 
             delete req.body.actions[req.body.card.name]
-            const prompt = await context.autopilot.getPromptFromTemplate({ board: req.body.board, context: serializedContext, templateName: "actionRules", card: JSON.stringify(req.body.card, null, 4), states: JSON.stringify(req.body.states, null, 4), rules: JSON.stringify(req.body.rules, null, 4), actions: JSON.stringify(req.body.actions, null, 4), userParams: JSON.stringify(req.body.userParams, null, 4) });
+            const prompt = await context.autopilot.getPromptFromTemplate({ 
+                board: req.body.board, 
+                context: serializedContext, 
+                templateName: "actionRules", 
+                card: JSON.stringify(req.body.card, null, 4), 
+                states: JSON.stringify(req.body.states, null, 4), 
+                rules: JSON.stringify(req.body.rules, null, 4),
+                previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
+                actions: JSON.stringify(req.body.actions, null, 4), 
+                userParams: JSON.stringify(req.body.userParams, null, 4) 
+            });
 
             if (req.query.debug) {
                 console.log("Prompt: ", prompt)
@@ -825,7 +835,13 @@ export default async (app, context) => {
             }
         })
 
-        const prompt = await context.autopilot.getPromptFromTemplate({ templateName: "boardRules", states: JSON.stringify(req.body.states, null, 4), rules: JSON.stringify(req.body.rules, null, 4), actions: JSON.stringify(req.body.actions, null, 4) });
+        const prompt = await context.autopilot.getPromptFromTemplate({ 
+            templateName: "boardRules", 
+            states: JSON.stringify(req.body.states, null, 4), 
+            rules: JSON.stringify(req.body.rules, null, 4),
+            previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
+            actions: JSON.stringify(req.body.actions, null, 4) 
+        });
         if (req.query.debug) {
             console.log("Prompt: ", prompt)
         }
