@@ -19,21 +19,6 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
   const [boardVersion] = useBoardVersion();
   const current = boardVersion
 
-  // useEffect(() => {
-  //   ; (async () => {
-  //     try {
-  //       const res = await fetch(`/api/core/v1/boards/${boardId}/history`)
-  //       const raw = await res.json()
-  //       const data: VersionInfo[] = (raw ?? [])
-  //         .map((v: VersionInfo) => ({ ...v, savedAt: Number(v.savedAt) }))
-  //         .sort((a, b) => b.version - a.version)
-  //       //setVersions(data)
-  //     } catch {
-  //       //setVersions([])
-  //     }
-  //   })()
-  // }, [boardId])
-
   const fmt = (ts: number | string) => {
     const d = new Date(Number(ts))
     return isNaN(d.getTime())

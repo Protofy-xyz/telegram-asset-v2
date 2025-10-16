@@ -6,7 +6,6 @@ import { atom, useAtom } from 'jotai'
 
 export const listVersions = async (boardId: string): Promise<number[]> => {
   const r = await fetch(`/api/core/v1/boards/${boardId}/history`, { credentials: 'include' });
-  console.log("listVersions**************** - fetch /history response:", r);
   if (!r.ok) throw new Error('Failed to list versions');
   return r.json();
 };
@@ -63,13 +62,12 @@ export function useBoardVersions(boardId?: string) {
   const goToVersion = useCallback(
     async (target: number) => {
       if (!boardId || busy) return;
-
       setBusy(true);
       try {
         console.log("GO TO VERSIONtre", target, busy);
         await restoreVersion(boardId, target);
         setCurrent(target);
-        //document.location.reload();
+        document.location.reload();
       } finally {
         setBusy(false);
       }

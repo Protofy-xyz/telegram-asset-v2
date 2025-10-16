@@ -10,7 +10,7 @@ import { useBoardVersion } from './store/boardStore';
 import { reloadBoard, itemsAtom, automationInfoAtom, uiCodeInfoAtom } from '@extensions/boards/utils/viewUtils'
 import { useAtom } from 'jotai';
 
-const toggleInstantUndoRedo = false; // disables reload when undo/redo, still buggy
+const toggleInstantUndoRedo = true; // disables reload when undo/redo, still buggy
 
 const AutopilotButton = ({ generateEvent, autopilot }) => <ActionBarButton
   tooltipText={autopilot ? "Pause Autopilot" : "Play Autopilot"}
@@ -68,7 +68,7 @@ const getActionBar = (generateEvent) => {
   const [boardVersion] = useBoardVersion();
   const current = boardVersion
 
-  const { canUndo, canRedo, undo, redo, snapshot, refresh } = useBoardVersions(boardId || undefined);
+  const { canUndo, canRedo, undo, redo, refresh } = useBoardVersions(boardId || undefined);
   console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
 
   // Suscripción a errores nivel 50
@@ -156,14 +156,14 @@ const getActionBar = (generateEvent) => {
     // deps: si cambian estas, re-registra el handler
   }, [isJSONView, generateEvent]);
 
-  const undoRedoButtons = [<ActionBarButton
+  const toggleUndoRedoButtons = false
+  const undoRedoButtons = toggleUndoRedoButtons ? [<ActionBarButton
     tooltipText={canUndo ? `Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}` : 'No Undo Available'}
     Icon={Undo}
     disabled={!boardId || !canUndo}
     onPress={async () => {
       try {
         await undo?.();
-        await refresh();
         if (toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
         else document.location.reload();
       } catch (e) { console.error(e); }
@@ -176,24 +176,23 @@ const getActionBar = (generateEvent) => {
     onPress={async () => {
       try {
         await redo?.();
-        await refresh();
         if (toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
         else document.location.reload();
       } catch (e) { console.error(e); }
     }}
   />,
-  ]
+  ] : []
 
 
-  const versions = false //TOGGLE TO ENABLE HISTORY
-  const historyVersion = versions ? [  <ActionBarButton
+
+  const historyVersion = [<ActionBarButton
     tooltipText={tabVisible == "history" ? "Close History" : "Open History"}
     selected={tabVisible == "history"}
     Icon={FileClock}
     disabled={!boardId}
     onPress={() => generateEvent({ type: "toggle-history" })}
   />,
-  ] : []
+  ]
   const bars = {
     'JSONView': [
       <ActionBarButton Icon={X} iconProps={{ color: 'var(--gray9)' }} onPress={() => generateEvent({ type: "toggle-json" })} />,

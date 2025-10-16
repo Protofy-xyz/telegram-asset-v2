@@ -191,7 +191,7 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
     })
   })
 
-  const showHistory = false
+  const showHistory = true
   const tabs = {
     "states": {
       "label": "States",
