@@ -12,7 +12,7 @@ import { atomWithStorage } from 'jotai/utils'
 
 export const CollapsedSideMenuAtom = atomWithStorage('collapsedSideMenu', false)
 
-export const SideMenu = ({ sideBarColor = '$background', children, themeSwitcher = true, tintSwitcher = true, ...props }: any) => {
+export const SideMenu = ({ sideBarColor = '$background', children, themeSwitcher = true, tintSwitcher = true, logo, collapsedLogo, ...props }: any) => {
     const isXs = useMedia().xs
     const [open, setOpen] = useState(false)
     const [collapsed, setCollapsed] = useAtom(CollapsedSideMenuAtom)
@@ -44,8 +44,8 @@ export const SideMenu = ({ sideBarColor = '$background', children, themeSwitcher
             <YStack px="$5" pt="$8" jc="center" ai={collapsed ? "center" : "flex-start"} height={"fit-content"}>
                 {/* do not use ternary, use `display` to have both images loaded and only play 
                 with visibility */}
-                <YStack display={collapsed ? "none" : "flex"}>{props.logo}</YStack>
-                <YStack display={collapsed ? "flex" : "none"}>{props.collapsedLogo}</YStack>
+                <YStack display={collapsed ? "none" : "flex"}>{logo}</YStack>
+                <YStack display={collapsed ? "flex" : "none"}>{collapsedLogo}</YStack>
             </YStack>
             <YStack pos='relative'>
                 {React.cloneElement(children, { ...children.props, collapsed })}
