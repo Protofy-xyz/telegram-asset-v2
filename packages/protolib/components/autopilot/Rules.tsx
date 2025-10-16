@@ -9,7 +9,7 @@ const BoardTextArea = dynamic(() =>
   { ssr: false }
 );
 
-export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur, ...props }) => {
+export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur = (e) => {}, ...props }) => {
   return (
     <XStack ai="flex-end" gap="$2" mb="$2" width="100%" {...props}>
       <BoardTextArea
@@ -97,7 +97,7 @@ export const Rules = ({
     e.stopPropagation()
     setGenerating(true)
     setErrorMsg(null)
-    await onReloadRules(rules)
+    await onReloadRules(draftRules)
     setGenerating(false)
   }
 
@@ -117,7 +117,7 @@ export const Rules = ({
               value={rule}
               loading={loadingIndex === i}
               onEdit={(text) => setDraftAt(i, text)}
-              onBlur={() => commitIfChanged(i)}
+              // onBlur={() => commitIfChanged(i)}
               onDelete={async () => {
                 setGenerating(true)
                 setErrorMsg(null)
