@@ -26,9 +26,9 @@ export const QueryFilters = ({ state, extraFilters }) => {
             queryFilters.map((q, i) => <Tooltip key={i}>
                 <Tooltip.Trigger cursor='pointer' >
                     <Chip color={"$color6"} text={q.replace('filter[', '').replace(']', '')} textProps={{ fontWeight: '600', fontSize: 12 }} gap="$2" pl="$1" pr="$3" py="$1">
-                <Button onPress={() => removePush(q)} size="$1" circular={true}>
-                    <X size={12} color={"var(--color8)"}></X>
-                </Button>
+                        <Button onPress={() => removePush(q)} size="$1" circular={true}>
+                            <X size={12} color={"var(--color8)"}></X>
+                        </Button>
                     </Chip>
                 </Tooltip.Trigger>
                 <Tooltip.Content
@@ -63,6 +63,17 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
     const [open, setOpen] = useState(false)
     const { push, removePush, query } = usePageParams(state)
     const schema = model.getObjectSchema()
+    const shape = schema?.shape
+    const schemaKeys = Object.keys(shape || {})
+
+    const hasAnyFilterable = schemaKeys.some(key => {
+        const def = shape[key]?._def?.innerType?._def ?? shape[key]?._def
+        if (!def) return false
+        if (customFilters?.[key]?.component) return true
+        return ['ZodBoolean', 'ZodDate', 'ZodUnion'].includes(def?.typeName)
+    }) || extraFilters.length
+    
+    if (!hasAnyFilterable) return null  // Hide Filters menu if no filterable fields or extra filters
 
     const onClear = () => {
         removePush(Object.keys(query).filter(q => q.startsWith('filter')))
@@ -170,7 +181,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                     </XStack>
                 </Tinted>
                 <YStack overflow='scroll' overflowX='hidden' p="2px" maxHeight="300px">
-                    {Object.keys(schema.shape).map((key) => {
+                    {schemaKeys.map((key) => {
                         const def = schema.shape[key]._def?.innerType?._def ?? schema.shape[key]._def
                         return <Fragment key={key}>
                             {getFilter(def, key)}
