@@ -121,6 +121,9 @@ export default async (app, context) => {
             [`${boardId}_ui.js`, fspath.join(base, `${boardId}_ui.js`)],
         ];
 
+        const fileContent = fsSync.readFileSync(fspath.join(vdir, `${boardId}.json`), 'utf8');
+        const versionData = JSON.parse(fileContent);
+
         for (const [name, dst] of sources) {
             const src = fspath.join(vdir, name);
             if (fsSync.existsSync(src)) {
@@ -154,6 +157,6 @@ export default async (app, context) => {
         }
         // Re-registra acciones y estados derivados:
         await API.get("/api/core/v1/reloadBoards?token=" + getServiceToken())
-        res.send({ ok: true, restored: { boardId, version } });
+        res.send({ ok: true, restored: { boardId, version: versionData.version } });
     });
 };

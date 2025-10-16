@@ -43,7 +43,7 @@ export function useBoardVersions(boardId?: string) {
   const canUndo = current > 1;
   const canRedo = current >= 1 && current < versions.length;
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (includeVersion?: boolean) => {
     if (!boardId) return;
     setLoading(true);
     try {
@@ -53,7 +53,10 @@ export function useBoardVersions(boardId?: string) {
       ]);
 
       setVersions(list);
-      setCurrent(curr || null);
+      if(includeVersion) {
+        setCurrent(curr || null);
+      }
+      
     } finally {
       setLoading(false);
     }
@@ -64,9 +67,8 @@ export function useBoardVersions(boardId?: string) {
       if (!boardId || busy) return;
       setBusy(true);
       try {
-        console.log("GO TO VERSIONtre", target, busy);
-        await restoreVersion(boardId, target);
-        setCurrent(target);
+        const response = await restoreVersion(boardId, target);
+        setCurrent(response?.restored?.version ?? target);
         setBoardVersionId(v => v + 1) //to force reloading board
         // document.location.reload();
       } finally {
