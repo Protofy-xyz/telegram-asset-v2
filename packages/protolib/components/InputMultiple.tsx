@@ -168,6 +168,7 @@ export const InputMultiple = ({ values = [], setValues, placeholder }: InputMult
             bw={0}
             f={1}
             placeholder={placeholder ?? "Add an entry"}
+            placeholderTextColor="$gray8"
             value={draftValue}
             onChangeText={setDraftValue}
             onKeyPress={handleDraftKeyPress}

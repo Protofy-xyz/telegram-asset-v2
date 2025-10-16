@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Text, TooltipSimple } from '@my/ui'
 import { XStack, YStack, Button, Spinner } from '@my/ui'
-import { Trash, Plus, ArrowUp, X } from '@tamagui/lucide-icons'
+import { Trash, Plus, ArrowUp, X, Sparkles } from '@tamagui/lucide-icons'
 import dynamic from 'next/dynamic';
 
 const BoardTextArea = dynamic(() =>
@@ -59,6 +59,7 @@ export const Rules = ({
   const [draftRules, setDraftRules] = useState(rules ?? [])
   const [newRule, setNewRule] = useState("")
   const [generating, setGenerating] = useState(false)
+  const [isFocus, setIsFocus] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
 
   const setDraftAt = (i, text) =>
@@ -112,12 +113,19 @@ export const Rules = ({
   }
 
   const isLoadingOrGenerating = loadingIndex === rules.length || generating || loading
+  const ruleHasChanged = draftRules[0] !== rules[0] && draftRules[0] != ""
+  const differentRulesCode = ruleHasChanged && !isFocus
+
+  const borderStyles = {
+    borderColor: differentRulesCode ? "$color9" : errorMsg ? '$red10' : 'transparent',
+    borderWidth: (errorMsg || differentRulesCode) && !isLoadingOrGenerating ? 2 : 0,
+    borderStyle: 'dashed',
+  }
 
   useEffect(() => {
     setDraftRules(rules ?? [])
   }, [rules])
 
-  const ruleHasChanged = draftRules[0] !== rules[0] && draftRules[0] != ""
 
   return (
     <YStack height="100%" f={1} w="100%">
@@ -142,8 +150,12 @@ export const Rules = ({
         </YStack> */}
 
         {/* Input para nueva regla */}
-        <XStack gap="$3" width="100%" f={1}>
+        <XStack gap="$3" width="100%" f={1} {...borderStyles}>
           <BoardTextArea
+            onBlur={() => {
+              setTimeout(() => setIsFocus(false), 100)
+            }}
+            onFocus={() => setIsFocus(true)}
             speechRecognition={true}
             placeholder={isLoadingOrGenerating ? "Generating rules..." : "Add your rules here..."}
             value={draftRules[0]}
@@ -157,37 +169,57 @@ export const Rules = ({
             disabled={isLoadingOrGenerating}
             enableShortcuts={true}
             footer={
-              <XStack justifyContent='space-between' w="100%" ai="center">
-                <XStack>
-                  {errorMsg && (
-                    <YStack mt="$1" mb="$2" px="$1">
-                      <Text color="$red10" fontSize="$2">
-                        {errorMsg}
-                      </Text>
-                    </YStack>
-                  )}
+              <XStack justifyContent='space-between' w="100%" ai="flex-end">
+                <XStack mt="$1" mb="$2">
+                  {(errorMsg || differentRulesCode) && (<Text display={isLoadingOrGenerating ? 'none' : 'flex'} color={differentRulesCode ? "$color9" : "$red10"} fontSize="$3" >
+                    {differentRulesCode ? '⚠️ Rules not generated. Press "Enter" while generating or "press the send button".' : errorMsg}
+                  </Text>)}
                 </XStack>
-                <TooltipSimple
-                  label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"}
-                  delay={{ open: 500, close: 0 }}
-                  restMs={0}
-                >
-                  <Button
-                    size="$3"
-                    p="$0"
-                    disabled={isLoadingOrGenerating || !ruleHasChanged}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    bg={ruleHasChanged ? '$color' : 'transparent'}
-                    color={ruleHasChanged ? "$gray3" : '$color'}
-                    hoverStyle={{ backgroundColor: '$gray11' }}
-                    pressStyle={{ backgroundColor: '$gray10' }}
-                    circular
-                    icon={isLoadingOrGenerating ? Spinner : (newRule.trim().length ? Plus : ArrowUp)}
-                    scaleIcon={1.4}
-                    onPress={editFirstRule}
-                  // onPress={newRule.trim().length > 1 ? addRule : reloadRules}
-                  />
-                </TooltipSimple>
+                <XStack gap="$2">
+                  {differentRulesCode  && <TooltipSimple
+                    label={"Cancel changes"}
+                    delay={{ open: 500, close: 0 }}
+                    restMs={0}
+                    >
+                    <Button
+                    display={isLoadingOrGenerating ? 'none' : 'flex'}
+                      size="$3"
+                      p="$0"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      color={'$gray9'}
+                      bc="$bgContent"
+                      borderWidth={1}
+                      borderColor="$gray9"
+                      hoverStyle={{ backgroundColor: '$bgContent' }}
+                      pressStyle={{ backgroundColor: '$bgContent' }}
+                      circular
+                      icon={X}
+                      scaleIcon={1.4}
+                      onPress={() => setDraftAt(0, rules[0] || "")}
+                    />
+                  </TooltipSimple>}
+                  <TooltipSimple
+                    label={newRule.trim().length > 1 ? "Add Rule" : "Reload Rules"}
+                    delay={{ open: 500, close: 0 }}
+                    restMs={0}
+                  >
+                    <Button
+                      size="$3"
+                      p="$0"
+                      disabled={isLoadingOrGenerating || !ruleHasChanged}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      bg={ruleHasChanged ? '$color' : 'transparent'}
+                      color={ruleHasChanged ? "$gray3" : '$color'}
+                      hoverStyle={{ backgroundColor: '$gray11' }}
+                      pressStyle={{ backgroundColor: '$gray10' }}
+                      circular
+                      icon={isLoadingOrGenerating ? Spinner : (!ruleHasChanged ? Sparkles : ArrowUp)}
+                      scaleIcon={1.4}
+                      onPress={editFirstRule}
+                    // onPress={newRule.trim().length > 1 ? addRule : reloadRules}
+                    />
+                  </TooltipSimple>
+                </XStack>
               </XStack>
             }
           />
