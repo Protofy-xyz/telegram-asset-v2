@@ -118,14 +118,14 @@ export const ParamsEditor = ({
   }, [])
 
   const types = ["any", "string", "number", "boolean", "json", "array", "text", "path", "markdown", "html"]
-  const inputDefProps = { backgroundColor: "$gray1", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
+  const inputDefProps = { backgroundColor: "$bgContent", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
   const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
   return <TabContainer>
     <TabTitle tabname={"Inputs Configuration"} tabDescription='Configure all the dynamic inputs for your card' />
     <YStack flex={1} height="100%" w="100%" overflow="hidden" >
       <ScrollView mt="$3" flex={1} space="$3">
-        <YStack gap="$3" borderRadius="$3" p="$3" backgroundColor="$gray3">
+        <YStack gap="$3" borderRadius="$3" p="$3" backgroundColor="$bgPanel">
           <Label size="$4" pl="$2">Parameters</Label>
           {rows.map(({ rowId, paramKey, description, visible, defaultValue, type }) => (
             <XStack key={rowId} space="$2" alignItems="center" >
@@ -231,7 +231,7 @@ export const ParamsEditor = ({
             />
           </TooltipSimple>
         </YStack>
-        <YStack borderRadius="$3" p="$3" backgroundColor="$gray3">
+        <YStack borderRadius="$3" p="$3" backgroundColor="$bgPanel">
           <Label size="$4" pl="$2">Actions before run</Label>
           <LinksEditor
             mode={"pre"}

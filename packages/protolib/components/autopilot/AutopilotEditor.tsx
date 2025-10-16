@@ -139,16 +139,15 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
     return (
         <PanelGroup direction="horizontal">
-            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} showActionsTabs showStatesTabs />
-
-            <CustomPanelResizeHandle direction="vertical" />
-
-            {/* Rigth panel */}
             <Panel defaultSize={70} minSize={20}>
-                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor="$gray3" overflow="hidden" >
+                <YStack flex={1} height="100%" borderRadius="$3" gap="$2" overflow="hidden" >
                     <Tinted>{flows}</Tinted>
                 </YStack>
             </Panel>
+
+            <CustomPanelResizeHandle direction="vertical" borderLess={false} borderColor="var(--gray4)" />
+
+            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} showActionsTabs showStatesTabs />
         </PanelGroup>
     );
 };

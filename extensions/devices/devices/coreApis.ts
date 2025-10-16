@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
+import { removeActions } from "@extensions/actions/coreContext/removeActions";
 
 export const DevicesAutoAPI = AutoAPI({
     modelName: 'devices',
@@ -38,6 +39,53 @@ export default (app, context) => {
         devices/patata/button/relay/actions/status
         ...
     */
+    const deleteDeviceCards = async (deviceName: string) => {
+        try {
+            const token = getServiceToken();
+            // fetch the full cards tree
+            const cardsTree = await API.get(`/api/core/v1/cards?token=${token}`);
+
+            // cardsTree structure: { [group]: { [tag]: { [name]: {...} } } }
+            const deviceCards = cardsTree?.data?.devices?.[deviceName] || {};
+            const names = Object.keys(deviceCards);
+
+            if (!names.length) return;
+
+            // POST-based delete per card: /api/core/v1/cards/:group/:tag/:name/delete
+            await Promise.all(
+                names.map((name) =>
+                    API.post(
+                        `/api/core/v1/cards/devices/${encodeURIComponent(
+                            deviceName
+                        )}/${encodeURIComponent(name)}/delete?token=${token}`,
+                        {}
+                    ).catch((err) => {
+                        logger.error({ deviceName, name, err }, 'Failed deleting device card');
+                    })
+                )
+            );
+
+            logger.info({ deviceName, count: names.length }, 'Deleted device cards');
+        } catch (err) {
+            logger.error({ err }, 'Failed deleting cards for device');
+        }
+    };
+    const deleteDeviceActions = async (deviceName: string) => {
+        try {
+            // remove actions (ProtoMemDB 'actions' chunk) + emit delete events
+            await removeActions({
+                chunk: 'actions',
+                group: 'devices',
+                tag: deviceName,
+            });
+            logger.info({ deviceName }, 'Deleted device actions');
+
+            // also remove all cards belonging to this device
+            await deleteDeviceCards(deviceName);
+        } catch (err) {
+            logger.error({ deviceName, err }, 'Failed deleting actions/cards for device');
+        }
+    };
 
     // iterate over all devices and register an action for each subsystem action
     const registerActions = async () => {
@@ -46,6 +94,9 @@ export default (app, context) => {
         for await (const [key, value] of db.iterator()) {
             // console.log('device: ', value)
             const deviceInfo = DevicesModel.load(JSON.parse(value))
+            // 🔴 delete existing actions & cards for this device before adding new ones
+            await deleteDeviceActions(deviceInfo.data.name)
+
             for (const subsystem of deviceInfo.data.subsystem) {
                 // console.log('subsystem: ', subsystem)
                 if(subsystem.name == "mqtt") continue
