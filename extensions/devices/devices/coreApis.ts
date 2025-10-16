@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
+import { removeActions } from "@extensions/actions/coreContext/removeActions";
 
 export const DevicesAutoAPI = AutoAPI({
     modelName: 'devices',
@@ -69,6 +70,23 @@ export default (app, context) => {
             logger.error({ err }, 'Failed deleting cards for device');
         }
     };
+    const deleteDeviceActions = async (deviceName: string) => {
+        try {
+            // remove actions (ProtoMemDB 'actions' chunk) + emit delete events
+            await removeActions({
+                chunk: 'actions',
+                group: 'devices',
+                tag: deviceName,
+            });
+            logger.info({ deviceName }, 'Deleted device actions');
+
+            // also remove all cards belonging to this device
+            await deleteDeviceCards(deviceName);
+        } catch (err) {
+            logger.error({ deviceName, err }, 'Failed deleting actions/cards for device');
+        }
+    };
+
     // iterate over all devices and register an action for each subsystem action
     const registerActions = async () => {
         const db = getDB('devices')
@@ -76,8 +94,8 @@ export default (app, context) => {
         for await (const [key, value] of db.iterator()) {
             // console.log('device: ', value)
             const deviceInfo = DevicesModel.load(JSON.parse(value))
-            // 🔴 delete all existing cards for this device before adding new ones
-            await deleteDeviceCards(deviceInfo.data.name)
+            // 🔴 delete existing actions & cards for this device before adding new ones
+            await deleteDeviceActions(deviceInfo.data.name)
 
             for (const subsystem of deviceInfo.data.subsystem) {
                 // console.log('subsystem: ', subsystem)
