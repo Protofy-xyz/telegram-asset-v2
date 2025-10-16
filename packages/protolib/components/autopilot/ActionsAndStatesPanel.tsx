@@ -232,7 +232,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
     const [selectedStatesTab, setSelectedStatesTab] = useState(board.name)
     const [stateSearch, setStateSearch] = useState('')
     const [selectedActionsTab, setSelectedActionsTab] = useState(board.name)
-    console.log("ActionsAndStatesPanel:", { actions, states });
+    //console.log("ActionsAndStatesPanel:", { actions, states });
 
     const cleanedActions = useMemo(() => {
         const cleaned = {};

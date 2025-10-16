@@ -638,7 +638,7 @@ window.iframeCard = (html, rootId) => {
 
 window.reactCard = (jsx, rootId, initialProps = {}) => {
     const isFrameCard = jsx.includes('//@card/reactframe') || jsx.includes('// @card/reactframe');
-    console.log('debugjsx:host:enter', { rootId, isFrameCard, jsxLen: jsx?.length });
+    //console.log('debugjsx:host:enter', { rootId, isFrameCard, jsxLen: jsx?.length });
 
     // ----- MODO CLÁSICO -----
     if (!isFrameCard) {
@@ -677,7 +677,7 @@ window.reactCard = (jsx, rootId, initialProps = {}) => {
         root.render(element);
     `;
 
-        console.log("Compiling JSX code for rootId:", "${rootId}", jsxCode);
+        //console.log("Compiling JSX code for rootId:", "${rootId}", jsxCode);
 
         const compiled = Babel.transform(jsxCode, {
             presets: ['react'],
