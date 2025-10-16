@@ -609,6 +609,8 @@ export const BoardTextArea = ({
           value={dump(value, symbols)}
           placeholder={placeholder}
           disabled={disabled}
+          onBlur={rest.onBlur}
+          onFocus={rest.onFocus}
           onSelect={(e) => {
             const index = e.currentTarget.selectionStart ?? 0;
             setInputInsertIndex(index);
