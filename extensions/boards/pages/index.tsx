@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react'
 import { Slides } from 'protolib/components/Slides';
 import { TemplateCard } from '../../apis/TemplateCard';
 import { CardView } from './card'
+import { useBoardVersionId } from '../store/boardStore';
 
 const { useParams } = createParam()
 
@@ -176,9 +177,10 @@ export default {
   view: {
     component: (props: any) => {
       const { params } = useParams()
+      const [boardVersionId] = useBoardVersionId();
 
       return <AsyncView ready={params.board ? true : false}>
-        <BoardView key={params.board} {...props} board={undefined} />
+        <BoardView key={params.board+'_'+boardVersionId} {...props} board={undefined} />
       </AsyncView>
     },
     getServerSideProps: SSR(async (context) => withSession(context, ['admin'], async (session) => {

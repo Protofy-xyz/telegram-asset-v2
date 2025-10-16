@@ -76,7 +76,7 @@ export default async (app, context) => {
                     : { cards: [] };
                 const currData = await readJson(filePath);
                 const { type, card } = getChange(prevData, currData);
-                const change = card ? {type: type, card: card.name} : {};
+                const change = card ? { type: type, card: card.name } : {};
 
                 return {
                     version: currData.version ?? version,
@@ -134,7 +134,21 @@ export default async (app, context) => {
         // Restaura la carpeta del board
         const srcDir = fspath.join(vdir, boardId);
         const dstDir = fspath.join(base, boardId);
-        if (fsSync.existsSync(dstDir)) fsSync.rmSync(dstDir, { recursive: true, force: true });
+
+
+        const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+        if (fsSync.existsSync(dstDir)) {
+            for (let i = 0; i < 10; i++) {
+                try {
+                    await fs.rm(dstDir, { recursive: true, force: true });
+                    break; // OK
+                } catch (e: any) {
+                    if (!['ENOTEMPTY', 'EBUSY', 'EPERM'].includes(e?.code) || i === 9) throw e;
+                    await sleep(100 * (i + 1)); // backoff suave
+                }
+            }
+        }
         if (fsSync.existsSync(srcDir)) {
             await copyDirRecursive(srcDir, dstDir);
         }

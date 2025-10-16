@@ -1,5 +1,5 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useBoardVersion, useBusy, useLoading, useVersions } from '../store/boardStore';
+import { useBoardVersion, useBusy, useLoading, useVersions, useBoardVersionId } from '../store/boardStore';
 import { atom, useAtom } from 'jotai'
 
 /* ---------- API calls (cliente) ---------- */
@@ -36,6 +36,7 @@ export const getCurrentVersion = async (boardId: string): Promise<number | null>
 export function useBoardVersions(boardId?: string) {
   const [versions, setVersions] = useVersions();
   const [current, setCurrent] = useBoardVersion();
+  const [, setBoardVersionId] = useBoardVersionId();
   const [loading, setLoading] = useLoading();
   const [busy, setBusy] = useBusy();
 
@@ -43,7 +44,6 @@ export function useBoardVersions(boardId?: string) {
   const canRedo = current >= 1 && current < versions.length;
 
   const refresh = useCallback(async () => {
-    console.log("*************************REFFRESHING VERSIONS***********************", boardId);
     if (!boardId) return;
     setLoading(true);
     try {
@@ -67,7 +67,8 @@ export function useBoardVersions(boardId?: string) {
         console.log("GO TO VERSIONtre", target, busy);
         await restoreVersion(boardId, target);
         setCurrent(target);
-        document.location.reload();
+        setBoardVersionId(v => v + 1) //to force reloading board
+        // document.location.reload();
       } finally {
         setBusy(false);
       }

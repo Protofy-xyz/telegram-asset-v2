@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useTabVisible } from './store/boardStore';
 import { API } from 'protobase'
 
 type PanelSide = 'right' | 'left';
@@ -37,7 +38,7 @@ export const BoardControlsProvider: React.FC<{
   const [isJSONView, setIsJSONView] = useState(mode === 'json');
   const [addOpened, setAddOpened] = useState(addMenu === 'open');
   const [autopilot, setAutopilot] = useState(autopilotRunning);
-  const [tabVisible, setTabVisible] = useState<string>("");
+  const [tabVisible, setTabVisible] = useTabVisible();
   const [viewMode, setViewMode] = useState<"board" | "json" | "ui">('board');
 
   const [panelSide, setPanelSide] = useState<PanelSide>(

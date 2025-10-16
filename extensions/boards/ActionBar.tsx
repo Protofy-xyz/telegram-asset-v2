@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useBoardVersions } from './utils/versions';
 import { useSearchParams } from 'next/navigation';
 import { useBoardVersion } from './store/boardStore';
-import { reloadBoard, itemsAtom, automationInfoAtom, uiCodeInfoAtom } from '@extensions/boards/utils/viewUtils'
+import { itemsAtom, automationInfoAtom, uiCodeInfoAtom } from '@extensions/boards/utils/viewUtils'
 import { useAtom } from 'jotai';
 
 const toggleInstantUndoRedo = true; // disables reload when undo/redo, still buggy
@@ -68,8 +68,8 @@ const getActionBar = (generateEvent) => {
   const [boardVersion] = useBoardVersion();
   const current = boardVersion
 
-  const { canUndo, canRedo, undo, redo, refresh } = useBoardVersions(boardId || undefined);
-  console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
+  const { canUndo, canRedo, undo, redo, goToVersion } = useBoardVersions(boardId || undefined);
+  //console.log("*********ActionBar - boardId:", boardId, "canUndo:", canUndo, "canRedo:", canRedo, "currentVersion:", current);
 
   // Suscripción a errores nivel 50
   const coreError = useSubscription('logs/core/50');
@@ -110,10 +110,6 @@ const getActionBar = (generateEvent) => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
-
-  const [items, setItems] = useAtom(itemsAtom);
-  const [automationInfo, setAutomationInfo] = useAtom(automationInfoAtom);
-  const [uicodeInfo, setUICodeInfo] = useAtom(uiCodeInfoAtom);
   const [, setBoardVersion] = useBoardVersion();
 
   const { isJSONView, autopilot, setViewMode, viewMode, tabVisible } = useBoardControls();
@@ -156,7 +152,7 @@ const getActionBar = (generateEvent) => {
     // deps: si cambian estas, re-registra el handler
   }, [isJSONView, generateEvent]);
 
-  const toggleUndoRedoButtons = false
+  const toggleUndoRedoButtons = true
   const undoRedoButtons = toggleUndoRedoButtons ? [<ActionBarButton
     tooltipText={canUndo ? `Undo${current != null ? ` (→ v${Number(current) - 1})` : ''}` : 'No Undo Available'}
     Icon={Undo}
@@ -164,8 +160,6 @@ const getActionBar = (generateEvent) => {
     onPress={async () => {
       try {
         await undo?.();
-        if (toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
-        else document.location.reload();
       } catch (e) { console.error(e); }
     }}
   />,
@@ -176,8 +170,6 @@ const getActionBar = (generateEvent) => {
     onPress={async () => {
       try {
         await redo?.();
-        if (toggleInstantUndoRedo) reloadBoard(boardId, setItems, setBoardVersion, setAutomationInfo, setUICodeInfo)
-        else document.location.reload();
       } catch (e) { console.error(e); }
     }}
   />,
