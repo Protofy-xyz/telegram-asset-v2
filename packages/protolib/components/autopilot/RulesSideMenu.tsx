@@ -45,8 +45,8 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
         return generateStateDeclarations(boardStates)
     }, [boardStates]);
 
-    console.log("Board States Declarations:", boardStatesDeclarations);
-    console.log("Board Actions:", boardActions);
+    //console.log("Board States Declarations:", boardStatesDeclarations);
+    //console.log("Board Actions:", boardActions);
 
     const boardDeclaration = useMemo(() => {
         const possibleNames = Object.keys(boardActions ?? {}).map(name => `"${name}"`).join(' | ')
