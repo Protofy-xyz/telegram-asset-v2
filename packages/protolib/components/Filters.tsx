@@ -3,7 +3,7 @@ import { Tinted } from './Tinted'
 import { SelectList } from './SelectList'
 import { Filter, Check, X } from '@tamagui/lucide-icons'
 import { XStack, Button, Popover, Text, Label, YStack, Checkbox, Tooltip } from '@my/ui'
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { usePageParams } from '../next';
 import { Chip } from './Chip';
 
@@ -23,7 +23,7 @@ export const QueryFilters = ({ state, extraFilters }) => {
 
     return <XStack gap="$2" mt="$2" flexWrap='wrap' f={1}>
         {
-            queryFilters.map((q, i) => <Tooltip>
+            queryFilters.map((q, i) => <Tooltip key={i}>
                 <Tooltip.Trigger cursor='pointer' >
                     <Chip color={"$color6"} text={q.replace('filter[', '').replace(']', '')} textProps={{ fontWeight: '600', fontSize: 12 }} gap="$2" pl="$1" pr="$3" py="$1">
                 <Button onPress={() => removePush(q)} size="$1" circular={true}>
@@ -131,7 +131,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
             </>
         } else if (def?.typeName === 'ZodUnion') {
             const options = def.options?.map(option => option._def.value)
-            return <>
+            return <Fragment key={key}>
                 <Label>{key}</Label>
                 <SelectList
                     value={value}
@@ -139,7 +139,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                     elements={options}
                     setValue={(val) => onFilter(val)}
                 />
-            </>
+            </Fragment>
         }
     }
 
@@ -172,16 +172,16 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                 <YStack overflow='scroll' overflowX='hidden' p="2px" maxHeight="300px">
                     {Object.keys(schema.shape).map((key) => {
                         const def = schema.shape[key]._def?.innerType?._def ?? schema.shape[key]._def
-                        return <>
+                        return <Fragment key={key}>
                             {getFilter(def, key)}
-                        </>
+                        </Fragment>
                     })}
                     {
                         extraFilters?.map((extraFilter) => {
                             if (!extraFilter.queryParam || !extraFilter.component) return
-                            return <>
+                            return <Fragment key={extraFilter.queryParam}>
                                 {getExtraFilter(extraFilter)}
-                            </>
+                            </Fragment>
                         })
                     }
                 </YStack>
