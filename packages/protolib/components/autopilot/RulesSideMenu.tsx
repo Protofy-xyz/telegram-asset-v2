@@ -162,20 +162,6 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
         />
     }, [resolvedTheme, board.name, theme, editedCode.current, isAIEnabled, hasKey, loading]);
     return <PanelGroup direction="horizontal" style={{ height: '100%' }}>
-        {/* Izquierda: tu contenido actual */}
-        <ActionsAndStatesPanel
-            colors={{
-                bgColor: "$bgContent",
-                inputBgColor: "$bgPanel"
-            }}
-            board={board}
-            panels={['actions', 'states']}
-            actions={{ [board.name]: boardActions }}
-            states={{ [board.name]: boardStates }}
-            copyMode={rulesMode}
-        />
-        <CustomPanelResizeHandle direction="vertical" />
-
         <Panel defaultSize={70} minSize={20}>
             <YStack w="100%" backgroundColor="transparent" backdropFilter="blur(5px)" height="100%">
                 <Tinted>
@@ -185,7 +171,13 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
                 </Tinted>
             </YStack>
         </Panel>
-
-
+        <CustomPanelResizeHandle direction="vertical" />
+        <ActionsAndStatesPanel
+            board={board}
+            panels={['actions', 'states']}
+            actions={{ [board.name]: boardActions }}
+            states={{ [board.name]: boardStates }}
+            copyMode={rulesMode}
+        />
     </PanelGroup>
 }

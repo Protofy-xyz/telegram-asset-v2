@@ -81,7 +81,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
         <PanelGroup direction="horizontal">
           <Panel defaultSize={50}>
             <YStack
-              flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
+              flex={1} height="100%" backgroundColor="$bgPanel" borderRadius="$3" p="$3" >
               <Markdown
                 data={cardData.description}
                 setData={(newCode) => {

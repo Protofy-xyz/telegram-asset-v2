@@ -108,7 +108,7 @@ export const FloatingWindow = ({ visible, onChangeTab, selectedTab, tabs, side =
                 position="fixed"
                 animation="quick"
                 {...baseStyle}
-                bc={darkMode ? 'var(--bgPanel)' : 'white'}
+                backgroundColor='var(--bgContent)'
                 borderWidth={2}
                 br="$5"
                 elevation={60}
