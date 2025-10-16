@@ -5,14 +5,99 @@ import { getServiceToken } from "protonode";
 export const registerCards = async () => {
     addCard({
         group: 'board',
+        tag: "memory",
+        id: 'board_job_queue',
+        templateName: "Job Queue",
+        name: "job_queue",
+        emitEvent: true,
+        defaults: {
+            "width": 2,
+            "height": 12,
+            "icon": "file-stack",
+            "name": "job_queue",
+            "description": "A job queue with a list of pending jobs and a current job",
+            "type": "action",
+            "editorOptions": {},
+            "displayResponse": true,
+            "params": {
+                "job": "",
+                "action": "action to perform in the job queue: push, remove, reset, next"
+            },
+            "configParams": {
+                "job": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "action": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "presets": {
+                "next": {
+                    "description": "move the current job to the next job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "next"
+                        }
+                    }
+                },
+                "reset": {
+                    "description": "resets the queue state to empty and skip curret job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "clear"
+                        }
+                    }
+                },
+                "remove": {
+                    "description": "remove the element with the given index from the job queue",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "remove"
+                        },
+                        "item": {
+                            "visible": true,
+                            "defaultValue": 0,
+                            "type": "number"
+                        }
+                    }
+                },
+                "push": {
+                    "params": {
+                        "job": "job to push"
+                    },
+                    "description": "Adds a new job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "push"
+                        },
+                        "job": {
+                            "visible": true,
+                            "defaultValue": "",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "tokens": {},
+            "displayButton": false,
+            "rulesCode": "if (params.action == \"reset\") {\n  return { items: [], current: undefined };\n} else if (params.action == \"next\") {\n  return {\n    items: (Array.isArray(board[name]?.items) ? board[name].items : []).slice(\n      1\n    ),\n    current: board[name].items[0],\n  };\n} else if (params.action == \"remove\") {\n  const queue = Array.isArray(board[name]?.items) ? board[name].items : [];\n  const index = parseInt(params.index, 10);\n  return {\n    items: queue.slice(0, index).concat(queue.slice(index + 1)),\n    current: board[name]?.current,\n  };\n} else if (params.action == \"clear\") {\n  return { items: [], current: board[name].current };\n} else {\n  const item = {\n    time: new Date().toISOString(),\n    data: params.job\n  };\n\n  if (board[name]?.current) {\n    return {\n      items: (Array.isArray(board[name]?.items)\n        ? board[name].items\n        : []\n      ).concat([item]),\n      current: board[name]?.current,\n    };\n  }\n  return {\n    items: Array.isArray(board[name]?.items) ? board[name].items : [],\n    current: item,\n  };\n}\n",
+            "html": "//@card/react\nfunction Widget(props) {\n  return (\n    <ViewList\n      onReply={(item, response) => execute_action(props.name, {action: 'next', response: response})}\n      enableReply={true}\n      enableManualPop={true}\n      current={props?.value?.current}\n      emptyMessageProps={{\n        fontSize: \"$6\",\n        fontWeight: \"600\"\n      }}\n      // emptyMode=\"wait\"\n      emptyMessage=\"Empty job list\" \n      items={props?.value?.items} \n      onPop={(items) => execute_action(props.name, {action: 'next'})}\n      onClear={(items) => execute_action(props.name, {action: 'reset'})}\n      onPush={(item) => execute_action(props.name, {action: 'push', job: item})}\n      onDeleteItem={(item, index) => execute_action(props.name, {action: 'remove', index})} \n    />\n  );\n}\n"
+        }
+    })
+    addCard({
+        group: 'board',
         tag: "http",
         id: 'board_http_endpoint',
         templateName: "HTTP Endpoint",
         name: "endpoint",
         emitEvent: true,
         defaults: {
-            "width": 2,
-            "height": 12,
+            "width": 4,
+            "height": 20,
             "icon": "globe",
             "name": "http_endpoint",
             "description": "A job queue with a list of pending jobs and a current job",
