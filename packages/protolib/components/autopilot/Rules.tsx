@@ -122,6 +122,8 @@ export const Rules = ({
     borderStyle: 'dashed',
   }
 
+  const feedbackMessageText = differentRulesCode ? '⚠️ Rules not generated. Press "Enter" while generating or "press the send button".' : errorMsg
+
   useEffect(() => {
     setDraftRules(rules ?? [])
   }, [rules])
@@ -170,19 +172,35 @@ export const Rules = ({
             enableShortcuts={true}
             footer={
               <XStack justifyContent='space-between' w="100%" ai="flex-end">
-                <XStack mt="$1" mb="$2">
-                  {(errorMsg || differentRulesCode) && (<Text display={isLoadingOrGenerating ? 'none' : 'flex'} color={differentRulesCode ? "$color9" : "$red10"} fontSize="$3" >
-                    {differentRulesCode ? '⚠️ Rules not generated. Press "Enter" while generating or "press the send button".' : errorMsg}
-                  </Text>)}
+                <XStack mt="$1" mb="$2" flex={1}>
+                  {(errorMsg || differentRulesCode) && (
+                    <TooltipSimple label={feedbackMessageText} restMs={0} delay={{ open: 500, close: 0 }}>
+                      <Text
+                        numberOfLines={2}
+                        paddingHorizontal="$2"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                        display={isLoadingOrGenerating ? 'none' : 'flex'}
+                        color={differentRulesCode ? "$color9" : "$red10"}
+                        fontSize="$3"
+                      >
+                        {feedbackMessageText}
+                      </Text>
+                    </TooltipSimple>)}
                 </XStack>
                 <XStack gap="$2">
-                  {differentRulesCode  && <TooltipSimple
+                  {differentRulesCode && <TooltipSimple
                     label={"Cancel changes"}
                     delay={{ open: 500, close: 0 }}
                     restMs={0}
-                    >
+                  >
                     <Button
-                    display={isLoadingOrGenerating ? 'none' : 'flex'}
+                      display={isLoadingOrGenerating ? 'none' : 'flex'}
                       size="$3"
                       p="$0"
                       onMouseDown={(e) => e.stopPropagation()}
