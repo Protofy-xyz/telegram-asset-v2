@@ -17,7 +17,7 @@ const onboardingHtml = async () => {
   return `//@card/react
 function Widget(card) {
   const readme = '#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.';
-  const requiredKeys = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"];
+  const requiredKeys = card.keys;
 
   const username = useKeyState("TELEGRAM_BOT_USERNAME")?.keyValue?.trim();
   const link = username ? "https://t.me/" + username : null;
@@ -171,9 +171,12 @@ const registerCards = async (context, botUsername) => {
       icon: "send",
       color: "#24A1DE",
       description: "Gets Telegram bot last received message",
-      html: "//@card/react\n\nfunction Widget(card) {\n    const value = card.value;\n    const message = value?.content ?? \"No message\"\n    const sender = value?.from ?? \"\"\n    const chatId = value?.chat_id ?? \"\"\n\n    const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n    const requiredKeys = [\"TELEGRAM_BOT_TOKEN\", \"TELEGRAM_BOT_USERNAME\"]\n\n    return (\n        <Tinted>\n            <ProtoThemeProvider forcedTheme= { window.TamaguiTheme }>\n                <KeyGate requiredKeys={requiredKeys} readme={readme} >\n                    <YStack gap=\"$3\" p=\"$3\" className=\"no-drag\">\n                        <XStack gap=\"$2\" ai=\"center\">\n                            <YStack jc=\"center\" ai=\"center\" p=\"$2\" bc={card.color} br=\"$20\" mr=\"$1\">\n                                <Icon name={data.icon} size={16} color={\"white\"}/>\n                            </YStack>\n                            <Text cursor=\"text\" fow=\"600\" fos=\"$3\">{sender}</Text>\n                            <Text cursor=\"text\" fow=\"100\" fos=\"$3\" o={0.3}>{chatId}</Text>\n                        </XStack>\n                        <YStack bc={\"$bgContent\"} p=\"$2\" br=\"$4\">\n                            <Markdown readOnly={ true } data={message} />\n                        </YStack>\n                    </YStack>\n                </KeyGate>\n            </ProtoThemeProvider>\n        </Tinted>\n  );\n}\n",
+      html: "//@card/react\n\nfunction Widget(card) {\n    const value = card.value;\n    const message = value?.content ?? \"No message\"\n    const sender = value?.from ?? \"\"\n    const chatId = value?.chat_id ?? \"\"\n\n    const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n    const requiredKeys = card.keys\n\n    return (\n        <Tinted>\n            <ProtoThemeProvider forcedTheme= { window.TamaguiTheme }>\n                <KeyGate requiredKeys={requiredKeys} readme={readme} >\n                    <YStack gap=\"$3\" p=\"$3\" className=\"no-drag\">\n                        <XStack gap=\"$2\" ai=\"center\">\n                            <YStack jc=\"center\" ai=\"center\" p=\"$2\" bc={card.color} br=\"$20\" mr=\"$1\">\n                                <Icon name={data.icon} size={16} color={\"white\"}/>\n                            </YStack>\n                            <Text cursor=\"text\" fow=\"600\" fos=\"$3\">{sender}</Text>\n                            <Text cursor=\"text\" fow=\"100\" fos=\"$3\" o={0.3}>{chatId}</Text>\n                        </XStack>\n                        <YStack bc={\"$bgContent\"} p=\"$2\" br=\"$4\">\n                            <Markdown readOnly={ true } data={message} />\n                        </YStack>\n                    </YStack>\n                </KeyGate>\n            </ProtoThemeProvider>\n        </Tinted>\n  );\n}\n",
       rulesCode: `return states?.telegram?.received?.message`,
-      type: 'value'
+      type: 'value',
+      keys: [
+        "TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"
+      ]
     },
     emitEvent: true,
     token: await getServiceToken()
@@ -220,13 +223,16 @@ const registerCards = async (context, botUsername) => {
       name: "Telegram send message",
       icon: "send",
       color: "#24A1DE",
-      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n  const requiredKeys = [\"TELEGRAM_BOT_TOKEN\", \"TELEGRAM_BOT_USERNAME\"]\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={requiredKeys} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
+      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n  const requiredKeys = card.keys\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={requiredKeys} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
       description: "Send a telegram message to a chat id",
       rulesCode: `return execute_action("/api/v1/telegram/send/message", { chat_id: userParams.chat_id, message: userParams.message });`,
       params: { chat_id: "chat id", message: "message" },
       type: 'action',
       displayButton: true,
-      buttonLabel: "Send Message"
+      buttonLabel: "Send Message",
+      keys: [
+        "TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"
+      ]
     },
     emitEvent: true,
     token: await getServiceToken()
@@ -269,7 +275,7 @@ const registerCards = async (context, botUsername) => {
       name: "Telegram send file",
       icon: "paperclip",
       color: "#24A1DE",
-      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n  const requiredKeys = [\"TELEGRAM_BOT_TOKEN\", \"TELEGRAM_BOT_USERNAME\"]\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={requiredKeys} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
+      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n  const requiredKeys = card.keys\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={requiredKeys} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
       description: "Send a telegram file/document to a chat id",
       rulesCode: `return execute_action("/api/v1/telegram/send/file", { chat_id: userParams.chat_id, path: userParams.path, caption: userParams.caption, disable_notification: userParams.disable_notification });`,
       params: {
@@ -281,7 +287,10 @@ const registerCards = async (context, botUsername) => {
       configParams: { chat_id: { visible: true, defaultValue: "", type: "string" }, path: { visible: true, defaultValue: "", type: "path" }, caption: { visible: true, defaultValue: "", type: "string" }, disable_notification: { visible: true, defaultValue: false, type: "boolean" } },
       type: 'action',
       displayButton: true,
-      buttonLabel: "Send File"
+      buttonLabel: "Send File",
+      keys: [
+        "TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"
+      ]
     },
     emitEvent: true,
     token: await getServiceToken()
@@ -303,7 +312,10 @@ const registerCards = async (context, botUsername) => {
       html: await onboardingHtml(),
       description: "Show a link to open the Telegram bot",
       rulesCode: `return null;`,
-      type: 'value'
+      type: 'value',
+      keys: [
+        "TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"
+      ]
     },
     emitEvent: true,
     token: await getServiceToken()

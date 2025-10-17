@@ -1,7 +1,7 @@
 //@card/react
 function Widget(card) {
   const readme = '#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.';
-  const requiredKeys = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"];
+  const requiredKeys = card.keys;
 
   const username = useKeyState("TELEGRAM_BOT_USERNAME")?.keyValue?.trim();
   const link = username ? "https://t.me/" + username : null;
@@ -17,7 +17,7 @@ function Widget(card) {
       el.value = link;
       document.body.appendChild(el);
       el.select();
-      try { document.execCommand("copy"); } catch {}
+      try { document.execCommand("copy"); } catch { }
       document.body.removeChild(el);
       alert("Link copied to clipboard");
     }
@@ -93,3 +93,4 @@ function Widget(card) {
     </Tinted>
   );
 }
+

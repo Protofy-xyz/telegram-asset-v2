@@ -1,1 +1,1 @@
-return states?.telegram?.received?.message;
+return states?.telegram?.received?.message

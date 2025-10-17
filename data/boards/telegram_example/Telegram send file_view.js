@@ -4,7 +4,7 @@ function Widget(card) {
   const value = card.value;
   const readme = `#### Add Telegram keys here. 
   Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`
-  const requiredKeys = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"]
+  const requiredKeys = card.keys
 
   const content = <YStack f={1}  mt={"20px"} ai="center" jc="center" width="100%">
       {card.icon && card.displayIcon !== false && (

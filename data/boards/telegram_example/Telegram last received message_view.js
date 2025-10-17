@@ -8,7 +8,7 @@ function Widget(card) {
 
     const readme = `#### Add Telegram keys here. 
   Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`
-    const requiredKeys = ["TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"]
+    const requiredKeys = card.keys
 
     return (
         <Tinted>
