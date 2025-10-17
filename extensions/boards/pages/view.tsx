@@ -53,7 +53,7 @@ class ValidationError extends Error {
 }
 
 const saveBoard = async (boardId, data, setBoardVersion?, refresh?, opts = { bumpVersion: true }) => {
-  if(__currentBoardVersion !== data.version) {
+  if (__currentBoardVersion !== data.version) {
     console.error("Cannot save board, the board version has changed, please refresh the board.")
     return
   }
@@ -445,6 +445,10 @@ const Board = ({ board, icons }) => {
 
   const boardRef = useRef(board)
 
+  useEffect(() => {
+    boardRef.current = board;
+  }, [board]);
+
   const deleteCard = async (card) => {
     const newItems = items.filter(item => item.key != card.key)
     // if (newItems.length == 0) newItems.push(addCard) // non necessary
@@ -522,7 +526,7 @@ const Board = ({ board, icons }) => {
       alert('Error editing board')
     }
   }
-  
+
   //fill items with react content, addWidget should be the last item
   const cards = (items || []).map((item) => {
     if (item.type == 'addWidget') {
@@ -924,7 +928,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     if (event.type === 'toggle-rules') {
       setTabVisible(tabVisible === 'rules' ? "" : 'rules');
     }
-        if (event.type === 'toggle-history') {
+    if (event.type === 'toggle-history') {
       setTabVisible(tabVisible === 'history' ? "" : 'history');
     }
     if (event.type === 'toggle-logs') {
@@ -955,6 +959,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
       setTabVisible(tabVisible === 'board-settings' ? "" : 'board-settings');
     }
   }
+
   __currentBoardVersion = boardData?.data?.version
   return <AdminPage
     title={params.board + " board"}
@@ -974,7 +979,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
 export const BoardView = ({ workspace, pageState, initialItems, itemData, pageSession, extraData, board, icons }: any) => {
   const { params } = useParams()
   const [boardData, setBoardData] = useState(board ?? getPendingResult('pending'))
-  const {refresh} = useBoardVersions(params.board)
+  const { refresh } = useBoardVersions(params.board)
   const [boardVersionId] = useBoardVersionId();
 
   const versionChanged = async () => {
