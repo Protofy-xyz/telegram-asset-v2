@@ -1,0 +1,347 @@
+{
+    "name": "telegram_example",
+    "cards": [
+        {
+            "key": "value_1759757405650",
+            "width": 3,
+            "height": 10,
+            "icon": "send",
+            "name": "Telegram last received message",
+            "color": "#24A1DE",
+            "description": "Gets Telegram bot last received message",
+            "type": "value",
+            "alwaysReportValue": true
+        },
+        {
+            "key": "action_1759758352002",
+            "width": 2,
+            "height": 8,
+            "icon": "file",
+            "type": "action",
+            "name": "files_read",
+            "description": "Read a file or directory",
+            "params": {
+                "path": "Path to the file or directory to read"
+            },
+            "configParams": {
+                "path": {
+                    "visible": false,
+                    "defaultValue": "data/public",
+                    "type": "path"
+                }
+            },
+            "displayResponse": true
+        },
+        {
+            "key": "action_1759758655673",
+            "width": 3,
+            "height": 10,
+            "icon": "send",
+            "name": "Telegram send message",
+            "color": "#24A1DE",
+            "description": "Send a telegram message to a chat id",
+            "params": {
+                "chat_id": "chat id",
+                "message": "message"
+            },
+            "type": "action",
+            "displayButton": true,
+            "buttonLabel": "Send Message"
+        },
+        {
+            "key": "action_1759759639002",
+            "width": 3,
+            "height": 10,
+            "icon": "paperclip",
+            "name": "Telegram send file",
+            "color": "#24A1DE",
+            "description": "Send a telegram file/document to a chat id",
+            "params": {
+                "chat_id": "chat id",
+                "path": "path to local file or public URL",
+                "caption": "(optional) caption for the file",
+                "disable_notification": "(optional) true/false to disable notification"
+            },
+            "configParams": {
+                "chat_id": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "path": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "path"
+                },
+                "caption": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "disable_notification": {
+                    "visible": true,
+                    "defaultValue": false,
+                    "type": "boolean"
+                }
+            },
+            "type": "action",
+            "displayButton": true,
+            "buttonLabel": "Send File"
+        },
+        {
+            "key": "value_1759761168538",
+            "width": 3,
+            "height": 12,
+            "icon": "file-text",
+            "name": "click down to show README",
+            "description": "Render formatted markdown using ReactMarkdown",
+            "type": "value",
+            "editorOptions": {}
+        },
+        {
+            "key": "value_1760434575781",
+            "width": 3,
+            "height": 10,
+            "icon": "send",
+            "name": "telegram_onboarding_link",
+            "color": "#24A1DE",
+            "description": "Show a link to open the Telegram bot",
+            "type": "value"
+        }
+    ],
+    "autopilot": true,
+    "layouts": {
+        "lg": [
+            {
+                "w": 26,
+                "h": 7,
+                "x": 0,
+                "y": 0,
+                "i": "value_1759757405650",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 26,
+                "h": 43,
+                "x": 26,
+                "y": 0,
+                "i": "action_1759758352002",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 25,
+                "h": 16,
+                "x": 1,
+                "y": 7,
+                "i": "action_1759758655673",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 25,
+                "h": 20,
+                "x": 1,
+                "y": 23,
+                "i": "action_1759759639002",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 33,
+                "h": 30,
+                "x": 52,
+                "y": 13,
+                "i": "value_1759761168538",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 33,
+                "h": 13,
+                "x": 52,
+                "y": 0,
+                "i": "value_1760434575781",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            }
+        ],
+        "md": [
+            {
+                "w": 15,
+                "h": 14,
+                "x": 13,
+                "y": 0,
+                "i": "value_1759757405650",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 13,
+                "h": 18,
+                "x": 0,
+                "y": 4,
+                "i": "action_1759758352002",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 21,
+                "h": 22,
+                "x": 43,
+                "y": 0,
+                "i": "action_1759758655673",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 15,
+                "h": 14,
+                "x": 28,
+                "y": 0,
+                "i": "action_1759759639002",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 13,
+                "h": 4,
+                "x": 0,
+                "y": 0,
+                "i": "value_1759761168538",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 30,
+                "h": 8,
+                "x": 13,
+                "y": 14,
+                "i": "value_1760434575781",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            }
+        ],
+        "sm": [
+            {
+                "i": "value_1759757405650",
+                "x": 0,
+                "y": 0,
+                "w": 2,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1759758352002",
+                "x": 0,
+                "y": 36,
+                "w": 1,
+                "h": 9,
+                "isResizable": true
+            },
+            {
+                "i": "action_1759758655673",
+                "x": 0,
+                "y": 45,
+                "w": 2,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1759759639002",
+                "x": 0,
+                "y": 56,
+                "w": 2,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "value_1759761168538",
+                "x": 0,
+                "y": 67,
+                "w": 2,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760434575781",
+                "x": 0,
+                "y": 81,
+                "w": 2,
+                "h": 11,
+                "isResizable": true
+            }
+        ],
+        "xs": [
+            {
+                "i": "value_1759757405650",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1759758352002",
+                "x": 0,
+                "y": 36,
+                "w": 1,
+                "h": 9,
+                "isResizable": true
+            },
+            {
+                "i": "action_1759758655673",
+                "x": 0,
+                "y": 45,
+                "w": 1,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1759759639002",
+                "x": 0,
+                "y": 56,
+                "w": 1,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "value_1759761168538",
+                "x": 0,
+                "y": 67,
+                "w": 1,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760434575781",
+                "x": 0,
+                "y": 81,
+                "w": 1,
+                "h": 11,
+                "isResizable": true
+            }
+        ]
+    },
+    "version": 21,
+    "rules": [
+        "Every time a message is received starting with /files run the <@files_read> to read the files directory and check if the requested file exists, if it exists return it using <@Telegram send file> , if not reply that it doesnt exist"
+    ],
+    "settings": {
+        "autoplay": true
+    },
+    "savedAt": 1760692917066
+}

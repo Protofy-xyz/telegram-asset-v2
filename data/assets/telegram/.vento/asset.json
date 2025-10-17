@@ -1,0 +1,17 @@
+{
+  "name": "telegram",
+  "description": "Adds cards to Boards for connecting with Telegram.",
+  "author": "protofy",
+  "tags": [
+    "chat",
+    "social"
+  ],
+  "version": "0.0.3",
+  "packagedFiles": [
+    "extensions/telegram/**",
+    "data/boards/telegram_example/**",
+    "data/boards/telegram_example_ui.js",
+    "data/boards/telegram_example.js",
+    "data/boards/telegram_example.json"
+  ]
+}

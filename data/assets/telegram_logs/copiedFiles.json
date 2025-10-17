@@ -1,0 +1,20 @@
+[
+  "data/boards/telegram_example/Markdown Display.js",
+  "data/boards/telegram_example/Markdown Display_view.js",
+  "data/boards/telegram_example/Telegram last received message.js",
+  "data/boards/telegram_example/Telegram last received message_view.js",
+  "data/boards/telegram_example/Telegram send file.js",
+  "data/boards/telegram_example/Telegram send file_view.js",
+  "data/boards/telegram_example/Telegram send message.js",
+  "data/boards/telegram_example/Telegram send message_view.js",
+  "data/boards/telegram_example/files_read.js",
+  "data/boards/telegram_example/files_read_view.js",
+  "data/boards/telegram_example/telegram_onboarding_link.js",
+  "data/boards/telegram_example/telegram_onboarding_link_view.js",
+  "data/boards/telegram_example.js",
+  "data/boards/telegram_example.json",
+  "data/boards/telegram_example_ui.js",
+  "extensions/telegram/apis.ts",
+  "extensions/telegram/package.json",
+  "extensions/telegram/tsconfig.json"
+]
