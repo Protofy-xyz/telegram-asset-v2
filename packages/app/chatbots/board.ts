@@ -34,6 +34,14 @@ export default Protofy("code", async (app:Application, context: typeof APIContex
           emitEvent: true
         })
 
+        context.state.set({
+          group: "chat",
+          tag: "messages",
+          name: "list",
+          value: body.messages.slice(0, body.messages.length - 1), //exclude the last message
+          emitEvent: true
+        })
+
         chatbot.end()
     })
 
