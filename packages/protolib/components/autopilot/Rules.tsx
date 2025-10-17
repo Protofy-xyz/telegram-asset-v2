@@ -122,7 +122,7 @@ export const Rules = ({
     borderStyle: 'dashed',
   }
 
-  const feedbackMessageText = differentRulesCode ? '⚠️ Rules not generated. Press "Enter" while generating or "press the send button".' : errorMsg
+  const feedbackMessageText = differentRulesCode ? '⚠️ Rules not generated. Press the send button "↑" to generate or "x" to cancel.' : errorMsg
 
   useEffect(() => {
     setDraftRules(rules ?? [])
