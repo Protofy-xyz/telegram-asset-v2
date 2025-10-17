@@ -308,6 +308,7 @@ export const BoardTextArea = ({
   const [symbols, setSymbols] = useState({})
   const [dumpedValue, setDumpedValue] = useState(value)
 
+  const textAreaPadding = "12px"
   const containerRef = useRef<HTMLElement | null>(null);
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const [speechRecognitionEnabled, setSpeechRecognitionEnabled] = useState(false);
@@ -317,6 +318,7 @@ export const BoardTextArea = ({
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const dropdownRef = useRef<HTMLElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const overlayContentRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 50, left: 0 });
   const {
     transcript,
@@ -324,6 +326,7 @@ export const BoardTextArea = ({
     resetTranscript,
     browserSupportsSpeechRecognition
   } = useSpeechRecognition();
+
   const updateDropdownPosition = useCallback(() => {
     if (!showDropdown) return;
     const textarea = ref.current;
@@ -432,6 +435,13 @@ export const BoardTextArea = ({
     }
   }, [transcript, speechRecognitionEnabled]);
 
+  useLayoutEffect(() => {
+    const ta = ref.current
+    if (!ta || !overlayContentRef.current) return
+    overlayContentRef.current.style.transform =
+      `translate(${-ta.scrollLeft}px, ${-ta.scrollTop}px)`
+  }, [dumpedValue])
+
   const filteredOptions = useMemo(() => {
     if (!dropDown || !showDropdown) return []
     const left = dumpedValue
@@ -469,7 +479,7 @@ export const BoardTextArea = ({
       height="100%"
       opacity={disabled ? 0.7 : 1}
       backgroundColor="$bgPanel"
-      padding="$6"
+      padding="$2"
       flexDirection='column'
     >
       {
@@ -588,20 +598,41 @@ export const BoardTextArea = ({
           r={0}
           b={0}
           style={{
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'break-word',
-            wordBreak: 'normal',
+            // whiteSpace: 'pre-wrap',
+            // overflowWrap: 'break-word',
+            // wordBreak: 'normal',
+            // boxSizing: 'border-box',
+            // borderRadius: '8px',
+            // fontFamily: 'inherit',
+            // fontSize: 'inherit',
+            // fontWeight: 'inherit',
+            // letterSpacing: 'inherit',
+            // overflow: 'hidden',
+            // transform: 'translate(0,0)',
+            // lineHeight: '1.4',
             boxSizing: 'border-box',
-            borderRadius: '8px',
+            overflow: 'hidden',       // sin scroll propio
+            lineHeight: '1.4',
             fontFamily: 'inherit',
             fontSize: 'inherit',
             fontWeight: 'inherit',
             letterSpacing: 'inherit',
-            overflow: 'hidden',
-            lineHeight: '1.4',
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'break-word',
+            wordBreak: 'normal',
           }}
-          dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(dumpedValue) }}
-        />
+        // dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(dumpedValue) }}
+        >
+          <div
+            ref={overlayContentRef}
+            style={{
+              willChange: 'transform',
+              transform: 'translate(0,0)',
+              padding: textAreaPadding
+            }}
+            dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(dumpedValue) }}
+          />
+        </YStack>
 
         <textarea
           ref={ref}
@@ -765,10 +796,11 @@ export const BoardTextArea = ({
             }
           }}
           onScroll={(e) => {
-            // sincroniza el scroll con la capa de resaltado
-            if (overlayRef.current) {
-              overlayRef.current.scrollTop = (e.target as HTMLTextAreaElement).scrollTop;
-              overlayRef.current.scrollLeft = (e.target as HTMLTextAreaElement).scrollLeft;
+            const el = e.currentTarget
+            const y = el.scrollTop
+            const x = el.scrollLeft
+            if (overlayContentRef.current) {
+              overlayContentRef.current.style.transform = `translate(${-x}px, ${-y}px)`
             }
             if (showDropdown) {
               updateDropdownPosition();
@@ -785,6 +817,7 @@ export const BoardTextArea = ({
             color: 'transparent',
             caretColor: 'var(--color)',  // this caret, has color, to use for the overlay text
             fontSize: "inherit",
+            padding: textAreaPadding,
             ...style,
           }}
         />
