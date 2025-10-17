@@ -11,7 +11,8 @@ mac:
     - zip
   icon: apps/adminpanel/public/icon.icns
   hardenedRuntime: true
-  gatekeeperAssess: false
+  entitlements: electron/entitlements.plist
+  entitlementsInherit: electron/entitlements.plist
   extendInfo:
     NSCameraUsageDescription: "Esta aplicación necesita acceso a la cámara"
     NSMicrophoneUsageDescription: "Esta aplicación necesita acceso al micrófono"

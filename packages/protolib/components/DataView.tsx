@@ -295,7 +295,7 @@ const DataViewInternal = forwardRef(({
         setSearchStatus(undefined)
     }
 
-    const [_items, setItems] = useRemoteStateList(initialItems, fetch, 'notifications/' + model.getModelName() + "/#", model, quickRefresh, disableNotifications);
+    const [_items, setItems] = useRemoteStateList(initialItems, fetch, 'notifications/' + model.getModelName() + "/#", model, quickRefresh, disableNotifications, 50);
     const items: any = _items
     const [currentItems, setCurrentItems] = useState<PendingResult | undefined>(initialItems ?? getPendingResult('pending'))
     const [createOpen, setCreateOpen] = useState(addOpened ?? false)

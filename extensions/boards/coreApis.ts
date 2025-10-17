@@ -117,7 +117,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
     for (let i = 0; i < actionsCards.length; i++) {
 
         const card = actionsCards[i];
-        console.log("Adding action: ", JSON.stringify(card, null, 4))
+        //console.log("Adding action: ", JSON.stringify(card, null, 4))
         await addAction({
             method: card.method || 'get',
             group: 'boards',

@@ -178,7 +178,7 @@ export const ActionCard = ({
     const hideTitle = data.displayTitle === false
     const highlighted = useIsHighlightedCard(board?.name, data?.name)
     const action = window["protoActions"]?.boards?.[board.name]?.[name]
-    console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
+    //console.log('highlightedCard: ', highlighted, board?.name + '/' + data?.name)
     const cardRef = useRef(null);
 
     const isAutoResponsive = data?.autoResponsive !== false;
@@ -216,11 +216,11 @@ export const ActionCard = ({
         try {
             const parsedMessage = JSON.parse(msg.message)
             const payload = parsedMessage.payload
-            console.log('Message: ', payload)
+            //console.log('Message: ', payload)
 
             const next = payload.status
             if (next === 'running') {
-                console.log('Running action: ', name)
+                //console.log('Running action: ', name)
                 lockRef.current = true
                 setStatus('running')
                 requestAnimationFrame(() => {

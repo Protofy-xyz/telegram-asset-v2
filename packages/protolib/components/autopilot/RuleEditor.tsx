@@ -39,7 +39,7 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
   }, [cardData.rulesCode])
 
   return <TabContainer>
-    <TabTitle tabname={"Card Rules"} tabDescription='Define the behavior of your card using using natural language' />
+    {/* <TabTitle tabname={"Card Rules"} tabDescription='Define the behavior of your card using using natural language' /> */}
     <AutopilotEditor
       key={key}
       cardData={cardData}

@@ -8,6 +8,250 @@ import fs from 'fs';
 import path from 'path';
 import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
+import { removeActions } from "@extensions/actions/coreContext/removeActions";
+const deleteDeviceCards = async (deviceName: string) => {
+    try {
+        const token = getServiceToken();
+        // fetch the full cards tree
+        const cardsTree = await API.get(`/api/core/v1/cards?token=${token}`);
+
+        // cardsTree structure: { [group]: { [tag]: { [name]: {...} } } }
+        const deviceCards = cardsTree?.data?.devices?.[deviceName] || {};
+        const names = Object.keys(deviceCards);
+
+        if (!names.length) return;
+
+        // POST-based delete per card: /api/core/v1/cards/:group/:tag/:name/delete
+        await Promise.all(
+            names.map((name) =>
+                API.post(
+                    `/api/core/v1/cards/devices/${encodeURIComponent(
+                        deviceName
+                    )}/${encodeURIComponent(name)}/delete?token=${token}`,
+                    {}
+                ).catch((err) => {
+                    logger.error({ deviceName, name, err }, 'Failed deleting device card');
+                })
+            )
+        );
+
+        logger.info({ deviceName, count: names.length }, 'Deleted device cards');
+    } catch (err) {
+        logger.error({ err }, 'Failed deleting cards for device');
+    }
+};
+const deleteDeviceActions = async (deviceName: string) => {
+    try {
+        // remove actions (ProtoMemDB 'actions' chunk) + emit delete events
+        await removeActions({
+            chunk: 'actions',
+            group: 'devices',
+            tag: deviceName,
+        });
+        logger.info({ deviceName }, 'Deleted device actions');
+
+        // also remove all cards belonging to this device
+        await deleteDeviceCards(deviceName);
+    } catch (err) {
+        logger.error({ deviceName, err }, 'Failed deleting actions/cards for device');
+    }
+};
+
+// iterate over all devices and register an action for each subsystem action
+const registerActions = async () => {
+    const db = getDB('devices')
+    //db.iterator is yeilding
+    for await (const [key, value] of db.iterator()) {
+        // console.log('device: ', value)
+        const deviceInfo = DevicesModel.load(JSON.parse(value))
+        // 🔴 delete existing actions & cards for this device before adding new ones
+        await deleteDeviceActions(deviceInfo.data.name)
+
+        for (const subsystem of deviceInfo.data.subsystem) {
+            // console.log('subsystem: ', subsystem)
+            if (subsystem.name == "mqtt") continue
+            for (const monitor of subsystem.monitors ?? []) {
+                // console.log('monitor: ', monitor)
+                const monitorModel = deviceInfo.getMonitorByEndpoint(monitor.endpoint)
+                const stateName = deviceInfo.getStateNameByMonitor(monitorModel)
+                if (subsystem.monitors.length == 1) {
+                    addCard({
+                        group: 'devices',
+                        tag: deviceInfo.data.name,
+                        id: 'devices_monitors_' + deviceInfo.data.name + '_' + subsystem.name,
+                        templateName: deviceInfo.data.name + ' ' + subsystem.name + ' device value',
+                        name: subsystem.name,
+                        defaults: {
+                            name: deviceInfo.data.name + ' ' + subsystem.name,
+                            description: monitor.description ?? "",
+                            rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
+                            type: 'value',
+                            icon: "scan-eye"
+                        },
+                        emitEvent: true
+                    })
+                } else {
+                    addCard({
+                        group: 'devices',
+                        tag: deviceInfo.data.name,
+                        id: 'devices_monitors_' + deviceInfo.data.name + '_' + monitor.name,
+                        templateName: deviceInfo.data.name + ' ' + monitor.name + ' device value',
+                        name: monitor.name,
+                        defaults: {
+                            name: deviceInfo.data.name + ' ' + monitor.name,
+                            description: monitor.description ?? "",
+                            rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
+                            type: 'value',
+                            icon: "scan-eye"
+                        },
+                        emitEvent: true
+                    })
+                }
+            }
+            const formatParamsJson = (json) => {
+                const parts = Object.entries(json).map(([key, value]) => {
+                    return `${key} ${value}`;
+                });
+
+                if (parts.length === 0) {
+                    return 'No constraints specified';
+                }
+
+                return `The value must have ${parts.join(', ')}`;
+            }
+
+            for (const action of subsystem.actions ?? []) {
+                const url = `/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}`;
+                const isJsonSchema = action.payload?.type === "json-schema";
+
+                const params = { value: "value to set" }
+                if (isJsonSchema) {
+                    delete params.value
+                    const toParamType = (schemaType?: string) => {
+                        switch (schemaType) {
+                            case 'int':
+                            case 'number':
+                                return 'number';
+                            case 'array':
+                            case 'object':
+                                return 'json';
+                            case 'boolean':
+                                return 'boolean';
+                            default:
+                                return 'string';
+                        }
+                    };
+                    type JsonSchema = {
+                        type?: 'string' | 'number' | 'int' | 'boolean' | 'object' | 'array';
+                        default?: any;
+                        enum?: any[];
+                        minimum?: number;
+                        properties?: Record<string, JsonSchema>;
+                        required?: string[];
+                        items?: JsonSchema;
+                        description?: string;
+                    };
+
+                    const exampleForSchema = (field?: JsonSchema): any => {
+                        if (!field || typeof field !== 'object') return null;
+
+                        // If an explicit default is provided, prefer it
+                        if (field.default !== undefined) return field.default;
+
+                        switch (field.type) {
+                            case 'object': {
+                                const props = field.properties || {};
+                                const keys = field.required?.length ? field.required : Object.keys(props);
+                                const out: Record<string, any> = {};
+                                for (const key of keys) {
+                                    out[key] = exampleForSchema(props[key]);
+                                }
+                                return JSON.stringify(out, null, 2);
+                            }
+                            case 'array': {
+                                // Build a one-element example array
+                                const item = exampleForSchema(field.items || { type: 'string' });
+                                return [item];
+                            }
+                            case 'string':
+                                return Array.isArray(field.enum) && field.enum.length ? field.enum[0] : '';
+                            case 'number':
+                            case 'int':
+                                return typeof field.minimum === 'number' ? field.minimum : 0;
+                            case 'boolean':
+                                return false;
+                            default:
+                                return null;
+                        }
+                    };
+
+                    if (action.payload?.schema && typeof action.payload?.schema === "object") {
+                        for (const [key, value] of Object.entries(action.payload.schema)) {
+                            if (typeof value === "object" && !Array.isArray(value)) {
+                                params[key] = {
+                                    visible: true,
+                                    description: value.description ?? formatParamsJson(value),
+                                    defaultValue: exampleForSchema(value),
+                                    type: toParamType(value.type)
+                                }
+                                if (value.enum) {
+                                    params[key].description += ` Possible values: ${value.enum.join(", ")}`;
+                                }
+                            } else {
+                                params[key] = {
+                                    visible: true,
+                                    description: '',
+                                    defaultValue: '',
+                                    type: 'string'
+                                }
+                            }
+                        }
+                    }
+
+
+                }
+                const rulesCode = isJsonSchema
+                    ? `const value = { value: JSON.stringify(userParams) };\nreturn execute_action('${url}', value)`
+                    : `return execute_action('${url}', userParams)`;
+                const getParams = (params) => {
+                    let actionParams = {}
+                    for (const key in params) {
+                        actionParams[key] = params[key].description || ''
+                    }
+                    return actionParams
+                }
+                addAction({
+                    group: 'devices',
+                    name: subsystem.name + '_' + action.name, //get last path element
+                    url: `/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}`,
+                    tag: deviceInfo.data.name,
+                    description: action.description ?? "",
+                    ...!action.payload?.value ? { params } : {},
+                    emitEvent: true
+                })
+
+                //http://localhost:8000/api/core/v1/cards to understand what this fills
+                addCard({
+                    group: 'devices',
+                    tag: deviceInfo.data.name,
+                    id: 'devices_' + deviceInfo.data.name + '_' + subsystem.name + '_' + action.name,
+                    templateName: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name + ' device action',
+                    name: subsystem.name + '_' + action.name,
+                    defaults: {
+                        name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
+                        description: action.description ?? "",
+                        rulesCode,
+                        params: action.payload?.value ? {} : getParams(params),
+                        configParams: params,
+                        type: 'action',
+                        icon: "rocket",
+                    },
+                    emitEvent: true
+                })
+            }
+        }
+    }
+}
 
 export const DevicesAutoAPI = AutoAPI({
     modelName: 'devices',
@@ -21,6 +265,25 @@ export const DevicesAutoAPI = AutoAPI({
             return data
         }
 
+    },
+    onBeforeDelete: async (data, session, req) => {
+        console.log("🤖 ~ data:", data)
+        if(typeof data === 'string') {
+            try {
+                data = JSON.parse(data)
+            } catch (e) {
+                console.log("🤖 ~ Failed to parse data:", e)
+            }
+        }
+        // before deleting a device, remove all actions and cards associated with it
+        await deleteDeviceActions(data.name)
+        //also delete the folder in data/devices/[deviceName]
+        const devicePath = path.join(process.cwd(), getRoot(req), "data", "devices", data.name)
+        if(fs.existsSync(devicePath)){
+            fs.rmSync(devicePath, { recursive: true, force: true });
+            // console.log("🤖 ~ Deleted device path:", devicePath)
+        }
+        return data;
     }
 
 })
@@ -38,232 +301,7 @@ export default (app, context) => {
         devices/patata/button/relay/actions/status
         ...
     */
-    const deleteDeviceCards = async (deviceName: string) => {
-        try {
-            const token = getServiceToken();
-            // fetch the full cards tree
-            const cardsTree = await API.get(`/api/core/v1/cards?token=${token}`);
 
-            // cardsTree structure: { [group]: { [tag]: { [name]: {...} } } }
-            const deviceCards = cardsTree?.data?.devices?.[deviceName] || {};
-            const names = Object.keys(deviceCards);
-
-            if (!names.length) return;
-
-            // POST-based delete per card: /api/core/v1/cards/:group/:tag/:name/delete
-            await Promise.all(
-                names.map((name) =>
-                    API.post(
-                        `/api/core/v1/cards/devices/${encodeURIComponent(
-                            deviceName
-                        )}/${encodeURIComponent(name)}/delete?token=${token}`,
-                        {}
-                    ).catch((err) => {
-                        logger.error({ deviceName, name, err }, 'Failed deleting device card');
-                    })
-                )
-            );
-
-            logger.info({ deviceName, count: names.length }, 'Deleted device cards');
-        } catch (err) {
-            logger.error({ err }, 'Failed deleting cards for device');
-        }
-    };
-    // iterate over all devices and register an action for each subsystem action
-    const registerActions = async () => {
-        const db = getDB('devices')
-        //db.iterator is yeilding
-        for await (const [key, value] of db.iterator()) {
-            // console.log('device: ', value)
-            const deviceInfo = DevicesModel.load(JSON.parse(value))
-            // 🔴 delete all existing cards for this device before adding new ones
-            await deleteDeviceCards(deviceInfo.data.name)
-
-            for (const subsystem of deviceInfo.data.subsystem) {
-                // console.log('subsystem: ', subsystem)
-                if(subsystem.name == "mqtt") continue
-                for (const monitor of subsystem.monitors ?? []) {
-                    // console.log('monitor: ', monitor)
-                    const monitorModel = deviceInfo.getMonitorByEndpoint(monitor.endpoint)
-                    const stateName = deviceInfo.getStateNameByMonitor(monitorModel)
-                    if(subsystem.monitors.length == 1) {
-                        addCard({
-                            group: 'devices',
-                            tag: deviceInfo.data.name,
-                            id: 'devices_monitors_'+deviceInfo.data.name+'_'+subsystem.name,
-                            templateName: deviceInfo.data.name + ' ' + subsystem.name+ ' device value',
-                            name: subsystem.name,
-                            defaults: {
-                                name: deviceInfo.data.name + ' ' + subsystem.name,
-                                description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
-                                type: 'value',
-                                icon: "scan-eye"
-                            },
-                            emitEvent: true
-                        })
-                    } else{
-                        addCard({
-                            group: 'devices',
-                            tag: deviceInfo.data.name,
-                            id: 'devices_monitors_'+deviceInfo.data.name+'_'+monitor.name,
-                            templateName: deviceInfo.data.name + ' ' + monitor.name + ' device value',
-                            name: monitor.name,
-                            defaults: {
-                                name: deviceInfo.data.name + ' ' + monitor.name,
-                                description: monitor.description ?? "",
-                                rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
-                                type: 'value',
-                                icon: "scan-eye"
-                            },
-                            emitEvent: true
-                        })
-                    }
-                }
-                const formatParamsJson = (json)=>{
-                    const parts = Object.entries(json).map(([key, value]) => {
-                        return `${key} ${value}`;
-                      });
-                    
-                      if (parts.length === 0) {
-                        return 'No constraints specified';
-                      }
-                    
-                      return `The value must have ${parts.join(', ')}`;
-                }
-
-                for (const action of subsystem.actions ?? []) {
-                    const url = `/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}`;
-                    const isJsonSchema = action.payload?.type === "json-schema";
-
-                    const params = {value: "value to set"}
-                    if(isJsonSchema){
-                        delete params.value
-                        const toParamType = (schemaType?: string) => {
-                            switch (schemaType) {
-                                case 'int':
-                                case 'number':
-                                return 'number';
-                                case 'array':
-                                case 'object':
-                                return 'json';
-                                case 'boolean':
-                                return 'boolean';
-                                default:
-                                return 'string';
-                            }
-                        };
-                        type JsonSchema = {
-                            type?: 'string' | 'number' | 'int' | 'boolean' | 'object' | 'array';
-                            default?: any;
-                            enum?: any[];
-                            minimum?: number;
-                            properties?: Record<string, JsonSchema>;
-                            required?: string[];
-                            items?: JsonSchema;
-                            description?: string;
-                        };
-
-                        const exampleForSchema = (field?: JsonSchema): any => {
-                            if (!field || typeof field !== 'object') return null;
-
-                            // If an explicit default is provided, prefer it
-                            if (field.default !== undefined) return field.default;
-
-                            switch (field.type) {
-                                case 'object': {
-                                    const props = field.properties || {};
-                                    const keys = field.required?.length ? field.required : Object.keys(props);
-                                    const out: Record<string, any> = {};
-                                    for (const key of keys) {
-                                        out[key] = exampleForSchema(props[key]);
-                                    }
-                                    return JSON.stringify(out, null, 2);
-                                }
-                                case 'array': {
-                                    // Build a one-element example array
-                                    const item = exampleForSchema(field.items || { type: 'string' });
-                                    return [item];
-                                }
-                                case 'string':
-                                    return Array.isArray(field.enum) && field.enum.length ? field.enum[0] : '';
-                                case 'number':
-                                case 'int':
-                                    return typeof field.minimum === 'number' ? field.minimum : 0;
-                                case 'boolean':
-                                    return false;
-                                default:
-                                    return null;
-                            }
-                        };
-                        
-                        if(action.payload?.schema && typeof action.payload?.schema === "object"){
-                            for(const [key, value] of Object.entries(action.payload.schema)){
-                                if(typeof value === "object" && !Array.isArray(value)){
-                                    params[key] = {
-                                        visible: true,
-                                        description: value.description ?? formatParamsJson(value),
-                                        defaultValue: exampleForSchema(value),
-                                        type: toParamType(value.type)
-                                    }
-                                    if(value.enum){
-                                        params[key].description += ` Possible values: ${value.enum.join(", ")}`;
-                                    }
-                                }else{
-                                    params[key] = {
-                                        visible: true,
-                                        description: '',
-                                        defaultValue: '',
-                                        type: 'string'
-                                    }
-                                }
-                            }
-                        }
-
-
-                    }
-                    const rulesCode = isJsonSchema
-                            ? `const value = { value: JSON.stringify(userParams) };\nreturn execute_action('${url}', value)`
-                            : `return execute_action('${url}', userParams)`;
-                    const getParams = (params) => {
-                        let actionParams = {}
-                        for(const key in params) {
-                            actionParams[key] = params[key].description || ''
-                        }
-                        return actionParams
-                    }
-                    addAction({
-                        group: 'devices',
-                        name: subsystem.name + '_' + action.name, //get last path element
-                        url: `/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}`,
-                        tag: deviceInfo.data.name,
-                        description: action.description ?? "",
-                        ...!action.payload?.value ? {params}:{},
-                        emitEvent: true
-                    })
-
-                    //http://localhost:8000/api/core/v1/cards to understand what this fills
-                    addCard({
-                        group: 'devices',
-                        tag: deviceInfo.data.name,
-                        id: 'devices_'+deviceInfo.data.name+'_'+subsystem.name + '_' + action.name,
-                        templateName: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name + ' device action',
-                        name: subsystem.name + '_' + action.name,
-                        defaults: {
-                            name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
-                            description: action.description ?? "",
-                            rulesCode,
-                            params: action.payload?.value ? {} : getParams(params),
-                            configParams: params,
-                            type: 'action',
-                            icon: "rocket",
-                        },
-                        emitEvent: true
-                    })
-                }
-            }
-        }
-    }
 
     registerActions()
 

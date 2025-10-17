@@ -131,9 +131,10 @@ const FirstSlide = ({ selected, setSelected, options, errors }) => {
                   <SelectGrid>
                     {options.map((option) => (
                       <XStack
-                        width={260}
                         height={70}
                         key={option.id}
+                        width="calc(50% - 12.5px)"
+                        $gtLg={{ width: "calc(33% - 17px)" }}
                         gap={"$2"}
                         p={"$2"}
                         px={"$3"}

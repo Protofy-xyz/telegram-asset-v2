@@ -28,8 +28,7 @@ const configPanels = [
   { name: 'Databases', href: '/workspace/databases', icon: "database" },
   { name: 'Files', href: '/workspace/files?path=/', icon: "folder" },
   { name: 'Settings', href: '/workspace/settings', icon: "cog" },
-  { name: 'Themes', href: '/workspace/themes', icon: "palette" },
-  { name: 'Events', href: '/workspace/events', icon: "activity" }
+  { name: 'Themes', href: '/workspace/themes', icon: "palette" }
 ]
 
 export default {

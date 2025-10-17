@@ -1,11 +1,12 @@
 import { DatePicker } from './datepickers';
 import { Tinted } from './Tinted'
 import { SelectList } from './SelectList'
-import { Filter, Check, X } from '@tamagui/lucide-icons'
-import { XStack, Button, Popover, Text, Label, YStack, Checkbox, Tooltip, Input } from '@my/ui'
+import { Filter, X, RefreshCcw } from '@tamagui/lucide-icons'
+import { XStack, Button, Popover, Text, Label, YStack, Tooltip, Input, Stack, Switch, Circle } from '@my/ui'
 import { Fragment, useState } from 'react';
 import { usePageParams } from '../next';
 import { Chip } from './Chip';
+import { InteractiveIcon } from './InteractiveIcon';
 
 type FiltersType = {
     model: any,
@@ -25,7 +26,7 @@ export const QueryFilters = ({ state, extraFilters }) => {
         {
             queryFilters.map((q, i) => <Tooltip key={i}>
                 <Tooltip.Trigger cursor='pointer' >
-                    <Chip color={"$color6"} text={q.replace('filter[', '').replace(']', '')} textProps={{ fontWeight: '600', fontSize: 12 }} gap="$2" pl="$1" pr="$3" py="$1">
+                    <Chip color={"$color7"} text={q.replace('filter[', '').replace(']', '')} textProps={{ fontWeight: '400', fontSize: 12 }} gap="$2" pl="$1" pr="$3" py="$1">
                         <Button onPress={() => removePush(q)} size="$1" circular={true}>
                             <X size={12} color={"var(--color8)"}></X>
                         </Button>
@@ -72,7 +73,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
         if (customFilters?.[key]?.component) return true
         return ['ZodBoolean', 'ZodDate', 'ZodUnion', 'ZodNumber'].includes(def?.typeName)
     }) || extraFilters.length
-    
+
     if (!hasAnyFilterable) return null  // Hide Filters menu if no filterable fields or extra filters
 
     const onClear = () => {
@@ -100,7 +101,8 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
         var value: any = query[`filter[${key}]`]
 
         if (def?.typeName === 'ZodBoolean') {
-            value = value == "true"
+            if (value === "true") value = true
+            else if (value === "false") value = false
         }
 
         const onFilter = (value) => {
@@ -121,16 +123,20 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
         }
 
         if (def?.typeName === 'ZodBoolean') {
+            const isUndefined = value === undefined
             return <>
                 <Label>{key}</Label>
-                <Checkbox
-                    checked={value}
-                    onCheckedChange={(val) => onFilter(val)}
-                >
-                    <Checkbox.Indicator>
-                        <Check></Check>
-                    </Checkbox.Indicator>
-                </Checkbox>
+                <Tinted>
+                    <Stack flexDirection="row" gap="$2" alignItems="center">
+                        <Switch cursor="pointer" checked={value === true} onCheckedChange={onFilter} size="$2" bc="$color7">
+                            {/*@ts-ignore*/}
+                            <Switch.Thumb style={{ width: isUndefined ? '100%' : '50%' }} animation="quick">
+                                {isUndefined ? <Stack enterStyle={{ opacity: 0 }} alignSelf="center"><Circle size={18} fillOpacity={1} fill="var(--color)"></Circle></Stack> : null}
+                            </Switch.Thumb>
+                        </Switch>
+                        <InteractiveIcon IconColor='$gray10' Icon={RefreshCcw} onPress={() => removePush(`filter[${key}]`)} />
+                    </Stack>
+                </Tinted>
             </>
         } else if (def?.typeName === 'ZodDate') {
             return <>
@@ -145,6 +151,10 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
             return <Fragment key={key}>
                 <Label>{key}</Label>
                 <SelectList
+                    triggerProps={{ bc: "$bgContent" }}
+                    titleStyle={{ normal: { bc: "$bgContent" } }}
+                    rowStyle={{ normal: { bc: "$bgContent" }, hover: { filter: "brightness(0.5)", bc: "$bgContent" } }}
+
                     value={value}
                     title={key}
                     elements={options}
@@ -172,6 +182,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                 <Label>{key}</Label>
                 <XStack gap={'$2'}>
                     <Input
+                        bc="$bgContent"
                         type="number"
                         placeholder="From"
                         value={fromValue ?? ''}
@@ -179,6 +190,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                         onChangeText={(t: any) => onFilterFrom(t)}
                     />
                     <Input
+                        bc="$bgContent"
                         type="number"
                         placeholder="To"
                         value={toValue ?? ''}
@@ -201,14 +213,14 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
             </Tinted>
         </Popover.Trigger>
         <Popover.Content
-            backgroundColor={"$backgroundStrong"}
+            backgroundColor={"$bgPanel"}
             borderWidth={1}
             borderColor="$borderColor"
             elevate
             mr={'$4'}
             maxWidth={"350px"}
         >
-            <Popover.Arrow ml={'$4'} borderWidth={1} borderColor="$borderColor" />
+            <Popover.Arrow ml={'$4'} borderWidth={1} borderColor="$borderColor" bc="$bgPanel" />
             <YStack miw={'$20'} gap={'$2'}>
                 <Text fontWeight="bold">Filters</Text>
                 <Tinted key="filter" >
@@ -216,7 +228,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                         <QueryFilters state={state} extraFilters={extraFilters} />
                     </XStack>
                 </Tinted>
-                <YStack overflow='scroll' p="2px" maxHeight="300px">
+                <YStack overflow='auto' p="2px" maxHeight="300px">
                     {schemaKeys.map((key) => {
                         const def = schema.shape[key]._def?.innerType?._def ?? schema.shape[key]._def
                         return <Fragment key={key}>
@@ -234,7 +246,7 @@ export const Filters = ({ model, state, customFilters, extraFilters }: FiltersTy
                 </YStack>
                 <XStack mt={'$4'} jc={'flex-end'} gap={'$3'} p={'$3'}>
                     <Tinted>
-                        <Button onPress={onClear}>Clear</Button>
+                        <Button bc="$color6" icon={RefreshCcw} onPress={onClear}>Clear</Button>
                     </Tinted>
                 </XStack>
             </YStack>

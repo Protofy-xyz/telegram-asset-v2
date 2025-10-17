@@ -1,28 +1,20 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useBoardVersion, useBusy, useLoading, useVersions } from '../store/boardStore';
+import { useBoardVersion, useBusy, useLoading, useVersions, useBoardVersionId } from '../store/boardStore';
 import { atom, useAtom } from 'jotai'
 
 /* ---------- API calls (cliente) ---------- */
 
 export const listVersions = async (boardId: string): Promise<number[]> => {
-  const r = await fetch(`/api/core/v1/boards/${boardId}/versions`, { credentials: 'include' });
+  const r = await fetch(`/api/core/v1/boards/${boardId}/history`, { credentials: 'include' });
   if (!r.ok) throw new Error('Failed to list versions');
-  return r.json();
-};
-
-export const createVersion = async (boardId: string): Promise<{ ok: boolean; version: number }> => {
-  const r = await fetch(`/api/core/v1/boards/${boardId}/version`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  if (!r.ok) throw new Error('Failed to create version');
   return r.json();
 };
 
 export const restoreVersion = async (
   boardId: string,
-  version: number
-): Promise<{ ok: boolean; restored: { boardId: string; version: number } }> => {
+  version: any
+): Promise<{ ok: boolean; restored: { boardId: string; version: any } }> => {
+  console.log("restoreVersion**************** - restoring version:", version);
   const r = await fetch(`/api/core/v1/boards/${boardId}/versions/${version}/restore`, {
     method: 'GET',
     credentials: 'include',
@@ -44,13 +36,14 @@ export const getCurrentVersion = async (boardId: string): Promise<number | null>
 export function useBoardVersions(boardId?: string) {
   const [versions, setVersions] = useVersions();
   const [current, setCurrent] = useBoardVersion();
+  const [, setBoardVersionId] = useBoardVersionId();
   const [loading, setLoading] = useLoading();
   const [busy, setBusy] = useBusy();
 
   const canUndo = current > 1;
   const canRedo = current >= 1 && current < versions.length;
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (includeVersion?: boolean) => {
     if (!boardId) return;
     setLoading(true);
     try {
@@ -60,30 +53,24 @@ export function useBoardVersions(boardId?: string) {
       ]);
 
       setVersions(list);
-
-      // Si current no está en la lista, cae al último existente
-      if (curr != null && list.includes(curr)) {
-        setCurrent(curr);
-      } else {
-        setCurrent(list.length ? list[list.length - 1] : null);
+      if(includeVersion) {
+        setCurrent(curr || null);
       }
+      
     } finally {
       setLoading(false);
     }
   }, [boardId]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
   const goToVersion = useCallback(
     async (target: number) => {
       if (!boardId || busy) return;
-      if (!versions.includes(target)) return; // sanity
       setBusy(true);
       try {
-        await restoreVersion(boardId, target);
-        setCurrent(target);
+        const response = await restoreVersion(boardId, target);
+        setCurrent(response?.restored?.version ?? target);
+        setBoardVersionId(v => v + 1) //to force reloading board
+        // document.location.reload();
       } finally {
         setBusy(false);
       }
@@ -93,13 +80,13 @@ export function useBoardVersions(boardId?: string) {
 
   const undo = useCallback(async () => {
     if (!canUndo) return;
-    const target = versions[current - 2];
+    const target = current - 1;
     await goToVersion(target);
   }, [canUndo, current, versions, goToVersion]);
 
   const redo = useCallback(async () => {
     if (!canRedo) return;
-    const target = versions[current];
+    const target = current + 1;
     await goToVersion(target);
   }, [canRedo, current, versions, goToVersion]);
 

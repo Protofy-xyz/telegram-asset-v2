@@ -4,8 +4,9 @@ import CustomPanelResizeHandle from "../MainPanel/CustomPanelResizeHandle";
 import { JSONView } from "../JSONView";
 import { useCallback, useMemo, useState } from "react";
 import { AlignLeft, Braces, ChevronDown, Copy, Globe, LayoutDashboard, Search } from "@tamagui/lucide-icons";
-import { TabBar } from "../../components/TabBar";
+import { TabBar } from "../TabBar";
 import { generateActionCode, generateStateCode } from "@extensions/boards/utils/ActionsAndStates"
+import { Tinted } from "../Tinted";
 
 function flattenObject(obj, prefix = "", maxDepth = undefined, currentDepth = 1) {
     let result = [];
@@ -112,32 +113,34 @@ const ActionsList = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hide
                 const value = line[copyIndex]
 
                 return (
-                    <Button
-                        key={keyLabel + index}
-                        bc={isCopied ? "transparent" : "$gray6"}
-                        alignSelf="flex-start"
-                        width="auto"
-                        size="$2"
-                        iconAfter={<Copy color={isCopied ? "transparent" : "$color8"} />}
-                        hoverStyle={{ backgroundColor: isCopied ? "transparent" : "$color5" }}
-                        onPress={() => handleCopy(value, index)}
-                    >
-                        {isCopied
-                            && <Text numberOfLines={1} overflow="visible" fos="$4" color="$color">
-                                copied to clipboard!
-                            </Text>
-                        }
-                        <XStack opacity={isCopied ? 0 : 1}>
-                            <Text fos="$4">
-                                {keyLabel + (hideValue ? '' : ' : ')}
-                            </Text>
-                            {!hideValue && (
-                                <Text fos="$4" color="$color7">
-                                    {line[displayIndex] || value}
+                    <Tinted>
+                        <Button
+                            key={keyLabel + index}
+                            bc={isCopied ? "transparent" : "$bgPanel"}
+                            alignSelf="flex-start"
+                            width="auto"
+                            size="$2"
+                            iconAfter={<Copy color={isCopied ? "transparent" : "$color8"} />}
+                            hoverStyle={{ backgroundColor: isCopied ? "transparent" : "$color5" }}
+                            onPress={() => handleCopy(value, index)}
+                        >
+                            {isCopied
+                                && <Text numberOfLines={1} overflow="visible" fos="$4" color="$color">
+                                    copied to clipboard!
                                 </Text>
-                            )}
-                        </XStack>
-                    </Button>
+                            }
+                            <XStack opacity={isCopied ? 0 : 1}>
+                                <Text fos="$4">
+                                    {keyLabel + (hideValue ? '' : ' : ')}
+                                </Text>
+                                {!hideValue && (
+                                    <Text fos="$4" color="$color7">
+                                        {line[displayIndex] || value}
+                                    </Text>
+                                )}
+                            </XStack>
+                        </Button>
+                    </Tinted>
                 )
             })}
         </YStack>
@@ -226,13 +229,13 @@ function filterObjectBySearch(data, search) {
     return Object.keys(result).length > 0 ? result : undefined;
 }
 
-export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode, colors = {}, showActionsTabs = false, showStatesTabs = false }) => {
+export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode, showActionsTabs = false, showStatesTabs = false }) => {
     const [inputMode, setInputMode] = useState<"json" | "formatted">("formatted")
     const [search, setSearch] = useState('')
     const [selectedStatesTab, setSelectedStatesTab] = useState(board.name)
     const [stateSearch, setStateSearch] = useState('')
     const [selectedActionsTab, setSelectedActionsTab] = useState(board.name)
-    console.log("ActionsAndStatesPanel:", { actions, states });
+    //console.log("ActionsAndStatesPanel:", { actions, states });
 
     const cleanedActions = useMemo(() => {
         const cleaned = {};
@@ -328,31 +331,35 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
 
     return <Panel defaultSize={30}>
         <PanelGroup direction="vertical">
-            {panels && panels?.includes('actions') && <Panel defaultSize={50} minSize={20} maxSize={80}>
-                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor={colors["bgColor"] ?? "$gray3"} overflow="hidden" >
-                    <XStack jc="space-between" width="100%">
-                        <Label pl="$3" lineHeight={"$4"} >Actions</Label>
-                        <XStack gap="$2">
-                            <Button
-                                icon={AlignLeft}
-                                bc={inputMode === "formatted" ? "$gray7" : "$gray4"}
-                                scaleIcon={1.6}
-                                size="$2"
-                                onPress={() => setInputMode("formatted")}
-                            />
-                            <Button
-                                icon={Braces}
-                                bc={inputMode === "json" ? "$gray7" : "$gray4"}
-                                scaleIcon={1.6}
-                                size="$2"
-                                onPress={() => setInputMode("json")}
-                            />
+            {panels && panels?.includes('actions') && <Panel defaultSize={50} minSize={20} maxSize={80} >
+                <YStack flex={1} height="100%" p="$3" gap="$2" overflow="hidden">
+                    <Tinted>
+                        <XStack jc="space-between" width="100%">
+                            <Label pl="$3" lineHeight={"$4"} fontSize="$5" color="$gray9" >Actions</Label>
+                            <XStack gap="$2">
+                                <Button
+                                    icon={AlignLeft}
+                                    bc={inputMode === "formatted" ? "$bgPanel" : "$bgContent"}
+                                    color={inputMode === "formatted" ? "$color8" : "$color"}
+                                    scaleIcon={1.6}
+                                    size="$2"
+                                    onPress={() => setInputMode("formatted")}
+                                />
+                                <Button
+                                    icon={Braces}
+                                    color={inputMode === "json" ? "$color8" : "$color"}
+                                    bc={inputMode === "json" ? "$bgPanel" : "$bgContent"}
+                                    scaleIcon={1.6}
+                                    size="$2"
+                                    onPress={() => setInputMode("json")}
+                                />
+                            </XStack>
                         </XStack>
-                    </XStack>
+                    </Tinted>
                     <XStack gap="$2">
                         <Search pos="absolute" left="$3" top={14} size={16} />
                         <Input
-                            bg={colors["inputBgColor"] ?? "$gray1"}
+                            bg="$bgPanel"
                             color="$gray12"
                             paddingLeft="$7"
                             bw={0}
@@ -389,14 +396,14 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
 
                 </YStack>
             </Panel>}
-            <CustomPanelResizeHandle direction="horizontal" />
+            <CustomPanelResizeHandle direction="horizontal" borderLess={false} borderColor="var(--gray4)" />
             <Panel defaultSize={50} minSize={20} maxSize={80}>
-                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" backgroundColor={colors["bgColor"] ?? "$gray3"} overflow="hidden" >
-                    <Label pl="$3" lineHeight={"$4"} >States</Label>
+                <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" overflow="hidden" >
+                    <Label pl="$3" lineHeight={"$4"} fontSize="$5" color="$gray9">States</Label>
                     <XStack>
                         <Search pos="absolute" left="$3" top={14} size={16} />
                         <Input
-                            bg={colors["inputBgColor"] ?? "$gray1"}
+                            bg={"$bgPanel"}
                             color={"$gray12"}
                             paddingLeft="$7"
                             bw={0}

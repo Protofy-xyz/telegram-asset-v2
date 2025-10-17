@@ -52,17 +52,6 @@ export default async (app, context) => {
         if (v === null) return res.status(404).send({ error: 'board not found or invalid version' });
         return res.send({ version: v });
     });
-    // List versions
-    app.get('/api/core/v1/boards/:boardId/versions', requireAdmin(), async (req, res) => {
-        const root = getRoot(req);
-        const dir = fspath.join(VersionsBaseDir(root), req.params.boardId);
-        if (!fsSync.existsSync(dir)) return res.send([]);
-        const entries = (await fs.readdir(dir))
-            .filter(n => /^\d+$/.test(n))
-            .map(n => Number(n))
-            .sort((a, b) => a - b);
-        res.send(entries);
-    });
 
     // Get history
     app.get('/api/core/v1/boards/:boardId/history', requireAdmin(), async (req, res) => {
@@ -87,7 +76,7 @@ export default async (app, context) => {
                     : { cards: [] };
                 const currData = await readJson(filePath);
                 const { type, card } = getChange(prevData, currData);
-                const change = card ? {type: type, card: card.name} : {};
+                const change = card ? { type: type, card: card.name } : {};
 
                 return {
                     version: currData.version ?? version,
@@ -132,6 +121,9 @@ export default async (app, context) => {
             [`${boardId}_ui.js`, fspath.join(base, `${boardId}_ui.js`)],
         ];
 
+        const fileContent = fsSync.readFileSync(fspath.join(vdir, `${boardId}.json`), 'utf8');
+        const versionData = JSON.parse(fileContent);
+
         for (const [name, dst] of sources) {
             const src = fspath.join(vdir, name);
             if (fsSync.existsSync(src)) {
@@ -145,12 +137,26 @@ export default async (app, context) => {
         // Restaura la carpeta del board
         const srcDir = fspath.join(vdir, boardId);
         const dstDir = fspath.join(base, boardId);
-        if (fsSync.existsSync(dstDir)) fsSync.rmSync(dstDir, { recursive: true, force: true });
+
+
+        const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+        if (fsSync.existsSync(dstDir)) {
+            for (let i = 0; i < 10; i++) {
+                try {
+                    await fs.rm(dstDir, { recursive: true, force: true });
+                    break; // OK
+                } catch (e: any) {
+                    if (!['ENOTEMPTY', 'EBUSY', 'EPERM'].includes(e?.code) || i === 9) throw e;
+                    await sleep(100 * (i + 1)); // backoff suave
+                }
+            }
+        }
         if (fsSync.existsSync(srcDir)) {
             await copyDirRecursive(srcDir, dstDir);
         }
         // Re-registra acciones y estados derivados:
         await API.get("/api/core/v1/reloadBoards?token=" + getServiceToken())
-        res.send({ ok: true, restored: { boardId, version } });
+        res.send({ ok: true, restored: { boardId, version: versionData.version } });
     });
 };

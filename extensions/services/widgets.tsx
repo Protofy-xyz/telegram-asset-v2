@@ -168,12 +168,12 @@ export const HTMLView = ({ html, data, setData = () => { }, ...props }) => {
 
     // Este useEffect es clave para ReactCards ya montadas
     useEffect(() => {
-        console.log('Updating HTMLView for card:', uuid, 'with data:', dataForCard);
+        //console.log('Updating HTMLView for card:', uuid, 'with data:', dataForCard);
         if (!loaded || !viewLib) return;
 
 
         if (html == displayedHTML.current && isReactWidget(html) && window._reactWidgets?.[uuid]) {
-            console.log("React card already mounted, skipping update");
+            //console.log("React card already mounted, skipping update");
             // Ya montado antes y el codigo no ha cambiado
             window.updateReactCardProps?.(uuid, dataForCard);
             return

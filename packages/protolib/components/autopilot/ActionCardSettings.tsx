@@ -77,11 +77,11 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       label: 'Readme',
       icon: <FileQuestion size={"$1"} />,
       content: <TabContainer>
-        <TabTitle tabname={"Description"} />
+        {/* <TabTitle tabname={"Description"} /> */}
         <PanelGroup direction="horizontal">
           <Panel defaultSize={50}>
             <YStack
-              flex={1} height="100%" backgroundColor="$gray3" borderRadius="$3" p="$3" >
+              flex={1} height="100%" backgroundColor="$bgPanel" borderRadius="$3" p="$3" >
               <Markdown
                 data={cardData.description}
                 setData={(newCode) => {
@@ -179,7 +179,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       label: 'Settings',
       icon: <Settings size={"$1"} />,
       content: <TabContainer>
-        <TabTitle tabname={"General Setting"} />
+        {/* <TabTitle tabname={"General Setting"} /> */}
         <DisplayEditor style={{ width: "100%", height: "fit-content" }} board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
       </TabContainer>
     },
@@ -188,7 +188,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       label: 'View',
       icon: <FileCode size={"$1"} />,
       content: <TabContainer>
-        <TabTitle tabname={"Card View"} tabDescription='Configure the view of your card with React or plain html' />
+        {/* <TabTitle tabname={"Card View"} tabDescription='Configure the view of your card with React or plain html' /> */}
         <ViewEditor cardData={cardData} setHTMLCode={setHTMLCode} />
       </TabContainer>
     },

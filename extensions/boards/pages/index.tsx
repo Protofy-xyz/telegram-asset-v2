@@ -12,7 +12,6 @@ import { createParam } from 'solito'
 import { AsyncView } from 'protolib/components/AsyncView'
 import { BoardView } from './view'
 import { YStack, Text, XStack, Spacer, ScrollView, Input } from "@my/ui";
-import { LayoutDashboard } from '@tamagui/lucide-icons'
 import { AlertDialog } from 'protolib/components/AlertDialog'
 import { useEffect, useState } from 'react'
 import { Slides } from 'protolib/components/Slides';

@@ -2,14 +2,25 @@ import { atom, useAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
 export const highlightedCard = atom("")
+export const tabVisible = atom("")
+
 export const boardVersion = atom(1)
 export const versions = atom<number[]>([]);
 export const loading = atom(false);
 export const busy = atom(false);
+export const boardVersionId = atom(1) //internal id to track version changes. Only changes when switching versions, not when board changes
 
 export const useBoardVersion = () => {
     return useAtom(boardVersion)
 } 
+
+export const useBoardVersionId = () => {
+    return useAtom(boardVersionId)
+}
+
+export const useTabVisible = () => {
+    return useAtom(tabVisible)
+}
 
 export const useVersions = () => useAtom(versions);
 export const useLoading  = () => useAtom(loading);

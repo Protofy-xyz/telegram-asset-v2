@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { VerticalTimeline, VerticalTimelineElement } from "react-vertical-timeline-component"
 import "react-vertical-timeline-component/style.min.css"
-import { useTheme, Paragraph, ScrollView, XStack } from "@my/ui"
+import { useTheme, Paragraph, ScrollView, XStack, Text } from "@my/ui"
 import { ArchiveRestore, CheckCircle, Clock } from "@tamagui/lucide-icons"
 import { Tinted } from 'protolib/components/Tinted'
 import { InteractiveIcon } from "protolib/components/InteractiveIcon"
@@ -13,26 +13,11 @@ import { useBoardVersion } from './store/boardStore';
 type VersionInfo = { version: number; savedAt: number | string, cards: string[]; change: { type?: string; card?: string } }
 
 export function VersionTimeline({ boardId }: { boardId: string }) {
-  const [versions, setVersions] = useState<VersionInfo[]>([])
-  const { goToVersion, refresh } = useBoardVersions(boardId || undefined);
+
+  const { goToVersion, versions } = useBoardVersions(boardId);
   const theme = useTheme()
   const [boardVersion] = useBoardVersion();
   const current = boardVersion
-
-  useEffect(() => {
-    ; (async () => {
-      try {
-        const res = await fetch(`/api/core/v1/boards/${boardId}/history`)
-        const raw = await res.json()
-        const data: VersionInfo[] = (raw ?? [])
-          .map((v: VersionInfo) => ({ ...v, savedAt: Number(v.savedAt) }))
-          .sort((a, b) => b.version - a.version)
-        setVersions(data)
-      } catch {
-        setVersions([])
-      }
-    })()
-  }, [boardId])
 
   const fmt = (ts: number | string) => {
     const d = new Date(Number(ts))
@@ -47,23 +32,25 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
         second: "2-digit",
       })
   }
-
+  
   return (
     <ScrollView flex={1} width="100%" height="100%" overflow="auto">
       <Tinted>
         <VerticalTimeline
+          animate={false}
           //layout="1-column-left" //'1-column-left' or '1-column-right' or '2-columns' (default: '2-columns')
           lineColor={"var(--gray6)"}
         >
-          {versions.map((v) => (
+          {[...versions].reverse().map((v) => (
             <VerticalTimelineElement
+            
               key={v.version}
               date={fmt(v.savedAt)}
               icon={current === v.version ? <CheckCircle /> : <Clock />}
               iconStyle={{
                 background: current === v.version ? "var(--color6)" : "var(--gray6)",
                 color: "var(--color8)",
-                boxShadow: "none",
+                boxShadow: "none",  
               }}
               contentStyle={{
                 background: "var(--bgContent)",
@@ -82,9 +69,8 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
                     size={24}
                     onPress={async () => {
                       try {
+                        console.log("GOING TO VERSION", v.version);
                         await goToVersion(v.version);
-                        await refresh();
-                        document.location.reload();
                       } catch (e) { console.error(e); }
                     }}
                   />
@@ -92,10 +78,10 @@ export function VersionTimeline({ boardId }: { boardId: string }) {
               </div>
               <Paragraph size="$3" mt={8} mb={0} color={current === v.version ? "var(--color8)" : "var(--color)"}>
                 <XStack>
-                  Total cards: {v.cards.length}
+                  <Text>Total cards: {v.cards.length}</Text>
                 </XStack>
                 <XStack>
-                  Changes: {`${v.change.type} card ${v.change.card}`}
+                  <Text>Changes: {`${v.change.type} card ${v.change.card}`}</Text>
                 </XStack>
               </Paragraph>
 
