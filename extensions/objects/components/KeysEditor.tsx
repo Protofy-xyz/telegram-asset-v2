@@ -55,20 +55,21 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
         (k: string, v: "string" | "number" | "boolean" | "array" | "union") => {
             const next = { ...data }
             const prev = next[k]
-            let params = prev.params
+            const updated: any = { ...prev, type: v }
             switch (v) {
                 case 'array': {
-                    params = ["z.any()"]
+                    updated.params = ["z.any()"]
                     break
                 } case 'union': {
-                    const hasUnionParams = Array.isArray(prev.params) && prev.params.length > 0 && /z\.literal\(/.test(prev.params.join(','))
-                    params = hasUnionParams ? prev.params : ["[z.literal(\"option1\"), z.literal(\"option2\")]"]
+                    const hasUnionParams = Array.isArray(prev.params) && /z\.literal\(/.test((prev.params || []).join(','))
+                    updated.params = hasUnionParams ? prev.params : []
                     break
-                } default:
+                } default: {
+                    if (updated.params !== undefined) delete updated.params
                     break
+                }
             }
-
-            next[k] = { ...prev, type: v, ...(params ? { params } : {}) }
+            next[k] = updated
             setData(next)
         },
         [data, setData]
@@ -353,7 +354,7 @@ const FriendlyKeysEditor = ({ data, setData, mode }) => {
                 <InputMultiple values={values} setValues={handleSet} placeholder="Add options (comma, enter or newline)" />
             </Tinted>
             {invalid && (
-                <Text color="$red9" fontSize="$2">At least 2 options are required for a union.</Text>
+                <Text ml="$2" color="$red9" fontSize="$2">At least 2 options are required for a union type key.</Text>
             )}
         </YStack>
     }
