@@ -26,7 +26,7 @@ export const OutputEditor = ({ card, setCardData, links, setLinks }: any) => {
   }, [selectedType])
 
   return <TabContainer >
-    <TabTitle tabname="Output Configuration" tabDescription='Configure all the possible behaviours that your card' />
+    {/* <TabTitle tabname="Output Configuration" tabDescription='Configure all the possible behaviours that your card' /> */}
     <YStack gap="$3" f={1} w="100%">
       <YStack bc="$bgPanel" p="$3" borderRadius="$4" >
         <YStack pb="$3">

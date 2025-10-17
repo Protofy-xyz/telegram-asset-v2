@@ -122,7 +122,7 @@ export const ParamsEditor = ({
   const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
   return <TabContainer>
-    <TabTitle tabname={"Inputs Configuration"} tabDescription='Configure all the dynamic inputs for your card' />
+    {/* <TabTitle tabname={"Inputs Configuration"} tabDescription='Configure all the dynamic inputs for your card' /> */}
     <YStack flex={1} height="100%" w="100%" overflow="hidden" >
       <ScrollView mt="$3" flex={1} space="$3">
         <YStack gap="$3" borderRadius="$3" p="$3" backgroundColor="$bgPanel">

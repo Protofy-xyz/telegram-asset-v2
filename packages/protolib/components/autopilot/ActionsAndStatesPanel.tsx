@@ -335,7 +335,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
                 <YStack flex={1} height="100%" p="$3" gap="$2" overflow="hidden">
                     <Tinted>
                         <XStack jc="space-between" width="100%">
-                            <Label pl="$3" lineHeight={"$4"} >Actions</Label>
+                            <Label pl="$3" lineHeight={"$4"} fontSize="$5" color="$gray9" >Actions</Label>
                             <XStack gap="$2">
                                 <Button
                                     icon={AlignLeft}
@@ -399,7 +399,7 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
             <CustomPanelResizeHandle direction="horizontal" borderLess={false} borderColor="var(--gray4)" />
             <Panel defaultSize={50} minSize={20} maxSize={80}>
                 <YStack flex={1} height="100%" borderRadius="$3" p="$3" gap="$2" overflow="hidden" >
-                    <Label pl="$3" lineHeight={"$4"} >States</Label>
+                    <Label pl="$3" lineHeight={"$4"} fontSize="$5" color="$gray9">States</Label>
                     <XStack>
                         <Search pos="absolute" left="$3" top={14} size={16} />
                         <Input

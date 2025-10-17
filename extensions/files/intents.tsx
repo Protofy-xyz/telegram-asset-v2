@@ -178,7 +178,37 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
   </AsyncView>
 }
 
-export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPanels = false, extraPanels = [], leftIcons = <></>, rightIcons = <></>, icons = <></>, disableFlowMode = false, masksPath = undefined, defaultMode = 'flow', monacoOnMount = (editor, monaco) => { }, monacoInstance = null, monacoProps = {}, monacoOptions = {}, onCodeChange = (code) => { }, onFlowChange = (code) => { }, fileContent = null, path, flowsPath = undefined, rules = [], onApplyRules = async (rules) => { }, sourceCode, isModified = false, setIsModified = (x) => { }, query = {}, children = <></>, viewPort = undefined, onModeChange = (mode) => { } }) => {
+export const CodeView = ({ 
+  rulesConfig = {}, 
+  pathname = undefined, 
+  disableAIPanels = false, 
+  extraPanels = [], 
+  leftIcons = <></>, 
+  rightIcons = <></>, 
+  icons = <></>, 
+  disableFlowMode = false, 
+  masksPath = undefined, 
+  defaultMode = 'flow',
+  rulesProps = {},
+  monacoOnMount = (editor, monaco) => { }, 
+  monacoInstance = null, 
+  monacoProps = {}, 
+  monacoOptions = {}, 
+  onCodeChange = (code) => { }, 
+  onFlowChange = (code) => { }, 
+  fileContent = null, 
+  path, 
+  flowsPath = undefined, 
+  rules = [], 
+  onApplyRules = async (rules) => { }, 
+  sourceCode, 
+  isModified = false, 
+  setIsModified = (x) => { }, 
+  query = {}, 
+  children = <></>, 
+  viewPort = undefined, 
+  onModeChange = (mode) => { } 
+}) => {
   pathname = pathname ?? usePathname();
   const theme = useTheme()
   const tint = useTint().tint
@@ -359,7 +389,7 @@ export const CodeView = ({ rulesConfig = {}, pathname = undefined, disableAIPane
     {/* <Theme name={tint as any}> */}
     <XStack justifyContent="space-between" alignItems="center">
       <XStack>
-        <Label paddingLeft="$3">Rules</Label>
+        <Label paddingLeft="$3" fontSize="$5" color="$gray9">{rulesProps["title"] ?? "Rules"}</Label>
         {leftIcons}
       </XStack>
       <XStack alignItems="center" mb="$2">

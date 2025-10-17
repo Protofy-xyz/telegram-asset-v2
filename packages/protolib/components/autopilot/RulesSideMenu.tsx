@@ -79,6 +79,7 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
     const theme = useTheme()
     const flows = useMemo(() => {
         return <CodeView
+            rulesProps={{ title: "Board Rules" }}
             onModeChange={(currMode) => setRulesMode(currMode)}
             onApplyRules={async (rules) => {
                 try {
