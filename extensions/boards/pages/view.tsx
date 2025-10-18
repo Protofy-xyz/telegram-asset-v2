@@ -38,7 +38,7 @@ import { useAtom as useJotaiAtom } from 'jotai'
 import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard } from '../utils/viewUtils'
 import { ActionCard } from '../components/ActionCard'
 import { VersionTimeline } from '../VersionTimeline'
-import { useBoardVersions } from '../utils/versions'
+import { useBoardVersions, latestVersion } from '../utils/versions'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -63,7 +63,8 @@ const saveBoard = async (boardId, data, setBoardVersion?, refresh?, opts = { bum
       if (!data.version) {
         data.version = 1
       } else {
-        data.version += 1
+        const last = await latestVersion(boardId);
+        data.version = last + 1;
       }
       data.savedAt = Date.now()
     }

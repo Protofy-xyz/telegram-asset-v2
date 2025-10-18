@@ -10,6 +10,11 @@ export const listVersions = async (boardId: string): Promise<number[]> => {
   return r.json();
 };
 
+export const latestVersion = async (boardId: string): Promise<number> => {
+  const versions = await listVersions(boardId);
+  return versions?.length ?? 0;   
+};
+
 export const restoreVersion = async (
   boardId: string,
   version: any
