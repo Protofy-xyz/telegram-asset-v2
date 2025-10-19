@@ -281,6 +281,8 @@ const Board = ({ board, icons }) => {
     setTabVisible
   } = useBoardControls();
 
+  window['board'] = board;
+
   const breakpointCancelRef = useRef(null) as any
   const dedupRef = useRef() as any
   const initialized = useRef(false)
