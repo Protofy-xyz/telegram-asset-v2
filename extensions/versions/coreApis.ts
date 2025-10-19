@@ -71,7 +71,7 @@ export default async (app, context) => {
                 const filePath = fspath.join(dir, String(version), boardName);
 
                 if (!fsSync.existsSync(filePath)) return null;
-                const metaPath = fspath.join(filePath, 'meta.json');
+                const metaPath = fspath.join(dir, String(version), 'meta.json');
                 let meta = {};
                 if (fsSync.existsSync(metaPath)) {
                     meta = JSON.parse(await fs.readFile(metaPath, 'utf8'));
