@@ -69,7 +69,13 @@ export default async (app, context) => {
 
             const versions = await Promise.all(entries.map(async version => {
                 const filePath = fspath.join(dir, String(version), boardName);
+
                 if (!fsSync.existsSync(filePath)) return null;
+                const metaPath = fspath.join(filePath, 'meta.json');
+                let meta = {};
+                if (fsSync.existsSync(metaPath)) {
+                    meta = JSON.parse(await fs.readFile(metaPath, 'utf8'));
+                }
                 const prevPath = fspath.join(dir, String(version - 1), boardName);
                 const prevData = (version > 1 && fsSync.existsSync(prevPath))
                     ? await readJson(prevPath)
@@ -80,6 +86,7 @@ export default async (app, context) => {
 
                 return {
                     version: currData.version ?? version,
+                    ...meta,
                     savedAt: currData.savedAt ?? null,
                     cards: (currData.cards ?? []).map(c => `${c.name}.card`),
                     change,
@@ -102,6 +109,19 @@ export default async (app, context) => {
         const current = getCurrentVersionFromFS(root, boardId);
         await snapshotBoardFiles(root, boardId, current);
         res.send({ ok: true, version: current });
+    });
+
+    // Add or update version comment/tag
+    app.post('/api/core/v1/boards/:boardId/versions/:version/meta', requireAdmin(), async (req, res) => {
+        const root = getRoot(req);
+        const { boardId, version } = req.params;
+        const { comment, tag } = req.body;
+
+        const metaPath = fspath.join(VersionsBaseDir(root), boardId, version, 'meta.json');
+        const meta = { comment, tag, updatedAt: Date.now() };
+
+        await fs.writeFile(metaPath, JSON.stringify(meta, null, 2));
+        res.send({ ok: true });
     });
 
     // Restore version

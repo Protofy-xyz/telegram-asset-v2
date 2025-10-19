@@ -36,7 +36,16 @@ export const getCurrentVersion = async (boardId: string): Promise<number | null>
   return Number.isFinite(v) ? v : null;
 };
 
-
+export const setVersionMeta = async (boardId: string, version: number, data: { comment?: string; tag?: string }) => {
+  const r = await fetch(`/api/core/v1/boards/${boardId}/versions/${version}/meta`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('Failed to set version meta');
+  return r.json();
+};
 
 export function useBoardVersions(boardId?: string) {
   const [versions, setVersions] = useVersions();
