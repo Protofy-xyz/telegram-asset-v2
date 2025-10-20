@@ -73,6 +73,7 @@ function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenu
 function CardElement({ element, onDeleted }: any) {
   const toast = useToastController()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [openError, setOpenError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -166,15 +167,19 @@ function CardElement({ element, onDeleted }: any) {
             </Tinted>
           </XStack>
         }
-        {element.status == 'pending'
+        {(element.status == 'pending' && !isDownloading)
           && <Tinted>
             <InteractiveIcon size={20} IconColor="var(--color8)" Icon={Download} onPress={async () => {
-              const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
-              const result = await fetch(url)
+              setIsDownloading(true)
+              try {
+                const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
+                await fetch(url)
+              } catch (error) { }
+              setIsDownloading(false)
             }} />
           </Tinted>
         }
-        {(element.status === 'downloading' || isDeleting || isRunning)
+        {(isDownloading|| isDeleting || isRunning)
           && <Tinted>
             <Paragraph col="var(--color)">{isDeleting ? 'Deleting…' : isRunning ? 'Running…' : 'Downloading…'}</Paragraph>
             <Spinner m="$2" color="var(--color8)" />
@@ -211,7 +216,7 @@ const MainView = () => {
 
     const handler = ({ name, status }: { name: string; status: string }) => {
       // simple approach: any status change triggers a refresh of the list
-      if (['downloaded', 'error', 'downloading', 'deleted'].includes(status)) {
+      if (['downloaded', 'error', 'deleted'].includes(status)) {
         setReload((r) => r + 1);
       }
     };
