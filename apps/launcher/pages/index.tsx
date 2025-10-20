@@ -53,7 +53,7 @@ function CardMenuItem({ icon: Icon, label, onPress, iconColor }: CardMenuItemPro
 function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenuItemProps[] }) {
   return <Popover allowFlip>
     <Popover.Trigger disabled={disabled}>
-      <InteractiveIcon IconColor="var(--color)" Icon={MoreVertical} />
+      <InteractiveIcon IconColor="var(--color)" Icon={MoreVertical} opacity={disabled ? 0.3 : 1} />
     </Popover.Trigger>
     <Popover.Content left={"$7"} top={"$2"} bw={1} boc={"$borderColor"} bc={"var(--bgContent)"} >
       <Popover.Arrow borderWidth={1} boc="$gray4" />
@@ -146,10 +146,13 @@ function CardElement({ element, onDeleted }: any) {
         <Paragraph f={1} style={{ color: 'var(--color)', fontSize: '14px', fontWeight: '600' }} numberOfLines={1} ellipsizeMode="tail">
           {element.name}
         </Paragraph>
-        <CardMenu disabled={isDeleting || !["downloaded", "pending", "error"].includes(element.status)} options={[
-          { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
-          ...(element.status === "downloaded" ? [{ icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder }] : [])
-        ]} />
+        <CardMenu
+          disabled={isDeleting || isDownloading || isRunning}
+          options={[
+            { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
+            ...(element.status === "downloaded" ? [{ icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder }] : [])
+          ]}
+        />
       </XStack>
       <Paragraph style={{ color: 'var(--color)', fontSize: '10px' }}>
         v: {element.version}
@@ -179,7 +182,7 @@ function CardElement({ element, onDeleted }: any) {
             }} />
           </Tinted>
         }
-        {(isDownloading|| isDeleting || isRunning)
+        {(isDownloading || isDeleting || isRunning)
           && <Tinted>
             <Paragraph col="var(--color)">{isDeleting ? 'Deleting…' : isRunning ? 'Running…' : 'Downloading…'}</Paragraph>
             <Spinner m="$2" color="var(--color8)" />

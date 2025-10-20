@@ -101,6 +101,14 @@ const processCards = async (boardId, cards, context, boardData?, regenerate?) =>
             });
         }
 
+        if (card.enableAgentInputMode) {
+            const customRunPath = '/api/agents/v1/' + boardId + '/' + card.name;
+            proxyDB.set('boards', boardId, card.name, {
+                alias: customRunPath,
+                target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name + '/run/raw'
+            });
+        }
+
         if (card.customCardViewPath) {
             proxyDB.set('boards', boardId, card.name + '_view', {
                 alias: card.customCardViewPath,
