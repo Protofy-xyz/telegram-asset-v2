@@ -128,9 +128,9 @@
     "layouts": {
         "lg": [
             {
-                "w": 26,
-                "h": 43,
-                "x": 26,
+                "w": 16,
+                "h": 35,
+                "x": 74,
                 "y": 0,
                 "i": "action_1759758352002",
                 "moved": false,
@@ -138,45 +138,53 @@
                 "isResizable": true
             },
             {
-                "w": 33,
-                "h": 30,
-                "x": 52,
-                "y": 13,
+                "w": 20,
+                "h": 23,
+                "x": 0,
+                "y": 0,
                 "i": "value_1759761168538",
                 "moved": false,
                 "static": false,
                 "isResizable": true
             },
             {
+                "w": 18,
+                "h": 35,
+                "x": 56,
+                "y": 0,
                 "i": "value_1760706989562",
-                "x": 52,
-                "y": 42,
-                "w": 23,
-                "h": 11,
+                "moved": false,
+                "static": false,
                 "isResizable": true
             },
             {
+                "w": 18,
+                "h": 35,
+                "x": 38,
+                "y": 0,
                 "i": "action_1760707021429",
-                "x": 0,
-                "y": 53,
-                "w": 23,
-                "h": 11,
+                "moved": false,
+                "static": false,
                 "isResizable": true
             },
             {
+                "w": 18,
+                "h": 35,
+                "x": 20,
+                "y": 0,
                 "i": "action_1760707077855",
-                "x": 23,
-                "y": 63,
-                "w": 23,
-                "h": 11,
+                "moved": false,
+                "static": false,
                 "isResizable": true
             },
             {
+                "w": 20,
+                "h": 12,
+                "x": 0,
+                "y": 23,
                 "i": "value_1760707113396",
-                "x": 46,
-                "y": 73,
-                "w": 23,
-                "h": 11,
+                "moved": false,
+                "static": false,
                 "isResizable": true
             }
         ],
