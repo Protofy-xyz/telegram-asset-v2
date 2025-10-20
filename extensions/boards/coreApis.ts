@@ -38,6 +38,18 @@ class HttpError extends Error {
 
 const processCards = async (boardId, cards, context, boardData?, regenerate?) => {
     const proxyDB = ProtoMemDB('proxy');
+    
+    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: cards.map(card => {
+        return {
+            name: card.name,
+            type: card.type,
+            description: card.description || '',
+            icon: card.icon || '',
+            rulesCode: card.rulesCode,
+            html: card.html,
+            rules: card.rules
+        }
+    }), emitEvent: true }) //set board meta info
     context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
 
