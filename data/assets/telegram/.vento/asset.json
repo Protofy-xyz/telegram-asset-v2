@@ -6,12 +6,12 @@
     "chat",
     "social"
   ],
-  "version": "0.0.3",
+  "version": "0.0.4",
   "packagedFiles": [
     "extensions/telegram/**",
-    "data/boards/telegram_example/**",
-    "data/boards/telegram_example_ui.js",
-    "data/boards/telegram_example.js",
-    "data/boards/telegram_example.json"
+    "data/boards/telegram_tutorial/**",
+    "data/boards/telegram_tutorial_ui.js",
+    "data/boards/telegram_tutorial.js",
+    "data/boards/telegram_tutorial.json"
   ]
 }

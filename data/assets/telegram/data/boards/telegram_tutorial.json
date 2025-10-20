@@ -1,0 +1,548 @@
+{
+    "name": "telegram_tutorial",
+    "cards": [
+        {
+            "key": "value_1760955558592",
+            "width": 4,
+            "height": 13,
+            "icon": "send",
+            "name": "CONNECT A BOT",
+            "description": "Connects Vento with a Telegram bot using apikeys",
+            "type": "value",
+            "params": {
+                "nameKey": "The key name to set",
+                "nameKey2": "The key name to set"
+            },
+            "configParams": {
+                "nameKey": {
+                    "visible": true,
+                    "defaultValue": "TELEGRAM_BOT_TOKEN",
+                    "type": "string"
+                },
+                "nameKey2": {
+                    "visible": true,
+                    "defaultValue": "TELEGRAM_BOT_USERNAME",
+                    "type": "string"
+                }
+            },
+            "color": "#24a1de",
+            "displayTitle": false
+        },
+        {
+            "key": "action_1760955630233",
+            "width": 3,
+            "height": 12,
+            "icon": "file-text",
+            "name": "INTRODUCTION",
+            "markdownDisplay": true,
+            "displayIcon": false,
+            "displayResponse": true,
+            "description": "Render and edit formatted Markdown",
+            "type": "action",
+            "params": {
+                "editedValue": "New edited value",
+                "state": "Set state name"
+            },
+            "configParams": {
+                "editedValue": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "state": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "displayButton": false,
+            "buttonLabel": "Refresh from state",
+            "displayFrame": false,
+            "displayTitle": false
+        },
+        {
+            "key": "action_1760955829008_vento_copy_60kpglmh2b67wiwkff1qf8",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "action_2",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "input": "action input"
+            },
+            "configParams": {
+                "input": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayButton": false,
+            "displayTitle": false,
+            "displayFrame": false,
+            "autoResponsive": false
+        },
+        {
+            "key": "action_1760957111235",
+            "width": 3,
+            "height": 10,
+            "icon": "send",
+            "name": "COPY PREVIOUS MESSAGE CHATID AND REPLY",
+            "color": "#24A1DE",
+            "description": "Send a telegram message to a chat id",
+            "params": {
+                "chat_id": "chat id",
+                "message": "message"
+            },
+            "type": "action",
+            "displayButton": true,
+            "buttonLabel": "Send Message",
+            "keys": [
+                "TELEGRAM_BOT_TOKEN",
+                "TELEGRAM_BOT_USERNAME"
+            ],
+            "displayTitle": false
+        },
+        {
+            "key": "action_1760955829008_vento_copy_dxen5kt16rh1hc2rp73gq",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "action_3",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "input": "action input"
+            },
+            "configParams": {
+                "input": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayButton": false,
+            "displayTitle": false,
+            "displayFrame": false,
+            "autoResponsive": false
+        },
+        {
+            "key": "action_1760955829008_vento_copy_gekc9xedg2gcdl17pbqzj",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "action_4",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "input": "action input"
+            },
+            "configParams": {
+                "input": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayButton": false,
+            "displayTitle": false,
+            "displayFrame": false,
+            "autoResponsive": false
+        },
+        {
+            "key": "value_1760958112091",
+            "width": 3,
+            "height": 10,
+            "icon": "send",
+            "name": "SEND A MESSAGE TO THE BOT TO SHOW HERE",
+            "color": "#24A1DE",
+            "description": "Gets Telegram bot last received message",
+            "type": "value",
+            "keys": [
+                "TELEGRAM_BOT_TOKEN",
+                "TELEGRAM_BOT_USERNAME"
+            ],
+            "displayFrame": true
+        },
+        {
+            "key": "action_1760965187370",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "action 2",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "input": "action input"
+            },
+            "configParams": {
+                "input": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayTitle": false,
+            "displayFrame": false,
+            "displayButton": false,
+            "autoResponsive": false
+        },
+        {
+            "key": "value_1760967613152",
+            "width": 3,
+            "height": 8,
+            "icon": "youtube",
+            "name": "telegram asset explained",
+            "description": "Embed a YouTube video from a URL",
+            "type": "value",
+            "editorOptions": {},
+            "displayFrame": false
+        }
+    ],
+    "autopilot": false,
+    "layouts": {
+        "lg": [
+            {
+                "w": 18,
+                "h": 27,
+                "x": 18,
+                "y": 7,
+                "i": "value_1760955558592",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 17,
+                "h": 17,
+                "x": 0,
+                "y": 4,
+                "i": "action_1760955630233",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 7,
+                "x": 18,
+                "y": 0,
+                "i": "action_1760955829008_vento_copy_60kpglmh2b67wiwkff1qf8",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 53,
+                "h": 12,
+                "x": 37,
+                "y": 22,
+                "i": "action_1760957111235",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 52,
+                "h": 7,
+                "x": 37,
+                "y": 0,
+                "i": "action_1760955829008_vento_copy_dxen5kt16rh1hc2rp73gq",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 53,
+                "h": 3,
+                "x": 37,
+                "y": 19,
+                "i": "action_1760955829008_vento_copy_gekc9xedg2gcdl17pbqzj",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 53,
+                "h": 12,
+                "x": 37,
+                "y": 7,
+                "i": "value_1760958112091",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 15,
+                "h": 4,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760965187370",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 17,
+                "h": 13,
+                "x": 0,
+                "y": 21,
+                "i": "value_1760967613152",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            }
+        ],
+        "md": [
+            {
+                "w": 21,
+                "h": 19,
+                "x": 16,
+                "y": 3,
+                "i": "value_1760955558592",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 16,
+                "h": 11,
+                "x": 0,
+                "y": 3,
+                "i": "action_1760955630233",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 21,
+                "h": 3,
+                "x": 16,
+                "y": 0,
+                "i": "action_1760955829008_vento_copy_60kpglmh2b67wiwkff1qf8",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 27,
+                "h": 9,
+                "x": 37,
+                "y": 13,
+                "i": "action_1760957111235",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 27,
+                "h": 3,
+                "x": 37,
+                "y": 0,
+                "i": "action_1760955829008_vento_copy_dxen5kt16rh1hc2rp73gq",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 27,
+                "h": 3,
+                "x": 37,
+                "y": 10,
+                "i": "action_1760955829008_vento_copy_gekc9xedg2gcdl17pbqzj",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 27,
+                "h": 7,
+                "x": 37,
+                "y": 3,
+                "i": "value_1760958112091",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 15,
+                "h": 3,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760965187370",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 16,
+                "h": 8,
+                "x": 0,
+                "y": 14,
+                "i": "value_1760967613152",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            }
+        ],
+        "sm": [
+            {
+                "i": "value_1760955558592",
+                "x": 0,
+                "y": 11,
+                "w": 2,
+                "h": 15,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955630233",
+                "x": 0,
+                "y": 26,
+                "w": 2,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955829008_vento_copy_60kpglmh2b67wiwkff1qf8",
+                "x": 0,
+                "y": 40,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760957111235",
+                "x": 0,
+                "y": 48,
+                "w": 2,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955829008_vento_copy_dxen5kt16rh1hc2rp73gq",
+                "x": 0,
+                "y": 40,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955829008_vento_copy_gekc9xedg2gcdl17pbqzj",
+                "x": 0,
+                "y": 40,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760958112091",
+                "x": 0,
+                "y": 68,
+                "w": 2,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760965187370",
+                "x": 0,
+                "y": 79,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760967613152",
+                "x": 0,
+                "y": 87,
+                "w": 2,
+                "h": 9,
+                "isResizable": true
+            }
+        ],
+        "xs": [
+            {
+                "i": "value_1760955558592",
+                "x": 0,
+                "y": 11,
+                "w": 1,
+                "h": 15,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955630233",
+                "x": 0,
+                "y": 26,
+                "w": 1,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955829008_vento_copy_60kpglmh2b67wiwkff1qf8",
+                "x": 0,
+                "y": 40,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760957111235",
+                "x": 0,
+                "y": 48,
+                "w": 1,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955829008_vento_copy_dxen5kt16rh1hc2rp73gq",
+                "x": 0,
+                "y": 40,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760955829008_vento_copy_gekc9xedg2gcdl17pbqzj",
+                "x": 0,
+                "y": 40,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760958112091",
+                "x": 0,
+                "y": 68,
+                "w": 1,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760965187370",
+                "x": 0,
+                "y": 79,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760967613152",
+                "x": 0,
+                "y": 87,
+                "w": 1,
+                "h": 9,
+                "isResizable": true
+            }
+        ]
+    },
+    "version": 76,
+    "savedAt": 1760969385446
+}
