@@ -11,8 +11,8 @@ export const registerCards = async () => {
         name: "job_queue",
         emitEvent: true,
         defaults: {
-            "width": 2,
-            "height": 12,
+            "width": 3,
+            "height": 16,
             "icon": "file-stack",
             "name": "job_queue",
             "description": "A job queue with a list of pending jobs and a current job",
@@ -88,6 +88,51 @@ export const registerCards = async () => {
             "html": "//@card/react\nfunction Widget(props) {\n  return (\n    <ViewList\n      enableManualPop={true}\n      current={props?.value?.current}\n      emptyMessageProps={{\n        fontSize: \"$6\",\n        fontWeight: \"600\"\n      }}\n      // emptyMode=\"wait\"\n      emptyMessage=\"Empty job list\" \n      items={props?.value?.items} \n      onPop={(items) => execute_action(props.name, {action: 'next'})}\n      onClear={(items) => execute_action(props.name, {action: 'reset'})}\n      onPush={(item) => execute_action(props.name, {action: 'push', job: item})}\n      onDeleteItem={(item, index) => execute_action(props.name, {action: 'remove', index})} \n    />\n  );\n}\n",
         }
     })
+
+    addCard({
+        group: 'board',
+        tag: "agents",
+        id: 'board_agents_call',
+        templateName: "Call an Agent",
+        name: "call",
+        emitEvent: true,
+        defaults: {
+            width: 4,
+            height: 14,
+            icon: "bot-message-square",
+            type: "action",
+            name: "agent_call",
+            displayResponse: true,
+            displayIcon: true,
+            params: {
+                board: "board name where the target agent is located",
+                name: "name of the agent"
+            },
+            configParams: {
+                board: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                },
+                name: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "return await context.apis.fetch('get', '/api/agents/v1/'+params.board+'/'+params.name+'?token='+token)",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        }
+    })
+
+
+
+
+
+
+
+
     addCard({
         group: 'board',
         tag: "http",
