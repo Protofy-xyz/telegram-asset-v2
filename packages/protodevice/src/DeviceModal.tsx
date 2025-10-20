@@ -40,7 +40,20 @@ const DriversNote = () => {
     </div>
 }
 
-const DeviceModal = ({ eraseBeforeFlash, setEraseBeforeFlash, consoleOutput, stage, onCancel, onSelect, showModal, modalFeedback, selectedDevice, compileSessionId, onSelectAction }) => {
+const DeviceModal = ({
+  eraseBeforeFlash,
+  setEraseBeforeFlash,
+  consoleOutput,
+  stage,
+  onCancel,
+  onSelect,
+  showModal,
+  modalFeedback,
+  selectedDevice,
+  compileSessionId,
+  onSelectAction,
+  logSource, // 'mqtt' | 'usb' | null | undefined
+}) => {    
     const [fullscreen, setFullscreen] = useState(false);
     const [manifestUrl, setManifestUrl] = useState(null)
     const isError = modalFeedback?.details?.error
@@ -129,7 +142,9 @@ const DeviceModal = ({ eraseBeforeFlash, setEraseBeforeFlash, consoleOutput, sta
                     onCancel={() => {
                         onCancel()
                         setFullscreen(false)
-                    }} />
+                    }}
+                    showReset={logSource === 'usb'}
+                />
                 : <YStack>
                     <YStack justifyContent="center" flex={1} gap={"$2"}>
 

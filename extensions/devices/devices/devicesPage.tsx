@@ -654,6 +654,7 @@ export default {
             setStage(next);
           }}
           consoleOutput={consoleOutput}
+          logSource={logSource}
         // port={port}
         />
         <MqttTest onSetStage={(v) => setStage(v)} onSetModalFeedback={(v) => setModalFeedback(v)} compileSessionId={compileSessionId} stage={stage} />
