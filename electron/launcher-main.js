@@ -148,7 +148,7 @@ app.whenReady().then(async () => {
         }
 
         // >>> ADD: mark JSON status
-        updateProjectStatus(projectName, 'downloading');
+        // updateProjectStatus(projectName, 'downloading');
 
         // get zip url from github (keep your code, or apply your 'stable→latest' tweak if you want)
         const url = 'https://api.github.com/repos/Protofy-xyz/Vento/releases/tags/' + (project.version == 'latest' ? 'latest' : 'v' + project.version);

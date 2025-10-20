@@ -40,7 +40,20 @@ const DriversNote = () => {
     </div>
 }
 
-const DeviceModal = ({ eraseBeforeFlash, setEraseBeforeFlash, consoleOutput, stage, onCancel, onSelect, showModal, modalFeedback, selectedDevice, compileSessionId, onSelectAction }) => {
+const DeviceModal = ({
+  eraseBeforeFlash,
+  setEraseBeforeFlash,
+  consoleOutput,
+  stage,
+  onCancel,
+  onSelect,
+  showModal,
+  modalFeedback,
+  selectedDevice,
+  compileSessionId,
+  onSelectAction,
+  logSource, // 'mqtt' | 'usb' | null | undefined
+}) => {    
     const [fullscreen, setFullscreen] = useState(false);
     const [manifestUrl, setManifestUrl] = useState(null)
     const isError = modalFeedback?.details?.error
@@ -58,14 +71,14 @@ const DeviceModal = ({ eraseBeforeFlash, setEraseBeforeFlash, consoleOutput, sta
 
     const images = {
         "light": {
-            "compile": '/images/device/protofitoCompiling.gif',
-            "loading": '/images/device/protofitoLoading.gif',
-            "idle": '/images/device/protofitoDancing.gif'
+            "compile": "images/device/protofitoCompiling.gif",
+            "loading": "images/device/protofitoLoading.gif",
+            "idle": "images/device/protofitoDancing.gif"
         },
         "dark": {
-            "compile": '/images/device/protofitoCompilingW.gif',
-            "loading": '/images/device/protofitoLoadingW.gif',
-            "idle": '/images/device/protofitoDancingW.gif'
+            "compile": "images/device/protofitoCompilingW.gif",
+            "loading": "images/device/protofitoLoadingW.gif",
+            "idle": "images/device/protofitoDancingW.gif"
         }
     }
 
@@ -125,10 +138,13 @@ const DeviceModal = ({ eraseBeforeFlash, setEraseBeforeFlash, consoleOutput, sta
             {stage === 'console'
                 ? <EspConsole
                     consoleOutput={consoleOutput}
+                    deviceName={selectedDevice?.getId?.()}
                     onCancel={() => {
                         onCancel()
                         setFullscreen(false)
-                    }} />
+                    }}
+                    showReset={logSource === 'usb'}
+                />
                 : <YStack>
                     <YStack justifyContent="center" flex={1} gap={"$2"}>
 
