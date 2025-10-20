@@ -404,7 +404,7 @@ export default {
           setTargetDeviceName(element.data.name)
           setTargetDeviceModel(element)
           setLogsRequested(true)
-
+          setConsoleOutput('')
 
           const { port, error } = await connectSerialPort()
           console.log("Port: ", port, " Error: ", error)
@@ -450,7 +450,10 @@ export default {
           showModal={showModal}
           selectedDevice={targetDeviceModel}
           compileSessionId={compileSessionId}
-          onSelectAction={setStage}
+          onSelectAction={(next) => {
+            if (next === 'console') setConsoleOutput('');
+            setStage(next);
+          }}          
           consoleOutput={consoleOutput}
         // port={port}
         />
