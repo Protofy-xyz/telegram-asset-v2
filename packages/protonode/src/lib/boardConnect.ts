@@ -73,6 +73,7 @@ export const resolveBoardParam = async ({ states, boardId, defaultValue, value, 
             value = getByPath(boardsStates, value)
             resolved = true;
         } else {
+            value = undefined;
             //console.warn('State ' + stateName + ' not found in board ' + boardId);
         }
     }
