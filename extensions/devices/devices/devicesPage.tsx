@@ -144,7 +144,6 @@ export default {
     const [deviceDefinitions, setDeviceDefinitions] = useState(extraData?.deviceDefinitions ?? getPendingResult('pending'))
     usePendingEffect((s) => { API.get({ url: definitionsSourceUrl }, s) }, setDeviceDefinitions, extraData?.deviceDefinitions)
     const [logsRequested, setLogsRequested] = useState(false)
-
     const [serialChooser, setSerialChooser] = useState<null | {
       reqId: string; ports: Array<{
         portId: string;
@@ -155,6 +154,8 @@ export default {
         portName?: string;
       }>
     }>(null);
+    const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+    const isReadingRef = useRef(false);
 
     useEffect(() => {
       const api = (window as any)?.serial;
@@ -327,28 +328,86 @@ export default {
         console.error('No port selected');
         return;
       }
-      let reader;
+
+      // Prevent multiple readers
+      if (isReadingRef.current || readerRef.current) {
+        console.warn('Already reading from port');
+        return;
+      }
+
+      let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
       try {
-        if (port.readable.locked) {
-          console.warn('Port is already locked. Releasing previous reader...');
-          reader = port.readable.getReader();
-          reader.releaseLock();
+        if (!port.readable) {
+          console.error('Port has no readable stream');
+          return;
         }
+        if (port.readable.locked) {
+          // Another reader still holds the lock; bail out cleanly
+          console.warn('Readable stream is locked; cannot start another reader.');
+          return;
+        }
+
         reader = port.readable.getReader();
-        while (true) {
+        readerRef.current = reader;
+        isReadingRef.current = true;
+
+        const decoder = new TextDecoder();
+
+        while (isReadingRef.current) {
           const { value, done } = await reader.read();
           if (done) break;
-          setConsoleOutput((prev) => prev + new TextDecoder().decode(value));
+          if (value) {
+            setConsoleOutput(prev => prev + decoder.decode(value));
+          }
         }
       } catch (err) {
+        // Will often be a DOMException: "The device has been lost" or "readable stream is locked"
         console.error('Error reading from port:', err);
       } finally {
-        if (reader) {
-          reader.releaseLock();
+        // Reader cleanup (don’t close the port here; do it in stopConsole)
+        try {
+          if (readerRef.current) {
+            try { await readerRef.current.releaseLock(); } catch { }
+          }
+        } finally {
+          readerRef.current = null;
+          isReadingRef.current = false;
         }
       }
     };
+    const stopConsole = async () => {
+      isReadingRef.current = false;
 
+      // Cancel and release the reader if we created it
+      if (readerRef.current) {
+        try { await readerRef.current.cancel(); } catch { }
+        try { await readerRef.current.releaseLock(); } catch { }
+        readerRef.current = null;
+      }
+
+      // Now close the port (only after all locks are released)
+      try {
+        // If there’s a writer elsewhere, make sure it’s released before closing
+        if (port && !port.readable?.locked && !port.writable?.locked) {
+          await port.close();
+        } else if (port && !port.readable?.locked) {
+          // If writable is still locked by something else, skip closing to avoid throw
+          try { await port.close(); } catch (e) { /* ignore if still locked */ }
+        }
+      } catch (e) {
+        console.warn('Error closing port:', e);
+      } finally {
+        setPort(null);
+      }
+    };
+
+    useEffect(() => {
+      // When leaving console stage, stop reading/close port
+      if (stage !== 'console') return;
+      return () => { stopConsole(); }; // cleanup when stage changes away from console
+    }, [stage]);
+    
     useEffect(() => {
       const processStage = async () => {
 
@@ -432,16 +491,13 @@ export default {
       <Connector brokerUrl={onlineCompilerSecureWebSocketUrl()}>
         <DeviceModal
           stage={stage}
-          onCancel={() => {
-            if (logsRequested) {
-              setShowModal(false)
-              setLogsRequested(false)
-            } else if (["console"].includes(stage)) {
-              setStage("select-action")
-            } else {
-              setShowModal(false)
+          onCancel={async () => {
+            if (logsRequested || stage === 'console') {
+              await stopConsole();
+              setLogsRequested(false);
             }
-            closeSerialPort()
+            setShowModal(false);
+            setStage("");
           }}
           onSelect={onSelectPort}
           eraseBeforeFlash={eraseBeforeFlash}
