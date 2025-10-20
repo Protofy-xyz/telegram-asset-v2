@@ -165,6 +165,17 @@ module.exports = function start(rootPath) {
     const { randomUUID } = require('crypto');
     const { webContents } = require('electron');
     const pendingSerialChoosers = new Map();
+    function sanitizePorts(list) {
+      return list.map(p => ({
+        portId: p.portId,
+        displayName: p.displayName || p.portId || 'Unknown device',
+        vendorId: p.vendorId,
+        productId: p.productId,
+        serialNumber: p.serialNumber,
+        portName: p.portName || p.path || p.comName || undefined,
+      }));
+    }
+
     ses.on('serial-port-added', (_e, port) => {
       console.log('[serial] port added:', port);
       for (const [reqId, entry] of pendingSerialChoosers.entries()) {
@@ -190,16 +201,8 @@ module.exports = function start(rootPath) {
     function sendChooserUpdate(reqId, entry) {
       const wc = webContents.fromId(entry.webContentsId);
       if (!wc) return;
-      const ports = entry.portList.map(p => ({
-        portId: p.portId,
-        displayName: p.displayName || p.portId || 'Unknown device',
-        vendorId: p.vendorId,
-        productId: p.productId,
-        serialNumber: p.serialNumber,
-      }));
-      wc.send('serial:chooser-update', { reqId, ports });
+      wc.send('serial:chooser-update', { reqId, ports: sanitizePorts(entry.portList) });
     }
-
     ses.setPermissionCheckHandler((wc, permission, requestingOrigin, details) => {
       if (permission === 'serial') {
         const ok = isAllowed(details, requestingOrigin);
@@ -225,15 +228,7 @@ module.exports = function start(rootPath) {
 
       pendingSerialChoosers.set(reqId, { callback, portList, webContentsId: wc.id });
 
-      const ports = portList.map(p => ({
-        portId: p.portId,
-        displayName: p.displayName || p.portId || 'Unknown device',
-        vendorId: p.vendorId,
-        productId: p.productId,
-        serialNumber: p.serialNumber,
-        portName: p.portName
-      }));
-
+      const ports = sanitizePorts(portList); // 👈 use helper
       console.log('[serial][chooser-open]', { reqId, count: ports.length });
       wc.send('serial:chooser-open', { reqId, ports });
     });
