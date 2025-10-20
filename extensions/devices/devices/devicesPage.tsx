@@ -552,14 +552,10 @@ export default {
                   <Button
                     key={p.portId}
                     onPress={() => handleChoosePort(p.portId)}
-                    justifyContent="space-between"
+                    justifyContent="center"
                   >
                     <Text fow="600">
                       {p.displayName || p.portId || 'Unknown device'}
-                    </Text>
-                    <Text opacity={0.7} fos={12}>
-                      {p.vendorId && p.productId ? `VID:PID ${p.vendorId}:${p.productId}` : ''}
-                      {p.serialNumber ? `  •  SN ${p.serialNumber}` : ''}
                     </Text>
                   </Button>
                 ))
