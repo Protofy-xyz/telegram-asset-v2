@@ -104,7 +104,7 @@ export const ParamsForm = ({ data, children }) => {
     return (
         <YStack h="100%" w={"100%"} ai="center">
             {children}
-            <YStack w={"100%"} ai="center" jc="center" mt={data.buttonMode !== "full" ? "$5" : 0}>
+            <YStack w={"100%"} ai="center" jc="center">
                 {allKeys.map((key) => {
                     const cfg = data.configParams?.[key] || {};
                     const { visible = true, defaultValue = "", type = 'string' } = cfg;
@@ -206,16 +206,7 @@ export const ParamsForm = ({ data, children }) => {
                                     </TextEditDialog>)
                             }
                             {(type == 'json' || type == 'array')
-                                && <XStack
-                                    p="$3"
-                                    bc="$gray1"
-                                    borderColor="$gray8"
-                                    bw={1}
-                                    br="$4"
-                                    overflow="hidden"
-                                    mx="10px"
-                                    f={1}
-                                    height={200}
+                                && <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}
                                 >
                                     <Monaco
                                         language='json'
@@ -245,7 +236,6 @@ export const ParamsForm = ({ data, children }) => {
                             </Switch></Tinted>}
 
 
-
                             {type == 'path'
                                 && <FilePicker
                                     allowMultiple={true}
@@ -272,7 +262,7 @@ export const ParamsForm = ({ data, children }) => {
                         w={"100%"}
                         maw={"100%"}
                         f={isButtonFull && 1}
-                        mt={isButtonFull ? 0 : "$5"}
+                        // mt={isButtonFull ? 0 : "$5"}
                         p={"10px"}
                         textAlign="center"
                         bc={data.color}
