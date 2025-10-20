@@ -125,6 +125,7 @@ const DeviceModal = ({ eraseBeforeFlash, setEraseBeforeFlash, consoleOutput, sta
             {stage === 'console'
                 ? <EspConsole
                     consoleOutput={consoleOutput}
+                    deviceName={selectedDevice?.getId?.()}
                     onCancel={() => {
                         onCancel()
                         setFullscreen(false)
