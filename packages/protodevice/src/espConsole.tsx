@@ -85,7 +85,7 @@ function breakTokensIntoLines(tokens) {
     return lines;
 }
 
-export const EspConsole = ({ consoleOutput = '', onCancel }) => {
+export const EspConsole = ({ consoleOutput = '', onCancel, deviceName, showReset = true }) => {
     const processedOutput = consoleOutput.replace(/\\x1b/g, "\x1b");
     let tokens = parseAnsiText(processedOutput);
 
@@ -140,8 +140,10 @@ export const EspConsole = ({ consoleOutput = '', onCancel }) => {
         <XStack justifyContent="center" gap={"$4"}>
             <Button onPress={() => onCancel()}>Cancel</Button>
             <Tinted>
-                <Button icon={RefreshCcw} onPress={() => resetDevice()}>Reset device</Button>
-                <Button icon={Download} onPress={() => downloadLogs(consoleOutput)}>Download logs</Button>
+                {showReset && (
+                    <Button icon={RefreshCcw} onPress={() => resetDevice()}>Reset device</Button>
+                )}
+                <Button icon={Download} onPress={() => downloadLogs(consoleOutput, deviceName)}>Download logs</Button>
             </Tinted>
         </XStack>
     </YStack>
