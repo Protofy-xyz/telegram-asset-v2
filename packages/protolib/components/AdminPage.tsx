@@ -63,7 +63,7 @@ export const AdminPage = forwardRef(({ pageSession, title, children, integratedC
             {children}
           </AdminPanel>
         </SearchContext.Provider>
-        {integratedChat && settingsAssistantEnabled && <BubbleChat apiUrl="/api/v1/chatbots/board" />}
+        {settingsAssistantEnabled && <BubbleChat apiUrl="/api/v1/chatbots/board" />}
         {ActionBar}
         <UILogs />
       </Page>
