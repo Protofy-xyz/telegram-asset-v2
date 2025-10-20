@@ -543,7 +543,7 @@ export default {
           zi={2147483647}
           pointerEvents="auto"
         >
-          <YStack w={520} maw={520} p="$4" br="$4" bg="$background" bw={1} bc="$gray6" gap="$3" >
+          <YStack w={520} maw={520} p="$4" br="$4" bg="$background" bw={1} bc="$gray6" gap="$3" alignItems="center">
             <Paragraph size="$6" fow="700">Select a serial port</Paragraph>
 
             <YStack mah={280} overflow="auto" gap="$2">
