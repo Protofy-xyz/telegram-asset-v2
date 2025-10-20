@@ -231,6 +231,7 @@ module.exports = function start(rootPath) {
         vendorId: p.vendorId,
         productId: p.productId,
         serialNumber: p.serialNumber,
+        portName: p.portName
       }));
 
       console.log('[serial][chooser-open]', { reqId, count: ports.length });
