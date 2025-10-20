@@ -159,6 +159,88 @@ module.exports = function start(rootPath) {
       return callback(false);
     });
   }
+  const { randomUUID } = require('crypto');
+  const pendingSerialChoosers = new Map(); // reqId -> { callback, portList }
+
+  function wireSerialPermissions(ses) {
+    ses.on('serial-port-added', (_e, port) => {
+      console.log('[serial] port added:', port);
+    });
+    ses.on('serial-port-removed', (_e, port) => {
+      console.log('[serial] port removed:', port);
+    });
+
+    ses.setPermissionCheckHandler((wc, permission, requestingOrigin, details) => {
+      if (permission === 'serial') {
+        const ok = isAllowed(details, requestingOrigin);
+        console.log('[serial][check]', { ok, requestingOrigin, url: details?.requestingUrl });
+        return ok;
+      }
+      return false;
+    });
+    
+    ses.setDevicePermissionHandler((details) => {
+      if (details.deviceType === 'serial') {
+        const origin = details?.requestingOrigin || originFromUrl(details?.requestingUrl || '');
+        // If origin is missing, allow (we already gate by our allowlist elsewhere)
+        const ok = origin ? isAllowed(details, origin) : true;
+        console.log('[serial][device-permission]', { ok, origin });
+        return ok;
+      }
+      return false;
+    });
+
+    ses.on('select-serial-port', (event, portList, webContents, callback) => {
+      event.preventDefault();
+      const reqId = randomUUID();
+
+      // Keep the raw list for validation later
+      pendingSerialChoosers.set(reqId, { callback, portList });
+
+      // Send a sanitized copy to the renderer
+      const ports = portList.map(p => ({
+        portId: p.portId,                       // IMPORTANT: this exact string must come back
+        displayName: p.displayName || p.portId || 'Unknown device',
+        vendorId: p.vendorId,
+        productId: p.productId,
+        serialNumber: p.serialNumber,
+      }));
+
+      console.log('[serial][chooser-open]', { reqId, count: ports.length });
+      webContents.send('serial:chooser-open', { reqId, ports });
+    });
+
+    // Renderer picks/cancels here
+    ipcMain.on('serial:chooser-select', (_e, { reqId, portId }) => {
+      const entry = pendingSerialChoosers.get(reqId);
+      if (!entry) {
+        console.warn('[serial][chooser-select] unknown reqId', reqId);
+        return;
+      }
+
+      const { callback, portList } = entry;
+      pendingSerialChoosers.delete(reqId);
+
+      // Cancel?
+      if (!portId) {
+        console.log('[serial][chooser-select] canceled by user');
+        callback(''); // causes NotFoundError in navigator.serial.requestPort()
+        return;
+      }
+
+      // Validate the chosen portId exists in this request’s list
+      const match = portList.find(p => p.portId === portId);
+      if (!match) {
+        console.warn('[serial][chooser-select] invalid portId (not in list for reqId)', { reqId, portId });
+        callback(''); // reject the request
+        return;
+      }
+
+      console.log('[serial][chooser-select] OK', { reqId, portIdType: typeof portId, portId });
+      callback(portId); // ✅ resolves requestPort() with the right device
+    });
+  }
+
 
   function logToRenderer(msg) {
     try {
@@ -361,6 +443,7 @@ module.exports = function start(rootPath) {
   app.whenReady().then(async () => {
     try {
       wirePermissions(session.defaultSession);
+      wireSerialPermissions(session.defaultSession);
 
       let resolveWhenCoreReady;
       const coreStarted = new Promise(resolve => {

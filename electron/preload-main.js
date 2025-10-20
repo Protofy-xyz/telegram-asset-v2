@@ -42,3 +42,12 @@ contextBridge.exposeInMainWorld('webcam', {
   },
   listDevices: async () => navigator.mediaDevices.enumerateDevices(),
 });
+contextBridge.exposeInMainWorld('serial', {
+  onChooserOpen: (handler) => {
+    const wrapped = (_e, payload) => handler(payload);
+    ipcRenderer.on('serial:chooser-open', wrapped);
+    return () => ipcRenderer.off('serial:chooser-open', wrapped);
+  },
+  choose: (reqId, portId) => ipcRenderer.send('serial:chooser-select', { reqId, portId: String(portId) }),
+  cancel: (reqId) => ipcRenderer.send('serial:chooser-select', { reqId, portId: '' }),
+});
