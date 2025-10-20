@@ -152,6 +152,7 @@ export default {
         vendorId?: string;
         productId?: string;
         serialNumber?: string;
+        portName?: string;
       }>
     }>(null);
 
@@ -162,6 +163,7 @@ export default {
       // initial open (sets list)
       const offOpen =
         api.onChooserOpen?.(({ reqId, ports }) => {
+          console.log("🤖 ~ ports:", ports)
           setSerialChooser({ reqId, ports });
         });
 
@@ -555,7 +557,7 @@ export default {
                     justifyContent="center"
                   >
                     <Text fow="600">
-                      {p.displayName || p.portId || 'Unknown device'}
+                      {`${p.displayName || p.portId || 'Unknown device'}${p.portName ? ` (${p.portName})` : ''}`}
                     </Text>
                   </Button>
                 ))
