@@ -157,14 +157,26 @@ export default {
 
     useEffect(() => {
       const api = (window as any)?.serial;
-      if (!api?.onChooserOpen) return;
+      if (!api) return;
 
-      const unsubscribe = api.onChooserOpen(({ reqId, ports }) => {
-        setSerialChooser({ reqId, ports });
-      });
+      // initial open (sets list)
+      const offOpen =
+        api.onChooserOpen?.(({ reqId, ports }) => {
+          setSerialChooser({ reqId, ports });
+        });
+
+      // live updates (plug/unplug)
+      const offUpdate =
+        api.onChooserUpdate?.(({ reqId, ports }) => {
+          setSerialChooser((prev) => {
+            if (!prev || prev.reqId !== reqId) return prev;
+            return { reqId, ports };
+          });
+        });
 
       return () => {
-        if (typeof unsubscribe === 'function') unsubscribe();
+        if (typeof offOpen === 'function') offOpen();
+        if (typeof offUpdate === 'function') offUpdate();
       };
     }, []);
 
