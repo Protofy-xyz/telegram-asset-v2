@@ -58,14 +58,14 @@ const DeviceModal = ({ eraseBeforeFlash, setEraseBeforeFlash, consoleOutput, sta
 
     const images = {
         "light": {
-            "compile": '/images/device/protofitoCompiling.gif',
-            "loading": '/images/device/protofitoLoading.gif',
-            "idle": '/images/device/protofitoDancing.gif'
+            "compile": "images/device/protofitoCompiling.gif",
+            "loading": "images/device/protofitoLoading.gif",
+            "idle": "images/device/protofitoDancing.gif"
         },
         "dark": {
-            "compile": '/images/device/protofitoCompilingW.gif',
-            "loading": '/images/device/protofitoLoadingW.gif',
-            "idle": '/images/device/protofitoDancingW.gif'
+            "compile": "images/device/protofitoCompilingW.gif",
+            "loading": "images/device/protofitoLoadingW.gif",
+            "idle": "images/device/protofitoDancingW.gif"
         }
     }
 
