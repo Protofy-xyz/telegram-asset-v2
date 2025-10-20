@@ -145,6 +145,60 @@ export default {
     usePendingEffect((s) => { API.get({ url: definitionsSourceUrl }, s) }, setDeviceDefinitions, extraData?.deviceDefinitions)
     const [logsRequested, setLogsRequested] = useState(false)
 
+    const [serialChooser, setSerialChooser] = useState<null | {
+      reqId: string; ports: Array<{
+        portId: string;
+        displayName?: string;
+        vendorId?: string;
+        productId?: string;
+        serialNumber?: string;
+        portName?: string;
+      }>
+    }>(null);
+
+    useEffect(() => {
+      const api = (window as any)?.serial;
+      if (!api) return;
+
+      // initial open (sets list)
+      const offOpen =
+        api.onChooserOpen?.(({ reqId, ports }) => {
+          console.log("🤖 ~ ports:", ports)
+          setSerialChooser({ reqId, ports });
+        });
+
+      // live updates (plug/unplug)
+      const offUpdate =
+        api.onChooserUpdate?.(({ reqId, ports }) => {
+          setSerialChooser((prev) => {
+            if (!prev || prev.reqId !== reqId) return prev;
+            return { reqId, ports };
+          });
+        });
+
+      return () => {
+        if (typeof offOpen === 'function') offOpen();
+        if (typeof offUpdate === 'function') offUpdate();
+      };
+    }, []);
+
+    const handleChoosePort = (portId: string) => {
+      try {
+        (window as any)?.serial?.choose(serialChooser?.reqId, String(portId));
+      } finally {
+        setSerialChooser(null);
+      }
+    };
+    
+    const handleCancelChooser = () => {
+      try {
+        (window as any)?.serial?.cancel(serialChooser?.reqId);
+      } finally {
+        setSerialChooser(null);
+      }
+    };
+
+
     const flashDevice = async (device, yaml?) => {
       setTargetDeviceName(device.data.name)
       setTargetDeviceModel(device)
@@ -350,7 +404,7 @@ export default {
           setTargetDeviceName(element.data.name)
           setTargetDeviceModel(element)
           setLogsRequested(true)
-
+          setConsoleOutput('')
 
           const { port, error } = await connectSerialPort()
           console.log("Port: ", port, " Error: ", error)
@@ -396,7 +450,10 @@ export default {
           showModal={showModal}
           selectedDevice={targetDeviceModel}
           compileSessionId={compileSessionId}
-          onSelectAction={setStage}
+          onSelectAction={(next) => {
+            if (next === 'console') setConsoleOutput('');
+            setStage(next);
+          }}          
           consoleOutput={consoleOutput}
         // port={port}
         />
@@ -477,6 +534,48 @@ export default {
         }}
         extraMenuActions={extraMenuActions}
       />
+      {/* INSERT HERE: Electron serial chooser UI (web keeps native chooser) */}
+      {serialChooser && (
+        <YStack
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          jc="center"
+          ai="center"
+          zi={2147483647}
+          pointerEvents="auto"
+        >
+          <YStack w={520} maw={520} p="$4" br="$4" bw={1} bc="$color3" gap="$3" alignItems="center">
+            <Paragraph size="$6" fow="700">Select a serial port</Paragraph>
+
+            <YStack mah={280} overflow="auto" gap="$2">
+              {serialChooser.ports.length ? (
+                serialChooser.ports.map((p) => (
+                  <Button
+                    key={p.portId}
+                    onPress={() => handleChoosePort(p.portId)}
+                    justifyContent="center"
+                  >
+                    <Text fow="600">
+                      {`${p.displayName || p.portId || 'Unknown device'}${p.portName ? ` (${p.portName})` : ''}`}
+                    </Text>
+                  </Button>
+                ))
+              ) : (
+                <Paragraph opacity={0.8}>
+                  No ports found. Plug your device and try again.
+                </Paragraph>
+              )}
+            </YStack>
+
+            <XStack jc="flex-end" gap="$2" mt="$2">
+              <Button theme="alt1" onPress={handleCancelChooser}>Cancel</Button>
+            </XStack>
+          </YStack>
+        </YStack>
+      )}
     </AdminPage>)
   },
   getServerSideProps: SSR(async (context) => withSession(context, ['admin']))
