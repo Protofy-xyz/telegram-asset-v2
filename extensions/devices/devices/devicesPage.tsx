@@ -156,6 +156,29 @@ export default {
     }>(null);
     const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
     const isReadingRef = useRef(false);
+    const [logSourceChooserOpen, setLogSourceChooserOpen] = useState(false);
+    const [logSource, setLogSource] = useState<null | 'mqtt' | 'usb'>(null);
+    const [currentDeviceHasMqtt, setCurrentDeviceHasMqtt] = useState(false);
+    
+    const hasMqttSubsystem = (subs: any): boolean => {
+      if (!subs) return false;
+      if (Array.isArray(subs)) {
+        return subs.some((s) => {
+          const v = (s?.type ?? s?.name ?? s?.id ?? '').toString().toLowerCase();
+          return v.includes('mqtt');
+        });
+      }
+      if (typeof subs === 'object') {
+        const keyHas = Object.keys(subs).some((k) => k.toLowerCase().includes('mqtt'));
+        const valHas = Object.values(subs).some((s: any) => {
+          const v = (s?.type ?? s?.name ?? s?.id ?? '').toString().toLowerCase();
+          return v.includes('mqtt');
+        });
+        return keyHas || valHas;
+      }
+      return false;
+    };
+
 
     useEffect(() => {
       const api = (window as any)?.serial;
@@ -379,7 +402,9 @@ export default {
     const stopConsole = async () => {
       isReadingRef.current = false;
 
-      // Cancel and release the reader if we created it
+      // Stop MQTT log piping as well
+      setLogSource(null); // reset source so subscription clears
+
       if (readerRef.current) {
         try { await readerRef.current.cancel(); } catch { }
         try { await readerRef.current.releaseLock(); } catch { }
@@ -420,15 +445,58 @@ export default {
           // case "confirm-erase": setStage("write"); break;
           case 'write': await write(); break;
           case 'upload': startUploadStage(); break;
-          case 'console': startConsole(); break;
+          case 'console':
+            // If USB was chosen, only start USB reader. For MQTT we append via separate effect.
+            if (logSource === 'usb') startConsole();
+            break;
         }
 
       };
 
       processStage();
-    }, [stage]);
+    }, [stage, logSource]);
 
+    // ===== MQTT log piping =====
+    // Subscribe dynamically only when MQTT is the chosen source.
+    const mqttDebugTopic = logSource === 'mqtt' && targetDeviceName
+      ? [`devices/${targetDeviceName}/debug`]
+      : [];
 
+    const { message: mqttLogMessage } = useSubscription(mqttDebugTopic);
+
+    useEffect(() => {
+      if (logSource !== 'mqtt') return;
+      const raw = mqttLogMessage?.message;
+      if (!raw) return;
+
+      try {
+        const text =
+          typeof raw === 'string'
+            ? raw
+            : raw.toString?.() ?? String(raw);
+
+        // Normalize CRLF/CR to LF and ensure line breaks between chunks
+        const normalized = text.replace(/\r\n|\r/g, '\n');
+
+        setConsoleOutput(prev => {
+          const prevEndsWithNL = prev?.endsWith('\n') ?? true;
+          const nextStartsWithNL = normalized.startsWith('\n');
+          const nextEndsWithNL = normalized.endsWith('\n');
+
+          // Add a separator \n if previous chunk didn’t end with one and next doesn’t start with one
+          const sep = !prevEndsWithNL && !nextStartsWithNL ? '\n' : '';
+
+          // Also make sure the appended chunk ends with \n so lines don’t glue together
+          const tail = nextEndsWithNL ? '' : '\n';
+
+          return (prev || '') + sep + normalized + tail;
+        });
+      } catch {
+        setConsoleOutput(prev => (prev || '') + '\n' + String(raw) + '\n');
+      }
+    }, [mqttLogMessage, logSource]);
+
+    // ===== Actions =====
     const extraMenuActions = [
       {
         text: "Manage firmware",
@@ -465,27 +533,85 @@ export default {
           setLogsRequested(true)
           setConsoleOutput('')
 
-          const { port, error } = await connectSerialPort()
-          console.log("Port: ", port, " Error: ", error)
-          if(error === "Any port selected") {
-            return
+          const hasMqtt = hasMqttSubsystem(element?.data?.subsystem);
+          setCurrentDeviceHasMqtt(hasMqtt);
+
+          if (hasMqtt) {
+            // Offer choice
+            setLogSourceChooserOpen(true);
+          } else {
+            // USB-only
+            const { port, error } = await connectSerialPort();
+            if (error === 'Any port selected') {
+              setLogsRequested(false);
+              setLogSource(null);
+              return;
+            }
+            if (!port || error) {
+              setLogsRequested(false);
+              setLogSource(null);
+              setModalFeedback({ message: error || 'No port detected.', details: { error: true } });
+              return;
+            }
+            setPort(port);
+            setLogSource('usb');
+            setShowModal(true);
+            setStage('console');
           }
-          if (!port || error) {
-            setModalFeedback({ message: error || 'No port detected.', details: { error: true } })
-            setShowModal(true)
-            setLogsRequested(false)
-
-            return
-          }
-
-          setPort(port)
-          setShowModal(true)
-          setStage("console")
-
         },
         isVisible: (element) => true
-      }      
+      }
+
+
     ]
+    const chooseLogsSource = async (source: 'mqtt' | 'usb') => {
+      setLogSourceChooserOpen(false);
+
+      if (source === 'usb') {
+        // Try to open the port BEFORE opening the modal
+        const { port, error } = await connectSerialPort();
+
+        if (error === 'Any port selected') {
+          // User cancelled chooser — do nothing, keep modal closed
+          setLogsRequested(false);
+          setLogSource(null);
+          return;
+        }
+
+        if (!port || error) {
+          // Opening failed — keep modal closed, optionally surface feedback
+          setLogsRequested(false);
+          setLogSource(null);
+          setModalFeedback({ message: error || 'No port detected.', details: { error: true } });
+          return;
+        }
+
+        // Success: set up state, THEN open modal + console
+        setPort(port);
+        setLogSource('usb');
+        setConsoleOutput('');
+        setShowModal(true);
+        setStage('console'); // startConsole will run via the effect because logSource === 'usb'
+        return;
+      }
+
+      // MQTT path: open modal immediately; subscription effect will feed logs
+      setLogSource('mqtt');
+      setConsoleOutput('');
+      setShowModal(true);
+      setStage('console');
+      setModalFeedback({
+        message: `Subscribing to MQTT topic: devices/${targetDeviceName}/debug`,
+        details: { error: false },
+      });
+    };
+
+
+    const cancelLogsSource = () => {
+      setLogSourceChooserOpen(false);
+      setLogsRequested(false);
+      setLogSource(null);
+    }
 
     return (<AdminPage title="Devices" pageSession={pageSession}>
       <Connector brokerUrl={onlineCompilerSecureWebSocketUrl()}>
@@ -507,9 +633,26 @@ export default {
           selectedDevice={targetDeviceModel}
           compileSessionId={compileSessionId}
           onSelectAction={(next) => {
-            if (next === 'console') setConsoleOutput('');
+            if (next === 'console') {
+              // Force USB logs, assume port is already connected
+              setConsoleOutput('');
+              setLogSource('usb');
+
+              if (!port) {
+                // Guard just in case the port isn't actually set
+                setModalFeedback({
+                  message: 'Serial port is not open. Please connect the device first.',
+                  details: { error: true },
+                });
+                return;
+              }
+
+              setStage('console'); // startConsole() will run via the [stage, logSource] effect
+              return;
+            }
+
             setStage(next);
-          }}          
+          }}
           consoleOutput={consoleOutput}
         // port={port}
         />
@@ -628,6 +771,42 @@ export default {
 
             <XStack jc="flex-end" gap="$2" mt="$2">
               <Button theme="alt1" onPress={handleCancelChooser}>Cancel</Button>
+            </XStack>
+          </YStack>
+        </YStack>
+      )}
+
+      {/* NEW: Logs source chooser overlay */}
+      {logSourceChooserOpen && (
+        <YStack
+          position="fixed"
+          top={0}
+          left={0}
+          right={0}
+          bottom={0}
+          jc="center"
+          ai="center"
+          zi={2147483647}
+          pointerEvents="auto"
+          px="$4"
+        >
+          <YStack w={520} maw={520} p="$4" br="$4" bw={1} bc="$color3" gap="$3" ai="stretch" bg="$color1">
+            <Paragraph size="$6" fow="700" ta="center">Choose log source</Paragraph>
+            <Paragraph ta="center" opacity={0.8}>
+              Where do you want to read logs from for <Text fow="700">{targetDeviceName || 'device'}</Text>?
+            </Paragraph>
+            <YStack gap="$2" mt="$2">
+              {currentDeviceHasMqtt && (
+                <Button onPress={() => chooseLogsSource('mqtt')}>
+                  MQTT
+                </Button>
+              )}
+              <Button onPress={() => chooseLogsSource('usb')}>
+                USB
+              </Button>
+            </YStack>
+            <XStack jc="flex-end" gap="$2" mt="$2">
+              <Button theme="alt1" onPress={cancelLogsSource}>Cancel</Button>
             </XStack>
           </YStack>
         </YStack>
