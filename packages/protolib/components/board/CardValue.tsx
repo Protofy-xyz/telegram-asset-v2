@@ -38,7 +38,7 @@ export const CardValue = ({ value, style = {}, id = undefined, mode = undefined,
 
     //check if value is string, number or boolean
     if (!['string', 'number', 'boolean'].includes(typeof value)) {
-        return <ScrollView mt="20px" mb={"10px"} width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
+        return <ScrollView className="no-drag" mt="20px" mb={"10px"} width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
             <JSONView src={value} />
         </ScrollView>
     }
