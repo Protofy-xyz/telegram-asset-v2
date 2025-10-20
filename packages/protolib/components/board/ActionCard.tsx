@@ -102,7 +102,7 @@ export const ParamsForm = ({ data, children }) => {
     }
 
     return (
-        <YStack h="100%" w={"100%"} ai="center">
+        <YStack h="100%" w={"100%"} ai="center" p="10px">
             {children}
             <YStack w={"100%"} ai="center" jc="center">
                 {allKeys.map((key) => {
@@ -176,7 +176,6 @@ export const ParamsForm = ({ data, children }) => {
                                             ? <TextArea
                                                 className="no-drag"
                                                 f={1}
-                                                mx="10px"
                                                 focusStyle={{ outlineWidth: "1px" }}
                                                 value={value}
                                                 onChangeText={(val) => setParam(key, val)}
@@ -189,7 +188,6 @@ export const ParamsForm = ({ data, children }) => {
                                                 value={value}
                                                 placeholder={placeholder}
                                                 minWidth={100}
-                                                mx="10px"
                                                 onChangeText={(val) => setParam(key, val)}
                                             />
                                         }
@@ -252,7 +250,7 @@ export const ParamsForm = ({ data, children }) => {
             </YStack>
 
             {data.type === "action" && (
-                <YStack w={"100%"} {...(data.buttonMode === "full" ? { f: 1 } : {})} ai="center" jc="center" padding={data.buttonMode !== "full" ? "10px" : "0"}>
+                <YStack w={"100%"} {...(data.buttonMode === "full" ? { f: 1 } : {})} ai="center" jc="center">
                     <Button
                         id={`${data.name}-run-button`}
                         className="no-drag"
