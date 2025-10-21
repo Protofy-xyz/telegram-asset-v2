@@ -255,7 +255,7 @@ export const AutoAPI = ({
             });
             // console.log('-------------------------------------------------------------------------')
             // console.log("******** AI prompt: ", prompt)
-            const reply = await ai.callModel(prompt, context, { useChatGPT: true });
+            const reply = await ai.callModel(prompt);
             jsCode = ai.cleanCode(reply.choices[0].message.content)
             // console.log('-------------------------------------------------------------------------')
             // console.log("******** AI code: ", jsCode)

@@ -91,6 +91,92 @@ export const registerCards = async () => {
 
     addCard({
         group: 'board',
+        tag: "net",
+        id: 'board_net_apicall',
+        templateName: "Call an API",
+        name: "api_call",
+        emitEvent: true,
+        defaults: {
+            width: 3,
+            height: 10,
+            icon: "globe",
+            type: "action",
+            name: "API Call",
+            displayResponse: true,
+            displayIcon: false,
+            params: {
+                url: "http endpoint to call",
+                method: "method for the call: get or post",
+                body: "when using post, the body for the request"
+            },
+            configParams: {
+                url: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "any"
+                },
+                method: {
+                    visible: true,
+                    defaultValue: "get",
+                    type: "string"
+                },
+                body: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "return await context.apis.fetch(params.method ?? 'get', params.url, params.body)",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        }
+    })
+
+    addCard({
+        group: 'board',
+        tag: "net",
+        id: 'board_net_loadpage',
+        templateName: "Loads a Web Page",
+        name: "load_page",
+        emitEvent: true,
+        defaults: {
+            width: 3,
+            height: 10,
+            icon: "globe",
+            type: "action",
+            name: "Load Web Page",
+            displayResponse: true,
+            displayIcon: false,
+            params: {
+                url: "http endpoint to call",
+                method: "method for the call: get or post",
+                body: "when using post, the body for the request"
+            },
+            configParams: {
+                url: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "any"
+                },
+                method: {
+                    visible: false,
+                    defaultValue: "get",
+                    type: "string"
+                },
+                body: {
+                    visible: false,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "return await context.apis.fetch(params.method ?? 'get', params.url, params.body)",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        }
+    })
+
+    addCard({
+        group: 'board',
         tag: "agents",
         id: 'board_agents_call',
         templateName: "Call an Agent",
@@ -178,8 +264,8 @@ export const registerCards = async () => {
                         },
                         response: {
                             visible: true
+                        }
                     }
-                }
                 },
                 skip: {
                     description: "Skips the current job. Do not use unless you know what you are doing.",
@@ -224,7 +310,7 @@ export const registerCards = async () => {
                             defaultValue: "",
                             type: "string"
                         }
-                }
+                    }
                 }
             },
             enableAgentInputMode: true,
@@ -236,7 +322,7 @@ export const registerCards = async () => {
             value: {
                 items: []
             }
-            }
+        }
     })
 
 
