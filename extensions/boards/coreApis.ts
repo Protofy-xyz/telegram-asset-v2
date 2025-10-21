@@ -1,5 +1,5 @@
 import { BoardModel } from "./boardsSchemas";
-import { AutoAPI, getRoot, handler, resolveBoardParam } from 'protonode'
+import { ai, AutoAPI, getRoot, handler, resolveBoardParam } from 'protonode'
 import { API, getLogger, ProtoMemDB, generateEvent } from 'protobase'
 import { promises as fs } from 'fs';
 import * as fsSync from 'fs';
@@ -12,7 +12,6 @@ import fileActions from "@extensions/files/fileActions";
 import { Manager } from "./manager";
 import { dbProvider, getDBOptions } from 'protonode';
 import { acquireLock, releaseLock } from "./system/lock";
-import { callModel } from "./system/ai";
 import { registerCards } from "./system/cards";
 import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles } from "./system/boards";
 
@@ -38,18 +37,20 @@ class HttpError extends Error {
 
 const processCards = async (boardId, cards, context, boardData?, regenerate?) => {
     const proxyDB = ProtoMemDB('proxy');
-    
-    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: cards.map(card => {
-        return {
-            name: card.name,
-            type: card.type,
-            description: card.description || '',
-            icon: card.icon || '',
-            rulesCode: card.rulesCode,
-            html: card.html,
-            rules: card.rules
-        }
-    }), emitEvent: true }) //set board meta info
+
+    context.state.set({
+        group: 'meta', tag: 'boardCards', name: boardId, value: cards.map(card => {
+            return {
+                name: card.name,
+                type: card.type,
+                description: card.description || '',
+                icon: card.icon || '',
+                rulesCode: card.rulesCode,
+                html: card.html,
+                rules: card.rules
+            }
+        }), emitEvent: true
+    }) //set board meta info
     context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
 
@@ -618,7 +619,7 @@ export default async (app, context) => {
     }
 
     const handleCallModel = async (res, prompt, options = {}) => {
-        let reply = await callModel(prompt, context, defaultAIProvider, options)
+        let reply = await ai.callModel(prompt)
 
         console.log('REPLY: ', reply)
         if (reply?.raw?.error) {
@@ -718,7 +719,7 @@ export default async (app, context) => {
         if (req.query.debug) {
             console.log("Prompt: ", prompt)
         }
-        let reply = await callModel(prompt, context, defaultAIProvider)
+        let reply = await ai.callModel(prompt)
         console.log('REPLY: ', reply)
         const jsCode = reply.choices[0].message.content
         res.send({ jsCode: cleanCode(jsCode) })
@@ -877,7 +878,7 @@ export default async (app, context) => {
         if (req.query.debug) {
             console.log("Prompt: ", prompt)
         }
-        let reply = await callModel(prompt, context, defaultAIProvider)
+        let reply = await ai.callModel(prompt)
         console.log('REPLY: ', reply)
         const jsCode = reply.choices[0].message.content
         res.send({ jsCode: cleanCode(jsCode) })
@@ -1086,6 +1087,22 @@ export default async (app, context) => {
                 handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, true, (value) => { });
             } else {
                 handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, true);
+            }
+
+        }
+    }))
+
+    app.post('/api/core/v1/boards/:boardId/cards/:cardId/run/raw', handler(async (req, res, session, next) => {
+        const card = await getCard(req.params.boardId, req.params.cardId);
+        //get read token from card
+        if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
+            res.status(403).send({ error: "Forbidden: Invalid token" });
+        } else {
+            console.log("DEV: card.manualAPIResponse: ", card.manualAPIResponse)
+            if (card.manualAPIResponse) {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.body, true, (value) => { });
+            } else {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.body, true);
             }
 
         }

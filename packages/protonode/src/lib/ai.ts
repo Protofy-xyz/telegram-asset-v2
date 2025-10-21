@@ -1,30 +1,11 @@
+import { API, getServiceToken } from "protobase";
 
-const callModel = async (prompt, context, options?) => {
-    let reply;
-    if (options?.useChatGPT) {
-        reply = await context.chatgpt.chatGPTPrompt({
-            message: prompt
-        })
+const callModel = async (prompt) => {
+    const res = await API.post("/api/agents/v1/llm_agent/agent_input?token=" + getServiceToken(), {
+        prompt
+    })
 
-        let content = reply[0]
-
-        if (reply.isError) {
-            content = "// Error: " + reply.data.error.message
-        }
-
-        reply = {
-            choices: [
-                {
-                    message: {
-                        content
-                    }
-                }
-            ]
-        }
-    } else {
-        reply = await context.lmstudio.chatWithModel(prompt, 'qwen2.5-coder-32b-instruct')
-    }
-    return reply
+    return res.data
 }
 
 const cleanCode = (code) => {
@@ -40,8 +21,8 @@ const cleanCode = (code) => {
 
 
 export const ai = {
-    callModel: async (prompt, context, options) => {
-        return await callModel(prompt, context, options)
+    callModel: async (prompt) => {
+        return await callModel(prompt)
     },
     cleanCode: (code) => {
         return cleanCode(code)
