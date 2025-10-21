@@ -1,1 +1,0 @@
-return "Telegram tutorial"

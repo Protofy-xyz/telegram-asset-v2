@@ -1,1 +1,0 @@
-return execute_action("/api/v1/telegram/send/file", { chat_id: userParams.chat_id, path: userParams.path, caption: userParams.caption, disable_notification: userParams.disable_notification });
