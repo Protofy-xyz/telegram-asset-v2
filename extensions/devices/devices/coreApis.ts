@@ -108,7 +108,10 @@ const SIZE = {
 };
 
 // --- Smarter board generator: groups by subsystem, uses gridSizes totals ---
-const generateDeviceBoard = async (boardName: string = 'devices_all') => {
+const generateDeviceBoard = async (
+  boardName: string = 'devices_all',
+  deviceName?: string          // <- NEW
+) => {
     const token = getServiceToken();
 
     const DEFAULT_HTML_VALUE = `//@card/react
@@ -159,7 +162,10 @@ function Widget(card) {
 
     try {
         const treeResp = await API.get(`/api/core/v1/cards?token=${token}`);
-        const devicesTree = treeResp?.data?.devices || {};
+        const allDevicesTree = treeResp?.data?.devices || {};
+        const devicesTree = deviceName
+            ? (allDevicesTree?.[deviceName] ? { [deviceName]: allDevicesTree[deviceName] } : {})
+            : allDevicesTree;
 
         const cards: any[] = [];
         type Sized = { i: string; w: number; h: number; id: string; device: string; subsystem: string; };
@@ -594,7 +600,7 @@ const registerActions = async () => {
         }
         if(deviceInfo.data.generateAssociatedBoard !== false){
             console.log("Generating associated board for device: ", deviceInfo.data.name)
-            await generateDeviceBoard(deviceInfo.data.name+"_device");
+            await generateDeviceBoard(`${deviceInfo.data.name}_device`, deviceInfo.data.name);
         }
     }
 }
