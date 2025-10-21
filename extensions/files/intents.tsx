@@ -178,43 +178,43 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
   </AsyncView>
 }
 
-export const CodeView = ({ 
-  rulesConfig = {}, 
-  pathname = undefined, 
-  disableAIPanels = false, 
-  extraPanels = [], 
-  leftIcons = <></>, 
-  rightIcons = <></>, 
-  icons = <></>, 
-  disableFlowMode = false, 
-  masksPath = undefined, 
+export const CodeView = ({
+  rulesConfig = {},
+  pathname = undefined,
+  disableAIPanels = false,
+  disableFlowMode = false,
+  extraPanels = [],
+  leftIcons = <></>,
+  rightIcons = <></>,
+  icons = <></>,
+  masksPath = undefined,
   defaultMode = 'flow',
   rulesProps = {},
-  monacoOnMount = (editor, monaco) => { }, 
-  monacoInstance = null, 
-  monacoProps = {}, 
-  monacoOptions = {}, 
-  onCodeChange = (code) => { }, 
-  onFlowChange = (code) => { }, 
-  fileContent = null, 
-  path, 
-  flowsPath = undefined, 
-  rules = [], 
-  onApplyRules = async (rules) => { }, 
-  sourceCode, 
-  isModified = false, 
-  setIsModified = (x) => { }, 
-  query = {}, 
-  children = <></>, 
-  viewPort = undefined, 
-  onModeChange = (mode) => { } 
+  monacoOnMount = (editor, monaco) => { },
+  monacoInstance = null,
+  monacoProps = {},
+  monacoOptions = {},
+  onCodeChange = (code) => { },
+  onFlowChange = (code) => { },
+  fileContent = null,
+  path,
+  flowsPath = undefined,
+  rules = [],
+  onApplyRules = async (rules) => { },
+  sourceCode,
+  isModified = false,
+  setIsModified = (x) => { },
+  query = {},
+  children = <></>,
+  viewPort = undefined,
+  onModeChange = (mode) => { }
 }) => {
   pathname = pathname ?? usePathname();
   const theme = useTheme()
   const tint = useTint().tint
   const toast = useToastController();
   const { resolvedTheme } = useThemeSetting()
-  const [mode, setMode] = useState(disableFlowMode ? 'code' : defaultMode)
+  const [mode, setMode] = useState(disableAIPanels ? 'code' : defaultMode)
   const [savedRules, setSavedRules] = useState(rules)
 
   console.log('sourceCode: ', sourceCode)
@@ -393,27 +393,27 @@ export const CodeView = ({
         {leftIcons}
       </XStack>
       <XStack alignItems="center" mb="$2">
-        {!disableFlowMode && <>
-          {extraPanels.map(v => {
-            const LICon = v.icon;
-            return <IconContainer selected={mode == v.id} key={v.id} onPress={() => setMode(v.id)}>
-              <LICon color="var(--color)" size={"$1"} />
-            </IconContainer>
-          })}
-          {!disableAIPanels && <IconContainer selected={mode == 'rules'} onPress={() => setMode('rules')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
-            {/* <SizableText mr={"$2"}>Save</SizableText> */}
-            <Sparkles color="var(--color)" size={"$1"} />
-          </IconContainer>}
-          <IconContainer selected={mode == 'flow'} onPress={() => setMode('flow')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
-            {/* <SizableText mr={"$2"}>Save</SizableText> */}
-            <Workflow color="var(--color)" size={"$1"} />
+
+        {extraPanels.map(v => {
+          const LICon = v.icon;
+          return <IconContainer selected={mode == v.id} key={v.id} onPress={() => setMode(v.id)}>
+            <LICon color="var(--color)" size={"$1"} />
           </IconContainer>
-          <IconContainer selected={mode == 'code'} onPress={() => setMode('code')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
-            {/* <SizableText mr={"$2"}>Save</SizableText> */}
-            <Code color="var(--color)" size={"$1"} />
-          </IconContainer>
-          {rightIcons && <XStack pl="$3">{rightIcons}</XStack>}
-        </>}
+        })}
+        {!disableAIPanels && <IconContainer selected={mode == 'rules'} onPress={() => setMode('rules')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
+          {/* <SizableText mr={"$2"}>Save</SizableText> */}
+          <Sparkles color="var(--color)" size={"$1"} />
+        </IconContainer>}
+        {!disableFlowMode && <IconContainer selected={mode == 'flow'} onPress={() => setMode('flow')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
+          {/* <SizableText mr={"$2"}>Save</SizableText> */}
+          <Workflow color="var(--color)" size={"$1"} />
+        </IconContainer>}
+        <IconContainer selected={mode == 'code'} onPress={() => setMode('code')} style={{ padding: "10px", borderRadius: "5px" }} hoverStyle={{ backgroundColor: "$gray6" }}>
+          {/* <SizableText mr={"$2"}>Save</SizableText> */}
+          <Code color="var(--color)" size={"$1"} />
+        </IconContainer>
+        {rightIcons && <XStack pl="$3">{rightIcons}</XStack>}
+
         {icons}
         {children}
       </XStack>
@@ -478,7 +478,7 @@ const TopRightIcons = ({ children }) => (
 const ImageViewer = ({ path, extraIcons }) => {
   const url = ('/api/core/v1/files/' + path).replace(/\/+/g, '/')
   return (
-     <YStack f={1} w="100%" position="relative" p="$4" alignItems="center" justifyContent="center">
+    <YStack f={1} w="100%" position="relative" p="$4" alignItems="center" justifyContent="center">
       {!!extraIcons && <TopRightIcons>{extraIcons}</TopRightIcons>}
       <XStack ai="center" jc="center" f={1} h="100%" p="$2">
         <img
@@ -494,7 +494,7 @@ const ImageViewer = ({ path, extraIcons }) => {
 const VideoViewer = ({ path, extraIcons }) => {
   const url = ('/api/core/v1/files/' + path).replace(/\/+/g, '/')
   return (
-     <YStack f={1} w="100%" position="relative" p="$4" alignItems="center" justifyContent="center">
+    <YStack f={1} w="100%" position="relative" p="$4" alignItems="center" justifyContent="center">
       {!!extraIcons && <TopRightIcons>{extraIcons}</TopRightIcons>}
       <XStack ai="center" jc="center" f={1} h="100%" p="$2">
         <video src={url} controls style={{ maxWidth: '100%', maxHeight: '84vh', borderRadius: 8 }} />

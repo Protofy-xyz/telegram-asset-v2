@@ -69,6 +69,8 @@ export const DisplayEditor = ({
         { label: 'Keep value permanently', key: 'persistValue', type: 'checkbox', section: 'General', visible: ({ card }) => card.type === 'action' },
         { label: 'Autorun on start', key: 'autorun', type: 'checkbox', section: 'General', visible: ({ card }) => card.type === 'action' },
         { label: 'Always report value', key: 'alwaysReportValue', type: 'checkbox', section: 'General' },
+        { label: 'Natural language rules', key: 'editRulesInNaturalLanguage', type: 'checkbox', section: 'General', get: (cd) => cd.editRulesInNaturalLanguage !== false},
+        { label: 'Low code', key: 'editRulesInLowCode', type: 'checkbox', section: 'General',  get: (cd) => cd.editRulesInLowCode !== false},
 
         // ----- Display -----
         { label: 'Display title', key: 'displayTitle', type: 'checkbox', section: 'Display', get: (cd) => cd.displayTitle !== false },
