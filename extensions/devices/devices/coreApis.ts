@@ -167,6 +167,7 @@ function Widget(card) {
                 if ('displayIcon' in d) card.displayIcon = d.displayIcon;
                 if ('displayResponse' in d) card.displayResponse = d.displayResponse;
                 if ('html' in d && d.html) card.html = d.html;
+                if ('color' in d) card.color = d.color;
 
                 if (!card.html) {
                     card.html = (type === 'action') ? DEFAULT_HTML_ACTION : DEFAULT_HTML_VALUE;
@@ -304,7 +305,11 @@ const registerActions = async () => {
                 // console.log('monitor: ', monitor)
                 const monitorModel = deviceInfo.getMonitorByEndpoint(monitor.endpoint)
                 const stateName = deviceInfo.getStateNameByMonitor(monitorModel)
+                const iconFromValue = monitor.cardProps?.icon ?? "scan-eye";
+                const colorFromValue = monitor.cardProps?.color;
+
                 if (subsystem.monitors.length == 1) {
+
                     addCard({
                         group: 'devices',
                         tag: deviceInfo.data.name,
@@ -316,7 +321,8 @@ const registerActions = async () => {
                             description: monitor.description ?? "",
                             rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                             type: 'value',
-                            icon: "scan-eye"
+                            icon: iconFromValue,
+                            ...(colorFromValue ? { color: colorFromValue } : {})
                         },
                         emitEvent: true
                     })
@@ -332,7 +338,8 @@ const registerActions = async () => {
                             description: monitor.description ?? "",
                             rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                             type: 'value',
-                            icon: "scan-eye"
+                            icon: iconFromValue,
+                            ...(colorFromValue ? { color: colorFromValue } : {})
                         },
                         emitEvent: true
                     })
@@ -459,7 +466,9 @@ const registerActions = async () => {
                     ...!action.payload?.value ? { params } : {},
                     emitEvent: true
                 })
-
+                const iconFromAction = action.cardProps?.icon ?? "rocket";
+                const colorFromAction = action.cardProps?.color;
+                console.log("🤖 ~ registerActions ~ colorFromAction:", colorFromAction)
                 //http://localhost:8000/api/core/v1/cards to understand what this fills
                 addCard({
                     group: 'devices',
@@ -474,7 +483,8 @@ const registerActions = async () => {
                         params: action.payload?.value ? {} : getParams(params),
                         configParams: params,
                         type: 'action',
-                        icon: "rocket",
+                        icon: iconFromAction,
+                        ...(colorFromAction ? { color: colorFromAction } : {})
                     },
                     emitEvent: true
                 })
