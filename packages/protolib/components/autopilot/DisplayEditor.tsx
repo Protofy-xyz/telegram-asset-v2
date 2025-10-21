@@ -22,9 +22,9 @@ export const SettingsTitle = ({ children, error = "", ...props }) => {
 
 const SettingsSection = ({ children, title, ...props }) => {
     return (
-        <YStack f={1} borderRadius="$3" p="$3" bc="$bgPanel">
+        <YStack flex={1}>
             <SettingsTitle>{title}</SettingsTitle>
-            <YStack {...props}>{children}</YStack>
+            <YStack f={1} borderRadius="$3" p="$3" bc="$bgPanel" {...props}>{children}</YStack>
         </YStack>
     )
 }
@@ -48,7 +48,7 @@ export const DisplayEditor = ({
     setCardData,
     icons,
     board,
-    style, 
+    style,
 }: {
     card: any
     cardData: any
@@ -193,7 +193,7 @@ export const DisplayEditor = ({
                         boc="$gray6"
                     >
                         <Checkbox.Indicator>
-                            <Check size={16} color='var(--color8)'/>
+                            <Check size={16} color='var(--color8)' />
                         </Checkbox.Indicator>
                     </Checkbox>
                     <Label>{s.label}</Label>
@@ -226,9 +226,9 @@ export const DisplayEditor = ({
     }
 
     return (
-        <YStack f={1} gap="$4" style={style}>
-            <XStack space="$4" flexWrap="wrap">
-                <YStack flex={1} maw={400}>
+        <XStack f={1} gap="$4" style={style}>
+            <YStack flexWrap="wrap">
+                <YStack maw={400}>
                     <SettingsTitle error={error ?? ''}>
                         Name <Text color={"$color8"}>*</Text>
                     </SettingsTitle>
@@ -267,7 +267,7 @@ export const DisplayEditor = ({
                         inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
                     />
                 </YStack>
-            </XStack>
+            </YStack>
 
             <ScrollView>
                 <YStack>
@@ -287,6 +287,6 @@ export const DisplayEditor = ({
                     </YStack>
                 </YStack>
             </ScrollView>
-        </YStack>
+        </XStack>
     )
 }
