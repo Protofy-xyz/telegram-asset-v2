@@ -847,9 +847,9 @@ const saveCard = async () => {
                   setEditedCard(data);
                   setHasChanges(true);
                 }}
-                onClose={(unsaved) => {
-                  if (unsaved) setShowUnsavedDialog(true);
-                  else closeEdition();
+                onClose={() => {
+                  saveCard()
+                  closeEdition();
                 }}
                 errors={errors}
               />

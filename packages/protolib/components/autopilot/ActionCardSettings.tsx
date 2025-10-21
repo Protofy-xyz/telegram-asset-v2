@@ -1,4 +1,4 @@
-import { Braces, Cog, ClipboardList, Sliders, FileCode, FileQuestion, X, Save, Settings, FileInput, FileOutput, ArrowDownRight, ArrowUpRight, GitPullRequest } from '@tamagui/lucide-icons'
+import { Braces, ClipboardList, FileCode, FileQuestion, Save, Settings, ArrowDownRight, ArrowUpRight, Check } from '@tamagui/lucide-icons'
 import { Text, YStack, Paragraph, XStack } from '@my/ui'
 import { useState, useRef } from 'react'
 import { Tinted } from '../Tinted'
@@ -9,12 +9,12 @@ import { Markdown } from '../Markdown'
 import { Panel, PanelGroup } from "react-resizable-panels";
 import { SettingsEditor } from './SettingsEditor'
 import { ViewEditor } from './ViewEditor'
-import { DisplayEditor, SettingsTitle } from './DisplayEditor'
+import { DisplayEditor } from './DisplayEditor'
 import { useUpdateEffect } from 'usehooks-ts'
 import { TabBar } from 'protolib/components/TabBar';
 import { OutputEditor } from './OutputEditor'
 // import { LinkedActions } from './LinkedActions'
-import { TabContainer, TabTitle } from './Tab'
+import { TabContainer } from './Tab'
 
 function getAllPaths(obj, prefix = "", includeIntermediate = true) {
   if (obj === null || typeof obj !== "object") {
@@ -42,7 +42,7 @@ function getAllPaths(obj, prefix = "", includeIntermediate = true) {
   return out;
 }
 
-export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, onSave = () => { }, onClose = (changes) => { }, errors, mode = "edit", tab = "rules" }) => {
+export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, onSave = () => { }, onClose = () => { }, errors, mode = "edit", tab = "rules" }) => {
 
   const [cardData, setCardData] = useState(card);
   const originalNameRef = useRef(card?.name ?? null)
@@ -251,16 +251,16 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
                     pressStyle={{ opacity: 0.8 }}
                     hoverStyle={{ scale: 1.05 }}
                   >
-                    <Save size={18} color="var(--color)" />
+                    <Check size={18} color="var(--color)" />
                   </XStack>
 
                   <XStack
                     cursor="pointer"
-                    onPress={() => onClose(hasChanges)}
+                    onPress={() => onClose()}
                     pressStyle={{ opacity: 0.8 }}
                     hoverStyle={{ scale: 1.05 }}
                   >
-                    <X size={18} color="var(--color)" />
+                    <Save size={18} color="var(--color)" />
                   </XStack>
                 </XStack>
               </XStack>
