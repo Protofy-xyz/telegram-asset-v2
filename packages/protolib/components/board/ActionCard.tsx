@@ -28,7 +28,7 @@ export const Icon = ({ name, size = 24, color, style }) => {
             style={{
                 width: `${size}px`,
                 height: `${size}px`,
-                backgroundColor: `${color}`,
+                backgroundColor: `${bg}`,
                 maskImage: `url(/public/icons/${name}.svg)`,
                 WebkitMaskImage: `url(/public/icons/${name}.svg)`,
                 maskRepeat: `no-repeat`,
