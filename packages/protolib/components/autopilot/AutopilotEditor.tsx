@@ -83,7 +83,8 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
             onApplyRules={async (rules) => {
                 return await setRules(rules)
             }}
-            disableAIPanels={!isAIEnabled}
+            disableAIPanels={!isAIEnabled || cardData.editRulesInNaturalLanguage === false}
+            disableFlowMode={cardData.editRulesInLowCode === false}
             defaultMode={isAIEnabled ? 'rules' : 'code'}
             rules={rules}
             viewPort={{ x: 20, y: window.innerHeight / 8, zoom: 0.8 }}
