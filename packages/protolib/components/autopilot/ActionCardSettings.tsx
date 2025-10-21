@@ -74,7 +74,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'info',
       label: 'Readme',
       icon: <FileQuestion size={"$1"} />,
-      content: <TabContainer>
+      content: <TabContainer px="$4" py="$4">
         {/* <TabTitle tabname={"Description"} /> */}
         <PanelGroup direction="horizontal">
           <Panel defaultSize={50}>
@@ -98,65 +98,71 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'params',
       label: 'Inputs',
       icon: <ArrowDownRight size={"$1"} />,
-      content: <ParamsEditor
-        params={cardData.params || {}}
-        setParams={(newParams) => {
-          console.log("hacemos setParams", newParams)
-          setCardData((prev) => ({
-            ...prev,
-            params: newParams,
-          }))
-        }}
-        links={cardData.links || []}
-        setLinks={(newLinks) => {
-          setCardData((prev) => ({
-            ...prev,
-            links: newLinks,
-          }))
-        }}
-        configParams={cardData.configParams || {}}
-        setConfigParams={(newConfigParams) => {
-          console.log("hacemos setConfigParams", newConfigParams)
-          setCardData((prev) => ({
-            ...prev,
-            configParams: newConfigParams,
-          }))
-        }}
-        availableStates={getAllPaths(states?.boards?.[board.name] ?? {}).filter(s => s !== cardData.name)}
-      />
+      content: <TabContainer px="$4" py="$4">
+        <ParamsEditor
+          params={cardData.params || {}}
+          setParams={(newParams) => {
+            console.log("hacemos setParams", newParams)
+            setCardData((prev) => ({
+              ...prev,
+              params: newParams,
+            }))
+          }}
+          links={cardData.links || []}
+          setLinks={(newLinks) => {
+            setCardData((prev) => ({
+              ...prev,
+              links: newLinks,
+            }))
+          }}
+          configParams={cardData.configParams || {}}
+          setConfigParams={(newConfigParams) => {
+            console.log("hacemos setConfigParams", newConfigParams)
+            setCardData((prev) => ({
+              ...prev,
+              configParams: newConfigParams,
+            }))
+          }}
+          availableStates={getAllPaths(states?.boards?.[board.name] ?? {}).filter(s => s !== cardData.name)}
+        />
+      </TabContainer>
     },
     {
       id: 'rules',
       label: 'Rules',
       icon: <ClipboardList size={"$1"} />,
-      content: <RuleEditor
-        board={board}
-        extraCompilerData={{ userParams: cardData.params, actions: actions?.boards?.[board.name] }}
-        onCodeChange={(cardData, states) => {
-          return "rules processed"
-        }}
-        actions={actions.boards || {}}
-        compiler={cardData.type == 'value' ? 'getValueCode' : 'getActionCode'}
-        states={states?.boards || {}}
-        cardData={cardData}
-        setCardData={setCardData}
-      />
+      content: <TabContainer px="$4" py="$4">
+        <RuleEditor
+          board={board}
+          extraCompilerData={{ userParams: cardData.params, actions: actions?.boards?.[board.name] }}
+          onCodeChange={(cardData, states) => {
+            return "rules processed"
+          }}
+          actions={actions.boards || {}}
+          compiler={cardData.type == 'value' ? 'getValueCode' : 'getActionCode'}
+          states={states?.boards || {}}
+          cardData={cardData}
+          setCardData={setCardData}
+        />
+      </TabContainer>
     },
     {
       id: 'output',
       label: 'Output',
       icon: <ArrowUpRight size={"$1"} />,
-      content: <OutputEditor
-        card={cardData}
-        setCardData={setCardData}
-        links={cardData.links || []}
-        setLinks={(newLinks) => {
-          setCardData((prev) => ({
-            ...prev,
-            links: newLinks,
-          }))
-        }}
-      />
+      content: <TabContainer px="$4" py="$4">
+        <OutputEditor
+          card={cardData}
+          setCardData={setCardData}
+          links={cardData.links || []}
+          setLinks={(newLinks) => {
+            setCardData((prev) => ({
+              ...prev,
+              links: newLinks,
+            }))
+          }}
+        />
+      </TabContainer>
     },
     // {
     //   id: 'triggers',
@@ -176,7 +182,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'config',
       label: 'Settings',
       icon: <Settings size={"$1"} />,
-      content: <TabContainer>
+      content: <TabContainer px="0px" py="0px">
         {/* <TabTitle tabname={"General Setting"} /> */}
         <DisplayEditor style={{ width: "100%", height: "fit-content" }} board={board} icons={icons} card={card} cardData={cardData} setCardData={setCardData} />
       </TabContainer>
@@ -185,7 +191,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'view',
       label: 'View',
       icon: <FileCode size={"$1"} />,
-      content: <TabContainer>
+      content: <TabContainer px="$4" py="$4">
         {/* <TabTitle tabname={"Card View"} tabDescription='Configure the view of your card with React or plain html' /> */}
         <ViewEditor cardData={cardData} setHTMLCode={setHTMLCode} />
       </TabContainer>
@@ -263,7 +269,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
           <Tinted>
             {
               tabs.map((tabItem) => (
-                <YStack display={tabItem.id === (selectedTab ?? "rules") ? "flex" : "none"} key={tabItem.id} f={1} gap="$4" p="$4">
+                <YStack display={tabItem.id === (selectedTab ?? "rules") ? "flex" : "none"} key={tabItem.id} f={1} gap="$4">
                   {tabItem.content || (
                     <YStack f={1} ai="center" jc="center">
                       <Text color="$gray11">No content available for this tab</Text>
