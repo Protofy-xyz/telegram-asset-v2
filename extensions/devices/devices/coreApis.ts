@@ -819,14 +819,17 @@ export default (app, context) => {
             let deviceInfo = undefined
             try {
                 deviceInfo = DevicesModel.load(JSON.parse(await db.get(deviceName)))
-            } catch (err) {}
+            } catch (err) {
+                logger.error({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
+                return
+            }
             // console.log("deviceInfo: ", deviceInfo)
             // console.log("subsystems: ", deviceInfo.data.subsystem)
             // console.log("endpoint: ", endpoint)
             const monitor = deviceInfo?.getMonitorByEndpoint("/"+endpoint)
             // console.log("monitor: ", monitor)
             if(!monitor){
-                logger.error({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
+                // logger.error({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
                 return
             }
             // const subsystem = deviceInfo.getSubsystem(req.params.subsystem)
