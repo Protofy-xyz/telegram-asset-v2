@@ -966,6 +966,57 @@ return card({
 
     addAction({
         group: 'board',
+        name: 'resetgroup',
+        url: "/api/core/v1/board/cardresetgroup",
+        tag: 'card',
+        description: "Resets the values of groups of cards in the board",
+        params: {
+            included: "array of cards to include, or * for all",
+            excluded: "array of cards to exclude"
+        },
+        emitEvent: true,
+        receiveBoard: true,
+        token: await getServiceToken()
+    })
+
+    addCard({
+        group: 'board',
+        tag: 'card',
+        id: 'board_resetgroup',
+        templateName: 'Reset card group values',
+        name: 'board_resetgroup',
+        defaults: {
+            type: "action",
+            icon: 'message-square-text',
+            name: 'card reset group',
+            description: 'Reset the values of a group of cards in the board',
+            params: {
+                included: "array of cards to include, or * for all",
+                excluded: "array of cards to exclude"
+            },
+            configParams: {
+                included: {
+                    visible: true,
+                    defaultValue: "[\"*\"]",
+                    type: "array"
+                },
+                excluded: {
+                    visible: true,
+                    defaultValue: "[\"\"]",
+                    type: "array"
+                }
+            },
+            rulesCode: `return await execute_action("/api/core/v1/board/cardresetgroup", userParams)`,
+            displayResponse: true,
+            buttonLabel: "Reset all",
+            displayIcon: false
+        },
+        emitEvent: true,
+        token: await getServiceToken()
+    })
+
+    addAction({
+        group: 'board',
         name: 'reset',
         url: "/api/core/v1/board/cardreset",
         tag: 'card',
