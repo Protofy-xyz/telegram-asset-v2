@@ -3,7 +3,7 @@ import { API, getPendingResult, set } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
 import ErrorMessage from "protolib/components/ErrorMessage"
-import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Stack, H1, H3 } from '@my/ui'
+import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Stack, H1, H3, Button } from '@my/ui'
 import { computeLayout } from '@extensions/autopilot/layout';
 import { DashboardGrid, gridSizes, getCurrentBreakPoint } from 'protolib/components/DashboardGrid';
 import { LogPanel } from 'protolib/components/LogPanel';
@@ -301,11 +301,12 @@ const Board = ({ board, icons }) => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isApiDetails, setIsApiDetails] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [currentCard, setCurrentCard] = useState(null)
   const [editedCard, setEditedCard] = useState(null)
   const [editCode, setEditCode] = useState('')
   const [boardCode, setBoardCode] = useState(JSON.stringify(board))
+  const [hasChanges, setHasChanges] = useState(false);
 
   const [errors, setErrors] = useState<string[]>([])
   // const initialBreakPoint = useInitialBreakpoint()
@@ -707,40 +708,74 @@ const Board = ({ board, icons }) => {
     </Stack>
   );
 
-  const saveCard = async () => {
-    const newItems = items.map(item =>
-      item.key === currentCard.key ? editedCard : item
-    );
+const saveCard = async () => {
+  const newItems = items.map(item =>
+    item.key === currentCard.key ? editedCard : item
+  );
 
-    try {
-      await checkCard(newItems, editedCard);
-      setErrors([]);
-      setItems(newItems);
-      boardRef.current.cards = newItems;
-      await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
-      setEditedCard(editedCard);
-    } catch (e) {
-      if (e instanceof ValidationError) {
-        setErrors(e.errors);
-      } else {
-        console.error('Error checking card:', e);
-        setErrors(['An unexpected error occurred while checking the card.']);
-      }
+  try {
+    await checkCard(newItems, editedCard);
+    setErrors([]);
+    setItems(newItems);
+    boardRef.current.cards = newItems;
+    await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
+    setCurrentCard(editedCard);
+    setEditedCard(editedCard);
+    setHasChanges(false);
+  } catch (e) {
+    if (e instanceof ValidationError) {
+      setErrors(e.errors);
+    } else {
+      console.error('Error checking card:', e);
+      setErrors(['An unexpected error occurred while checking the card.']);
     }
-  };
+  }
+};
 
-  const handleCloseEditor = () => {
-    setIsEditing(false)
-    setCurrentCard(null)
-    setEditedCard(null)
-    setErrors([])
-  };
+
+  const closeEdition = () => {
+    setIsEditing(false);
+    setCurrentCard(null);
+    setEditedCard(null);
+    setErrors([]);
+    setHasChanges(false);
+  }
+
+  const closeDialog = (
+    <AlertDialog
+      open={showUnsavedDialog}
+      setOpen={setShowUnsavedDialog}
+      title="Unsaved changes"
+      description="You have unsaved changes. Do you want to save them before closing?"
+      hideAccept
+    >
+      <YStack width="100%" ai="center" gap="$4" mt="$3">
+        <XStack gap="$3" jc="center" width="100%">
+          <Button onPress={() => setShowUnsavedDialog(false)}>
+            Cancel
+          </Button>
+
+          <Button onPress={() => { setShowUnsavedDialog(false); closeEdition(); }} borderRadius="$4" >
+            Close without saving
+          </Button>
+
+          <Tinted>
+            <Button color="white" backgroundColor="$color6" borderRadius="$4" onPress={async () => { await saveCard(); setShowUnsavedDialog(false); closeEdition(); }}  >
+              Save & Close
+            </Button>
+          </Tinted>
+
+        </XStack>
+      </YStack>
+    </AlertDialog>)
+
+
 
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
 
       <CardSelector key={addKey} board={board} addOpened={addOpened} setAddOpened={setAddOpened} onFinish={addWidget} states={states} icons={icons} actions={actions} errors={errors} />
-
+      {closeDialog}
       <AlertDialog
         acceptButtonProps={{ color: "white", backgroundColor: "$red9" }}
         p="$5"
@@ -767,7 +802,24 @@ const Board = ({ board, icons }) => {
         description={apiInfo}
       />
       <Theme reset>
-        <Dialog modal open={isEditing} onOpenChange={setIsEditing}>
+        <Dialog
+          modal
+          open={isEditing}
+          onOpenChange={(open) => {
+            if (!open) {
+              const hasRealChanges =
+                editedCard && currentCard &&
+                JSON.stringify(editedCard) !== JSON.stringify(currentCard);
+              if (hasRealChanges) {
+                setShowUnsavedDialog(true);
+              } else {
+                closeEdition();
+              }
+            } else {
+              setIsEditing(true);
+            }
+          }}
+        >
           <Dialog.Portal zIndex={100000} overflow='hidden'>
             <Dialog.Overlay />
             <Dialog.Content
@@ -783,7 +835,24 @@ const Board = ({ board, icons }) => {
               h={"95vh"}
               maw={1600}
             >
-              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} tab={tab} onSave={saveCard} onEdit={(data) => { setEditedCard(data) }} onClose={handleCloseEditor} errors={errors} />
+              <ActionCardSettings
+                board={board}
+                actions={actions}
+                states={states}
+                icons={icons}
+                card={currentCard}
+                tab={tab}
+                onSave={saveCard}
+                onEdit={(data) => {
+                  setEditedCard(data);
+                  setHasChanges(true);
+                }}
+                onClose={(unsaved) => {
+                  if (unsaved) setShowUnsavedDialog(true);
+                  else closeEdition();
+                }}
+                errors={errors}
+              />
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog>
