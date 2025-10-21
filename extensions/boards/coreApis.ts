@@ -36,20 +36,39 @@ class HttpError extends Error {
     }
 }
 
+const getMetaCard = (card) => {
+    return {
+        name: card.name,
+        type: card.type,
+        description: card.description || '',
+        //icon: card.icon || '',
+        code: card.rulesCode,
+        html: card.html,
+        code_explanation: card.rules
+    }
+}
 const processCards = async (boardId, cards, context, boardData?, regenerate?) => {
     const proxyDB = ProtoMemDB('proxy');
-    
-    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: cards.map(card => {
-        return {
-            name: card.name,
-            type: card.type,
-            description: card.description || '',
-            icon: card.icon || '',
-            rulesCode: card.rulesCode,
-            html: card.html,
-            rules: card.rules
-        }
-    }), emitEvent: true }) //set board meta info
+
+    const cardsMetaValue = cards.filter(c => c.type == 'value').map(card => {
+        return getMetaCard(card);
+    }).reduce((obj, card) => {
+        obj[card.name] = card;
+        delete card.name;
+        delete card.type;
+        return obj;
+    }, {});
+
+    const cardsMetaActions = cards.filter(c => c.type == 'action').map(card => {
+        return getMetaCard(card);
+    }).reduce((obj, card) => {
+        obj[card.name] = card;
+        delete card.name;
+        delete card.type;
+        return obj;
+    }, {});
+
+    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: {actions: cardsMetaActions, values: cardsMetaValue}, emitEvent: true }) //set board meta info
     context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
 
