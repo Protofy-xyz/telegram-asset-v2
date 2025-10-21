@@ -301,6 +301,7 @@ const Board = ({ board, icons }) => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isApiDetails, setIsApiDetails] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  
   const [currentCard, setCurrentCard] = useState(null)
   const [editedCard, setEditedCard] = useState(null)
   const [editCode, setEditCode] = useState('')
@@ -717,8 +718,7 @@ const Board = ({ board, icons }) => {
       setItems(newItems);
       boardRef.current.cards = newItems;
       await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
-      setCurrentCard(null);
-      setIsEditing(false);
+      setEditedCard(editedCard);
     } catch (e) {
       if (e instanceof ValidationError) {
         setErrors(e.errors);
@@ -727,7 +727,14 @@ const Board = ({ board, icons }) => {
         setErrors(['An unexpected error occurred while checking the card.']);
       }
     }
-  }
+  };
+
+  const handleCloseEditor = () => {
+    setIsEditing(false)
+    setCurrentCard(null)
+    setEditedCard(null)
+    setErrors([])
+  };
 
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
@@ -776,7 +783,7 @@ const Board = ({ board, icons }) => {
               h={"95vh"}
               maw={1600}
             >
-              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} tab={tab} onSave={saveCard} onEdit={(data) => { setEditedCard(data) }} errors={errors} />
+              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} tab={tab} onSave={saveCard} onEdit={(data) => { setEditedCard(data) }} onClose={handleCloseEditor} errors={errors} />
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog>

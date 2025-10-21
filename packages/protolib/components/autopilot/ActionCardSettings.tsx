@@ -42,13 +42,13 @@ function getAllPaths(obj, prefix = "", includeIntermediate = true) {
   return out;
 }
 
-export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, onSave = () => { }, errors, mode = "edit", tab = "rules" }) => {
+export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, onSave = () => { }, onClose = () => { }, errors, mode = "edit", tab = "rules" }) => {
 
   const [cardData, setCardData] = useState(card);
   const originalNameRef = useRef(card?.name ?? null)
 
   const isCreateMode = mode === "create";
-
+  const [hasChanges, setHasChanges] = useState(false);
   const [selectedTab, setSelectedTab] = useState(isCreateMode ? "config" : tab);
 
   const { resolvedTheme } = useThemeSetting();
@@ -62,6 +62,11 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       delete payload.previousName
     }
     onEdit(payload);
+  }, [cardData]);
+
+  useUpdateEffect(() => {
+    const isDifferent = JSON.stringify(cardData) !== JSON.stringify(card);
+    setHasChanges(isDifferent);
   }, [cardData]);
 
   const setHTMLCode = (code) => {
@@ -200,6 +205,15 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
     }
   ]
 
+  const handleSave = async () => {
+    try {
+      await onSave();
+      setHasChanges(false);
+    } catch (e) {
+      console.error("Error saving:", e);
+    }
+  };
+
   const isTabVisible = (tab) => {
     const id = tab.id;
     return cardData.editorOptions?.hiddenTabs?.includes(id) ? false : true;
@@ -224,12 +238,18 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
               <XStack ai="center">
                 <YStack borderRightWidth="1px" borderRightColor="$gray6" h="100%" />
                 <XStack ai="center" gap="$3" p="$2.5" px="$3">
-                  <XStack cursor="pointer" onPress={onSave} pressStyle={{ opacity: 0.8 }} hoverStyle={{ scale: 1.05 }} >
+                  <XStack
+                    cursor={hasChanges ? "pointer" : "default"}
+                    opacity={hasChanges ? 1 : 0.4}
+                    onPress={hasChanges ? handleSave : undefined}
+                    pressStyle={hasChanges ? { opacity: 0.8 } : {}}
+                    hoverStyle={hasChanges ? { scale: 1.05 } : {}}
+                  >
                     <Save size={18} color="var(--color)" />
                   </XStack>
-                  {/* <XStack cursor="pointer" onPress={() => { }} pressStyle={{ opacity: 0.8 }} hoverStyle={{ scale: 1.05 }} >
+                  <XStack cursor="pointer" onPress={onClose} pressStyle={{ opacity: 0.8 }} hoverStyle={{ scale: 1.05 }}>
                     <X size={18} color="var(--color)" />
-                  </XStack> */}
+                  </XStack>
                 </XStack>
               </XStack>
             )}
