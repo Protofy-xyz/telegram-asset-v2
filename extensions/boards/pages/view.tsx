@@ -306,6 +306,7 @@ const Board = ({ board, icons }) => {
   const [editedCard, setEditedCard] = useState(null)
   const [editCode, setEditCode] = useState('')
   const [boardCode, setBoardCode] = useState(JSON.stringify(board))
+  const [hasChanges, setHasChanges] = useState(false);
 
   const [errors, setErrors] = useState<string[]>([])
   // const initialBreakPoint = useInitialBreakpoint()
@@ -707,33 +708,37 @@ const Board = ({ board, icons }) => {
     </Stack>
   );
 
-  const saveCard = async () => {
-    const newItems = items.map(item =>
-      item.key === currentCard.key ? editedCard : item
-    );
+const saveCard = async () => {
+  const newItems = items.map(item =>
+    item.key === currentCard.key ? editedCard : item
+  );
 
-    try {
-      await checkCard(newItems, editedCard);
-      setErrors([]);
-      setItems(newItems);
-      boardRef.current.cards = newItems;
-      await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
-      setEditedCard(editedCard);
-    } catch (e) {
-      if (e instanceof ValidationError) {
-        setErrors(e.errors);
-      } else {
-        console.error('Error checking card:', e);
-        setErrors(['An unexpected error occurred while checking the card.']);
-      }
+  try {
+    await checkCard(newItems, editedCard);
+    setErrors([]);
+    setItems(newItems);
+    boardRef.current.cards = newItems;
+    await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
+    setCurrentCard(editedCard);
+    setEditedCard(editedCard);
+    setHasChanges(false);
+  } catch (e) {
+    if (e instanceof ValidationError) {
+      setErrors(e.errors);
+    } else {
+      console.error('Error checking card:', e);
+      setErrors(['An unexpected error occurred while checking the card.']);
     }
-  };
+  }
+};
+
 
   const closeEdition = () => {
     setIsEditing(false);
     setCurrentCard(null);
     setEditedCard(null);
     setErrors([]);
+    setHasChanges(false);
   }
 
   const closeDialog = (
@@ -797,7 +802,24 @@ const Board = ({ board, icons }) => {
         description={apiInfo}
       />
       <Theme reset>
-        <Dialog modal open={isEditing} onOpenChange={setIsEditing}>
+        <Dialog
+          modal
+          open={isEditing}
+          onOpenChange={(open) => {
+            if (!open) {
+              const hasRealChanges =
+                editedCard && currentCard &&
+                JSON.stringify(editedCard) !== JSON.stringify(currentCard);
+              if (hasRealChanges) {
+                setShowUnsavedDialog(true);
+              } else {
+                closeEdition();
+              }
+            } else {
+              setIsEditing(true);
+            }
+          }}
+        >
           <Dialog.Portal zIndex={100000} overflow='hidden'>
             <Dialog.Overlay />
             <Dialog.Content
@@ -821,7 +843,10 @@ const Board = ({ board, icons }) => {
                 card={currentCard}
                 tab={tab}
                 onSave={saveCard}
-                onEdit={(data) => setEditedCard(data)}
+                onEdit={(data) => {
+                  setEditedCard(data);
+                  setHasChanges(true);
+                }}
                 onClose={(unsaved) => {
                   if (unsaved) setShowUnsavedDialog(true);
                   else closeEdition();
