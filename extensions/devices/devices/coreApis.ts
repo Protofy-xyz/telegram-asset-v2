@@ -228,26 +228,85 @@ function Widget(card) {
                 ensureBucket('xs', groupKey).push({ i: key, w: size.xs.w, h: size.xs.h, id, device: deviceName, subsystem });
             }
         }
+        // --- after you've finished filling `buckets` (lg/md/sm/xs) ---
+        const groupWeights = new Map<string, number>();
 
+        // Use lg bucket as canonical — membership is identical across breakpoints
+        for (const [gk, items] of buckets.lg.entries()) {
+            const weight = items.length; // monitors + actions -> #cards in group
+            groupWeights.set(gk, weight);
+        }
+
+        // Pretty log of all weights once
+        console.groupCollapsed('[devices_board] Subsystem weights');
+        for (const [gk, weight] of groupWeights.entries()) {
+            const [device, subsystem] = gk.split('::');
+            console.log(`- ${device} :: ${subsystem} -> weight=${weight}`);
+        }
+        console.groupEnd();
+
+        // helper: shift both axes
+        const shiftXY = (layout: any[], dx: number, dy: number) =>
+            layout.map(l => ({ ...l, x: l.x + dx, y: l.y + dy }));
+
+        // compute width (in cols) a local packed group actually uses
+        const groupWidth = (layout: any[]) =>
+            layout.reduce((m, l) => Math.max(m, l.x + l.w), 0);
+
+        // --- after computing groupWeights + the weights log ---
         const buildGroupedLayout = (bp: 'lg' | 'md' | 'sm' | 'xs', cols: number) => {
             const groupKeys = Array.from(buckets[bp].keys()).sort((a, b) => {
+                const wa = groupWeights.get(a) ?? buckets[bp].get(a)?.length ?? 0;
+                const wb = groupWeights.get(b) ?? buckets[bp].get(b)?.length ?? 0;
+                if (wa !== wb) return wa - wb;
                 const [da, sa] = a.split('::');
                 const [db, sb] = b.split('::');
                 return da === db ? sa.localeCompare(sb) : da.localeCompare(db);
             });
 
-            let yOffset = 0;
+            // log final order
+            console.groupCollapsed(`[devices_board] Order @ ${bp} (cols=${cols})`);
+            groupKeys.forEach((gk, i) => {
+                const [device, subsystem] = gk.split('::');
+                const w = groupWeights.get(gk) ?? buckets[bp].get(gk)?.length ?? 0;
+                console.log(`${i + 1}. ${device} :: ${subsystem} (weight=${w})`);
+            });
+            console.groupEnd();
+
+            let curX = 0;      // current column
+            let curY = 0;      // current row (y coord)
+            let rowH = 0;      // tallest group height in the current row
             const result: any[] = [];
 
             for (const gk of groupKeys) {
                 const items = buckets[bp].get(gk)!;
-                const packed = pack(items.map(({ i, w, h }) => ({ i, w, h })), cols);
-                const shifted = shiftY(packed, yOffset);
-                result.push(...shifted);
-                yOffset += sectionHeight(shifted) + 1; // 1-row spacer between groups
+
+                // Pack this group's cards locally (origin at 0,0)
+                const local = pack(items.map(({ i, w, h }) => ({ i, w, h })), cols);
+
+                // Measure this group's footprint
+                const gW = Math.min(groupWidth(local), cols);   // cols occupied
+                const gH = sectionHeight(local);                // rows occupied
+
+                // If it doesn't fit in the remaining columns, wrap to next row
+                if (curX + gW > cols) {
+                    curX = 0;
+                    curY += rowH + 1;    // +1 row spacer between rows of groups
+                    rowH = 0;
+                }
+
+                // Place this group at (curX, curY)
+                const placed = shiftXY(local, curX, curY);
+                result.push(...placed);
+
+                // Advance cursor
+                curX += gW;            // move to the right after the block
+                rowH = Math.max(rowH, gH);
             }
+
             return result;
         };
+
 
         const layouts = {
             lg: buildGroupedLayout('lg', GRID.lg.totalCols),
