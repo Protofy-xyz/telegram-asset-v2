@@ -42,7 +42,7 @@ function getAllPaths(obj, prefix = "", includeIntermediate = true) {
   return out;
 }
 
-export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, onSave = () => { }, onClose = () => { }, errors, mode = "edit", tab = "rules" }) => {
+export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit = (data) => { }, onSave = () => { }, onClose = (changes) => { }, errors, mode = "edit", tab = "rules" }) => {
 
   const [cardData, setCardData] = useState(card);
   const originalNameRef = useRef(card?.name ?? null)
@@ -247,7 +247,12 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
                   >
                     <Save size={18} color="var(--color)" />
                   </XStack>
-                  <XStack cursor="pointer" onPress={onClose} pressStyle={{ opacity: 0.8 }} hoverStyle={{ scale: 1.05 }}>
+                  <XStack
+                    cursor="pointer"
+                    onPress={() => onClose(hasChanges)}
+                    pressStyle={{ opacity: 0.8 }}
+                    hoverStyle={{ scale: 1.05 }}
+                  >
                     <X size={18} color="var(--color)" />
                   </XStack>
                 </XStack>
