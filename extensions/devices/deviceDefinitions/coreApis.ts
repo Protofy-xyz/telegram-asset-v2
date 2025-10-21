@@ -92,7 +92,7 @@ export default AutoAPI({
     modelName: 'devicedefinitions',
     modelType: DeviceDefinitionModel,
     initialData,
-    onAfterCreate: onAfterCreate,
+    // onAfterCreate: onAfterCreate,
     skipDatabaseIndexes: true,
     getDB: getDB,
     prefix: '/api/core/v1/',

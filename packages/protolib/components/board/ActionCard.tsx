@@ -7,14 +7,28 @@ import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
 import { SelectList } from "../SelectList";
 import { Pin } from "@tamagui/lucide-icons";
+import { useTheme, getVariableValue } from 'tamagui';
 
-export const Icon = ({ name, size, color, style }) => {
+export const Icon = ({ name, size = 24, color, style }) => {
+    const theme = useTheme();
+
+    const resolveColor = (c) => {
+        if (typeof c === 'string' && c.startsWith('$')) {
+            const key = c.slice(1);           // "$color10" -> "color10"
+            const v = theme[key];             // tamagui variable
+            return v ? getVariableValue(v) : c;
+        }
+        return c; // already a hex/rgb/etc.
+    };
+
+    const bg = resolveColor(color);
+
     return (
         <div
             style={{
                 width: `${size}px`,
                 height: `${size}px`,
-                backgroundColor: `${color}`,
+                backgroundColor: `${bg}`,
                 maskImage: `url(/public/icons/${name}.svg)`,
                 WebkitMaskImage: `url(/public/icons/${name}.svg)`,
                 maskRepeat: `no-repeat`,
