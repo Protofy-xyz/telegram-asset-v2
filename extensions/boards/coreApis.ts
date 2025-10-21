@@ -67,7 +67,7 @@ const processCards = async (boardId, cards, context, boardData?, regenerate?) =>
         return obj;
     }, {});
 
-    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: {actions: cardsMetaActions, values: cardsMetaValue}, emitEvent: true }) //set board meta info
+    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: { actions: cardsMetaActions, values: cardsMetaValue }, emitEvent: true }) //set board meta info
     context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
 
@@ -1218,7 +1218,37 @@ export default async (app, context) => {
 
     })
 
+    app.get('/api/core/v1/board/cardresetgroup', requireAdmin(), async (req, res) => {
+        if (!req.query.included) {
+            res.status(400).send('Missing included parameter')
+            return
+        }
 
+        if (!req.query.excluded) {
+            res.status(400).send('Missing excluded parameter')
+            return
+        }
+
+        if (!req.query.board) {
+            res.status(400).send('Missing board parameter')
+            return
+        }
+
+        const board = await getBoard(req.query.board);
+        if (!board.cards || !Array.isArray(board.cards)) {
+            res.send({ error: "No cards found" });
+            return;
+        }
+
+        const cards = board.cards.filter(c => (req.query.included.includes('*') || req.query.included.includes(c.name)) && !req.query.excluded.includes(c.name));
+        if (cards.length) {
+            for (const card of cards) {
+                await context.state.set({ group: 'boards', tag: req.query.board, name: card.name, value: card.initialValue ?? undefined, emitEvent: true });
+                Manager.update('../../data/boards/' + req.query.board + '.js', 'states', card.name, null);
+            }
+        }
+        res.json(cards.map(c => c.name));
+    })
 
     app.get('/api/core/v1/board/cardreset', requireAdmin(), async (req, res) => {
         if (!req.query.name) {

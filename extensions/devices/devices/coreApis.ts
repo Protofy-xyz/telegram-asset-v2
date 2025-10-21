@@ -576,7 +576,6 @@ const registerActions = async () => {
                 })
                 const iconFromAction = action.cardProps?.icon ?? "rocket";
                 const colorFromAction = action.cardProps?.color;
-                console.log("🤖 ~ registerActions ~ colorFromAction:", colorFromAction)
                 //http://localhost:8000/api/core/v1/cards to understand what this fills
                 addCard({
                     group: 'devices',
