@@ -813,17 +813,20 @@ export default (app, context) => {
             parsedMessage = JSON.parse(message);
         } catch (err) { }
         if (endpoint == 'debug') {
-            logger.trace({ from: device, deviceName, endpoint }, JSON.stringify({topic, message}))
+            // logger.error({ from: device, deviceName, endpoint }, JSON.stringify({topic, message}))
         } else {
             const db = getDB('devices')
-            const deviceInfo = DevicesModel.load(JSON.parse(await db.get(deviceName)))
+            let deviceInfo = undefined
+            try {
+                deviceInfo = DevicesModel.load(JSON.parse(await db.get(deviceName)))
+            } catch (err) {}
             // console.log("deviceInfo: ", deviceInfo)
             // console.log("subsystems: ", deviceInfo.data.subsystem)
             // console.log("endpoint: ", endpoint)
-            const monitor = deviceInfo.getMonitorByEndpoint("/"+endpoint)
+            const monitor = deviceInfo?.getMonitorByEndpoint("/"+endpoint)
             // console.log("monitor: ", monitor)
             if(!monitor){
-                logger.trace({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
+                logger.error({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
                 return
             }
             // const subsystem = deviceInfo.getSubsystem(req.params.subsystem)
