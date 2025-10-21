@@ -7,8 +7,8 @@ export const TabTitle = ({ tabname, tabDescription }: { tabname: String, tabDesc
   </YStack>
 }
 
-export const TabContainer = ({ children }) => {
-  return <YStack w="100%" h="100%" gap="$5" px="$3" py="$2" flex={1} jc="flex-start" ai="flex-start">
+export const TabContainer = ({ children, ...props }) => {
+  return <YStack w="100%" h="100%" gap="$5" px="$3" py="$2" flex={1} jc="flex-start" ai="flex-start" {...props}>
     {children}
   </YStack>
 }

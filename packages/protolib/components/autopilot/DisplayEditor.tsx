@@ -1,9 +1,10 @@
-import { useMemo, useState, useCallback } from 'react'
-import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView } from '@my/ui'
+import React, { useMemo, useState, useCallback } from 'react'
+import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView, ToggleGroup } from '@my/ui'
 import { Check } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import { IconSelect } from '../IconSelect'
 import { InputColor } from '../InputColor'
+import { Toggle } from '../Toggle'
 
 export const SettingsTitle = ({ children, error = "", ...props }) => {
     return (
@@ -20,11 +21,27 @@ export const SettingsTitle = ({ children, error = "", ...props }) => {
     )
 }
 
+
+export const SettingsSectionTitle = ({ children, error = "", ...props }) => {
+    return (
+        <XStack ai={"center"}>
+            <Label ml={"$3"} h={"$3.5"} color="$text" size="$7" fontWeight={500} {...props}>
+                {children}
+            </Label>
+            {error ? (
+                <Text color={"$red9"} fontSize={"$1"} ml={"$3"}>
+                    {error}
+                </Text>
+            ) : null}
+        </XStack>
+    )
+}
+
 const SettingsSection = ({ children, title, ...props }) => {
     return (
         <YStack flex={1}>
-            <SettingsTitle>{title}</SettingsTitle>
-            <YStack f={1} borderRadius="$3" p="$3" bc="$bgPanel" {...props}>{children}</YStack>
+            <SettingsSectionTitle>{title}</SettingsSectionTitle>
+            <YStack f={1} borderRadius="$3" p="$4" bc="$bgPanel" {...props}>{children}</YStack>
         </YStack>
     )
 }
@@ -32,8 +49,9 @@ const SettingsSection = ({ children, title, ...props }) => {
 type Setting = {
     key: string
     label: string
+    description?: string
     section: string
-    type: 'checkbox' | 'text'
+    type: 'checkbox' | 'text' | 'toggle'
     indent?: number
     placeholder?: string
     visible?: (ctx: { card: any; cardData: any }) => boolean
@@ -66,27 +84,27 @@ export const DisplayEditor = ({
 
     const settings: Setting[] = [
         // ----- General -----
-        { label: 'Keep value permanently', key: 'persistValue', type: 'checkbox', section: 'General', visible: ({ card }) => card.type === 'action' },
-        { label: 'Autorun on start', key: 'autorun', type: 'checkbox', section: 'General', visible: ({ card }) => card.type === 'action' },
-        { label: 'Always report value', key: 'alwaysReportValue', type: 'checkbox', section: 'General' },
-        { label: 'Natural language rules', key: 'editRulesInNaturalLanguage', type: 'checkbox', section: 'General', get: (cd) => cd.editRulesInNaturalLanguage !== false},
-        { label: 'Low code', key: 'editRulesInLowCode', type: 'checkbox', section: 'General',  get: (cd) => cd.editRulesInLowCode !== false},
+        { label: 'Keep value permanently', description: 'Persiste the value of the card on project restart', key: 'persistValue', type: 'toggle', section: 'General', visible: ({ card }) => card.type === 'action' },
+        { label: 'Autorun on start', description: 'Autorun the card on board start', key: 'autorun', type: 'toggle', section: 'General', visible: ({ card }) => card.type === 'action' },
+        { label: 'Always report value', description: 'Report the card value on each execution to the board', key: 'alwaysReportValue', type: 'toggle', section: 'General' },
+        { label: 'Natural language rules', description: 'Enable natural language rules view', key: 'editRulesInNaturalLanguage', type: 'toggle', section: 'General', get: (cd) => cd.editRulesInNaturalLanguage !== false },
+        { label: 'Low code', description: 'Enable low code view', key: 'editRulesInLowCode', type: 'toggle', section: 'General', get: (cd) => cd.editRulesInLowCode !== false },
 
         // ----- Display -----
-        { label: 'Display title', key: 'displayTitle', type: 'checkbox', section: 'Display', get: (cd) => cd.displayTitle !== false },
-        { label: 'Display icon', key: 'displayIcon', type: 'checkbox', section: 'Display', get: (cd) => cd.displayIcon !== false },
-        { label: 'Display frame', key: 'displayFrame', type: 'checkbox', section: 'Display', get: (cd) => cd.displayFrame !== false },
-        { label: 'Markdown display', key: 'markdownDisplay', type: 'checkbox', section: 'Display' },
-        { label: 'Html display', key: 'htmlDisplay', type: 'checkbox', section: 'Display' },
-        { label: 'Display value', key: 'displayResponse', type: 'checkbox', section: 'Display', get: (cd) => cd.displayResponse !== false, visible: ({ card }) => card.type === 'action' },
-        { label: 'Display button', key: 'displayButton', type: 'checkbox', section: 'Display', get: (cd) => cd.displayButton !== false, visible: ({ card }) => card.type === 'action' },
-        { label: 'Button text', key: 'buttonLabel', type: 'text', section: 'Display', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true) },
+        { label: 'Display title', description: 'Show name of the card as title', key: 'displayTitle', type: 'toggle', section: 'Display', get: (cd) => cd.displayTitle !== false },
+        { label: 'Display icon', description: 'Show the card icon', key: 'displayIcon', type: 'toggle', section: 'Display', get: (cd) => cd.displayIcon !== false },
+        { label: 'Display frame', description: 'Show a background frame to the card content', key: 'displayFrame', type: 'toggle', section: 'Display', get: (cd) => cd.displayFrame !== false },
+        { label: 'Markdown display', description: 'Show the card output as formatted markdown', key: 'markdownDisplay', type: 'toggle', section: 'Display' },
+        { label: 'Html display', description: 'Show the card output as formatted html', key: 'htmlDisplay', type: 'toggle', section: 'Display' },
+        { label: 'Display value', description: 'Show the card output value on the card', key: 'displayResponse', type: 'toggle', section: 'Display', get: (cd) => cd.displayResponse !== false, visible: ({ card }) => card.type === 'action' },
+        { label: 'Display button', description: 'Show the card execution button', key: 'displayButton', type: 'toggle', section: 'Display', get: (cd) => cd.displayButton !== false, visible: ({ card }) => card.type === 'action' },
+        { label: 'Button text', description: 'Displayed text on the execution button', key: 'buttonLabel', type: 'text', section: 'Display', visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true) },
         {
             label: 'Button Full',
+            description: 'Grow the button size to fill the card size',
             key: 'buttonMode',
-            type: 'checkbox',
+            type: 'toggle',
             section: 'Display',
-            indent: 1,
             visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true),
             get: (cd) => cd.buttonMode === 'full',
             set: (cd, checked) => {
@@ -96,22 +114,22 @@ export const DisplayEditor = ({
             },
         },
         {
-            label: 'Display icon',
+            label: 'Display button icon',
+            description: 'Show the card icon on the execution button',
             key: 'displayButtonIcon',
-            type: 'checkbox',
+            type: 'toggle',
             section: 'Display',
-            indent: 1,
             visible: ({ card, cardData }) => card.type === 'action' && !!getCheckedDefault(cardData, 'displayButton', true),
             get: (cd) => cd.displayButtonIcon === true,
             set: (cd, checked) => ({ ...cd, displayButtonIcon: !!checked }),
         },
-        { label: 'Auto Minimize', key: 'autoResponsive', type: 'checkbox', section: 'Display', get: (cd) => cd.autoResponsive !== false },
+        { label: 'Auto Minimize', description: 'Enable card auto minimize to show in reduced space boards', key: 'autoResponsive', type: 'toggle', section: 'Display', get: (cd) => cd.autoResponsive !== false },
 
         // ----- Paths and Permissions -----
         {
             label: 'API access',
             key: 'apiAccess',
-            type: 'checkbox',
+            type: 'toggle',
             section: 'Paths and Permissions',
             get: (cd) => Object.keys(cd.tokens ?? {}).length > 0,
             set: (cd, checked) => {
@@ -120,11 +138,11 @@ export const DisplayEditor = ({
                 return rest
             },
         },
-        { label: 'User access', key: 'userAccess', type: 'checkbox', section: 'Paths and Permissions' },
-        { label: 'Admin access', key: 'adminAccess', type: 'checkbox', section: 'Paths and Permissions' },
+        { label: 'User access', key: 'userAccess', type: 'toggle', section: 'Paths and Permissions' },
+        { label: 'Admin access', key: 'adminAccess', type: 'toggle', section: 'Paths and Permissions' },
 
-        { label: 'Allow public read', key: 'publicRead', type: 'checkbox', section: 'Paths and Permissions' },
-        { label: 'Custom read path', key: 'enableCustomPath', type: 'checkbox', section: 'Paths and Permissions' },
+        { label: 'Allow public read', key: 'publicRead', type: 'toggle', section: 'Paths and Permissions' },
+        { label: 'Custom read path', key: 'enableCustomPath', type: 'toggle', section: 'Paths and Permissions' },
         {
             label: 'Path to card',
             key: 'customPath',
@@ -139,8 +157,8 @@ export const DisplayEditor = ({
         // @ts-ignore
         ...(cardData.type === "action"
             ? [
-                { label: 'Allow public run', key: 'publicRun', type: 'checkbox', section: 'Paths and Permissions' },
-                { label: 'Custom run path', key: 'enableCustomRunPath', type: 'checkbox', section: 'Paths and Permissions' },
+                { label: 'Allow public run', key: 'publicRun', type: 'toggle', section: 'Paths and Permissions' },
+                { label: 'Custom run path', key: 'enableCustomRunPath', type: 'toggle', section: 'Paths and Permissions' },
                 {
                     label: 'Path to card run',
                     key: 'customRunPath',
@@ -169,8 +187,10 @@ export const DisplayEditor = ({
         return acc
     }, [settings, card, cardData])
 
-    const renderSetting = (s: Setting) => {
+    const renderSetting = (s: Setting, optionIndex: number, totalOptionsCount: Number) => {
+
         const indentMl = s.indent ? `$${s.indent * 4}` : undefined
+        let comp = null
 
         if (s.type === 'checkbox') {
             const checked = s.get ? !!s.get(cardData, card) : getCheckedDefault(cardData, s.key)
@@ -182,54 +202,101 @@ export const DisplayEditor = ({
                 }
             }
 
-            return (
-                <XStack key={s.key} ai="center" gap="$2" ml={indentMl}>
-                    <Checkbox
-                        w="$2"
-                        h="$2"
-                        focusStyle={{ outlineWidth: 0 }}
-                        checked={checked}
-                        onCheckedChange={onCheckedChange}
-                        className="no-drag"
-                        bc="$bgContent"
-                        boc="$gray6"
-                    >
-                        <Checkbox.Indicator>
-                            <Check size={16} color='var(--color8)' />
-                        </Checkbox.Indicator>
-                    </Checkbox>
-                    <Label>{s.label}</Label>
-                </XStack>
-            )
-        }
-
-        if (s.type === 'text') {
+            comp = <XStack key={s.key} ai="center" gap="$2" ml={indentMl}>
+                <Checkbox
+                    w="$2"
+                    h="$2"
+                    focusStyle={{ outlineWidth: 0 }}
+                    checked={checked}
+                    onCheckedChange={onCheckedChange}
+                    className="no-drag"
+                    bc="$bgContent"
+                    boc="$gray6"
+                >
+                    <Checkbox.Indicator>
+                        <Check size={16} color='var(--color8)' />
+                    </Checkbox.Indicator>
+                </Checkbox>
+                <Label>{s.label}</Label>
+            </XStack>
+        } else if (s.type === 'text') {
             const value = s.get ? s.get(cardData, card) : cardData?.[s.key] ?? ''
-            return (
-                <YStack key={s.key} ml={indentMl} w={400}>
-                    <Label pl="$4">{s.label}</Label>
-                    <Input
-                        br={"8px"}
-                        value={value}
-                        placeholder={s["placeholder"] ?? s.label}
-                        onChangeText={(t) => {
-                            if (s.set) setCardData(s.set(cardData, t))
-                            else setCardData({ ...cardData, [s.key]: t })
-                        }}
-                        bc="$bgContent"
-                        placeholderTextColor="$gray9"
-                        boc="$gray6"
-                    />
+            comp = <XStack key={s.key} ai="center" justifyContent="space-between" gap="$2" ml={indentMl}>
+                <YStack gap="0px">
+                    <Label
+                        color={"$text"}
+                        fontSize={"$5"}
+                        lineHeight={"fit-content"}>{s.label}</Label>
+                    <Label
+                        fontSize={"$5"}
+                        color="$gray10"
+                        lineHeight={"fit-content"}>{s.description}</Label>
                 </YStack>
-            )
+                <Input
+                    value={value}
+                    placeholder={s["placeholder"] ?? s.label}
+                    onChangeText={(t) => {
+                        if (s.set) setCardData(s.set(cardData, t))
+                        else setCardData({ ...cardData, [s.key]: t })
+                    }}
+                    bc="$bgContent"
+                    placeholderTextColor="$gray9"
+                    boc="$gray6"
+                />
+            </XStack>
+        } else if (s.type === 'toggle') {
+            const checked = s.get ? !!s.get(cardData, card) : getCheckedDefault(cardData, s.key)
+            const onCheckedChange = (checkedVal: boolean) => {
+                if (s.set) {
+                    setCardData(s.set(cardData, checkedVal))
+                } else {
+                    setCardData({ ...cardData, [s.key]: checkedVal })
+                }
+            }
+
+            comp = <XStack key={s.key} ai="center" justifyContent="space-between" gap="$2" ml={indentMl}>
+                <YStack gap="0px">
+                    <Label
+                        color={"$text"}
+                        fontSize={"$5"}
+                        lineHeight={"fit-content"}>{s.label}</Label>
+                    <Label
+                        fontSize={"$5"}
+                        color="$gray10"
+                        lineHeight={"fit-content"}>{s.description}</Label>
+                </YStack>
+                <Toggle checked={checked} onChange={onCheckedChange} />
+            </XStack>
         }
 
-        return null
+
+        return <div>
+            {comp}
+            {
+                // option divider
+                (optionIndex + 1) === totalOptionsCount
+                    ? null
+                    : <YStack style={{
+                        width: "100%",
+                        height: "2px",
+                    }} bg="$bgContent" my="$3" opacity={0.7}></YStack>
+            }
+        </div>
     }
 
     return (
         <XStack f={1} gap="$4" style={style}>
-            <YStack flexWrap="wrap">
+            <YStack flexWrap="wrap" py="$7" pl="$5">
+                <YStack w={400}>
+                    <SettingsTitle>Icon</SettingsTitle>
+                    <IconSelect
+                        br={"8px"}
+                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
+                        icons={icons}
+                        onSelect={(icon) => setCardData({ ...cardData, icon })}
+                        selected={cardData.icon}
+                    />
+                </YStack>
                 <YStack maw={400}>
                     <SettingsTitle error={error ?? ''}>
                         Name <Text color={"$color8"}>*</Text>
@@ -250,17 +317,6 @@ export const DisplayEditor = ({
                 </YStack>
 
                 <YStack w={400}>
-                    <SettingsTitle>Icon</SettingsTitle>
-                    <IconSelect
-                        br={"8px"}
-                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
-                        icons={icons}
-                        onSelect={(icon) => setCardData({ ...cardData, icon })}
-                        selected={cardData.icon}
-                    />
-                </YStack>
-
-                <YStack w={400}>
                     <SettingsTitle>Color</SettingsTitle>
                     <InputColor
                         br={"8px"}
@@ -269,26 +325,27 @@ export const DisplayEditor = ({
                         inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
                     />
                 </YStack>
-            </YStack>
+            </YStack >
 
-            <ScrollView>
-                <YStack>
-                    <YStack display="grid" gap="$2" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                        {Object.entries(settingsBySection).map(([section, items]) => {
-                            const layout = section == "General" ? 'full' : 'half'
-                            const gridColumn = layout === 'full' ? '1 / -1' : 'auto'
-                            return (
-                                // @ts-ignore
-                                <YStack key={section} gridColumn='1 / -1' $gtMd={{ gridColumn }} >
-                                    <SettingsSection title={section} flexDirection={layout === 'full' ? 'row' : 'column'} gap="$3">
-                                        {items.map(renderSetting)}
-                                    </SettingsSection>
-                                </YStack>
-                            )
-                        })}
-                    </YStack>
+            <ScrollView py="$7" pr="$5">
+                <YStack display="grid" gap="$2" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                    {Object.entries(settingsBySection).map(([section, items]) => {
+                        // disable half sections for the moment
+                        // const layout = section == "General" ? 'full' : 'half'
+                        // const gridColumn = layout === 'full' ? '1 / -1' : 'auto'
+                        const layout = "full"
+                        const gridColumn = "1 / -1"
+                        return (
+                            // @ts-ignore
+                            <YStack key={section} gridColumn='1 / -1' $gtMd={{ gridColumn }} >
+                                <SettingsSection title={section} flexDirection={"column"}>
+                                    {items.map((setting, i) => renderSetting(setting, i, items.length))}
+                                </SettingsSection>
+                            </YStack>
+                        )
+                    })}
                 </YStack>
             </ScrollView>
-        </XStack>
+        </XStack >
     )
 }
