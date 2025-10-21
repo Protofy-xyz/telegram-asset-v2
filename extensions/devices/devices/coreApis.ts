@@ -11,24 +11,65 @@ import { addCard } from "@extensions/cards/coreContext/addCard";
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
 import { gridSizes as GRID } from 'protolib/lib/gridConfig';
 
-const inferSubsystemFromId = (id: string, deviceName: string) => {
-    // Actions:  devices_<device>_<subsystem>_<action>
-    const actionRe = new RegExp(`^devices_${deviceName}_(?<subsys>[^_]+)_`);
-    const actionMatch = id.match(actionRe);
-    if (actionMatch?.groups?.subsys) return actionMatch.groups.subsys;
+// Accepts the stored card object so we can inspect src.id and defaults.name
+const inferSubsystemFromId = (
+    idOrName: string,                // what you're currently looping (e.g., 'leds_red')
+    deviceName: string,
+    src?: any                        // the stored card object
+) => {
+    const storedId: string | undefined = src?.id;              // where addCard's id should be
+    const humanName: string | undefined = src?.defaults?.name; // e.g. 'asas leds red'
 
-    // Monitors: devices_monitors_<device>_<subsystemOrMonitor>
-    const monRe = new RegExp(`^devices_monitors_${deviceName}_(?<maybe>.+)$`);
-    const monMatch = id.match(monRe);
-    if (monMatch?.groups?.maybe) return monMatch.groups.maybe;
+    //   console.log('[inferSubsystemFromId] INPUT', { idOrName, deviceName, storedId, humanName });
 
-    // Generic fallback
-    const genericRe = new RegExp(`^devices_${deviceName}_(?<rest>.+)$`);
-    const g = id.match(genericRe);
-    if (g?.groups?.rest) return g.groups.rest;
+    // 1) Prefer the true stored ID if present (full prefix format)
+    const pick = storedId || idOrName;
 
+    // Fast-paths for full IDs
+    const monPrefix = `devices_monitors_${deviceName}_`;
+    if (pick.startsWith(monPrefix)) {
+        const rest = pick.slice(monPrefix.length);
+        // console.log('[inferSubsystemFromId] monitors fast-path', { pick, rest });
+        return rest || 'misc';
+    }
+
+    const actPrefix = `devices_${deviceName}_`;
+    if (pick.startsWith(actPrefix)) {
+        const rest = pick.slice(actPrefix.length); // <subsystem>_<action...> OR just <subsystem>
+        const firstUnderscore = rest.indexOf('_');
+        const subsys = firstUnderscore >= 0 ? rest.slice(0, firstUnderscore) : rest;
+        // console.log('[inferSubsystemFromId] actions fast-path', { pick, rest, subsys });
+        if (subsys) return subsys;
+    }
+
+    // 2) Short-key heuristic (what your API is returning: 'leds_red', 'leds_off', etc.)
+    //    Take the segment before the first underscore if it exists and is non-empty.
+    if (idOrName.includes('_')) {
+        const subsys = idOrName.split('_')[0] || '';
+        if (subsys) {
+            //   console.log('[inferSubsystemFromId] short-key heuristic', { idOrName, subsys });
+            return subsys;
+        }
+    }
+
+    // 3) Try to infer from defaults.name: usually "<deviceName> <subsystem> ..."
+    if (humanName) {
+        const prefix = `${deviceName} `;
+        let tail = humanName.startsWith(prefix) ? humanName.slice(prefix.length) : humanName;
+        // Split by space or underscore and grab first token that isn’t empty.
+        const token = (tail.split(/[\s_]+/).find(Boolean) || '').trim();
+        if (token) {
+            //   console.log('[inferSubsystemFromId] humanName heuristic', { humanName, token });
+            return token;
+        }
+    }
+
+    // 4) Last fallback
+    //   console.log('[inferSubsystemFromId] fallback -> misc', { idOrName, deviceName });
     return 'misc';
 };
+
+
 
 // Pack items left→right and wrap
 const pack = (items: Array<{ i: string; w: number; h: number }>, cols: number) => {
@@ -175,9 +216,11 @@ function Widget(card) {
 
                 cards.push(card);
 
-                const subsystem = inferSubsystemFromId(id, deviceName);
+                const subsystem = inferSubsystemFromId(id, deviceName, src);
+                if (subsystem === 'misc') {
+                    console.log('🤖 ~ generateDeviceBoard ~ subsystem: misc', { deviceName, id, storedId: src?.id, humanName: d?.name });
+                }
                 const groupKey = `${deviceName}::${subsystem}`;
-
                 // push sizes per breakpoint
                 ensureBucket('lg', groupKey).push({ i: key, w: size.lg.w, h: size.lg.h, id, device: deviceName, subsystem });
                 ensureBucket('md', groupKey).push({ i: key, w: size.md.w, h: size.md.h, id, device: deviceName, subsystem });
