@@ -76,6 +76,7 @@ export const DisplayEditor = ({
     style?: any
 }) => {
     const [error, setError] = useState<string | null>(null)
+    const [filter, setFilter] = useState("")
 
     const getCheckedDefault = useCallback((cd: any, key: string, noValueIs: boolean = false) => {
         if (cd[key] === undefined) return noValueIs
@@ -285,9 +286,9 @@ export const DisplayEditor = ({
     }
 
     return (
-        <XStack f={1} gap="$4" style={style}>
-            <YStack flexWrap="wrap" py="$7" pl="$5">
-                <YStack w={400}>
+        <XStack f={1} gap="$6" style={style}>
+            <YStack flexWrap="wrap" py="$6" pl="$5" >
+                <YStack w={400} >
                     <SettingsTitle>Icon</SettingsTitle>
                     <IconSelect
                         br={"8px"}
@@ -327,21 +328,52 @@ export const DisplayEditor = ({
                 </YStack>
             </YStack >
 
-            <ScrollView py="$7" pr="$5">
-                <YStack display="grid" gap="$2" style={{ gridTemplateColumns: '1fr 1fr' }}>
+            <ScrollView pb="$7" pr="$5">
+                <YStack
+                    pos='sticky' top="0px" left="0px" zIndex={20} pt="$11" px="$3"
+                >
+                    <Input
+                        zi={1}
+                        br={"8px"}
+                        value={filter}
+                        fontSize={"$5"}
+                        color="$color"
+                        placeholderTextColor={"$gray8"}
+                        style={{
+                            backdropFilter: 'blur(20px)',
+                            WebkitBackdropFilter: 'blur(20px)',
+                            background: 'color-mix(in srgb, var(--bgPanel) 50%, transparent)',
+                        }}
+                        boc="$gray6"
+                        color={error ? '$red9' : undefined}
+                        onChangeText={(t) => {
+                            setFilter(t)
+                        }}
+                        placeholder='Search for a setting'
+                    />
+                </YStack>
+                <YStack display="grid" pt="$3" gap="$2" style={{ gridTemplateColumns: '1fr 1fr' }}>
                     {Object.entries(settingsBySection).map(([section, items]) => {
                         // disable half sections for the moment
                         // const layout = section == "General" ? 'full' : 'half'
                         // const gridColumn = layout === 'full' ? '1 / -1' : 'auto'
                         const layout = "full"
                         const gridColumn = "1 / -1"
+                        const loweredFilter = filter.toLowerCase()
+                        const filteredItems = items.filter((i) => i?.label?.toLocaleLowerCase()?.includes(loweredFilter) || i?.description?.toLocaleLowerCase()?.includes(loweredFilter)) ?? []
                         return (
                             // @ts-ignore
-                            <YStack key={section} gridColumn='1 / -1' $gtMd={{ gridColumn }} >
-                                <SettingsSection title={section} flexDirection={"column"}>
-                                    {items.map((setting, i) => renderSetting(setting, i, items.length))}
-                                </SettingsSection>
-                            </YStack>
+                            <>
+                                {
+                                    filteredItems.length
+                                        ? <YStack key={section} gridColumn='1 / -1' $gtMd={{ gridColumn }} >
+                                            <SettingsSection title={section} flexDirection={"column"}>
+                                                {filteredItems.map((setting, i) => renderSetting(setting, i, filteredItems.length))}
+                                            </SettingsSection>
+                                        </YStack>
+                                        : <></>
+                                }
+                            </>
                         )
                     })}
                 </YStack>
