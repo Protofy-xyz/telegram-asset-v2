@@ -45,14 +45,15 @@ const getMetaCard = (card) => {
     return {
         name: card.name,
         type: card.type,
-        description: card.description || '',
+        //description: card.description || '',
         //icon: card.icon || '',
         code: card.rulesCode,
         html: card.html,
         inputs: inputs,
         links: card.links,
         presets: card.presets || {},
-        code_explanation: card.rules
+        code_explanation: card.rules,
+        enableAgentInputMode: card.enableAgentInputMode || false
     }
 }
 const processCards = async (boardId, cards, context, boardData?, regenerate?) => {
