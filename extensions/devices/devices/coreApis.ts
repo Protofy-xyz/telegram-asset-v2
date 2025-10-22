@@ -215,8 +215,8 @@ function Widget(card) {
                     type: d.type || 'value',
                     icon: d.icon || '',
                     description: d.description || '',
-                    width: size.lg.w,
-                    height: size.lg.h,
+                    width: d.width,
+                    height: d.height,
                 };
 
                 if ('rulesCode' in d) card.rulesCode = d.rulesCode;
@@ -337,11 +337,17 @@ function Widget(card) {
             sm: buildGroupedLayout('sm', GRID.sm.totalCols),
             xs: buildGroupedLayout('xs', GRID.xs.totalCols),
         };
+        const emptyLayouts = {
+            lg: [],
+            md: [],
+            sm: [],
+            xs: [],
+        }
 
         const payload = {
             name: boardName,
             version: Date.now(),
-            layouts,
+            layouts: emptyLayouts,
             cards,
             rules: [],
             autopilot: false,
