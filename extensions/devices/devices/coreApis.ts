@@ -591,7 +591,8 @@ const registerActions = async () => {
                         configParams: params,
                         type: 'action',
                         icon: iconFromAction,
-                        ...(colorFromAction ? { color: colorFromAction } : {})
+                        ...(colorFromAction ? { color: colorFromAction } : {}),
+                        displayResponse: false
                     },
                     emitEvent: true
                 })
