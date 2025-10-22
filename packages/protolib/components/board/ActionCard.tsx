@@ -209,7 +209,7 @@ export const ParamsForm = ({ data, children }) => {
                                             <Icon name="maximize-2" size={20} color={"var(--gray8)"} style={{}} />
                                         </TextEditDialog.Trigger>
                                         <TextEditDialog.Editor
-                                            placeholder={key}
+                                            placeholder={placeholder}
                                             value={value}
                                             readValue={() => paramsState[key] ?? ""}
                                             onChange={(val) => setParam(key, val)}
