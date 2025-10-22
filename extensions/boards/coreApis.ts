@@ -241,12 +241,13 @@ const getDB = (path, req, session, context?) => {
                     const decodedContent = JSON.parse(fileContent);
 
                     const userType = session?.user?.type;
+                    const isAllVisible = req.query.all === 'true';
                     const isSystem = !!decodedContent?.tags?.includes('system');
                     const usersList = Array.isArray(decodedContent?.users) ? decodedContent.users : null;
 
                     let allowed: boolean;
 
-                    if (isSystem) {
+                    if (isSystem && !isAllVisible) {
                         // System boards: show ONLY if a whitelist exists and includes this user type
                         allowed = !!(usersList && userType && usersList.includes(userType));
                     } else {
@@ -423,7 +424,7 @@ function Widget({board, state}) {
             let shouldSnapshot = false;
             try {
                 //register actions for each card
-                console.log('cards: ', value.cards)
+                // console.log('cards: ', value.cards)
                 if (value.cards && Array.isArray(value.cards)) {
                     await processCards(key, value.cards, context, value, true)
                 }
