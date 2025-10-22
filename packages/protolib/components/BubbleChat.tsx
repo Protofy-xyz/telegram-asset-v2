@@ -58,7 +58,7 @@ export const BubbleChat = ({ apiUrl }: BubbleChatProps) => {
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
-  const showMenu = false
+  const showMenu = true
 
   return (
     <YStack>
