@@ -321,6 +321,8 @@ const Board = ({ board, icons }) => {
 
   const { resolvedTheme } = useThemeSetting()
 
+
+
   const visualui = useBoardVisualUI({
     boardID: tabVisible == "visualui" ? board.name : null,
     onDismiss: () => setTabVisible(""),
@@ -708,29 +710,29 @@ const Board = ({ board, icons }) => {
     </Stack>
   );
 
-const saveCard = async () => {
-  const newItems = items.map(item =>
-    item.key === currentCard.key ? editedCard : item
-  );
+  const saveCard = async () => {
+    const newItems = items.map(item =>
+      item.key === currentCard.key ? editedCard : item
+    );
 
-  try {
-    await checkCard(newItems, editedCard);
-    setErrors([]);
-    setItems(newItems);
-    boardRef.current.cards = newItems;
-    await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
-    setCurrentCard(editedCard);
-    setEditedCard(editedCard);
-    setHasChanges(false);
-  } catch (e) {
-    if (e instanceof ValidationError) {
-      setErrors(e.errors);
-    } else {
-      console.error('Error checking card:', e);
-      setErrors(['An unexpected error occurred while checking the card.']);
+    try {
+      await checkCard(newItems, editedCard);
+      setErrors([]);
+      setItems(newItems);
+      boardRef.current.cards = newItems;
+      await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
+      setCurrentCard(editedCard);
+      setEditedCard(editedCard);
+      setHasChanges(false);
+    } catch (e) {
+      if (e instanceof ValidationError) {
+        setErrors(e.errors);
+      } else {
+        console.error('Error checking card:', e);
+        setErrors(['An unexpected error occurred while checking the card.']);
+      }
     }
-  }
-};
+  };
 
 
   const closeEdition = () => {
@@ -768,8 +770,6 @@ const saveCard = async () => {
         </XStack>
       </YStack>
     </AlertDialog>)
-
-
 
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
@@ -909,6 +909,7 @@ const saveCard = async () => {
                 }}
               />
               : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
+                activeLayer="base"
                 extraScrollSpace={50}
                 items={cards}
                 settings={board.settings}
@@ -935,7 +936,16 @@ const saveCard = async () => {
                     console.log('Layout changed: ', breakpointRef.current)
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
                     console.log('New layout: ', layout)
-                    boardRef.current.layouts[breakpointRef.current] = layout
+                    const bp = breakpointRef.current;
+                    const prev = boardRef.current.layouts[bp] || [];
+                    const next = layout;
+                    const merged = [
+                      ...prev.filter((oldItem) => !next.find((newItem) => newItem.i === oldItem.i)),
+                      ...next,
+                    ];
+                    boardRef.current.layouts[bp] = merged;
+
+
                     saveBoard(board.name, boardRef.current, setBoardVersion, refresh, { bumpVersion: false })
                   }, 100)
                 }}
