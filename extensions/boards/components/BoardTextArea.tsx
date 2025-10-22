@@ -90,10 +90,14 @@ const updateSymbols = (value, setSymbols) => {
     let properties = matches.map((m) => m[1]);
     return "<#" + properties.join(".") + ">"
   })
-  let actions = getSymbols(value, /await\s+executeAction\(\{\s*name\s*:\s*"[^"]*"\s*\}\)/g, (match) => {
-    const name = match.match(/name\s*:\s*["']([^"']+)["']/);
-    return "<@" + name[1] + ">"
-  })
+  let actions = getSymbols(
+    value,
+    /await\s+(?:\w+\.)?execute[_A-Za-z]*\(\{\s*name\s*:\s*["'][^"']+["'](?:\s*,[\s\S]*?)?\}\)/gs,
+    (match) => {
+      const name = match.match(/name\s*:\s*["']([^"']+)["']/);
+      return "<@" + name[1] + ">";
+    }
+  );
   let _symbols = {
     ...states,
     ...actions

@@ -175,6 +175,7 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
         <CustomPanelResizeHandle direction="vertical" />
         <ActionsAndStatesPanel
             board={board}
+            type="board"
             panels={['actions', 'states']}
             actions={{ [board.name]: boardActions }}
             states={{ [board.name]: boardStates }}

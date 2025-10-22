@@ -98,7 +98,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
       id: 'params',
       label: 'Inputs',
       icon: <ArrowDownRight size={"$1"} />,
-      content: <TabContainer px="$4" py="$4">
+      content: <TabContainer px="0px" py="0px">
         <ParamsEditor
           params={cardData.params || {}}
           setParams={(newParams) => {
