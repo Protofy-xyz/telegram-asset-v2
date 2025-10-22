@@ -1,4 +1,4 @@
-import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot, Undo, Redo, FileClock } from 'lucide-react';
+import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot, Undo, Redo, FileClock, Layers } from 'lucide-react';
 import { useBoardControls } from './BoardControlsContext';
 import { ActionBarButton } from 'protolib/components/ActionBarWidget';
 import { Separator } from '@my/ui';
@@ -6,7 +6,7 @@ import { useSubscription } from 'protolib/lib/mqtt';
 import { useEffect, useRef, useState } from 'react';
 import { useBoardVersions } from './utils/versions';
 import { useSearchParams } from 'next/navigation';
-import { useBoardVersion, useLayers } from './store/boardStore';
+import { useBoardLayer, useBoardVersion, useLayers } from './store/boardStore';
 
 
 const toggleInstantUndoRedo = true; // disables reload when undo/redo, still buggy
@@ -22,6 +22,66 @@ const AutopilotButton = ({ generateEvent, autopilot }) => <ActionBarButton
   bc={autopilot ? 'var(--color8)' : "var(--color)"}
   br={"$20"}
 />
+
+const LayersButton = ({ layers, activeLayer, setActiveLayer }) => {
+  const [open, setOpen] = useState(false);
+
+  if (!layers || layers.length <= 1) return null; // 👈 solo si hay más de una layer
+
+  return (
+    <div style={{ position: "relative", display: "inline-block" }}>
+      <ActionBarButton
+        tooltipText="Layers"
+        Icon={Layers}
+        selected={open}
+        onPress={() => setOpen((v) => !v)}
+      />
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "100%",     // 👈 antes era top: "100%"
+            right: 0,
+            background: "var(--bgPanel)",
+            border: "1px solid var(--gray7)",
+            borderRadius: 6,
+            padding: 6,
+            minWidth: 120,
+            zIndex: 1000,
+            boxShadow: "0 -2px 6px rgba(0,0,0,0.15)", // 👈 sombra invertida
+            marginBottom: 6,    // 👈 pequeño margen visual
+          }}
+        >
+          {layers.map((layer) => (
+            <div
+              key={layer}
+              onClick={() => {
+                setActiveLayer(layer);
+                setOpen(false);
+              }}
+              style={{
+                padding: "6px 10px",
+                cursor: "pointer",
+                borderRadius: 4,
+                background:
+                  layer === activeLayer
+                    ? "var(--color8)"
+                    : "transparent",
+                color:
+                  layer === activeLayer
+                    ? "var(--bgPanel)"
+                    : "var(--color)",
+              }}
+            >
+              {layer}
+            </div>
+          ))}
+        </div>
+      )}
+
+    </div>
+  );
+};
 
 const LogsButton = ({ selected, onPress, showDot }: { selected: boolean; onPress: () => void; showDot: boolean }) => (
   <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -66,6 +126,7 @@ const getActionBar = (generateEvent) => {
   const boardId = useBoardId();
   const [boardVersion] = useBoardVersion();
   const [layers] = useLayers();
+  const [activeLayer, setActiveLayer] = useBoardLayer();
   console.log("ActionBar - layers:", layers);
   const current = boardVersion
 
@@ -200,6 +261,7 @@ const getActionBar = (generateEvent) => {
       <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,
       <LogsButton selected={tabVisible == "logs"} showDot={showLogsDot} onPress={() => generateEvent({ type: "toggle-logs" })} />,
       <ActionBarButton tooltipText="Board Settings" selected={tabVisible == "board-settings"} Icon={Settings} onPress={() => generateEvent({ type: "board-settings" })} />,
+      <LayersButton layers={layers} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />,
       <>
         <Separator vertical borderColor="var(--gray7)" h="30px" />
         <ActionBarButton tooltipText="Presentation Mode" selected={viewMode === "ui"} Icon={Presentation} onPress={() => setViewMode(viewMode === "ui" ? "board" : "ui")} />
