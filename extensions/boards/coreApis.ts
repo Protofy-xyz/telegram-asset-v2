@@ -36,6 +36,12 @@ class HttpError extends Error {
 }
 
 const getMetaCard = (card) => {
+    const inputs = card.params ? Object.fromEntries(
+        Object.entries(card.params).map(([key, description]) => {
+            const config = card.configParams[key] || {};
+            return [key, { ...config, description }];
+        })
+    ) : {};
     return {
         name: card.name,
         type: card.type,
@@ -43,6 +49,9 @@ const getMetaCard = (card) => {
         //icon: card.icon || '',
         code: card.rulesCode,
         html: card.html,
+        inputs: inputs,
+        links: card.links,
+        presets: card.presets || {},
         code_explanation: card.rules
     }
 }
@@ -68,6 +77,9 @@ const processCards = async (boardId, cards, context, boardData?, regenerate?) =>
     }, {});
 
     context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: { actionCards: cardsMetaActions, valueCards: cardsMetaValue }, emitEvent: true }) //set board meta info
+    // console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||');
+    // console.log('Setting board cards meta for board: ', boardId, { actionCards: cardsMetaActions, valueCards: cardsMetaValue });
+    // console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||');
     context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
 
