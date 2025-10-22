@@ -215,8 +215,8 @@ function Widget(card) {
                     type: d.type || 'value',
                     icon: d.icon || '',
                     description: d.description || '',
-                    width: size.lg.w,
-                    height: size.lg.h,
+                    width: d.width,
+                    height: d.height,
                 };
 
                 if ('rulesCode' in d) card.rulesCode = d.rulesCode;
@@ -337,11 +337,17 @@ function Widget(card) {
             sm: buildGroupedLayout('sm', GRID.sm.totalCols),
             xs: buildGroupedLayout('xs', GRID.xs.totalCols),
         };
+        const emptyLayouts = {
+            lg: [],
+            md: [],
+            sm: [],
+            xs: [],
+        }
 
         const payload = {
             name: boardName,
             version: Date.now(),
-            layouts,
+            layouts: emptyLayouts,
             cards,
             rules: [],
             autopilot: false,
@@ -432,6 +438,9 @@ const registerActions = async () => {
                 const stateName = deviceInfo.getStateNameByMonitor(monitorModel)
                 const iconFromValue = monitor.cardProps?.icon ?? "scan-eye";
                 const colorFromValue = monitor.cardProps?.color;
+                const { width, height } = computeCardSize({});
+                const cardWidth = monitor.cardProps?.width || width;
+                const cardHeight = monitor.cardProps?.height || height;
 
                 if (subsystem.monitors.length == 1) {
 
@@ -447,7 +456,9 @@ const registerActions = async () => {
                             rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                             type: 'value',
                             icon: iconFromValue,
-                            ...(colorFromValue ? { color: colorFromValue } : {})
+                            ...(colorFromValue ? { color: colorFromValue } : {}),
+                            width: cardWidth,
+                            height: cardHeight
                         },
                         emitEvent: true
                     })
@@ -464,7 +475,9 @@ const registerActions = async () => {
                             rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                             type: 'value',
                             icon: iconFromValue,
-                            ...(colorFromValue ? { color: colorFromValue } : {})
+                            ...(colorFromValue ? { color: colorFromValue } : {}),
+                            width: width,
+                            height: height
                         },
                         emitEvent: true
                     })
@@ -593,6 +606,9 @@ const registerActions = async () => {
                 })
                 const iconFromAction = action.cardProps?.icon ?? "rocket";
                 const colorFromAction = action.cardProps?.color;
+                const { width, height } = computeCardSize(params); // use config params to size
+                const cardWidth = action.cardProps?.width || width;
+                const cardHeight = action.cardProps?.height || height;
                 //http://localhost:8000/api/core/v1/cards to understand what this fills
                 addCard({
                     group: 'devices',
@@ -602,11 +618,10 @@ const registerActions = async () => {
                     name: subsystem.name + '_' + action.name,
                     defaults: (() => {
                         const paramsForDefaults = action.payload?.value ? {} : getParams(params);
-                        const { width, height } = computeCardSize(params); // use config params to size
 
                         return {
-                            width,
-                            height,
+                            width: cardWidth,
+                            height: cardHeight,
                             icon: iconFromAction,
                             name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
                             description: action.description ?? '',
