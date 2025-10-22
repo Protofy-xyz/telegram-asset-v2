@@ -1,4 +1,4 @@
-import { YStack, XStack, Label, Button, Input, ScrollView, TooltipSimple, Popover } from '@my/ui'
+import { YStack, XStack, Label, Button, Input, ScrollView, TooltipSimple, Popover, Text } from '@my/ui'
 import { Eye, Plus, Trash, Maximize2, Cable } from '@tamagui/lucide-icons'
 import { useState, useCallback } from 'react'
 import { InteractiveIcon } from '../InteractiveIcon'
@@ -122,19 +122,50 @@ export const ParamsEditor = ({
   const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
   {/* <TabTitle tabname={"Inputs Configuration"} tabDescription='Configure all the dynamic inputs for your card' /> */ }
-  return <YStack flex={1} height="100%" w="100%" overflow="hidden" >
-    <ScrollView mt="$3" flex={1} space="$3">
-      <YStack gap="$3" borderRadius="$3" p="$3" backgroundColor="$bgPanel">
-        <Label size="$4" pl="$2">Parameters</Label>
+  return <YStack height={"100%"} width={"100%"} px="$8" py="$6" gap="$8" overflowBlock="scroll">
+    {/* PARAMS */}
+    <YStack gap="$5">
+      <XStack justifyContent='space-between' ai="flex-end">
+        <YStack>
+          <Text h={"fit-content"} lineHeight={"fit-content"} color="$color" fontSize="$7" fontWeight={500}>
+            Parameters
+          </Text>
+          <Text h={"fit-content"} lineHeight={"fit-content"} color="$gray9" fontSize="$5" fontWeight={500}>
+            Input parameter for the card execution
+          </Text>
+        </YStack>
+        <Button
+          style={{
+            whiteSpace: "nowrap"
+          }}
+          h="fit-content"
+          w="fit-content"
+          px="$4"
+          py="$2"
+          bc="$bgPanel"
+          hoverStyle={{ backgroundColor: "$bgPanel", border: "1px solid var(--gray8)" }}
+          focusStyle={{ backgroundColor: "$bgPanel", border: "1px solid var(--gray8)" }}
+          onPress={handleAddParam}
+        >Add param</Button>
+      </XStack>
+      <YStack gap="$3" borderRadius="$3" ai="flex-end" w="100%" px="$3" overflow='visible'>
         {rows.map(({ rowId, paramKey, description, visible, defaultValue, type }) => (
-          <XStack key={rowId} space="$2" alignItems="center" >
-            <InteractiveIcon Icon={Eye} IconColor={visible ? 'var(--color10)' : 'var(--gray9)'} onPress={() => handleToggleVisible(rowId)} />
+          <XStack key={rowId} gap="$2" alignItems="center" justifyContent="center" w="100%" h="fit-content">
+            <YStack>
+              <InteractiveIcon Icon={Eye} h="fit-content" IconColor={visible ? 'var(--color10)' : 'var(--gray9)'} onPress={() => handleToggleVisible(rowId)} />
+            </YStack>
+            <Input {...inputDefProps} placeholder={"Param Key"} bg="$bgPanel" value={paramKey} onChange={(e) => handleChangeParamKey(rowId, e.target.value)} />
+            <Input {...inputDefProps} placeholder={"Description"} bg="$bgPanel" value={description} onChange={(e) => handleChangeDescription(rowId, e.target.value)} />
 
-            <Input {...inputDefProps} placeholder={"Param Key"} value={paramKey} onChange={(e) => handleChangeParamKey(rowId, e.target.value)} />
-
-            <Input {...inputDefProps} placeholder={"Description"} value={description} onChange={(e) => handleChangeDescription(rowId, e.target.value)} />
             <XStack width="150px">
-              <SelectList triggerProps={selectTriggerDefProps} title="Select type" elements={types} value={type ?? "any"} setValue={(value) => handleChangeType(rowId, value)} />
+              <SelectList
+                triggerProps={selectTriggerDefProps}
+                title="Select type"
+                selectorStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { boder: "1px solid red" } }}
+                rowStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { backgroundColor: "var(--bgContent)" } }}
+                titleStyle={{ normal: { backgroundColor: "var(--bgPanel)" } }}
+                elements={types} value={type ?? "any"}
+                setValue={(value) => handleChangeType(rowId, value)} />
             </XStack>
             <TextEditDialog key={rowId}>
               <Popover
@@ -152,6 +183,7 @@ export const ParamsEditor = ({
                   <Input
                     {...inputDefProps}
                     placeholder="Default Value"
+                    bg="$bgPanel"
                     value={defaultValue}
                     pr="$7"
                     onChange={(e) => handleChangeDefaultValue(rowId, e.target.value)}
@@ -216,22 +248,37 @@ export const ParamsEditor = ({
                 onChange={(value) => handleChangeDefaultValue(rowId, value)}
               />
             </TextEditDialog>
-            <InteractiveIcon mt="4px" Icon={Trash} IconColor="var(--red10)" onPress={() => handleRemoveParam(rowId)} />
+            <YStack>
+              <InteractiveIcon Icon={Trash} IconColor="var(--red10)" onPress={() => handleRemoveParam(rowId)} />
+            </YStack>
           </XStack>
         ))}
-        <TooltipSimple label="Add param" delay={{ open: 500, close: 0 }} restMs={0}>
-          <Button
-            bc="$gray6"
-            circular
-            icon={Plus}
-            alignSelf="center"
-            scaleIcon={1.2}
-            onPress={handleAddParam}
-          />
-        </TooltipSimple>
       </YStack>
-      <YStack borderRadius="$3" p="$3" backgroundColor="$bgPanel">
-        <Label size="$4" pl="$2">Actions before run</Label>
+    </YStack>
+    {/* ACTIONS */}
+    <YStack gap="$3">
+      <XStack justifyContent='space-between' ai="flex-end">
+        <YStack>
+          <Text h={"fit-content"} lineHeight={"fit-content"} color="$color" fontSize="$7" fontWeight={500}>
+            Action before run
+          </Text>
+          <Text h={"fit-content"} lineHeight={"fit-content"} color="$gray9" fontSize="$5" fontWeight={500}>
+            Input parameter for the card execution
+          </Text>
+        </YStack>
+        {/* <Button
+            style={{
+              whiteSpace: "nowrap"
+            }}
+            h="fit-content"
+            w="fit-content"
+            px="$4"
+            py="$2"
+            bc="$color8"
+            onPress={handleAddParam}
+          >Add param</Button> */}
+      </XStack>
+      <YStack borderRadius="$3" p="$3">
         <LinksEditor
           mode={"pre"}
           links={links}
@@ -239,7 +286,7 @@ export const ParamsEditor = ({
           inputProps={inputDefProps}
         />
       </YStack>
-    </ScrollView>
+    </YStack>
   </YStack>
 }
 
