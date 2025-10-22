@@ -350,6 +350,9 @@ class NeopixelsBus {
                             "brightness": { "type": "int", "minimum": 0, "maximum": 255, "default": 255 }
                         }
                     },
+                    cardProps: {
+                        icon: "wrench",
+                    },
                 },
                 {
                     name: 'red',
@@ -479,6 +482,9 @@ class NeopixelsBus {
                             "blue": { "type": "int", "minimum": 0, "maximum": 255, "default": 0 }
 
                           }
+                    },
+                    cardProps: {
+                        icon: "sliders-horizontal",
                     },
                 }
             ]

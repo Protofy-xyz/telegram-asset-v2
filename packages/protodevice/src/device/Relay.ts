@@ -157,6 +157,10 @@ class RelayComponent {
           payload: {
             type: 'str',
           },
+          cardProps: {
+            icon: "clock",
+            color: "$orange10"
+          },
         },
       ]
     }
