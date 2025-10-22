@@ -335,7 +335,6 @@
             }
         ]
     },
-    "version": 2,
     "savedAt": 1761155705920,
     "rules": [
         "when user_request changes value, check if there is something in it to execute the agent_core"

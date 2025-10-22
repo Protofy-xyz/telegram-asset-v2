@@ -639,7 +639,6 @@
             }
         ]
     },
-    "version": 2,
     "savedAt": 1761086358409,
     "rules": [
         "when user_request changes value, check if there is something in it to execute agent_prepare. After agent_prepare finishes, execute agent_core"
