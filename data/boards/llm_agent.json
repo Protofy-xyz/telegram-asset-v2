@@ -114,11 +114,12 @@
             "params": {
                 "prompt": "",
                 "provider": "chatgpt or lmstudio",
-                "model": ""
+                "model": "",
+                "requestId": "the id of the request to attend"
             },
             "configParams": {
                 "prompt": {
-                    "visible": false,
+                    "visible": true,
                     "defaultValue": "board.prompt",
                     "type": "text"
                 },
@@ -131,6 +132,11 @@
                     "visible": true,
                     "defaultValue": "gpt-4o",
                     "type": "string"
+                },
+                "requestId": {
+                    "visible": true,
+                    "defaultValue": "board.user_request.id",
+                    "type": "string"
                 }
             },
             "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
@@ -139,36 +145,10 @@
             "displayButtonIcon": true,
             "color": "var(--color7)",
             "theme": "dark",
-            "domId": "41d580c5-cd9e-4262-a0eb-b9468232ecc7",
+            "domId": "84591c7a-8056-4c3e-bcd6-beeee0d56621",
             "cardState": {},
-            "links": [
-                {
-                    "name": "reply",
-                    "type": "post"
-                }
-            ]
-        },
-        {
-            "key": "action_176081905123123",
-            "width": 2,
-            "height": 7,
-            "icon": "rocket",
-            "type": "action",
-            "name": "reply",
-            "displayResponse": false,
-            "displayIcon": false,
-            "params": {
-                "response": "response to send"
-            },
-            "configParams": {
-                "response": {
-                    "visible": false,
-                    "defaultValue": "board.agent_core",
-                    "type": "any"
-                }
-            },
-            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
-            "autoResponsive": false
+            "links": [],
+            "method": "post"
         },
         {
             "key": "value_1760819815820",
@@ -209,25 +189,82 @@
                     "type": "string"
                 }
             }
+        },
+        {
+            "key": "action_1761144753198",
+            "width": 2,
+            "height": 6,
+            "icon": "message-square-text",
+            "type": "action",
+            "name": "card reset group",
+            "description": "Reset the values of a group of cards in the board",
+            "params": {
+                "included": "array of cards to include, or * for all",
+                "excluded": "array of cards to exclude"
+            },
+            "configParams": {
+                "included": {
+                    "visible": false,
+                    "defaultValue": "[\"*\"]",
+                    "type": "array"
+                },
+                "excluded": {
+                    "visible": false,
+                    "defaultValue": "[\"\"]",
+                    "type": "array"
+                }
+            },
+            "displayResponse": false,
+            "buttonLabel": "Reset all",
+            "displayIcon": false,
+            "autoResponsive": false
+        },
+        {
+            "key": "action_1761146701452",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "reply",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "resquestId": "the id of the request to reply",
+                "response": "the response to send"
+            },
+            "configParams": {
+                "resquestId": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                },
+                "response": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "customName": "reply"
         }
     ],
-    "autopilot": true,
+    "autopilot": false,
     "layouts": {
         "lg": [
             {
                 "w": 18,
-                "h": 15,
+                "h": 17,
                 "x": 0,
-                "y": 5,
+                "y": 12,
                 "i": "action_1760800582118",
                 "moved": false,
                 "static": false,
                 "isResizable": true
             },
             {
-                "w": 23,
-                "h": 13,
-                "x": 18,
+                "w": 21,
+                "h": 25,
+                "x": 43,
                 "y": 0,
                 "i": "action_1760815369680",
                 "moved": false,
@@ -235,18 +272,70 @@
                 "isResizable": true
             },
             {
-                "w": 18,
-                "h": 5,
-                "x": 0,
+                "w": 25,
+                "h": 25,
+                "x": 18,
                 "y": 0,
-                "i": "action_176081905123123",
+                "i": "value_1760819815820",
                 "moved": false,
                 "static": false,
                 "isResizable": true
             },
             {
-                "w": 23,
-                "h": 7,
+                "w": 25,
+                "h": 25,
+                "x": 64,
+                "y": 0,
+                "i": "value_1760875866283",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 3,
+                "x": 0,
+                "y": 29,
+                "i": "action_1761144753198",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 12,
+                "x": 0,
+                "y": 0,
+                "i": "action_1761146701452",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            }
+        ],
+        "md": [
+            {
+                "w": 18,
+                "h": 13,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 25,
+                "h": 29,
+                "x": 39,
+                "y": 0,
+                "i": "action_1760815369680",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 21,
+                "h": 16,
                 "x": 18,
                 "y": 13,
                 "i": "value_1760819815820",
@@ -255,63 +344,31 @@
                 "isResizable": true
             },
             {
-                "w": 43,
-                "h": 20,
-                "x": 41,
+                "w": 21,
+                "h": 13,
+                "x": 18,
                 "y": 0,
                 "i": "value_1760875866283",
                 "moved": false,
                 "static": false,
                 "isResizable": true
-            }
-        ],
-        "md": [
+            },
             {
-                "w": 20,
-                "h": 12,
+                "w": 18,
+                "h": 7,
                 "x": 0,
-                "y": 0,
-                "i": "action_1760800582118",
+                "y": 22,
+                "i": "action_1761144753198",
                 "moved": false,
                 "static": false,
                 "isResizable": true
             },
             {
-                "w": 28,
-                "h": 18,
-                "x": 35,
-                "y": 0,
-                "i": "action_1760815369680",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 20,
-                "h": 6,
+                "w": 18,
+                "h": 9,
                 "x": 0,
-                "y": 12,
-                "i": "action_176081905123123",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 15,
-                "h": 6,
-                "x": 20,
-                "y": 12,
-                "i": "value_1760819815820",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 15,
-                "h": 12,
-                "x": 20,
-                "y": 0,
-                "i": "value_1760875866283",
+                "y": 13,
+                "i": "action_1761146701452",
                 "moved": false,
                 "static": false,
                 "isResizable": true
@@ -335,14 +392,6 @@
                 "isResizable": true
             },
             {
-                "i": "action_176081905123123",
-                "x": 0,
-                "y": 62,
-                "w": 1,
-                "h": 8,
-                "isResizable": true
-            },
-            {
                 "i": "value_1760819815820",
                 "x": 1,
                 "y": 57,
@@ -356,6 +405,22 @@
                 "y": 70,
                 "w": 2,
                 "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761144753198",
+                "x": 0,
+                "y": 84,
+                "w": 1,
+                "h": 7,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761146701452",
+                "x": 1,
+                "y": 90,
+                "w": 1,
+                "h": 8,
                 "isResizable": true
             }
         ],
@@ -377,14 +442,6 @@
                 "isResizable": true
             },
             {
-                "i": "action_176081905123123",
-                "x": 0,
-                "y": 63,
-                "w": 1,
-                "h": 8,
-                "isResizable": true
-            },
-            {
                 "i": "value_1760819815820",
                 "x": 0,
                 "y": 58,
@@ -399,13 +456,29 @@
                 "w": 1,
                 "h": 14,
                 "isResizable": true
+            },
+            {
+                "i": "action_1761144753198",
+                "x": 0,
+                "y": 85,
+                "w": 1,
+                "h": 7,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761146701452",
+                "x": 0,
+                "y": 92,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
             }
         ]
     },
-    "version": 2,
-    "savedAt": 1761056786454,
+    "version": 1,
+    "savedAt": 1761158922744,
     "rules": [
-        "when user_request changes value, check if there is something in it to execute the agent_core"
+        "when board?.[\"user_request\"] changes value run await executeAction({name: \"agent_core\"}) with board?.[\"user_request\"]?.[\"id\"] and board?.[\"user_request\"]?.[\"params\"]?.[\"prompt\"] and run await executeAction({name: \"agent_input.skip\"})"
     ],
     "settings": {
         "autoplay": true
