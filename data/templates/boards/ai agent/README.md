@@ -1,1 +1,1 @@
-ai agent template
+basic ai agent

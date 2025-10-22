@@ -20,7 +20,7 @@ win:
   target:
     - portable
     - dir
-  icon: apps/adminpanel/public/favicon.ico
+  icon: apps/adminpanel/public/vento.ico
   signingHashAlgorithms: []
   sign: false
 

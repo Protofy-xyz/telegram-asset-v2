@@ -115,8 +115,8 @@
             },
             "configParams": {
                 "prompt": {
-                    "visible": false,
-                    "defaultValue": "board.prompt",
+                    "visible": true,
+                    "defaultValue": "You are an assitant, assist the user in the language the user writes the messages. Take the last message of the user in consideration, and the rest of the history only when necessary. Use the information in the board to try to answer the user questions. \n\nThe information in the board has priority over your general knowledge.",
                     "type": "text"
                 }
             },
@@ -182,50 +182,6 @@
             "displayIcon": false,
             "rulesCode": "return params.input",
             "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n            <YStack f={1} height=\"100%\" ai=\"center\" jc=\"center\" width=\"100%\">\n                {card.icon && card.displayIcon !== false && (\n                    <Icon name={card.icon} size={48} color={card.color}/>\n                )}\n                {card.displayResponse !== false && (\n                    <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n                )}\n            </YStack>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n\n"
-        },
-        {
-            "key": "value_1760875866283",
-            "width": 3,
-            "height": 12,
-            "icon": "file-text",
-            "name": "prompt",
-            "description": "Rules of the agent",
-            "type": "value",
-            "editorOptions": {},
-            "params": {
-                "prompt": ""
-            },
-            "configParams": {
-                "prompt": {
-                    "visible": true,
-                    "defaultValue": "Vento is an agent platform\nYour mission is to generate a list of actions to perform in order to acomplish the user request.",
-                    "type": "string"
-                }
-            },
-            "rulesCode": "return params.prompt",
-            "html": "//@react\nreturn markdown(data, true)"
-        },
-        {
-            "key": "value_1760884383318",
-            "width": 1,
-            "height": 4,
-            "icon": "scan-eye",
-            "type": "value",
-            "name": "about_vento",
-            "description": "A reusable card that observes value changes on the board.\n\n  #### Key Features\n  - Real time updates.\n  - Customize parameters.\n  - Rule execution on each value change.\n  - Customize the card view (UI/render).",
-            "params": {
-                "input": "input to observe"
-            },
-            "configParams": {
-                "input": {
-                    "visible": true,
-                    "defaultValue": "What is Vento\n\nVento is an open-source AI agent platform that brings intelligence to the physical world.\nIt lets you monitor and control spaces, devices, and machines, connecting AI, hardware, and humans in one system.\n\nVento runs on Raspberry Pi, Intel NUC, laptops, PCs, VPS, and cloud servers. From there, it coordinates:\n\nHumans: receive live information and trigger actions using real time boards\n\nComputers: talk to other Vento instances, run small scripts, and make API calls\n\nMicrocontrollers (ESP32, Arduino): flash custom firmware, read and write data, tune parameters, orchestrate behavior\n\nIP cameras: ingest images and video to feed vision and detection pipelines into the system\n\nSmartphones: provide portable cameras and sensors, and lightweight UIs for control and feedback\n\nPLCs: integrate industrial I/O into agent decisions\n\nLLMs (local via LM Studio or remote): reasoning, planning, and tool use\n\nResult: systems that perceive, decide, and act in real time.\n\nAgents, Boards, and Cards\n\nIn Vento, each agent is a board composed of cards.\n\nEvery card has:\n\nInputs: values or references it uses, such as numbers, data, or other card outputs\n\nRules: TypeScript logic that computes the result\n\nOutput: the final value that updates the board state\n\nCard types:\n\nValue cards: update automatically, no side effects, represent continuous state\n\nAction cards: run on demand, can perform side effects using context.*, and can call other actions across boards\n\nAll card outputs together form the live state of the agent.\n\nBoard Automation\n\nEach board can include Automation code that reacts to changes in the board and executes actions when conditions are met.\nExample: if a detection score exceeds a threshold and the area is restricted, trigger a siren and notify a user.\nThis enables fully autonomous agents that combine sensors, cameras, PLCs, and LLM decisions in closed loop control.\n\nAuthoring: Natural Language, TypeScript, and Low-code\n\nAll logic in Vento is standard TypeScript.\nYou can write card rules and board automation directly in TS, generate TS from natural language descriptions, or edit flows using low-code diagrams.\nSwitch between natural language, TypeScript, and low-code as needed.\n\nStorage\n\nDefine data schemas and Vento generates a REST API with CRUD, pagination, sorting, and search.\nSchemas appear as Value and Action cards so agents can read, write, and query persistent data directly from their flows.\n\nUsers, Permissions, and Events\n\nVento includes users and groups with granular permissions.\nEvents let agents react to real time changes such as sensor input, camera results, user actions, or external messages.\n\nTasks\n\nTasks are .ts files that run in a Node.js environment on your Vento machine.\nEach task has its own package.json and exposes functions that agents can use as actions.\nUse Tasks for external APIs, business logic, hardware helpers, and AI or vision pipelines.\nYour TypeScript becomes first class agent actions.\n\nAssets Store\n\nDiscover and share automations, extensions, and prebuilt agents.\nAssets can be free or paid. Install with a single click.\nThis creates an open and collaborative ecosystem around Vento.\n\nDevice and Service Integration Summary\n\nMicrocontrollers: flash firmware, stream telemetry, send commands, adjust parameters\n\nIP cameras: connect streams, run vision, feed results into boards\n\nSmartphones: mobile sensors and cameras, lightweight UI, notifications\n\nPLCs: industrial I/O integrated into decisions\n\nLLMs: local or remote models connected to agent logic\n\nPrograms and APIs: scripts, services, and webhooks inside agent actions\n\nVento runs the high level logic on your Raspberry Pi, NUC, laptop, PC, VPS, or cloud server, while microcontrollers and PLCs handle low level signals and actuation.",
-                    "type": "string"
-                }
-            },
-            "displayIcon": false,
-            "rulesCode": "return params.input;\n",
-            "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n            <YStack f={1} height=\"100%\" ai=\"center\" jc=\"center\" width=\"100%\">\n                {card.icon && card.displayIcon !== false && (\n                    <Icon name={card.icon} size={48} color={card.color}/>\n                )}\n                {card.displayResponse !== false && (\n                    <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n                )}\n            </YStack>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n\n"
         }
     ],
     "autopilot": false,
@@ -233,7 +189,7 @@
         "lg": [
             {
                 "w": 18,
-                "h": 15,
+                "h": 21,
                 "x": 0,
                 "y": 5,
                 "i": "action_1760800582118",
@@ -243,9 +199,9 @@
             },
             {
                 "w": 23,
-                "h": 13,
+                "h": 19,
                 "x": 18,
-                "y": 0,
+                "y": 7,
                 "i": "action_1760815369680",
                 "moved": false,
                 "static": false,
@@ -265,28 +221,8 @@
                 "w": 23,
                 "h": 7,
                 "x": 18,
-                "y": 13,
+                "y": 0,
                 "i": "value_1760819815820",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 15,
-                "h": 12,
-                "x": 41,
-                "y": 0,
-                "i": "value_1760875866283",
-                "moved": false,
-                "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 19,
-                "h": 17,
-                "x": 56,
-                "y": 0,
-                "i": "value_1760884383318",
                 "moved": false,
                 "static": false,
                 "isResizable": true
@@ -328,22 +264,6 @@
                 "w": 8,
                 "h": 5,
                 "isResizable": true
-            },
-            {
-                "i": "value_1760875866283",
-                "x": 15,
-                "y": 40,
-                "w": 23,
-                "h": 14,
-                "isResizable": true
-            },
-            {
-                "i": "value_1760884383318",
-                "x": 53,
-                "y": 60,
-                "w": 8,
-                "h": 5,
-                "isResizable": true
             }
         ],
         "sm": [
@@ -375,22 +295,6 @@
                 "i": "value_1760819815820",
                 "x": 1,
                 "y": 57,
-                "w": 1,
-                "h": 5,
-                "isResizable": true
-            },
-            {
-                "i": "value_1760875866283",
-                "x": 0,
-                "y": 70,
-                "w": 2,
-                "h": 14,
-                "isResizable": true
-            },
-            {
-                "i": "value_1760884383318",
-                "x": 1,
-                "y": 91,
                 "w": 1,
                 "h": 5,
                 "isResizable": true
@@ -428,26 +332,10 @@
                 "w": 1,
                 "h": 5,
                 "isResizable": true
-            },
-            {
-                "i": "value_1760875866283",
-                "x": 0,
-                "y": 71,
-                "w": 1,
-                "h": 14,
-                "isResizable": true
-            },
-            {
-                "i": "value_1760884383318",
-                "x": 0,
-                "y": 93,
-                "w": 1,
-                "h": 5,
-                "isResizable": true
             }
         ]
     },
-    "savedAt": 1760968233999,
+    "savedAt": 1761155705920,
     "rules": [
         "when user_request changes value, check if there is something in it to execute the agent_core"
     ],
