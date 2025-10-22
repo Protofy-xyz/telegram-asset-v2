@@ -7,14 +7,15 @@ import { useRouter } from 'next/router'
 
 export default function Page(props: any) {
     const { query } = useRouter()
-    const apiUrl = query.apiUrl as string
+    const agent = query.agent as string
+    const apiUrl ='/api/v1/chatbots/board?agent=' + encodeURIComponent(agent || '')
     const Chatbot = dynamic(() => import('protolib/components/chatbot'), { ssr: false })
     const projectName = SiteConfig.projectName
 
     return (
         <>
             <Head>
-                <title>{projectName + " - Chatbot"}</title>
+                <title>{projectName + " - Chat with " + agent}</title>
             </Head>
             <YStack backgroundColor="$bgContent" f={1}>
                 <Chatbot apiUrl={apiUrl} />
