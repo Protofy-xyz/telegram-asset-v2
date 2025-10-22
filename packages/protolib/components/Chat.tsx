@@ -1,11 +1,11 @@
 type ChatProps = {
-    apiUrl: string;
+    agent: string;
   };
   
-  export const Chat = ({ apiUrl }: ChatProps) => {
+  export const Chat = ({ agent }: ChatProps) => {
     return (
       <iframe
-        src={"/workspace/chatbot?apiUrl=" + encodeURIComponent(apiUrl)}
+        src={"/workspace/chatbot?agent=" + encodeURIComponent(agent)}
         width="100%"
         height="100%"
         style={{ border: "none" }}

@@ -5,16 +5,13 @@ import { Chat } from "./Chat";
 import { YStack, Button, XStack, Paragraph, ScrollView, Separator, Spinner } from "@my/ui";
 import { API } from 'protobase'
 
-type BubbleChatProps = {
-  apiUrl: string;
-};
 
 type Agent = {
   name: string;
   target: string;
 };
 
-export const BubbleChat = ({ apiUrl }: BubbleChatProps) => {
+export const BubbleChat = () => {
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isChatLoaded, setIsChatLoaded] = useState(false);
@@ -182,7 +179,7 @@ export const BubbleChat = ({ apiUrl }: BubbleChatProps) => {
           </YStack>
 
           {/* Chat iframe */}
-          {isChatLoaded && selectedBot && <Chat apiUrl={apiUrl} />}
+          {isChatLoaded && selectedBot && <Chat agent={selectedBot.name} />}
         </YStack>
       </XStack>
     </YStack>
