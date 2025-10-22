@@ -188,7 +188,7 @@ function Widget(card) {
                 const d = src.defaults || {};
 
                 const type: 'value' | 'action' = (d.type === 'action') ? 'action' : 'value';
-                const humanName = d.name || `${deviceName} ${id}`;
+                const humanName = `${id}`;
                 const key = makeKey(`${deviceName}__${id}`, type);
                 const size = SIZE[type];
 
