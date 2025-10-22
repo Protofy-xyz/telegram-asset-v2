@@ -15,4 +15,5 @@ const filtered = Object.entries(boards)
   });
 
 const filteredObj = Object.fromEntries(filtered);
+delete filteredObj['llm_agent']
 return filteredObj;
