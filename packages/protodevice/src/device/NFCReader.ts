@@ -106,6 +106,9 @@ class NFCReader {
                         description: 'Get tag read status',
                         endpoint:  `/sensor/${this.name}/state`,
                         connectionType: 'mqtt',
+                        cardProps: {
+                            icon: "nfc",
+                        }
                     },
                 ]
             } 

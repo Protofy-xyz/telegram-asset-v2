@@ -69,6 +69,9 @@ class GPS {
           units: 'º',
           endpoint: "/sensor/" + this.name + "_latitude/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "map",
+          }
         },
         {
           name: 'longitude',
@@ -77,6 +80,9 @@ class GPS {
           units: 'º',
           endpoint: "/sensor/" + this.name + "_longitude/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "map",
+          }
         },
         {
           name: 'altitude',
@@ -85,6 +91,9 @@ class GPS {
           units: 'm',
           endpoint: "/sensor/" + this.name + "_altitude/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "mountain",
+          }
         },
         {
           name: 'speed',
@@ -93,6 +102,9 @@ class GPS {
           units: 'km/h',
           endpoint: "/sensor/" + this.name + "_speed/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "gauge",
+          }
         },
         {
           name: 'satellites',
@@ -100,6 +112,9 @@ class GPS {
           description: 'Gets number of satellites',
           endpoint: "/sensor/" + this.name + "_satellites/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "satellite",
+          }
         },
         {
           name: 'hdop',

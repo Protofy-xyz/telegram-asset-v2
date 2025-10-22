@@ -59,6 +59,10 @@ class BMP280 {
             description: `Get temperature`,
             endpoint: "/sensor/" +this.name + "_temperature"+ "/state",
             connectionType: "mqtt",
+            cardProps: {
+                icon: "thermometer",
+                color: "$red10"
+            }
         },
         {
             label: `Pressure`,
@@ -66,6 +70,10 @@ class BMP280 {
             description: `Get pressure`,
             endpoint: "/sensor/" +this.name + "_pressure"+ "/state",
             connectionType: "mqtt",
+            cardProps: {
+                icon: "gauge",
+                color: "$blue10"
+            }
         }]
         
         return {
