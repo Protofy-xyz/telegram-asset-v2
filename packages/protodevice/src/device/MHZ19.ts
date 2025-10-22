@@ -53,6 +53,9 @@ class MHZ19 {
           units: 'ppm',
           endpoint: "/"+this.type+"/"+this.name+"-co2/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "cloud",
+          }
         },
         {
           name: 'CO_2-temp',
@@ -60,6 +63,10 @@ class MHZ19 {
           units: 'ºC',
           endpoint: "/"+this.type+"/"+this.name+"-temperature/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "thermometer",
+            color: "$red10"
+          }
         },
       ]
     }

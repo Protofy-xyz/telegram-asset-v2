@@ -68,6 +68,10 @@ class DS18B20 {
                   units: 'ºC',
                   endpoint: "/"+this.type+"/"+this.name+"/state",
                   connectionType: "mqtt",
+                  cardProps: {
+                      icon: "thermometer",
+                      color: "$red10"
+                  }
               }
           ]
       }
