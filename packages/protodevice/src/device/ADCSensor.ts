@@ -54,6 +54,9 @@ class ADCSensor {
                     description: "Get sensor status",
                     endpoint: "/"+this.type+"/"+this.name+"/state",
                     connectionType: "mqtt",
+                    cardProps: {
+                        icon: "gauge",
+                    }
                 }
             ]
         }
