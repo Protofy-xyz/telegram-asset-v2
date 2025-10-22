@@ -11,6 +11,23 @@ import { addCard } from "@extensions/cards/coreContext/addCard";
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
 import { gridSizes as GRID } from 'protolib/lib/gridConfig';
 
+const PER_PARAM_ROWS = 1; // tweak as needed (extra grid rows per visible param)
+const PADDING_ICON = 6; // extra padding for icon
+
+const computeCardSize = (paramsObj?: Record<string, any>) => {
+    const baseWidth = 2
+    const baseHeight = 6
+    const paramCount = Object.keys(paramsObj ?? {}).length > 1
+        ? Object.keys(paramsObj ?? {}).length
+        : 0;
+
+    const width = baseWidth;
+    const height =
+        paramCount > 0 ? baseHeight + paramCount * PER_PARAM_ROWS + PADDING_ICON : baseHeight;
+
+    return { width, height };
+};
+
 // Accepts the stored card object so we can inspect src.id and defaults.name
 const inferSubsystemFromId = (
     idOrName: string,                // what you're currently looping (e.g., 'leds_red')
@@ -583,17 +600,24 @@ const registerActions = async () => {
                     id: 'devices_' + deviceInfo.data.name + '_' + subsystem.name + '_' + action.name,
                     templateName: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name + ' device action',
                     name: subsystem.name + '_' + action.name,
-                    defaults: {
-                        name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
-                        description: action.description ?? "",
-                        rulesCode,
-                        params: action.payload?.value ? {} : getParams(params),
-                        configParams: params,
-                        type: 'action',
-                        icon: iconFromAction,
-                        ...(colorFromAction ? { color: colorFromAction } : {}),
-                        displayResponse: false
-                    },
+                    defaults: (() => {
+                        const paramsForDefaults = action.payload?.value ? {} : getParams(params);
+                        const { width, height } = computeCardSize(params); // use config params to size
+
+                        return {
+                            width,
+                            height,
+                            icon: iconFromAction,
+                            name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
+                            description: action.description ?? '',
+                            rulesCode,
+                            params: paramsForDefaults,
+                            configParams: params,
+                            type: 'action',
+                            ...(colorFromAction ? { color: colorFromAction } : {}),
+                            displayResponse: false
+                        };
+                    })(),
                     emitEvent: true
                 })
             }
