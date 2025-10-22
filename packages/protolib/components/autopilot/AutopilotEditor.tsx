@@ -149,7 +149,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
             <CustomPanelResizeHandle direction="vertical" borderLess={false} borderColor="var(--gray4)" />
 
-            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} showActionsTabs showStatesTabs />
+            <ActionsAndStatesPanel type="card" board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} showActionsTabs showStatesTabs />
         </PanelGroup>
     );
 };
