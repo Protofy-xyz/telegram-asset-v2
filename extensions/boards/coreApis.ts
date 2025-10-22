@@ -67,7 +67,7 @@ const processCards = async (boardId, cards, context, boardData?, regenerate?) =>
         return obj;
     }, {});
 
-    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: { actions: cardsMetaActions, values: cardsMetaValue }, emitEvent: true }) //set board meta info
+    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: { actionCards: cardsMetaActions, valueCards: cardsMetaValue }, emitEvent: true }) //set board meta info
     context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
 
