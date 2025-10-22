@@ -389,6 +389,22 @@ export const BoardTextArea = ({
     }
   }
 
+  const handleInputIndexChange = (index, value) => {
+    setInputInsertIndex(index);
+    const leftText = value.slice(0, index);
+    const splits = leftText.split(" ")
+    const lastSegment = splits[splits.length - 1];
+    const lastSegmentFirstChar = lastSegment[0];
+
+    if (lastSegmentFirstChar === "#") {
+      setShowDropdown("states");
+    } else if (lastSegmentFirstChar === "@") {
+      setShowDropdown("actions");
+    } else if ((lastSegmentFirstChar != "@" && lastSegmentFirstChar != "#")) {
+      setShowDropdown(null)
+    }
+  }
+
   useEffect(() => {
     // clean unknown tags (manually setted) -> dedump → recalc symbols → dump with new symbols
     let cleaned = removeUnknownTags(value, symbols);
@@ -633,7 +649,7 @@ export const BoardTextArea = ({
           onFocus={rest.onFocus}
           onSelect={(e) => {
             const index = e.currentTarget.selectionStart ?? 0;
-            setInputInsertIndex(index);
+            handleInputIndexChange(index, e.currentTarget.value);
             if (showDropdown) {
               if (typeof window !== 'undefined') {
                 window.requestAnimationFrame(() => updateDropdownPosition());
@@ -644,16 +660,8 @@ export const BoardTextArea = ({
           }}
           onChange={(e) => {
             const index = e.currentTarget.selectionStart ?? 0;
-            setInputInsertIndex(index);
             // shortcut to trigger dropdown
-            let end = e.currentTarget.value[index - 1];
-            if (end === "#") {
-              setShowDropdown("states");
-            } else if (end === "@") {
-              setShowDropdown("actions");
-            } else if (end === " ") {
-              setShowDropdown(null)
-            }
+            handleInputIndexChange(index, e.currentTarget.value);
 
             // dedump and set the new symbols
             let cleaned = removeUnknownTags(e.currentTarget.value, symbols);
