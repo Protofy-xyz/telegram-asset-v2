@@ -3,6 +3,7 @@ import { Send } from "lucide-react";
 import { useRef, useState } from "react";
 import useChat, { useSettings } from "../../store/store";
 import { createMessage } from "../../utils/createMessage";
+import { Tinted } from 'protolib/components/Tinted'
 
 export default function UserQuery() {
   const [query, setQuery] = useState("");
@@ -40,7 +41,7 @@ export default function UserQuery() {
   }
 
   return (
-    <form className="flex items-center shadow-md dark:bg-[#2f2f2f] bg-white dark:border-white border-gray-700 border-2 rounded-md" onSubmit={handleOnSubmit} ref={formRef}>
+    <form className="flex items-center shadow-md dark:bg-[#2f2f2f] bg-white dark:border-white border-gray-700 border-2 rounded-md" style={{ backgroundColor: "var(--background)" }} onSubmit={handleOnSubmit} ref={formRef}>
       <div className="flex-grow p-2">
         <textarea
           name="query"
@@ -54,16 +55,22 @@ export default function UserQuery() {
         ></textarea>
       </div>
       <div className="w-1/12 text-center mx-2">
-        <button
-          style={{ marginTop: "-1px" }}
-          type="submit"
-          className={classNames(
-            "text-center text-gray-600 dark:text-white transition inline-flex items-center justify-center py-2 px-2 rounded-md",
-            { "bg-gray-500 dark:text-gray-200 text-white": query }
-          )}
-        >
-          <Send />
-        </button>
+
+        <Tinted>
+          <button
+            type="submit"
+            className={classNames(
+              "transition inline-flex items-center justify-center py-1 px-1 rounded-md",
+            )}
+            style={{
+              backgroundColor: query ? "var(--color5)" : "transparent",
+              color: query ? "var(--color8)" : "var(--gray11)",
+              marginTop: "-1px",
+            }}
+          >
+            <Send />
+          </button>
+        </Tinted>
       </div>
     </form>
   );
