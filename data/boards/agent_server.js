@@ -2,6 +2,7 @@ const { boardConnect } = require('protonode')
 const { Protofy } = require('protobase')
 
 const run = Protofy("code", async ({ context, states, board }) => {
+await board.execute_action({name: "http_endpoint", params:{action:"reset"}})
 board.onChange({
     name: 'current_request',
     changed: value => {
