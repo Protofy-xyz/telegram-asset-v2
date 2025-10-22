@@ -2,7 +2,7 @@ import React from 'react'
 import { BoardModel } from '../boardsSchemas'
 import { API } from 'protobase'
 import { DataTable2 } from "protolib/components/DataTable2"
-import { DataView } from "protolib/components/DataView"
+import { DataView, DataViewActionButton } from "protolib/components/DataView"
 import { AdminPage } from "protolib/components/AdminPage"
 import { PaginatedData, SSR } from "protolib/lib/SSR"
 import { withSession } from "protolib/lib/Session"
@@ -17,6 +17,9 @@ import { useEffect, useState } from 'react'
 import { Slides } from 'protolib/components/Slides';
 import { TemplateCard } from '../../apis/TemplateCard';
 import { CardView } from './card'
+import { Eye, EyeOff } from '@tamagui/lucide-icons'
+import { usePageParams } from 'protolib/next'
+import { Tinted } from 'protolib/components/Tinted'
 
 const { useParams } = createParam()
 
@@ -89,6 +92,7 @@ export default {
   boards: {
     component: ({ workspace, pageState, initialItems, itemData, pageSession, extraData }: any) => {
       const router = useRouter()
+      const { push, query } = usePageParams({})
       const [addOpen, setAddOpen] = React.useState(false)
 
       const defaultData = { template: {id:'blank'}, name: '' }
@@ -113,7 +117,7 @@ export default {
                 onFinish={async () => {
                   console.log('val: ', data)
                   const name = data.name
-                  if (!isNameValid(name)) return 
+                  if (!isNameValid(name)) return
                   const template = data.template
                   await API.post(`/api/core/v1/import/board`, { name, template })
                   router.push(`/boards/view?board=${name}`)
@@ -139,6 +143,20 @@ export default {
           entityName={"boards"}
           itemData={itemData}
           sourceUrl={sourceUrl}
+          sourceUrlParams={query}
+          extraActions={[
+            <Tinted>
+              <DataViewActionButton
+                id="admin-dataview-add-btn"
+                icon={query.all === 'true' ? EyeOff : Eye}
+                description={query.all === 'true' ? `Hide system boards` : `Show hidden boards` }
+                onPress={() => {
+                  push('all', query.all === 'true' ? 'false' : 'true')
+                }}
+              />
+            </Tinted>
+          ]}
+          extraFilters={[{ queryParam: "all" }]}
           initialItems={initialItems}
           numColumnsForm={1}
           onAdd={(data) => { router.push(`/boards/view?board=${data.name}`); return data }}

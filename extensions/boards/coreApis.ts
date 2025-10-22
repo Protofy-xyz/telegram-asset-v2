@@ -67,7 +67,7 @@ const processCards = async (boardId, cards, context, boardData?, regenerate?) =>
         return obj;
     }, {});
 
-    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: { actions: cardsMetaActions, values: cardsMetaValue }, emitEvent: true }) //set board meta info
+    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: { actionCards: cardsMetaActions, valueCards: cardsMetaValue }, emitEvent: true }) //set board meta info
     context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
 
@@ -241,12 +241,13 @@ const getDB = (path, req, session, context?) => {
                     const decodedContent = JSON.parse(fileContent);
 
                     const userType = session?.user?.type;
+                    const isAllVisible = req.query.all === 'true';
                     const isSystem = !!decodedContent?.tags?.includes('system');
                     const usersList = Array.isArray(decodedContent?.users) ? decodedContent.users : null;
 
                     let allowed: boolean;
 
-                    if (isSystem) {
+                    if (isSystem && !isAllVisible) {
                         // System boards: show ONLY if a whitelist exists and includes this user type
                         allowed = !!(usersList && userType && usersList.includes(userType));
                     } else {

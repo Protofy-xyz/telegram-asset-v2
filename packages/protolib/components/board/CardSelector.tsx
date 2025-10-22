@@ -398,7 +398,7 @@ const extraCards = [
         input: {
           visible: true,
           defaultValue: "",
-          type: "string"
+          type: "any"
         }
       },
       rulesCode: "return params.input;\n",
