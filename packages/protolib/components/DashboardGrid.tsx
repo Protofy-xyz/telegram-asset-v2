@@ -3,6 +3,7 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import { Stack } from "@my/ui";
 import { Tinted } from './Tinted';
 import { gridSizes } from '../lib/gridConfig';
+import { useBoardLayer } from '@extensions/boards/store/boardStore'
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -26,10 +27,9 @@ export const DashboardGrid = ({
   padding = 10,
   settings = {},
   extraScrollSpace = 0,
-  activeLayer = "base",
   ...props
 }) => {
-
+  const [boardLayer] = useBoardLayer()
   const mergedWrapperStyle = extraScrollSpace ? {
     height: '100%',
     overflow: 'auto',
@@ -42,7 +42,7 @@ export const DashboardGrid = ({
   // 👇 filtramos las cards según la capa activa
   const filteredItems = items.filter((item) => {
     const cardLayer = item.layer || "base";
-    return cardLayer === activeLayer;
+    return cardLayer === boardLayer;
   });
 
   return (

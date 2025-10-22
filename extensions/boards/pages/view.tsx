@@ -909,7 +909,6 @@ const Board = ({ board, icons }) => {
                 }}
               />
               : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
-                activeLayer="base"
                 extraScrollSpace={50}
                 items={cards}
                 settings={board.settings}

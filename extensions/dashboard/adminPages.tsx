@@ -17,7 +17,7 @@ export default {
 
             return (<AdminPage title="Dashboard" pageSession={pageSession}>
                 <YStack flex={1} padding={20}>
-                    <DashboardGrid items={itemsContent} layouts={layouts} borderRadius={10} padding={10} backgroundColor="white" activeLayer="base"/>
+                    <DashboardGrid items={itemsContent} layouts={layouts} borderRadius={10} padding={10} backgroundColor="white"/>
                 </YStack>
             </AdminPage>)
         },
