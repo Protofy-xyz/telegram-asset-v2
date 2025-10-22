@@ -172,7 +172,7 @@
             "displayTitle": false
         }
     ],
-    "autopilot": false,
+    "autopilot": true,
     "layouts": {
         "lg": [
             {
@@ -319,8 +319,8 @@
             }
         ]
     },
-    "version": 33,
-    "savedAt": 1761145965939,
+    "version": 35,
+    "savedAt": 1761150713334,
     "settings": {
         "autoplay": true
     },
