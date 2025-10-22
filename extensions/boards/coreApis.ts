@@ -423,7 +423,7 @@ function Widget({board, state}) {
             let shouldSnapshot = false;
             try {
                 //register actions for each card
-                console.log('cards: ', value.cards)
+                // console.log('cards: ', value.cards)
                 if (value.cards && Array.isArray(value.cards)) {
                     await processCards(key, value.cards, context, value, true)
                 }
