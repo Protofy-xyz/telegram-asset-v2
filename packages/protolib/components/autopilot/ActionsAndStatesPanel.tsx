@@ -147,7 +147,7 @@ const ActionsList = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hide
     )
 }
 
-const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hideValue = false, copyMode = "rules", format = "actions", boardName = "" }) => {
+const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hideValue = false, copyMode = "rules", format = "actions", boardName = "", type = "" }) => {
     const [selectedBoard, setSelectedCategory] = useState(boardName)
 
     const copy = (text) => {
@@ -161,11 +161,11 @@ const FormattedView = ({ maxDepth = 1, copyIndex = 1, displayIndex = 1, data, hi
         }
 
         if (copyMode === "rules") {
-            return generateActionCode(copyVal)
+            return generateActionCode(copyVal, undefined, type)
         }
 
         if (copyMode === "code" || copyMode === "flows") {
-            return generateActionCode(copyVal, val.params ?? {})
+            return generateActionCode(copyVal, val.params ?? {}, type)
         }
 
         return text
@@ -229,7 +229,7 @@ function filterObjectBySearch(data, search) {
     return Object.keys(result).length > 0 ? result : undefined;
 }
 
-export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], actions, states, copyMode, showActionsTabs = false, showStatesTabs = false }) => {
+export const ActionsAndStatesPanel = ({ board, type, panels = ["actions", "states"], actions, states, copyMode, showActionsTabs = false, showStatesTabs = false }) => {
     const [inputMode, setInputMode] = useState<"json" | "formatted">("formatted")
     const [search, setSearch] = useState('')
     const [selectedStatesTab, setSelectedStatesTab] = useState(board.name)
@@ -292,14 +292,14 @@ export const ActionsAndStatesPanel = ({ board, panels = ["actions", "states"], a
 
     const actionsPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start" f={1}>
-            {inputMode === "formatted" && <FormattedView hideValue={true} data={filteredActionData} copyMode={copyMode} boardName={board?.name} />}
+            {inputMode === "formatted" && <FormattedView type={type} hideValue={true} data={filteredActionData} copyMode={copyMode} boardName={board?.name} />}
             {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'transparent' }} src={filteredActionData} />}
         </YStack>
     }, [filteredActionData, filteredActionData, inputMode, board?.name, copyMode]);
 
     const otherBoardsPanel = useMemo(() => {
         return <YStack gap="$2" ai="flex-start" f={1}>
-            {inputMode === "formatted" && <FormattedView hideValue={true} data={filteredActionData} format={"boards"} copyMode={copyMode} boardName={board?.name} />}
+            {inputMode === "formatted" && <FormattedView type={type} hideValue={true} data={filteredActionData} format={"boards"} copyMode={copyMode} boardName={board?.name} />}
             {inputMode == "json" && <JSONView collapsed={3} style={{ backgroundColor: 'transparent' }} src={filteredActionData} />}
         </YStack>
     }, [filteredActionData, filteredActionData, inputMode, board?.name, copyMode]);
