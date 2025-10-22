@@ -31,7 +31,7 @@ import { FloatingWindow } from '../components/FloatingWindow'
 import { useAtom } from 'protolib/lib/Atom'
 import { AppState } from 'protolib/components/AdminPanel'
 import { useLog } from '@extensions/logs/hooks/useLog'
-import { useBoardVersion, useBoardVersionId } from '@extensions/boards/store/boardStore'
+import { useBoardVersion, useBoardVersionId, useLayers } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 import { useAtom as useJotaiAtom } from 'jotai'
@@ -288,6 +288,18 @@ const Board = ({ board, icons }) => {
   const dedupRef = useRef() as any
   const initialized = useRef(false)
   const [items, setItems] = useState(board.cards && board.cards.length ? board.cards : []);
+  const [, setLayers] = useLayers();
+
+  useEffect(() => {
+    const allLayers = Array.from(
+      new Set(items.map((c) => c.layer || "base"))
+    );
+    const sortedLayers = allLayers.sort((a, b) =>
+      a === "base" ? -1 : b === "base" ? 1 : a.localeCompare(b)
+    );
+    setLayers(sortedLayers);
+  }, [items, setLayers]);
+
   const [globalItems, setGlobalItems] = useJotaiAtom(itemsAtom)
   const [automationInfo, setAutomationInfo] = useJotaiAtom(automationInfoAtom);
   const [uicodeInfo, setUICodeInfo] = useJotaiAtom(uiCodeInfoAtom);

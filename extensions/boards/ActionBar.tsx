@@ -6,9 +6,8 @@ import { useSubscription } from 'protolib/lib/mqtt';
 import { useEffect, useRef, useState } from 'react';
 import { useBoardVersions } from './utils/versions';
 import { useSearchParams } from 'next/navigation';
-import { useBoardVersion } from './store/boardStore';
-import { itemsAtom, automationInfoAtom, uiCodeInfoAtom } from '@extensions/boards/utils/viewUtils'
-import { useAtom } from 'jotai';
+import { useBoardVersion, useLayers } from './store/boardStore';
+
 
 const toggleInstantUndoRedo = true; // disables reload when undo/redo, still buggy
 
@@ -66,6 +65,8 @@ function useBoardId() {
 const getActionBar = (generateEvent) => {
   const boardId = useBoardId();
   const [boardVersion] = useBoardVersion();
+  const [layers] = useLayers();
+  console.log("ActionBar - layers:", layers);
   const current = boardVersion
 
   const { canUndo, canRedo, undo, redo, goToVersion } = useBoardVersions(boardId || undefined);
