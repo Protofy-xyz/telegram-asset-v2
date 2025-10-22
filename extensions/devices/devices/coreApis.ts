@@ -499,7 +499,11 @@ const registerActions = async () => {
                 const url = `/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}`;
                 const isJsonSchema = action.payload?.type === "json-schema";
 
-                const params = { value: "value to set" }
+                const params = { 
+                    value: {
+                        description: action.description ?? "Value to send",
+                    } 
+                };
                 if (isJsonSchema) {
                     delete params.value
                     const toParamType = (schemaType?: string) => {
