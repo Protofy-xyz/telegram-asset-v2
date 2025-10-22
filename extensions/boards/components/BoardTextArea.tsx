@@ -395,17 +395,6 @@ export const BoardTextArea = ({
     const dedumped = dedump(cleaned, symbols);
     const nextSymbolsCollector = {};
     updateSymbols(dedumped, (s) => Object.assign(nextSymbolsCollector, s));
-    const dumped = dump(dedumped, nextSymbolsCollector);
-
-    setSymbols(nextSymbolsCollector);
-    setDumpedValue(dumped);
-  }, []);
-
-  useEffect(() => {
-    let cleaned = removeUnknownTags(value, symbols);
-    const dedumped = dedump(cleaned, symbols);
-    const nextSymbolsCollector = {};
-    updateSymbols(dedumped, (s) => Object.assign(nextSymbolsCollector, s));
 
     setSymbols(nextSymbolsCollector);
     setDumpedValue(dump(value, nextSymbolsCollector));
