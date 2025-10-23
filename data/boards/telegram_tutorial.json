@@ -54,7 +54,7 @@
             "width": 3,
             "height": 10,
             "icon": "send",
-            "name": "SEND A MESSAGE TO THE BOT TO SHOW HERE",
+            "name": "last_message",
             "color": "#24A1DE",
             "description": "Gets Telegram bot last received message",
             "type": "value",
@@ -63,7 +63,7 @@
                 "TELEGRAM_BOT_USERNAME"
             ],
             "displayFrame": true,
-            "displayTitle": false,
+            "displayTitle": true,
             "displayIcon": false
         },
         {
