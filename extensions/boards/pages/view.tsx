@@ -527,15 +527,21 @@ const Board = ({ board, icons }) => {
   };
 
   const setCardContent = (key, content) => {
-    const newItems = items.map(item => {
-      if (item.key === key || item.name === key) {
-        return { ...item, ...content };
+    setItems(prevItems => {
+      try {
+        const newItems = prevItems.map(item => {
+          if (item.key === key || item.name === key) {
+            return { ...item, ...content };
+          }
+          return item;
+        });
+        boardRef.current.cards = newItems
+        return newItems
+      } catch (err) {
+        return prevItems
       }
-      return item;
-    });
+    })
 
-    setItems(newItems)
-    boardRef.current.cards = newItems
     saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
   }
 
