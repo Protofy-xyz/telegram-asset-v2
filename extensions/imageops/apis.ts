@@ -60,6 +60,43 @@ export default (app, context) => {
                     saveTo: "path to save the cropped image",
                     rotation: "rotation in degrees (0-360, default 0)"
                 },
+                configParams: {
+                    image: {
+                        visible: true,
+                        defaultValue: "",
+                        type: "path"
+                    },
+                    x: {
+                        visible: true,
+                        defaultValue: "0",
+                        type: "number"
+                    },
+                    y: {
+                        visible: true,
+                        defaultValue: "0",
+                        type: "number"
+                    },
+                    width: {
+                        visible: true,
+                        defaultValue: "1",
+                        type: "number"
+                    },
+                    height: {
+                        visible: true,
+                        defaultValue: "1",
+                        type: "number"
+                    },
+                    saveTo: {
+                        visible: true,
+                        defaultValue: "",
+                        type: "path"
+                    },
+                    rotation: {
+                        visible: true,
+                        defaultValue: "0",
+                        type: "number"
+                    }
+                }, 
                 type: 'action'
             },
             emitEvent: true,

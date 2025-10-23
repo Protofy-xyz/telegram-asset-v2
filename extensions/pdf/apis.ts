@@ -59,6 +59,13 @@ export default async (app, context) => {
             params: {
                 path: "pdf file path"
             },
+            configParams: {
+                path: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "path"
+                },
+            },
             rulesCode: `return await execute_action("/api/v1/pdf/getTotalPages", userParams)`,
             displayResponse: true
         },
@@ -134,6 +141,18 @@ export default async (app, context) => {
             params: {
                 path: "pdf file path",
                 outputDir: "output directory"
+            },
+            configParams: {
+                path: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "path"
+                },
+                outputDir: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "path"
+                }
             },
             rulesCode: `return await execute_action("/api/v1/pdf/dumpPages", userParams)`,
             displayResponse: true
