@@ -1,1 +1,1 @@
-Two AI actions working in tandem to solve tasks
+Empty board with two AI cores working together to solve tasks

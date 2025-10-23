@@ -337,5 +337,6 @@
     ],
     "settings": {
         "autoplay": true
-    }
+    },
+    "icon": "bot"
 }

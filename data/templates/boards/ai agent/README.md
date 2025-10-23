@@ -1,1 +1,1 @@
-basic ai agent
+Empty board with basic single core AI agent support
