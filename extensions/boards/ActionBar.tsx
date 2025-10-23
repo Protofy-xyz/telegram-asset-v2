@@ -189,30 +189,30 @@ const getActionBar = (generateEvent) => {
     return false;
   };
 
-  useEffect(() => {
-    if (isJSONView) return;
+  // useEffect(() => {
+  //   if (isJSONView) return;
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return;
-      if (isEditableTarget(e.target)) return;
+  //   const onKeyDown = (e: KeyboardEvent) => {
+  //     if (e.repeat) return;
+  //     if (isEditableTarget(e.target)) return;
 
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault(); // evita scroll de la página con espacio
-        generateEvent({ type: 'toggle-autopilot' });
-        return;
-      }
+  //     if (e.code === 'Space' || e.key === ' ') {
+  //       e.preventDefault(); // evita scroll de la página con espacio
+  //       generateEvent({ type: 'toggle-autopilot' });
+  //       return;
+  //     }
 
-      if ((e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault();
-        generateEvent({ type: 'open-add' });
-        return;
-      }
-    };
+  //     if ((e.key === 'a' || e.key === 'A') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+  //       e.preventDefault();
+  //       generateEvent({ type: 'open-add' });
+  //       return;
+  //     }
+  //   };
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-    // deps: si cambian estas, re-registra el handler
-  }, [isJSONView, generateEvent]);
+  //   window.addEventListener('keydown', onKeyDown);
+  //   return () => window.removeEventListener('keydown', onKeyDown);
+  //   // deps: si cambian estas, re-registra el handler
+  // }, [isJSONView, generateEvent]);
 
   const toggleUndoRedoButtons = true
   const undoRedoButtons = toggleUndoRedoButtons ? [<ActionBarButton
