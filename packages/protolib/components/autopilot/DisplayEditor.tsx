@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { IconSelect } from '../IconSelect'
 import { InputColor } from '../InputColor'
 import { Toggle } from '../Toggle'
+import { useBoardLayer } from '@extensions/boards/store/boardStore'
 
 export const SettingsTitle = ({ children, error = "", ...props }) => {
     return (
@@ -82,6 +83,7 @@ export const DisplayEditor = ({
         if (cd[key] === undefined) return noValueIs
         return cd[key]
     }, [])
+    const [activeLayer] = useBoardLayer();
 
     const settings: Setting[] = [
         // ----- General -----
@@ -90,7 +92,7 @@ export const DisplayEditor = ({
         { label: 'Always report value', description: 'Report the card value on each execution to the board', key: 'alwaysReportValue', type: 'toggle', section: 'General' },
         { label: 'Natural language rules', description: 'Enable natural language rules view', key: 'editRulesInNaturalLanguage', type: 'toggle', section: 'General', get: (cd) => cd.editRulesInNaturalLanguage !== false },
         { label: 'Low code', description: 'Enable low code view', key: 'editRulesInLowCode', type: 'toggle', section: 'General', get: (cd) => cd.editRulesInLowCode !== false },
-         { label: 'Layer', description: 'Displayed text on the execution button', key: 'layer', type: 'text', section: 'General', get: (cd) => cd.layer ?? 'base' },
+        { label: 'Layer', description: 'Layer to show the card in', key: 'layer', type: 'text', section: 'General', get: (cd) => cd.layer ?? activeLayer },
         // ----- Display -----
         { label: 'Display title', description: 'Show name of the card as title', key: 'displayTitle', type: 'toggle', section: 'Display', get: (cd) => cd.displayTitle !== false },
         { label: 'Display icon', description: 'Show the card icon', key: 'displayIcon', type: 'toggle', section: 'Display', get: (cd) => cd.displayIcon !== false },
