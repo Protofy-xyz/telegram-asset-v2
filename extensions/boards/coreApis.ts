@@ -38,7 +38,7 @@ class HttpError extends Error {
 const getMetaCard = (card) => {
     const inputs = card.params ? Object.fromEntries(
         Object.entries(card.params).map(([key, description]) => {
-            const config = card.configParams[key] || {};
+            const config = card.configParams?.[key] || {};
             return [key, { ...config, description }];
         })
     ) : {};

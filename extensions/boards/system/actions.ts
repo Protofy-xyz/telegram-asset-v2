@@ -137,7 +137,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
             params[param] = await resolveBoardParam({
                 states: await context.state.getStateTree(),
                 boardId,
-                defaultValue: action.configParams[param].defaultValue,
+                defaultValue: action.configParams[param]?.defaultValue,
                 value: params[param],
                 type: action.configParams[param]?.type
             });

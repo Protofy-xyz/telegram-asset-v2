@@ -31,6 +31,13 @@ export default async (app, context) => {
             params: {
                 path: "Path to the directory to create",
             },
+            configParams: {
+                "path": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "path"
+                },
+            },
             rulesCode: "return await execute_action(\"/api/core/v1/directories\", userParams)",
         }
     })
