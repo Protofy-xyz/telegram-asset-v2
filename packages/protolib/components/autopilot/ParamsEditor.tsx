@@ -1,4 +1,4 @@
-import { YStack, XStack, Label, Button, Input, ScrollView, TooltipSimple, Popover, Text } from '@my/ui'
+import { YStack, XStack, Label, Button, Input, ScrollView, TooltipSimple, Popover, Text, TextArea } from '@my/ui'
 import { Eye, Plus, Trash, Maximize2, Cable } from '@tamagui/lucide-icons'
 import { useState, useCallback } from 'react'
 import { InteractiveIcon } from '../InteractiveIcon'
@@ -8,6 +8,142 @@ import { SelectList } from '../SelectList'
 import { TextEditDialog } from '../TextEditDialog'
 import { TabContainer, TabTitle } from './Tab'
 import { LinksEditor } from './LinksEditor'
+
+const types = ["any", "string", "number", "boolean", "json", "array", "text", "path", "markdown", "html"]
+const inputDefProps = { backgroundColor: "$bgContent", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
+const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
+
+const InputTitle = ({ children, ...props }) => {
+  return <Text
+    color="$gray9"
+    {...props}
+  >{children}</Text>
+}
+
+const InputEditor = ({ onClose, show, addRow }) => {
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [type, setType] = useState("")
+  const [defaultValue, setDefaultValue] = useState("")
+
+  return <YStack
+    onPress={() => onClose()}
+    style={{
+      position: "absolute",
+      height: "100%",
+      width: "100%",
+      backgroundColor: "#00000051",
+      zIndex: 200,
+      top: "0px",
+      right: "0px",
+      visibility: show ? "visible" : "hidden",
+      opacity: show ? 1 : 0,
+      transition: "all 120ms ease-in-out",
+    }}>
+    <YStack
+      bg={"$bgContent"}
+      onPress={(e) => e.stopPropagation()}
+      borderLeftColor={"$gray6"}
+      borderLeftWidth="1px"
+      jc='space-between'
+      py="$5"
+      px="$6"
+      gap="$4"
+      overflowBlock='scroll'
+      style={{
+        position: "absolute",
+        height: "100%",
+        minWidth: "400px",
+        width: "fit-content",
+        transform: show ? "" : "translateX(100%)",
+        transition: "all 150ms ease-in-out",
+        zIndex: 200,
+        top: "0px",
+        right: "0px"
+      }}
+    >
+      <YStack gap="$5">
+        <YStack>
+          <Text
+            h="fit-content"
+            w="fit-content"
+            fontSize={"$7"}
+          >New input</Text>
+          <InputTitle>Configure an input parameter to the card execution</InputTitle>
+        </YStack>
+        <YStack gap="$2">
+          <InputTitle>Title</InputTitle>
+          <Input
+            placeholder={"Title"}
+            bg="$bgPanel"
+            borderColor="$colorTransparent"
+            placeholderTextColor={"$gray9"}
+            hoverStyle={{ borderColor: "$gray6" }}
+            focusStyle={{ borderColor: "$gray6", outlineColor: "$gray6", outlineOffset: "2px", outlineWidth: "2px" }}
+            value={title}
+            onChange={(e) => setTitle(e.currentTarget.value)}
+          />
+          <InputTitle>Description</InputTitle>
+          <Input
+            placeholder={"Description"}
+            bg="$bgPanel"
+            borderColor="$colorTransparent"
+            placeholderTextColor={"$gray9"}
+            hoverStyle={{ borderColor: "$gray6" }}
+            focusStyle={{ borderColor: "$gray6", outlineColor: "$gray6", outlineOffset: "2px", outlineWidth: "2px" }}
+            value={description}
+            onChange={(e) => setDescription(e.currentTarget.value)}
+          />
+
+          <InputTitle>Input Type</InputTitle>
+          <SelectList
+            triggerProps={selectTriggerDefProps}
+            title="Select type"
+            selectorStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { backgroundColor: "var(--bgContent)" } }}
+            rowStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { backgroundColor: "var(--bgContent)" } }}
+            titleStyle={{ normal: { backgroundColor: "var(--bgPanel)" } }}
+            elements={types}
+            value={type}
+            setValue={(value) => setType(value)}
+          />
+
+
+          <InputTitle>Default value</InputTitle>
+          <TextArea
+            placeholder={"write some default value"}
+            height={"300px"}
+            bg="$bgPanel"
+            borderColor="$colorTransparent"
+            placeholderTextColor={"$gray9"}
+            hoverStyle={{ borderColor: "$gray6" }}
+            focusStyle={{ borderColor: "$gray6", outlineColor: "$gray6", outlineOffset: "2px", outlineWidth: "2px" }}
+            value={defaultValue}
+            onChange={(e) => setDefaultValue(e.currentTarget.value)}
+          />
+
+        </YStack>
+      </YStack>
+      <YStack>
+        <Button
+          style={{
+            whiteSpace: "nowrap"
+          }}
+          h="fit-content"
+          w="fit-content"
+          px="$4"
+          py="$2"
+          bc="$bgPanel"
+          hoverStyle={{ backgroundColor: "$bgPanel", border: "1px solid var(--gray8)" }}
+          focusStyle={{ backgroundColor: "$bgPanel", border: "1px solid var(--gray8)" }}
+          onPress={() => {
+            onClose()
+            addRow(title, description, type, defaultValue)
+          }}
+        >Create input</Button>
+      </YStack>
+    </YStack>
+  </YStack>
+}
 
 export const ParamsEditor = ({
   params = {},
@@ -20,6 +156,7 @@ export const ParamsEditor = ({
 }) => {
   const [statesVisible, setStatesVisible] = useState<string | undefined>()
   const [selectedIndex, setSelectedIndex] = useState<number>(0)
+  const [showInputEditor, setShowInputEditor] = useState(false)
   const [rows, setRows] = useState(() => {
     const allKeys = new Set([...Object.keys(params), ...Object.keys(configParams)])
 
@@ -51,17 +188,7 @@ export const ParamsEditor = ({
   }, [rows])
 
   const handleAddParam = useCallback(() => {
-    setRows((prev) => [
-      ...prev,
-      {
-        rowId: nanoid(),
-        paramKey: '',
-        description: '',
-        visible: true,
-        defaultValue: '',
-        type: 'string',
-      },
-    ])
+    setShowInputEditor(true)
   }, [])
 
   const handleRemoveParam = useCallback((rowIdToRemove) => {
@@ -117,12 +244,27 @@ export const ParamsEditor = ({
     )
   }, [])
 
-  const types = ["any", "string", "number", "boolean", "json", "array", "text", "path", "markdown", "html"]
-  const inputDefProps = { backgroundColor: "$bgContent", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
-  const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
-
   {/* <TabTitle tabname={"Inputs Configuration"} tabDescription='Configure all the dynamic inputs for your card' /> */ }
-  return <YStack height={"100%"} width={"100%"} px="$8" py="$6" gap="$8" overflowBlock="scroll">
+  return <YStack height={"100%"} width={"100%"} px="$8" py="$6" gap="$8" overflowBlock="scroll" overflowInline='hidden'>
+    {/* INPUT EDITOR */}
+    <InputEditor
+      show={showInputEditor}
+      onClose={() => setShowInputEditor(false)}
+      addRow={(title, description, type, defaultValue) => {
+        setRows((prev) => [
+          ...prev,
+          {
+            rowId: nanoid(),
+            paramKey: title,
+            description: description,
+            visible: true,
+            defaultValue: defaultValue,
+            type: type ?? "string",
+          },
+        ])
+      }}
+    />
+
     {/* PARAMS */}
     <YStack gap="$5">
       <XStack justifyContent='space-between' ai="flex-end">
