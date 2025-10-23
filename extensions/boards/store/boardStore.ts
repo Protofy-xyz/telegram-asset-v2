@@ -10,7 +10,7 @@ export const loading = atom(false);
 export const busy = atom(false);
 export const boardVersionId = atom(1) //internal id to track version changes. Only changes when switching versions, not when board changes
 export const boardLayer = atom("base") // current active layer
-export const layers = atom([])
+export const layers = atom(["base"])
 
 export const useBoardLayer = () => useAtom(boardLayer)
 export const useLayers = () => useAtom(layers)

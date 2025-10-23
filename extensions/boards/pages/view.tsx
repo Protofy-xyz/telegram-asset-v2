@@ -291,13 +291,13 @@ const Board = ({ board, icons }) => {
   const [, setLayers] = useLayers();
 
   useEffect(() => {
-    const allLayers = Array.from(
-      new Set(items.map((c) => c.layer || "base"))
+    const set = new Set<string>(["base"]);               // 👈 siempre incluimos base
+    for (const c of items) set.add(c.layer ?? "base");
+
+    const sorted = Array.from(set).sort((a, b) =>
+      a === "base" ? -1 : b === "base" ? 1 : a.localeCompare(b, undefined, { sensitivity: "base" })
     );
-    const sortedLayers = allLayers.sort((a, b) =>
-      a === "base" ? -1 : b === "base" ? 1 : a.localeCompare(b)
-    );
-    setLayers(sortedLayers);
+    setLayers(sorted);
   }, [items, setLayers]);
 
   const [globalItems, setGlobalItems] = useJotaiAtom(itemsAtom)
