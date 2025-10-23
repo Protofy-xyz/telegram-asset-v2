@@ -31,7 +31,7 @@ import { FloatingWindow } from '../components/FloatingWindow'
 import { useAtom } from 'protolib/lib/Atom'
 import { AppState } from 'protolib/components/AdminPanel'
 import { useLog } from '@extensions/logs/hooks/useLog'
-import { useBoardVersion, useBoardVersionId, useLayers } from '@extensions/boards/store/boardStore'
+import { useBoardLayer, useBoardVersion, useBoardVersionId, useLayers } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 import { useAtom as useJotaiAtom } from 'jotai'
@@ -493,7 +493,8 @@ const Board = ({ board, icons }) => {
   }, [items, board?.layouts])
 
   boardRef.current.layouts = layouts
-
+  
+  const [activeLayer] = useBoardLayer();
   const addWidget = async (card) => {
     try {
       await checkCard(boardRef.current?.cards, card)
@@ -509,7 +510,7 @@ const Board = ({ board, icons }) => {
     }
 
     const uniqueKey = card.type + '_' + Date.now();
-    const newCard = { ...card, key: uniqueKey }
+    const newCard = { ...card, key: uniqueKey, layer: card.layer ?? activeLayer }
     const newItems = [...boardRef.current?.cards, newCard].filter(item => item.key !== 'addwidget');
     setItems(newItems)
     boardRef.current.cards = newItems;
