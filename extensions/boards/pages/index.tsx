@@ -95,7 +95,7 @@ export default {
       const { push, query } = usePageParams({})
       const [addOpen, setAddOpen] = React.useState(false)
 
-      const defaultData = { template: {id:'blank'}, name: '' }
+      const defaultData = { template: {id:'ai agent'}, name: '' }
       const [data, setData] = useState(defaultData)
 
       return (<AdminPage title="Boards" workspace={workspace} pageSession={pageSession}>
