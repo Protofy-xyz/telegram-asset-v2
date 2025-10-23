@@ -8,7 +8,7 @@ type ChatProps = {
 export const Chat = ({ agent }: ChatProps) => {
   const [loaded, setLoaded] = React.useState(false);
   React.useEffect(() => setLoaded(false), [agent]);
-  
+
   return (
     <div style={{ width: "100%", height: "100%", position: "relative" }}>
       {!loaded
@@ -22,8 +22,8 @@ export const Chat = ({ agent }: ChatProps) => {
           right={0}
           zIndex={-2}
         >
-          <Spinner color="$color6" size={100} mb="$6" />
-          <Paragraph size="$5">Loading chat...</Paragraph>
+          <Spinner color="$color6" size={"large"} mb="$6" />
+          <Paragraph color="$color11">Loading chat...</Paragraph>
         </YStack>
       }
       <iframe

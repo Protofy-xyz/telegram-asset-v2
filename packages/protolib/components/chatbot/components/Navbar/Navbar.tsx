@@ -1,25 +1,14 @@
-import classnames from "classnames";
-import ChatHistory from "./ChatHistory";
-import { X, Plus, PanelLeft } from "lucide-react";
+import { X, Plus, ChevronDown, ChevronUp, Check } from "lucide-react";
 import useChat, { ModalList, useAuth, useSettings } from "../../store/store";
-export default function Navbar({
-  active,
-  setActive,
-}: {
-  active: boolean;
-  setActive: (v: boolean) => void;
-}) {
+import { Adapt, Button, ScrollView, Select, Sheet, XStack, YStack } from "tamagui";
+import ChatHistory from "./ChatHistory";
+
+export default function Navbar({ active, setActive, }: { active: boolean; setActive: (v: boolean) => void; }) {
+
   const addNewChat = useChat((state) => state.addNewChat);
-  const [
-    selectedModal,
-    modalsList,
-    setModal,
-  ] = useSettings((state) => [
-    state.settings.selectedModal,
-    state.modalsList,
-    state.setModal,
-  ]);
+  const [selectedModal, modalsList, setModal] = useSettings((state) => [state.settings.selectedModal, state.modalsList, state.setModal]);
   const name = useAuth((state) => state.user.name);
+
   const groupedModels = modalsList.reduce(
     (obj: Record<string, string[]>, modal) => {
       const prefix = modal.split("-")[0] + "-" + modal.split("-")[1];
@@ -32,89 +21,140 @@ export default function Navbar({
   );
 
   return (
-    <>
-      <div
-        className={classnames(
-          "navwrap fixed duration-500 top-0 left-0 bottom-0 right-0 md:right-[calc(100vw-260px)] z-30 md:bg-opacity-0",
-          {
-            "bg-opacity-60": active,
-            "opacity-0 pointer-events-none": !active,
-          }
-        )}
+    <YStack
+      overflow="hidden"
+      position="fixed"
+      top={0}
+      left={0}
+      right={0}
+      bottom={0}
+      zIndex={30}
+      backgroundColor={active ? "$colorTransparent" : "transparent"}
+      opacity={active ? 1 : 0}
+      pointerEvents={active ? "auto" : "none"}
+      animation="quick"
+      enterStyle={{ opacity: 0 }}
+      exitStyle={{ opacity: 0 }}
+      transition="opacity 0.5s"
+    >
+      <YStack
+        bc="$bgPanel"
+        p="$3"
+        w="80%"
+        h="100%"
+        overflow="hidden"
+        elevation="$2"
+        gap="$2"
+        shadowColor="$shadowColor"
       >
-        <nav
-          className={classnames(
-            "absolute left-0 bottom-0 top-0 md:flex-grow-1 w-9/12 md:w-[260px] flex flex-col transition duration-500",
-            "bg-[#f8f8f8] dark:bg-[#171717] text-black dark:text-white",
-            {
-              "translate-x-0": active,
-              "-translate-x-[150%]": !active,
-            }
-          )}
-        >
-          <div className="flex mb-2 items-center justify-between gap-2 p-2">
-            <button
-              type="button"
-              className="border border-gray-300 dark:border-gray-500 p-2 w-full md:w-auto rounded-md text-left flex-grow flex bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800"
-              onClick={addNewChat}
-            >
-              <span className="mr-2 text-xl">
-                <Plus />
-              </span>
-              <span>New chat</span>
-            </button>
-            <button
-              type="button"
-              className="border h-10 w-10 border-gray-300 dark:border-gray-500 rounded-md p-2 hidden md:inline-block text-gray-800 dark:text-gray-200"
-              onClick={() => setActive(false)}
-            >
-              <PanelLeft />
-            </button>
-          </div>
-          <div className="history overflow-y-auto h-[calc(100%-60px)]">
-            <ChatHistory />
-          </div>
-          <div className="account font-bold z-20 bg-[#f8f8f8] dark:bg-[#171717] border-t border-gray-300 dark:border-gray-500 shadow">
-            <div className="self-stretch mr-4 w-full mb-2">
-              <select
-                value={selectedModal}
-                onChange={(e) => setModal(e.target.value as ModalList)}
-                className="border border-gray-300 dark:border-gray-500 block w-full p-2.5 text-black dark:text-white bg-white dark:bg-[#212121] focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-500"
-              >
-                {Object.keys(groupedModels).map((group) => (
-                  <optgroup
-                    label={group.toUpperCase()}
-                    key={group}
-                    className="bg-white dark:bg-[#212121] text-black dark:text-white"
-                  >
-                    {groupedModels[group].map((modal) => (
-                      <option
-                        value={modal}
-                        key={modal}
-                        className="bg-white dark:bg-[#212121] text-black dark:text-white"
-                      >
-                        {modal}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-
-            </div>
-
-          </div>
-          <button
-            type="button"
-            onClick={() => setActive(false)}
-            className="close md:hidden absolute top-2 h-10 w-10 border-2 -right-10 p-2 flex items-center justify-center text-gray-800 dark:text-white"
+        <XStack jc="space-between" ai="center">
+          <Button
+            bc="$bgContent"
+            hoverStyle={{ bc: "$bgContent", filter: "brightness(1.2)" }}
+            icon={Plus}
+            onPress={() => {
+              addNewChat();
+              setActive(false);
+            }}
           >
-            <span className="text-2xl flex">
-              <X />
-            </span>
-          </button>
-        </nav>
-      </div>
-    </>
-  );
+            New Chat
+          </Button>
 
-}  
+          <Button
+            theme="red"
+            circular
+            chromeless
+            scaleIcon={1.3}
+            icon={X}
+            onPress={() => setActive(false)}
+          />
+        </XStack>
+        <ScrollView>
+          <ChatHistory />
+        </ScrollView>
+        <Select
+          value={selectedModal}
+          onValueChange={(value) => setModal(value as ModalList)}
+          disablePreventBodyScroll
+        >
+          <Select.Trigger
+            f={1}
+            iconAfter={ChevronDown}
+            bc="$bgContent"
+            hoverStyle={{
+              bc: "$bgContent",
+              filter: "brightness(1.2)",
+            }}
+          >
+            <Select.Value placeholder="Select model..." />
+          </Select.Trigger>
+
+          <Adapt when="sm" platform="touch">
+            <Sheet
+              modal
+              dismissOnSnapToBottom
+              animationConfig={{
+                type: "spring",
+                damping: 20,
+                mass: 1.2,
+                stiffness: 250,
+              }}
+            >
+              <Sheet.Frame>
+                <Sheet.ScrollView>
+                  <Adapt.Contents />
+                </Sheet.ScrollView>
+              </Sheet.Frame>
+              <Sheet.Overlay
+                animation="lazy"
+                enterStyle={{ opacity: 0 }}
+                exitStyle={{ opacity: 0 }}
+              />
+            </Sheet>
+          </Adapt>
+          <Select.Content zIndex={999999}>
+            <Select.ScrollUpButton
+              ai="center"
+              jc="center"
+              position="relative"
+              width="100%"
+              height="$3"
+            >
+              <YStack zIndex={10}>
+                <ChevronUp size={20} />
+              </YStack>
+            </Select.ScrollUpButton>
+
+            <Select.Viewport>
+              {Object.keys(groupedModels).map((group) => (
+                <Select.Group key={group}>
+                  <Select.Label o={0.6}>{group.toUpperCase()}</Select.Label>
+                  {groupedModels[group].map((modal, index) => (
+                    <Select.Item key={modal} index={index} value={modal} pl="$8">
+                      <Select.ItemText>{modal}</Select.ItemText>
+                      <Select.ItemIndicator marginLeft="auto">
+                        <Check size={16} />
+                      </Select.ItemIndicator>
+                    </Select.Item>
+                  ))}
+                </Select.Group>
+              ))}
+            </Select.Viewport>
+
+            <Select.ScrollDownButton
+              ai="center"
+              jc="center"
+              position="relative"
+              width="100%"
+              height="$3"
+            >
+              <YStack zIndex={10}>
+                <ChevronDown size={20} />
+              </YStack>
+            </Select.ScrollDownButton>
+          </Select.Content>
+        </Select>
+      </YStack>
+    </YStack>
+  );
+}
