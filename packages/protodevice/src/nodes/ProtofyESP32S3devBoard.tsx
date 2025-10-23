@@ -165,7 +165,7 @@ export default {
     />
   ),
   getInitialData: () => {
-    return { to: '"Protofy ESP32S3 devBoard"' };
+    return { to: '"protofyESP32S3devBoard"' };
   },
   hidden: true,
   nonDeletable: true,
