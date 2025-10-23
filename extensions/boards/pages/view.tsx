@@ -3,7 +3,7 @@ import { API, getPendingResult, set } from 'protobase'
 import { AdminPage } from "protolib/components/AdminPage"
 import { useIsAdmin } from "protolib/lib/useIsAdmin"
 import ErrorMessage from "protolib/components/ErrorMessage"
-import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Stack, H1, H3 } from '@my/ui'
+import { YStack, XStack, Paragraph, Button as TamaButton, Dialog, Theme, Spinner, Stack, H1, H3, Button } from '@my/ui'
 import { computeLayout } from '@extensions/autopilot/layout';
 import { DashboardGrid, gridSizes, getCurrentBreakPoint } from 'protolib/components/DashboardGrid';
 import { LogPanel } from 'protolib/components/LogPanel';
@@ -31,14 +31,14 @@ import { FloatingWindow } from '../components/FloatingWindow'
 import { useAtom } from 'protolib/lib/Atom'
 import { AppState } from 'protolib/components/AdminPanel'
 import { useLog } from '@extensions/logs/hooks/useLog'
-import { useBoardVersion, useBoardVersionId } from '@extensions/boards/store/boardStore'
+import { useBoardLayer, useBoardVersion, useBoardVersionId, useLayers } from '@extensions/boards/store/boardStore'
 import { useBoardVisualUI } from '../useBoardVisualUI'
 import { scrollToAndHighlight } from '../utils/animations'
 import { useAtom as useJotaiAtom } from 'jotai'
 import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard } from '../utils/viewUtils'
 import { ActionCard } from '../components/ActionCard'
 import { VersionTimeline } from '../VersionTimeline'
-import { useBoardVersions } from '../utils/versions'
+import { useBoardVersions, latestVersion } from '../utils/versions'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -53,7 +53,7 @@ class ValidationError extends Error {
 }
 
 const saveBoard = async (boardId, data, setBoardVersion?, refresh?, opts = { bumpVersion: true }) => {
-  if(__currentBoardVersion !== data.version) {
+  if (__currentBoardVersion !== data.version) {
     console.error("Cannot save board, the board version has changed, please refresh the board.")
     return
   }
@@ -63,7 +63,8 @@ const saveBoard = async (boardId, data, setBoardVersion?, refresh?, opts = { bum
       if (!data.version) {
         data.version = 1
       } else {
-        data.version += 1
+        const last = await latestVersion(boardId);
+        data.version = last + 1;
       }
       data.savedAt = Date.now()
     }
@@ -281,10 +282,24 @@ const Board = ({ board, icons }) => {
     setTabVisible
   } = useBoardControls();
 
+  window['board'] = board;
+
   const breakpointCancelRef = useRef(null) as any
   const dedupRef = useRef() as any
   const initialized = useRef(false)
   const [items, setItems] = useState(board.cards && board.cards.length ? board.cards : []);
+  const [, setLayers] = useLayers();
+
+  useEffect(() => {
+    const set = new Set<string>(["base"]);               // 👈 siempre incluimos base
+    for (const c of items) set.add(c.layer ?? "base");
+
+    const sorted = Array.from(set).sort((a, b) =>
+      a === "base" ? -1 : b === "base" ? 1 : a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
+    setLayers(sorted);
+  }, [items, setLayers]);
+
   const [globalItems, setGlobalItems] = useJotaiAtom(itemsAtom)
   const [automationInfo, setAutomationInfo] = useJotaiAtom(automationInfoAtom);
   const [uicodeInfo, setUICodeInfo] = useJotaiAtom(uiCodeInfoAtom);
@@ -298,10 +313,12 @@ const Board = ({ board, icons }) => {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isApiDetails, setIsApiDetails] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [currentCard, setCurrentCard] = useState(null)
   const [editedCard, setEditedCard] = useState(null)
   const [editCode, setEditCode] = useState('')
   const [boardCode, setBoardCode] = useState(JSON.stringify(board))
+  const [hasChanges, setHasChanges] = useState(false);
 
   const [errors, setErrors] = useState<string[]>([])
   // const initialBreakPoint = useInitialBreakpoint()
@@ -315,6 +332,8 @@ const Board = ({ board, icons }) => {
   const [addKey, setAddKey] = useState(0)
 
   const { resolvedTheme } = useThemeSetting()
+
+
 
   const visualui = useBoardVisualUI({
     boardID: tabVisible == "visualui" ? board.name : null,
@@ -445,6 +464,10 @@ const Board = ({ board, icons }) => {
 
   const boardRef = useRef(board)
 
+  useEffect(() => {
+    boardRef.current = board;
+  }, [board]);
+
   const deleteCard = async (card) => {
     const newItems = items.filter(item => item.key != card.key)
     // if (newItems.length == 0) newItems.push(addCard) // non necessary
@@ -471,6 +494,7 @@ const Board = ({ board, icons }) => {
 
   boardRef.current.layouts = layouts
 
+  const [activeLayer] = useBoardLayer();
   const addWidget = async (card) => {
     try {
       await checkCard(boardRef.current?.cards, card)
@@ -486,7 +510,7 @@ const Board = ({ board, icons }) => {
     }
 
     const uniqueKey = card.type + '_' + Date.now();
-    const newCard = { ...card, key: uniqueKey }
+    const newCard = { ...card, key: uniqueKey, layer: card.layer ?? activeLayer }
     const newItems = [...boardRef.current?.cards, newCard].filter(item => item.key !== 'addwidget');
     setItems(newItems)
     boardRef.current.cards = newItems;
@@ -522,7 +546,7 @@ const Board = ({ board, icons }) => {
       alert('Error editing board')
     }
   }
-  
+
   //fill items with react content, addWidget should be the last item
   const cards = (items || []).map((item) => {
     if (item.type == 'addWidget') {
@@ -710,8 +734,9 @@ const Board = ({ board, icons }) => {
       setItems(newItems);
       boardRef.current.cards = newItems;
       await saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
-      setCurrentCard(null);
-      setIsEditing(false);
+      setCurrentCard(editedCard);
+      setEditedCard(editedCard);
+      setHasChanges(false);
     } catch (e) {
       if (e instanceof ValidationError) {
         setErrors(e.errors);
@@ -720,13 +745,50 @@ const Board = ({ board, icons }) => {
         setErrors(['An unexpected error occurred while checking the card.']);
       }
     }
+  };
+
+
+  const closeEdition = () => {
+    setIsEditing(false);
+    setCurrentCard(null);
+    setEditedCard(null);
+    setErrors([]);
+    setHasChanges(false);
   }
+
+  const closeDialog = (
+    <AlertDialog
+      open={showUnsavedDialog}
+      setOpen={setShowUnsavedDialog}
+      title="Unsaved changes"
+      description="You have unsaved changes. Do you want to save them before closing?"
+      hideAccept
+    >
+      <YStack width="100%" ai="center" gap="$4" mt="$3">
+        <XStack gap="$3" jc="center" width="100%">
+          <Button flex={1} onPress={() => setShowUnsavedDialog(false)}>
+            Cancel
+          </Button>
+
+          <Button flex={1} onPress={() => { setShowUnsavedDialog(false); closeEdition(); }} borderRadius="$4" >
+            Don't Save
+          </Button>
+
+          <Tinted>
+            <Button flex={1} color="white" backgroundColor="$color6" borderRadius="$4" onPress={async () => { await saveCard(); setShowUnsavedDialog(false); closeEdition(); }}  >
+              Save
+            </Button>
+          </Tinted>
+
+        </XStack>
+      </YStack>
+    </AlertDialog>)
 
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
 
       <CardSelector key={addKey} board={board} addOpened={addOpened} setAddOpened={setAddOpened} onFinish={addWidget} states={states} icons={icons} actions={actions} errors={errors} />
-
+      {closeDialog}
       <AlertDialog
         acceptButtonProps={{ color: "white", backgroundColor: "$red9" }}
         p="$5"
@@ -753,7 +815,24 @@ const Board = ({ board, icons }) => {
         description={apiInfo}
       />
       <Theme reset>
-        <Dialog modal open={isEditing} onOpenChange={setIsEditing}>
+        <Dialog
+          modal
+          open={isEditing}
+          onOpenChange={(open) => {
+            if (!open) {
+              const hasRealChanges =
+                editedCard && currentCard &&
+                JSON.stringify(editedCard) !== JSON.stringify(currentCard);
+              if (hasRealChanges) {
+                setShowUnsavedDialog(true);
+              } else {
+                closeEdition();
+              }
+            } else {
+              setIsEditing(true);
+            }
+          }}
+        >
           <Dialog.Portal zIndex={100000} overflow='hidden'>
             <Dialog.Overlay />
             <Dialog.Content
@@ -769,7 +848,24 @@ const Board = ({ board, icons }) => {
               h={"95vh"}
               maw={1600}
             >
-              <ActionCardSettings board={board} actions={actions} states={states} icons={icons} card={currentCard} tab={tab} onSave={saveCard} onEdit={(data) => { setEditedCard(data) }} errors={errors} />
+              <ActionCardSettings
+                board={board}
+                actions={actions}
+                states={states}
+                icons={icons}
+                card={currentCard}
+                tab={tab}
+                onSave={saveCard}
+                onEdit={(data) => {
+                  setEditedCard(data);
+                  setHasChanges(true);
+                }}
+                onClose={() => {
+                  saveCard()
+                  closeEdition();
+                }}
+                errors={errors}
+              />
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog>
@@ -852,7 +948,16 @@ const Board = ({ board, icons }) => {
                     console.log('Layout changed: ', breakpointRef.current)
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
                     console.log('New layout: ', layout)
-                    boardRef.current.layouts[breakpointRef.current] = layout
+                    const bp = breakpointRef.current;
+                    const prev = boardRef.current.layouts[bp] || [];
+                    const next = layout;
+                    const merged = [
+                      ...prev.filter((oldItem) => !next.find((newItem) => newItem.i === oldItem.i)),
+                      ...next,
+                    ];
+                    boardRef.current.layouts[bp] = merged;
+
+
                     saveBoard(board.name, boardRef.current, setBoardVersion, refresh, { bumpVersion: false })
                   }, 100)
                 }}
@@ -924,7 +1029,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     if (event.type === 'toggle-rules') {
       setTabVisible(tabVisible === 'rules' ? "" : 'rules');
     }
-        if (event.type === 'toggle-history') {
+    if (event.type === 'toggle-history') {
       setTabVisible(tabVisible === 'history' ? "" : 'history');
     }
     if (event.type === 'toggle-logs') {
@@ -955,6 +1060,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
       setTabVisible(tabVisible === 'board-settings' ? "" : 'board-settings');
     }
   }
+
   __currentBoardVersion = boardData?.data?.version
   return <AdminPage
     title={params.board + " board"}
@@ -974,7 +1080,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
 export const BoardView = ({ workspace, pageState, initialItems, itemData, pageSession, extraData, board, icons }: any) => {
   const { params } = useParams()
   const [boardData, setBoardData] = useState(board ?? getPendingResult('pending'))
-  const {refresh} = useBoardVersions(params.board)
+  const { refresh } = useBoardVersions(params.board)
   const [boardVersionId] = useBoardVersionId();
 
   const versionChanged = async () => {

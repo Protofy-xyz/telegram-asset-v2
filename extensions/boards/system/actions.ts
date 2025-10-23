@@ -8,52 +8,52 @@ import { getLogger } from 'protobase';
 import { TypeParser } from "./types";
 
 const getBoardCardActions = async (boardId) => {
-  const board = await getBoard(boardId);
-  if (!board.cards || !Array.isArray(board.cards)) return [];
+    const board = await getBoard(boardId);
+    if (!board.cards || !Array.isArray(board.cards)) return [];
 
-  const base = board.cards.filter(c => c.type === 'action');
-  const result = [...base];
+    const base = board.cards.filter(c => c.type === 'action');
+    const result = [...base];
 
-  const isPlainObject = (o) =>
-    o && typeof o === 'object' && Object.prototype.toString.call(o) === '[object Object]';
+    const isPlainObject = (o) =>
+        o && typeof o === 'object' && Object.prototype.toString.call(o) === '[object Object]';
 
-  const deepMerge = (a = {}, b = {}) => {
-    if (!isPlainObject(a)) a = {};
-    if (!isPlainObject(b)) return b; // si b no es objeto plano, reemplaza
-    const out = { ...a };
-    for (const k of Object.keys(b)) {
-      const av = a[k], bv = b[k];
-      if (isPlainObject(av) && isPlainObject(bv)) out[k] = deepMerge(av, bv);
-      else if (Array.isArray(bv)) out[k] = bv.slice(); // sustituye arrays; para concatenar: (Array.isArray(av)?av:[]).concat(bv)
-      else out[k] = bv;
+    const deepMerge = (a = {}, b = {}) => {
+        if (!isPlainObject(a)) a = {};
+        if (!isPlainObject(b)) return b; // si b no es objeto plano, reemplaza
+        const out = { ...a };
+        for (const k of Object.keys(b)) {
+            const av = a[k], bv = b[k];
+            if (isPlainObject(av) && isPlainObject(bv)) out[k] = deepMerge(av, bv);
+            else if (Array.isArray(bv)) out[k] = bv.slice(); // sustituye arrays; para concatenar: (Array.isArray(av)?av:[]).concat(bv)
+            else out[k] = bv;
+        }
+        return out;
+    };
+
+    for (const action of base) {
+        const presets = action?.presets;
+        if (presets && typeof presets === 'object') {
+            for (const [presetKey, preset] of Object.entries(presets)) {
+                result.push({
+                    ...action,
+                    aliasedName: action.name + '.' + presetKey,
+                    description: preset?.description ?? action.description,
+                    configParams: deepMerge(action.configParams || {}, preset?.configParams || {}),
+                });
+            }
+        }
     }
-    return out;
-  };
 
-  for (const action of base) {
-    const presets = action?.presets;
-    if (presets && typeof presets === 'object') {
-      for (const [presetKey, preset] of Object.entries(presets)) {
-        result.push({
-          ...action,
-          aliasedName: action.name + '.' + presetKey,
-          description: preset?.description ?? action.description,
-          configParams: deepMerge(action.configParams || {}, preset?.configParams || {}),
-        });
-      }
-    }
-  }
-
-  return result;
+    return result;
 };
 
 const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
 const token = getServiceToken()
 
 //TODO: refactor to use only protomemdb (state.set) for card state persistance and updates on frontend  (now using .set for persist and state event for updates)
-const updateActionStatus = async (context, boardId, actionId, status) => {
+const updateActionStatus = async (context, boardId, actionId, status, payload = {}) => {
     const action = await context.state.get({ chunk: 'actions', group: 'boards', tag: boardId, name: actionId });
-    await context.state.set({ chunk: 'actions', group: 'boards', tag: boardId, name: actionId, value: { ...action, status } });
+    await context.state.set({ chunk: 'actions', group: 'boards', tag: boardId, name: actionId, value: { ...action, status, ...payload } });
 };
 
 export const getActions = async (context) => {
@@ -70,6 +70,14 @@ export const getActions = async (context) => {
     }
     flatten(actions, '')
     return flatActions
+}
+
+const setActionValue = async (Manager, context, boardId, action, value) => {
+    const prevValue = await context.state.get({ group: 'boards', tag: boardId, name: action.name });
+    if (action?.alwaysReportValue || JSON.stringify(value) !== JSON.stringify(prevValue)) {
+        await context.state.set({ group: 'boards', tag: boardId, name: action.name, value: value, emitEvent: true });
+        Manager.update(`../../data/boards/${boardId}.js`, 'states', action.name, value);
+    }
 }
 
 export const handleBoardAction = async (context, Manager, req, boardId, action_or_card_id, res, rawParams, rawResponse = false, responseCb = undefined) => {
@@ -102,7 +110,8 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
                 stackTrace
             },
         }, getServiceToken());
-        await updateActionStatus(context, boardId, action.name, 'error');
+        await setActionValue(Manager, context, boardId, action, { error: "Recursive action call detected" });
+        await updateActionStatus(context, boardId, action.name, 'error', { error: { message: "Recursive action call detected" } });
 
         getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: "Recursive action call detected" }, "Error executing card: ");
         res.status(500).send({ _err: "e_code", error: "Error executing action code", message: "Recursive action call detected" });
@@ -200,7 +209,10 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
                     stackTrace
                 },
             }, getServiceToken());
-            await updateActionStatus(context, boardId, action.name, 'error');
+
+            await setActionValue(Manager, context, boardId, action, { error: err });
+            await updateActionStatus(context, boardId, action.name, 'error', { error: err });
+
 
             getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err }, "Error executing card: ");
             res.status(500).send({ _err: "e_code", error: "Error executing action code", message: err.message, stack: err.stack, stackTrace, name: err.name, code: err.code });
@@ -211,11 +223,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
             response = response[action.responseKey];
         }
 
-        const prevValue = await context.state.get({ group: 'boards', tag: boardId, name: action.name });
-        if (action?.alwaysReportValue || JSON.stringify(response) !== JSON.stringify(prevValue)) {
-            await context.state.set({ group: 'boards', tag: boardId, name: action.name, value: response, emitEvent: true });
-            Manager.update(`../../data/boards/${boardId}.js`, 'states', action.name, response);
-        }
+        await setActionValue(Manager, context, boardId, action, response);
 
         if (responseCb) {
             responseCb(response);
@@ -282,7 +290,8 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
                 stackTrace
             },
         }, getServiceToken());
-        await updateActionStatus(context, boardId, action.name, 'error');
+        await setActionValue(Manager, context, boardId, action, { error: err });
+        await updateActionStatus(context, boardId, action.name, 'error', { error: err });
         console.error("Error executing action: ", err);
         res.status(500).send({ _err: "e_general", error: "Error executing action", message: err.message, stack: err.stack, name: err.name, code: err.code });
     }

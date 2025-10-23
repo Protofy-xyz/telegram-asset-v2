@@ -38,38 +38,36 @@ export const RuleEditor = ({ board, actions, states, cardData, setCardData, comp
     }
   }, [cardData.rulesCode])
 
-  return <TabContainer>
-    {/* <TabTitle tabname={"Card Rules"} tabDescription='Define the behavior of your card using using natural language' /> */}
-    <AutopilotEditor
-      key={key}
-      cardData={cardData}
-      board={board}
-      panels={cardData.type == 'value' ? ['states'] : ['actions', 'states']}
-      setRulesCode={(rulesCode) => {
-        setCardData(prev => ({ ...prev, rulesCode }))
-      }}
-      rulesCode={cardData.rulesCode}
-      actions={actions}
-      states={states}
-      rules={cardData.rules ?? []}
-      value={value}
-      setRules={async (rules) => {
-        const rulesRes = await getRulesCode(rules)
-        if (rulesRes.error) throw new Error(rulesRes.message ?? rulesRes.error)
+  {/* <TabTitle tabname={"Card Rules"} tabDescription='Define the behavior of your card using using natural language' /> */ }
+  return <AutopilotEditor
+    key={key}
+    cardData={cardData}
+    board={board}
+    panels={cardData.type == 'value' ? ['states'] : ['actions', 'states']}
+    setRulesCode={(rulesCode) => {
+      setCardData(prev => ({ ...prev, rulesCode }))
+    }}
+    rulesCode={cardData.rulesCode}
+    actions={actions}
+    states={states}
+    rules={cardData.rules ?? []}
+    value={value}
+    setRules={async (rules) => {
+      const rulesRes = await getRulesCode(rules)
+      if (rulesRes.error) throw new Error(rulesRes.message ?? rulesRes.error)
 
-        setKey(k => k + 1)
+      setKey(k => k + 1)
 
-        setCardData(prev => {
-          const next = { ...prev, ...rulesRes, rules }
-          return next
-        })
-      }}
-      rulesConfig={{
-        enabled: hasKey,
-        loading: loading,
-        disabledView: () => <RulesKeySetter updateKey={updateKey} loading={loading} />
-      }}
-      setReturnType={(t) => setCardData(prev => ({ ...prev, returnType: t }))}
-      valueReady={hasCode} />
-  </TabContainer>
+      setCardData(prev => {
+        const next = { ...prev, ...rulesRes, rules }
+        return next
+      })
+    }}
+    rulesConfig={{
+      enabled: hasKey,
+      loading: loading,
+      disabledView: () => <RulesKeySetter updateKey={updateKey} loading={loading} />
+    }}
+    setReturnType={(t) => setCardData(prev => ({ ...prev, returnType: t }))}
+    valueReady={hasCode} />
 }

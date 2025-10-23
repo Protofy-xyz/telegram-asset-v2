@@ -11,8 +11,8 @@ export const registerCards = async () => {
         name: "job_queue",
         emitEvent: true,
         defaults: {
-            "width": 2,
-            "height": 12,
+            "width": 3,
+            "height": 16,
             "icon": "file-stack",
             "name": "job_queue",
             "description": "A job queue with a list of pending jobs and a current job",
@@ -88,6 +88,247 @@ export const registerCards = async () => {
             "html": "//@card/react\nfunction Widget(props) {\n  return (\n    <ViewList\n      enableManualPop={true}\n      current={props?.value?.current}\n      emptyMessageProps={{\n        fontSize: \"$6\",\n        fontWeight: \"600\"\n      }}\n      // emptyMode=\"wait\"\n      emptyMessage=\"Empty job list\" \n      items={props?.value?.items} \n      onPop={(items) => execute_action(props.name, {action: 'next'})}\n      onClear={(items) => execute_action(props.name, {action: 'reset'})}\n      onPush={(item) => execute_action(props.name, {action: 'push', job: item})}\n      onDeleteItem={(item, index) => execute_action(props.name, {action: 'remove', index})} \n    />\n  );\n}\n",
         }
     })
+
+    addCard({
+        group: 'board',
+        tag: "net",
+        id: 'board_net_apicall',
+        templateName: "Call an API",
+        name: "api_call",
+        emitEvent: true,
+        defaults: {
+            width: 3,
+            height: 10,
+            icon: "globe",
+            type: "action",
+            name: "API Call",
+            displayResponse: true,
+            displayIcon: false,
+            params: {
+                url: "http endpoint to call",
+                method: "method for the call: get or post",
+                body: "when using post, the body for the request"
+            },
+            configParams: {
+                url: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "any"
+                },
+                method: {
+                    visible: true,
+                    defaultValue: "get",
+                    type: "string"
+                },
+                body: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "return await context.apis.fetch(params.method ?? 'get', params.url, params.body)",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        }
+    })
+
+    addCard({
+        group: 'board',
+        tag: "net",
+        id: 'board_net_loadpage',
+        templateName: "Loads a Web Page",
+        name: "load_page",
+        emitEvent: true,
+        defaults: {
+            width: 3,
+            height: 10,
+            icon: "globe",
+            type: "action",
+            name: "Load Web Page",
+            displayResponse: true,
+            displayIcon: false,
+            params: {
+                url: "http endpoint to call",
+                method: "method for the call: get or post",
+                body: "when using post, the body for the request"
+            },
+            configParams: {
+                url: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "any"
+                },
+                method: {
+                    visible: false,
+                    defaultValue: "get",
+                    type: "string"
+                },
+                body: {
+                    visible: false,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "return await context.apis.fetch(params.method ?? 'get', params.url, params.body)",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        }
+    })
+
+    addCard({
+        group: 'board',
+        tag: "agents",
+        id: 'board_agents_call',
+        templateName: "Call an Agent",
+        name: "call",
+        emitEvent: true,
+        defaults: {
+            width: 2,
+            height: 10,
+            icon: "bot-message-square",
+            type: "action",
+            name: "agent_call",
+            displayResponse: true,
+            displayIcon: true,
+            params: {
+                board: "board name where the target agent is located",
+                name: "name of the agent"
+            },
+            configParams: {
+                board: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                },
+                name: {
+                    visible: false,
+                    defaultValue: "agent_input",
+                    type: "string"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "const { board: reqBoardName, name: reqName, ...reqParams } = params;\r\n\r\nconst queryString = new URLSearchParams({\r\n  ...reqParams,\r\n  token\r\n}).toString();\r\n\r\nreturn await context.apis.fetch(\r\n  'get',\r\n  `/api/agents/v1/${reqBoardName}/${reqName}?${queryString}`\r\n);",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        }
+    })
+
+
+    addCard({
+        group: 'board',
+        tag: "agents",
+        id: 'board_agents_input',
+        templateName: "Agent Input to receive agent calls",
+        name: "input",
+        emitEvent: true,
+        defaults: {
+            width: 3,
+            height: 25,
+            icon: "globe",
+            name: "agent_input",
+            description: "A job queue with a list of pending jobs and a current job",
+            type: "action",
+            editorOptions: {},
+            displayResponse: true,
+            params: {
+                item: "",
+                action: "action to perform in the queue: push, pop, clear",
+                response: ""
+            },
+            configParams: {
+                item: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                },
+                action: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                },
+                response: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
+            presets: {
+                reply: {
+                    description: "Sends a reply to the current job and makes the next item (if any) the current job. The reply should be specified in the response param",
+                    configParams: {
+                        action: {
+                            visible: false,
+                            defaultValue: "reply"
+                        },
+                        item: {
+                            visible: false
+                        },
+                        response: {
+                            visible: true
+                        }
+                    }
+                },
+                skip: {
+                    description: "Skips the current job. Do not use unless you know what you are doing.",
+                    configParams: {
+                        action: {
+                            defaultValue: "skip"
+                        }
+                    }
+                },
+                reset: {
+                    description: "resets the queue state to empty and skip curret job",
+                    configParams: {
+                        action: {
+                            defaultValue: "clear"
+                        }
+                    }
+                },
+                remove: {
+                    description: "remove the element with the given index from the job queue",
+                    configParams: {
+                        action: {
+                            defaultValue: "remove"
+                        },
+                        item: {
+                            visible: true,
+                            defaultValue: 0,
+                            type: "number"
+                        }
+                    }
+                },
+                push: {
+                    params: {
+                        item: "item to push"
+                    },
+                    description: "Adds a new job",
+                    configParams: {
+                        action: {
+                            defaultValue: "push"
+                        },
+                        item: {
+                            visible: true,
+                            defaultValue: "",
+                            type: "string"
+                        }
+                    }
+                }
+            },
+            enableAgentInputMode: true,
+            tokens: {},
+            displayButton: false,
+            manualAPIResponse: true,
+            rulesCode: "if (params.action == \"reset\") {\n  return { items: [], current: undefined };\n} else if (params.action == \"skip\") {\n  return {\n    items: (Array.isArray(board[name]?.items) ? board[name].items : []).slice(\n      1\n    ),\n    current: board[name].items[0],\n  };\n} else if (params.action == \"remove\") {\n  const queue = Array.isArray(board[name]?.items) ? board[name].items : [];\n  const index = parseInt(params.index, 10);\n  return {\n    items: queue.slice(0, index).concat(queue.slice(index + 1)),\n    current: board[name]?.current,\n  };\n} else if (params.action == \"clear\") {\n  return { items: [], current: board[name].current };\n} else if (params.action == \"reply\") {\n  //reply to current job\n  const job = board[name].current;\n  if (!job) {\n    throw \"Unable to send reply: There is not current job to reply to\";\n  }\n  const res = context.boards.getVar(\"job_\" + job.id, true);\n  if (!res) {\n    throw \"Unable to send reply: Empty res object in current job.\";\n  }\n  res.send(params.response);\n  return {\n    items: (Array.isArray(board[name]?.items) ? board[name].items : []).slice(\n      1\n    ),\n    current: board[name].items[0],\n  };\n} else {\n  const genUID = (l = 16) => {\n    const t = Date.now().toString(36);\n    const r =\n      Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);\n    let out = \"\";\n    for (let i = 0; i < l; i++)\n      out += (i % 2 ? t : r)[i % (i % 2 ? t.length : r.length)];\n    return out;\n  };\n  const uid = genUID(16);\n  context.boards.setVar(\"job_\" + uid, res);\n  const item = {\n    id: uid,\n    time: new Date().toISOString(),\n    ua: req.get(\"User-Agent\"),\n    params: req.query,\n    path: params.path,\n  };\n\n  if (board[name]?.current) {\n    return {\n      items: (Array.isArray(board[name]?.items)\n        ? board[name].items\n        : []\n      ).concat([item]),\n      current: board[name]?.current,\n    };\n  }\n  return {\n    items: Array.isArray(board[name]?.items) ? board[name].items : [],\n    current: item,\n  };\n}\n",
+            html: "//@card/react\nfunction Widget(props) {\n  return (\n    <ViewList\n      onReply={(item, response) => execute_action(props.name, {action: 'reply', response: response})}\n      enableReply={true}\n      enableManualPop={true}\n      current={props?.value?.current}\n      emptyMessageProps={{\n        fontSize: \"$6\",\n        fontWeight: \"600\"\n      }}\n      emptyDescription={<YStack>\n        <Paragraph color=\"$color10\" mt={\"$2\"} fontSize={\"$4\"}>\n          <a style={{}} target=\"_new\" href={'/api/agents/v1/'+window?.board?.name+'/'+props?.name}>{'Open agent link'}</a>\n        </Paragraph>\n      </YStack>  \n      }\n      // emptyMode=\"wait\"\n      emptyMessage=\"Empty agent job queue\"\n      disableManualPush={true}\n      items={props?.value?.items} \n      onPop={(items) => execute_action(props.name, {action: 'skip'})}\n      onClear={(items) => execute_action(props.name, {action: 'reset'})}\n      onPush={(item) => execute_action(props.name, {action: 'push', item})}\n      onDeleteItem={(item, index) => execute_action(props.name, {action: 'remove', index})} \n    />\n  );\n}\n",
+            value: {
+                items: []
+            }
+        }
+    })
+
+
+
+
+
     addCard({
         group: 'board',
         tag: "http",
@@ -721,6 +962,57 @@ return card({
             rulesCode: "return [{name: \"protofito\", age: 20}, {name: \"protofita\", age: 19}, {name: \"bad protofito\", age: 10}]",
         },
         emitEvent: true
+    })
+
+    addAction({
+        group: 'board',
+        name: 'resetgroup',
+        url: "/api/core/v1/board/cardresetgroup",
+        tag: 'card',
+        description: "Resets the values of groups of cards in the board",
+        params: {
+            included: "array of cards to include, or * for all",
+            excluded: "array of cards to exclude"
+        },
+        emitEvent: true,
+        receiveBoard: true,
+        token: await getServiceToken()
+    })
+
+    addCard({
+        group: 'board',
+        tag: 'card',
+        id: 'board_resetgroup',
+        templateName: 'Reset card group values',
+        name: 'board_resetgroup',
+        defaults: {
+            type: "action",
+            icon: 'message-square-text',
+            name: 'card reset group',
+            description: 'Reset the values of a group of cards in the board',
+            params: {
+                included: "array of cards to include, or * for all",
+                excluded: "array of cards to exclude"
+            },
+            configParams: {
+                included: {
+                    visible: true,
+                    defaultValue: "[\"*\"]",
+                    type: "array"
+                },
+                excluded: {
+                    visible: true,
+                    defaultValue: "[\"\"]",
+                    type: "array"
+                }
+            },
+            rulesCode: `return await execute_action("/api/core/v1/board/cardresetgroup", userParams)`,
+            displayResponse: true,
+            buttonLabel: "Reset all",
+            displayIcon: false
+        },
+        emitEvent: true,
+        token: await getServiceToken()
     })
 
     addAction({

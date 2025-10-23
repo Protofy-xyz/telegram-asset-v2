@@ -7,14 +7,28 @@ import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
 import { SelectList } from "../SelectList";
 import { Pin } from "@tamagui/lucide-icons";
+import { useTheme, getVariableValue } from 'tamagui';
 
-export const Icon = ({ name, size, color, style }) => {
+export const Icon = ({ name, size = 24, color, style }) => {
+    const theme = useTheme();
+
+    const resolveColor = (c) => {
+        if (typeof c === 'string' && c.startsWith('$')) {
+            const key = c.slice(1);           // "$color10" -> "color10"
+            const v = theme[key];             // tamagui variable
+            return v ? getVariableValue(v) : c;
+        }
+        return c; // already a hex/rgb/etc.
+    };
+
+    const bg = resolveColor(color);
+
     return (
         <div
             style={{
                 width: `${size}px`,
                 height: `${size}px`,
-                backgroundColor: `${color}`,
+                backgroundColor: `${bg}`,
                 maskImage: `url(/public/icons/${name}.svg)`,
                 WebkitMaskImage: `url(/public/icons/${name}.svg)`,
                 maskRepeat: `no-repeat`,
@@ -102,9 +116,9 @@ export const ParamsForm = ({ data, children }) => {
     }
 
     return (
-        <YStack h="100%" w={"100%"} ai="center">
+        <YStack h="100%" w={"100%"} ai="center" p="10px">
             {children}
-            <YStack w={"100%"} ai="center" jc="center" mt={data.buttonMode !== "full" ? "$5" : 0}>
+            <YStack w={"100%"} ai="center" jc="center">
                 {allKeys.map((key) => {
                     const cfg = data.configParams?.[key] || {};
                     const { visible = true, defaultValue = "", type = 'string' } = cfg;
@@ -176,7 +190,6 @@ export const ParamsForm = ({ data, children }) => {
                                             ? <TextArea
                                                 className="no-drag"
                                                 f={1}
-                                                mx="10px"
                                                 focusStyle={{ outlineWidth: "1px" }}
                                                 value={value}
                                                 onChangeText={(val) => setParam(key, val)}
@@ -189,7 +202,6 @@ export const ParamsForm = ({ data, children }) => {
                                                 value={value}
                                                 placeholder={placeholder}
                                                 minWidth={100}
-                                                mx="10px"
                                                 onChangeText={(val) => setParam(key, val)}
                                             />
                                         }
@@ -197,7 +209,7 @@ export const ParamsForm = ({ data, children }) => {
                                             <Icon name="maximize-2" size={20} color={"var(--gray8)"} style={{}} />
                                         </TextEditDialog.Trigger>
                                         <TextEditDialog.Editor
-                                            placeholder={key}
+                                            placeholder={placeholder}
                                             value={value}
                                             readValue={() => paramsState[key] ?? ""}
                                             onChange={(val) => setParam(key, val)}
@@ -206,16 +218,7 @@ export const ParamsForm = ({ data, children }) => {
                                     </TextEditDialog>)
                             }
                             {(type == 'json' || type == 'array')
-                                && <XStack
-                                    p="$3"
-                                    bc="$gray1"
-                                    borderColor="$gray8"
-                                    bw={1}
-                                    br="$4"
-                                    overflow="hidden"
-                                    mx="10px"
-                                    f={1}
-                                    height={200}
+                                && <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}
                                 >
                                     <Monaco
                                         language='json'
@@ -245,7 +248,6 @@ export const ParamsForm = ({ data, children }) => {
                             </Switch></Tinted>}
 
 
-
                             {type == 'path'
                                 && <FilePicker
                                     allowMultiple={true}
@@ -262,7 +264,7 @@ export const ParamsForm = ({ data, children }) => {
             </YStack>
 
             {data.type === "action" && (
-                <YStack w={"100%"} {...(data.buttonMode === "full" ? { f: 1 } : {})} ai="center" jc="center" padding={data.buttonMode !== "full" ? "10px" : "0"}>
+                <YStack w={"100%"} {...(data.buttonMode === "full" ? { f: 1 } : {})} ai="center" jc="center">
                     <Button
                         id={`${data.name}-run-button`}
                         className="no-drag"
@@ -272,7 +274,7 @@ export const ParamsForm = ({ data, children }) => {
                         w={"100%"}
                         maw={"100%"}
                         f={isButtonFull && 1}
-                        mt={isButtonFull ? 0 : "$5"}
+                        // mt={isButtonFull ? 0 : "$5"}
                         p={"10px"}
                         textAlign="center"
                         bc={data.color}

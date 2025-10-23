@@ -23,18 +23,33 @@ export default Protofy("code", async (app:Application, context: typeof APIContex
         const {metadata, ...body} = req.body
 
         const {session, token} = getAuth(req)
+        let agentName = req.query.agent as string
+
+        if(!agentName) {
+          chatbot.send("Agent parameter is required")
+          chatbot.end()
+          return
+        }
+
+        const agentUrl = `/api/agents/v1/${agentName}/agent_input`
+
+        const userMessage = body.messages[body.messages.length - 1].content
+        const prevMessages = body.messages.slice(0, body.messages.length - 1) //exclude the last message
+
+
+        let response = await context.apis.fetch(
+          'get',
+          agentUrl+'?token='+encodeURIComponent(token)+'&message='+encodeURIComponent(userMessage)+'&history='+encodeURIComponent(JSON.stringify(prevMessages)),
+        );
+
+        if(typeof response !== 'string') {
+          response = JSON.stringify(response)
+        }
+
         // const message = "Message received"
-        // chatbot.send(message)
-
-        context.state.set({
-          group: "chat",
-          tag: "messages",
-          name: "lastMessage",
-          value: body.messages[body.messages.length - 1].content,
-          emitEvent: true
-        })
-
+        chatbot.send(response)
         chatbot.end()
+        // chatbot.end()
     })
 
 

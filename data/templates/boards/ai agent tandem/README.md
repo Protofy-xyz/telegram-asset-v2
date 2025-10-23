@@ -1,0 +1,1 @@
+Empty board with two AI cores working together to solve tasks

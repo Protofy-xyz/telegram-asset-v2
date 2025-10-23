@@ -83,7 +83,8 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
             onApplyRules={async (rules) => {
                 return await setRules(rules)
             }}
-            disableAIPanels={!isAIEnabled}
+            disableAIPanels={!isAIEnabled || cardData.editRulesInNaturalLanguage === false}
+            disableFlowMode={cardData.editRulesInLowCode === false}
             defaultMode={isAIEnabled ? 'rules' : 'code'}
             rules={rules}
             viewPort={{ x: 20, y: window.innerHeight / 8, zoom: 0.8 }}
@@ -148,7 +149,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
             <CustomPanelResizeHandle direction="vertical" borderLess={false} borderColor="var(--gray4)" />
 
-            <ActionsAndStatesPanel board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} showActionsTabs showStatesTabs />
+            <ActionsAndStatesPanel type="card" board={board} panels={panels} actions={actions} states={states} copyMode={rulesMode} showActionsTabs showStatesTabs />
         </PanelGroup>
     );
 };

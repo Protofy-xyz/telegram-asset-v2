@@ -350,11 +350,22 @@ class NeopixelsBus {
                             "brightness": { "type": "int", "minimum": 0, "maximum": 255, "default": 255 }
                         }
                     },
+                    cardProps: {
+                        icon: "wrench",
+                    },
                 },
                 {
                     name: 'red',
                     label: 'Red',
                     description: 'Turns on the neopixels in red',
+                    props: {
+                        theme: "red",
+                        color: "$red10"
+                    },
+                    cardProps: {
+                        icon: "lightbulb",
+                        color: "$red10"
+                    },
                     endpoint: "/" + this.type + "/" + this.name + "/command",
                     connectionType: 'mqtt',
                     payload: {
@@ -375,6 +386,14 @@ class NeopixelsBus {
                     name: 'green',
                     label: 'Green',
                     description: 'Turns on the neopixels in green',
+                    props: {
+                        theme: "green",
+                        color: "$green10"
+                    },
+                    cardProps: {
+                        icon: "lightbulb",
+                        color: "$green10"
+                    },
                     endpoint: "/" + this.type + "/" + this.name + "/command",
                     connectionType: 'mqtt',
                     payload: {
@@ -395,6 +414,14 @@ class NeopixelsBus {
                     name: 'blue',
                     label: 'Blue',
                     description: 'Turns on the neopixels in blue',
+                    props: {
+                        theme: "blue",
+                        color: "$blue10"
+                    },
+                    cardProps: {
+                        icon: "lightbulb",
+                        color: "$blue10"
+                    },
                     endpoint: "/" + this.type + "/" + this.name + "/command",
                     connectionType: 'mqtt',
                     payload: {
@@ -415,6 +442,14 @@ class NeopixelsBus {
                     name: 'off',
                     label: 'Turn off',
                     description: 'Turns off the neopixels',
+                    props: {
+                        theme: "gray",
+                        color: "$gray10"
+                    },
+                    cardProps: {
+                        icon: "lightbulb-off",
+                        color: "$gray10"
+                    },
                     endpoint: "/" + this.type + "/" + this.name + "/command",
                     connectionType: 'mqtt',
                     payload: {
@@ -447,6 +482,9 @@ class NeopixelsBus {
                             "blue": { "type": "int", "minimum": 0, "maximum": 255, "default": 0 }
 
                           }
+                    },
+                    cardProps: {
+                        icon: "sliders-horizontal",
                     },
                 }
             ]

@@ -61,6 +61,9 @@ class SEN55 {
           units: 'µg/m³',
           endpoint: "/sensor/"+this.name+"-pm1-0/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "cloud",
+          }
         },
         {
           name: 'pm2.5',
@@ -69,6 +72,9 @@ class SEN55 {
           units: 'µg/m³',
           endpoint: "/sensor/"+this.name+"-pm2-5/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "cloud",
+          }
         },
         {
           name: 'pm4.0',
@@ -77,6 +83,9 @@ class SEN55 {
           units: 'µg/m³',
           endpoint: "/sensor/"+this.name+"-pm4-0/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "cloud",
+          }
         },
         {
           name: 'pm10.0',
@@ -85,6 +94,9 @@ class SEN55 {
           units: 'µg/m³',
           endpoint: "/sensor/"+this.name+"-pm10-0/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "cloud",
+          }
         },
         {
           name: 'temperature',
@@ -93,6 +105,10 @@ class SEN55 {
           units: 'ºC',
           endpoint: "/sensor/"+this.name+"-temperature/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "thermometer",
+            color: "$red10"
+          }
         },
         {
           name: 'humidity',
@@ -101,6 +117,10 @@ class SEN55 {
           units: '%',
           endpoint: "/sensor/"+this.name+"-humidity/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "droplets",
+            color: "$blue10"
+          }
         },
         {
           name: 'nox',
@@ -108,6 +128,9 @@ class SEN55 {
           description: 'Get NOX status',
           endpoint: "/sensor/"+this.name+"-nox/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "cloud",
+          }
         },
         {
           name: 'voc',
@@ -115,6 +138,9 @@ class SEN55 {
           description: 'Get VOC status',
           endpoint: "/sensor/"+this.name+"-voc/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "cloud",
+          }
         }
       ]
     }

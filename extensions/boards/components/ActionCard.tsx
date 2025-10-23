@@ -107,7 +107,7 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
 
             <XStack className='no-drag'>
                 {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
-                <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "config")} />
+                <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "params")} />
 
                 <Popover key="card-menu" onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
                     <Popover.Trigger>

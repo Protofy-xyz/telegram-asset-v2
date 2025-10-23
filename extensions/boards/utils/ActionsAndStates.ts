@@ -13,16 +13,24 @@ export const generateStateCode = (properties, target?: "boards" | "state") => {
     }
 }
 
-export const generateActionCode = (actionName, params = null) => {
+const parseParams = (params) => {
     try {
-        if (params) {
-            return `await executeAction({name: "${actionName}", params: {
-${Object.entries(params || {}).map(([key, value]) => {
-                return `\t${key}: '', // ${value}`;
-            }).join('\n')}
-}})`
+        if (!params) return "{}";
+        return `{ ${Object.entries(params).map(([key, value]) => {
+            return `\n\t${key}: ${typeof value === 'string' ? `'${value}'` : value}, // ${value}`;
+        }).join('')} \n}`;
+    } catch (err) {
+        return "{}";
+    }
+}
+
+export const generateActionCode = (actionName, params = null, type?: "board" | "card" | "") => {
+    try {
+        const paramsString = parseParams(params);
+        if (type === "board") {
+            return `await board.execute_action({name: "${actionName}", params: ${paramsString}})`
         } else {
-            return `await executeAction({name: "${actionName}"})`
+            return `await executeAction({name: "${actionName}", params: ${paramsString}})`
         }
     } catch (err) {
         console.error("cannot generate action code for " + actionName + ", ", err)

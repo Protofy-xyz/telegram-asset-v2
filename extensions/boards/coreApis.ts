@@ -1,5 +1,5 @@
 import { BoardModel } from "./boardsSchemas";
-import { AutoAPI, getRoot, handler, resolveBoardParam } from 'protonode'
+import { ai, AutoAPI, getRoot, handler, resolveBoardParam } from 'protonode'
 import { API, getLogger, ProtoMemDB, generateEvent } from 'protobase'
 import { promises as fs } from 'fs';
 import * as fsSync from 'fs';
@@ -12,7 +12,6 @@ import fileActions from "@extensions/files/fileActions";
 import { Manager } from "./manager";
 import { dbProvider, getDBOptions } from 'protonode';
 import { acquireLock, releaseLock } from "./system/lock";
-import { callModel } from "./system/ai";
 import { registerCards } from "./system/cards";
 import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles } from "./system/boards";
 
@@ -36,9 +35,56 @@ class HttpError extends Error {
     }
 }
 
-const processCards = async (boardId, cards, context, regenerate?) => {
+const getMetaCard = (card) => {
+    const inputs = card.params ? Object.fromEntries(
+        Object.entries(card.params).map(([key, description]) => {
+            const config = card.configParams[key] || {};
+            return [key, { ...config, description }];
+        })
+    ) : {};
+    return {
+        name: card.name,
+        type: card.type,
+        //description: card.description || '',
+        //icon: card.icon || '',
+        code: card.rulesCode,
+        html: card.html,
+        inputs: inputs,
+        links: card.links,
+        presets: card.presets || {},
+        code_explanation: card.rules,
+        enableAgentInputMode: card.enableAgentInputMode || false
+    }
+}
+const processCards = async (boardId, cards, context, boardData?, regenerate?) => {
     const proxyDB = ProtoMemDB('proxy');
+
+    const cardsMetaValue = cards.filter(c => c.type == 'value').map(card => {
+        return getMetaCard(card);
+    }).reduce((obj, card) => {
+        obj[card.name] = card;
+        delete card.name;
+        delete card.type;
+        return obj;
+    }, {});
+
+    const cardsMetaActions = cards.filter(c => c.type == 'action').map(card => {
+        return getMetaCard(card);
+    }).reduce((obj, card) => {
+        obj[card.name] = card;
+        delete card.name;
+        delete card.type;
+        return obj;
+    }, {});
+
+    context.state.set({ group: 'meta', tag: 'boardCards', name: boardId, value: { actionCards: cardsMetaActions, valueCards: cardsMetaValue }, emitEvent: true }) //set board meta info
+    // console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||');
+    // console.log('Setting board cards meta for board: ', boardId, { actionCards: cardsMetaActions, valueCards: cardsMetaValue });
+    // console.log('|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||');
+    context.state.set({ group: 'meta', tag: 'boards', name: boardId, value: boardData, emitEvent: true }) //set board meta info
     if (regenerate) {
+
+
         const newCardNames = cards.map(card => card.name);
         cleanObsoleteCardFiles(boardId, newCardNames);
         for (let i = 0; i < cards.length; i++) {
@@ -66,6 +112,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
                 }
                 delete card.html
             }
+
         }
         proxyDB.clear('boards', boardId)
     }
@@ -91,6 +138,14 @@ const processCards = async (boardId, cards, context, regenerate?) => {
 
         if (card.enableCustomRunPathInputParam && card.customRunPathInputParam && card.configParams[card.customRunPathInputParam]?.defaultValue) {
             const customRunPath = card.configParams[card.customRunPathInputParam]?.defaultValue;
+            proxyDB.set('boards', boardId, card.name, {
+                alias: customRunPath,
+                target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name + '/run/raw'
+            });
+        }
+
+        if (card.enableAgentInputMode) {
+            const customRunPath = '/api/agents/v1/' + boardId + '/' + card.name;
             proxyDB.set('boards', boardId, card.name, {
                 alias: customRunPath,
                 target: '/api/core/v1/boards/' + boardId + '/cards/' + card.name + '/run/raw'
@@ -130,7 +185,7 @@ const processCards = async (boardId, cards, context, regenerate?) => {
             emitEvent: true,
             persistValue: card.persistValue ?? false
         })
-    
+
 
 
         // add preset actions if the card contains presets
@@ -199,12 +254,13 @@ const getDB = (path, req, session, context?) => {
                     const decodedContent = JSON.parse(fileContent);
 
                     const userType = session?.user?.type;
+                    const isAllVisible = req.query.all === 'true';
                     const isSystem = !!decodedContent?.tags?.includes('system');
                     const usersList = Array.isArray(decodedContent?.users) ? decodedContent.users : null;
 
                     let allowed: boolean;
 
-                    if (isSystem) {
+                    if (isSystem && !isAllVisible) {
                         // System boards: show ONLY if a whitelist exists and includes this user type
                         allowed = !!(usersList && userType && usersList.includes(userType));
                     } else {
@@ -381,9 +437,9 @@ function Widget({board, state}) {
             let shouldSnapshot = false;
             try {
                 //register actions for each card
-                console.log('cards: ', value.cards)
+                // console.log('cards: ', value.cards)
                 if (value.cards && Array.isArray(value.cards)) {
-                    await processCards(key, value.cards, context, true)
+                    await processCards(key, value.cards, context, value, true)
                 }
                 const statesDB = ProtoMemDB('states');
                 const group = 'boards';
@@ -594,7 +650,7 @@ export default async (app, context) => {
     }
 
     const handleCallModel = async (res, prompt, options = {}) => {
-        let reply = await callModel(prompt, context, defaultAIProvider, options)
+        let reply = await ai.callModel(prompt)
 
         console.log('REPLY: ', reply)
         if (reply?.raw?.error) {
@@ -669,6 +725,8 @@ export default async (app, context) => {
         //get full board
         const board = await getBoard(from)
         board.name = '{{{name}}}'
+        delete board.version
+        delete board.savedAt
         //fill uiCode and rulesCode
 
 
@@ -694,7 +752,7 @@ export default async (app, context) => {
         if (req.query.debug) {
             console.log("Prompt: ", prompt)
         }
-        let reply = await callModel(prompt, context, defaultAIProvider)
+        let reply = await ai.callModel(prompt)
         console.log('REPLY: ', reply)
         const jsCode = reply.choices[0].message.content
         res.send({ jsCode: cleanCode(jsCode) })
@@ -798,16 +856,16 @@ export default async (app, context) => {
             const serializedContext = safeDump(cleanContext);
 
             delete req.body.actions[req.body.card.name]
-            const prompt = await context.autopilot.getPromptFromTemplate({ 
-                board: req.body.board, 
-                context: serializedContext, 
-                templateName: "actionRules", 
-                card: JSON.stringify(req.body.card, null, 4), 
-                states: JSON.stringify(req.body.states, null, 4), 
+            const prompt = await context.autopilot.getPromptFromTemplate({
+                board: req.body.board,
+                context: serializedContext,
+                templateName: "actionRules",
+                card: JSON.stringify(req.body.card, null, 4),
+                states: JSON.stringify(req.body.states, null, 4),
                 rules: JSON.stringify(req.body.rules, null, 4),
                 previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
-                actions: JSON.stringify(req.body.actions, null, 4), 
-                userParams: JSON.stringify(req.body.userParams, null, 4) 
+                actions: JSON.stringify(req.body.actions, null, 4),
+                userParams: JSON.stringify(req.body.userParams, null, 4)
             });
 
             if (req.query.debug) {
@@ -835,12 +893,12 @@ export default async (app, context) => {
             }
         })
 
-        const prompt = await context.autopilot.getPromptFromTemplate({ 
-            templateName: "boardRules", 
-            states: JSON.stringify(req.body.states, null, 4), 
+        const prompt = await context.autopilot.getPromptFromTemplate({
+            templateName: "boardRules",
+            states: JSON.stringify(req.body.states, null, 4),
             rules: JSON.stringify(req.body.rules, null, 4),
             previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
-            actions: JSON.stringify(req.body.actions, null, 4) 
+            actions: JSON.stringify(req.body.actions, null, 4)
         });
         if (req.query.debug) {
             console.log("Prompt: ", prompt)
@@ -853,7 +911,7 @@ export default async (app, context) => {
         if (req.query.debug) {
             console.log("Prompt: ", prompt)
         }
-        let reply = await callModel(prompt, context, defaultAIProvider)
+        let reply = await ai.callModel(prompt)
         console.log('REPLY: ', reply)
         const jsCode = reply.choices[0].message.content
         res.send({ jsCode: cleanCode(jsCode) })
@@ -1044,8 +1102,8 @@ export default async (app, context) => {
         if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
-            if(card.manualAPIResponse) {
-                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, false, (value)=>{});
+            if (card.manualAPIResponse) {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, false, (value) => { });
             } else {
                 handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query);
             }
@@ -1058,10 +1116,26 @@ export default async (app, context) => {
         if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
             res.status(403).send({ error: "Forbidden: Invalid token" });
         } else {
-            if(card.manualAPIResponse) {
-                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, true, (value)=>{});
+            if (card.manualAPIResponse) {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, true, (value) => { });
             } else {
                 handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.query, true);
+            }
+
+        }
+    }))
+
+    app.post('/api/core/v1/boards/:boardId/cards/:cardId/run/raw', handler(async (req, res, session, next) => {
+        const card = await getCard(req.params.boardId, req.params.cardId);
+        //get read token from card
+        if (!card?.publicRun && !(await hasAccessToken('run', session, card, req.query.token))) {
+            res.status(403).send({ error: "Forbidden: Invalid token" });
+        } else {
+            console.log("DEV: card.manualAPIResponse: ", card.manualAPIResponse)
+            if (card.manualAPIResponse) {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.body, true, (value) => { });
+            } else {
+                handleBoardAction(context, Manager, req, req.params.boardId, req.params.cardId, res, req.body, true);
             }
 
         }
@@ -1160,7 +1234,37 @@ export default async (app, context) => {
 
     })
 
+    app.get('/api/core/v1/board/cardresetgroup', requireAdmin(), async (req, res) => {
+        if (!req.query.included) {
+            res.status(400).send('Missing included parameter')
+            return
+        }
 
+        if (!req.query.excluded) {
+            res.status(400).send('Missing excluded parameter')
+            return
+        }
+
+        if (!req.query.board) {
+            res.status(400).send('Missing board parameter')
+            return
+        }
+
+        const board = await getBoard(req.query.board);
+        if (!board.cards || !Array.isArray(board.cards)) {
+            res.send({ error: "No cards found" });
+            return;
+        }
+
+        const cards = board.cards.filter(c => (req.query.included.includes('*') || req.query.included.includes(c.name)) && !req.query.excluded.includes(c.name));
+        if (cards.length) {
+            for (const card of cards) {
+                await context.state.set({ group: 'boards', tag: req.query.board, name: card.name, value: card.initialValue ?? undefined, emitEvent: true });
+                Manager.update('../../data/boards/' + req.query.board + '.js', 'states', card.name, null);
+            }
+        }
+        res.json(cards.map(c => c.name));
+    })
 
     app.get('/api/core/v1/board/cardreset', requireAdmin(), async (req, res) => {
         if (!req.query.name) {
@@ -1246,7 +1350,7 @@ export default async (app, context) => {
         for (const board of boards) {
             const boardContent = await getBoard(board)
             if (boardContent.cards && Array.isArray(boardContent.cards)) {
-                await processCards(boardContent.name, boardContent.cards, context)
+                await processCards(boardContent.name, boardContent.cards, context, boardContent)
             }
         }
     }

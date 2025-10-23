@@ -53,7 +53,7 @@ function CardMenuItem({ icon: Icon, label, onPress, iconColor }: CardMenuItemPro
 function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenuItemProps[] }) {
   return <Popover allowFlip>
     <Popover.Trigger disabled={disabled}>
-      <InteractiveIcon IconColor="var(--color)" Icon={MoreVertical} />
+      <InteractiveIcon IconColor="var(--color)" Icon={MoreVertical} opacity={disabled ? 0.3 : 1} />
     </Popover.Trigger>
     <Popover.Content left={"$7"} top={"$2"} bw={1} boc={"$borderColor"} bc={"var(--bgContent)"} >
       <Popover.Arrow borderWidth={1} boc="$gray4" />
@@ -73,6 +73,7 @@ function CardMenu({ disabled, options }: { disabled?: boolean, options: CardMenu
 function CardElement({ element, onDeleted }: any) {
   const toast = useToastController()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [openError, setOpenError] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -145,10 +146,13 @@ function CardElement({ element, onDeleted }: any) {
         <Paragraph f={1} style={{ color: 'var(--color)', fontSize: '14px', fontWeight: '600' }} numberOfLines={1} ellipsizeMode="tail">
           {element.name}
         </Paragraph>
-        <CardMenu disabled={isDeleting || !["downloaded", "pending", "error"].includes(element.status)} options={[
-          { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
-          ...(element.status === "downloaded" ? [{ icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder }] : [])
-        ]} />
+        <CardMenu
+          disabled={isDeleting || isDownloading || isRunning}
+          options={[
+            { icon: Trash2, iconColor: "$red8", label: "Delete", onPress: handleDelete },
+            ...(element.status === "downloaded" ? [{ icon: FolderOpen, label: "Open Folder", onPress: handleOpenFolder }] : [])
+          ]}
+        />
       </XStack>
       <Paragraph style={{ color: 'var(--color)', fontSize: '10px' }}>
         v: {element.version}
@@ -166,15 +170,19 @@ function CardElement({ element, onDeleted }: any) {
             </Tinted>
           </XStack>
         }
-        {element.status == 'pending'
+        {(element.status == 'pending' && !isDownloading)
           && <Tinted>
             <InteractiveIcon size={20} IconColor="var(--color8)" Icon={Download} onPress={async () => {
-              const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
-              const result = await fetch(url)
+              setIsDownloading(true)
+              try {
+                const url = 'app://localhost/api/v1/projects/' + element.name + '/download'
+                await fetch(url)
+              } catch (error) { }
+              setIsDownloading(false)
             }} />
           </Tinted>
         }
-        {(element.status === 'downloading' || isDeleting || isRunning)
+        {(isDownloading || isDeleting || isRunning)
           && <Tinted>
             <Paragraph col="var(--color)">{isDeleting ? 'Deleting…' : isRunning ? 'Running…' : 'Downloading…'}</Paragraph>
             <Spinner m="$2" color="var(--color8)" />
@@ -211,7 +219,7 @@ const MainView = () => {
 
     const handler = ({ name, status }: { name: string; status: string }) => {
       // simple approach: any status change triggers a refresh of the list
-      if (['downloaded', 'error', 'downloading', 'deleted'].includes(status)) {
+      if (['downloaded', 'error', 'deleted'].includes(status)) {
         setReload((r) => r + 1);
       }
     };

@@ -1,6 +1,6 @@
-import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button } from '@my/ui';
+import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button, TooltipSimple } from '@my/ui';
 import { Tinted } from '../Tinted';
-import { Sparkles, Cog, Type, LayoutTemplate } from "@tamagui/lucide-icons";
+import { Sparkles, Cog, Type, LayoutTemplate, AlertTriangle } from "@tamagui/lucide-icons";
 import { BoardModel } from '@extensions/boards/boardsSchemas';
 import { useRouter } from 'solito/navigation';
 import { getIconUrl } from '../IconSelect';
@@ -33,6 +33,14 @@ export default ({ element, width, onDelete, ...props }: any) => {
             {...props}
         >
 
+            {board?.get("tags")?.length && board.get("tags").includes("system") && <Tinted>
+                <TooltipSimple label="This is a system board if you edit or delete it, it may affect core functionality." delay={{ open: 500, close: 0 }} restMs={0}>
+                    <XStack pos='absolute' gap="$2" right="14px" top="-10px" jc="center" ai="center" br="$2" bg="$yellow9" px="$2" py="$1">
+                        <AlertTriangle color={"black"} size={14} />
+                        <Text color={"black"} fow="600" fos="$1">System Board</Text>
+                    </XStack>
+                </TooltipSimple>
+            </Tinted>}
             <XStack jc={"space-between"} ai={"start"} >
                 <XStack gap="$2" ai={"start"} >
                     <YStack>

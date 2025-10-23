@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, YStack, Paragraph, XStack } from '@my/ui';
-import { Camera, Video, VideoOff } from '@tamagui/lucide-icons';
+import { Camera, Hand, TimerReset, Video, VideoOff } from '@tamagui/lucide-icons';
+import { Tinted } from "../Tinted";
 
 type CameraCardProps = {
     params?: {
@@ -18,9 +19,9 @@ export const CameraCard = ({ params, onPicture }: CameraCardProps) => {
     const [error, setError] = useState<string | null>(null);
     const [isOn, setIsOn] = useState(false);
     const [busy, setBusy] = useState(false);
+    const [mode, setMode] = useState<'auto' | 'manual'>(params?.mode?.defaultValue ?? 'auto');
 
     const fps = params?.fps?.defaultValue || 1;
-    const mode = params?.mode?.defaultValue ?? 'auto';
 
     function normalizeMediaError(e: unknown) {
         const any = e as any;
@@ -137,6 +138,21 @@ export const CameraCard = ({ params, onPicture }: CameraCardProps) => {
                     >
                         {isOn ? "" : "Open Camera"}
                     </Button>
+                    {isOn && <Tinted tint="green">
+                        <Button
+                            icon={mode === 'auto' ? Hand : TimerReset}
+                            onPress={() => setMode(mode === 'auto' ? 'manual' : 'auto')}
+                            size="$4"
+                            scaleIcon={1.2}
+                            f={1}
+                            disabled={busy}
+                            theme="active"
+                            className="no-drag"
+                        >
+                            {mode === 'auto' ? 'Manual' : 'Auto'}
+                        </Button>
+                    </Tinted>
+                    }
 
                     {mode === 'manual' && isOn && (
                         <Button

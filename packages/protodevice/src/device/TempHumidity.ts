@@ -57,6 +57,10 @@ class TempHumidity {
                     units: 'ºC',
                     endpoint: "/" + this.type + "/" + this.name + '-temperature' + "/state",
                     connectionType: "mqtt",
+                    cardProps: {
+                        icon: "thermometer",
+                        color: "$red10"
+                    }
                 },
                 {
                     name: "humidity",
@@ -65,6 +69,10 @@ class TempHumidity {
                     description: "Get sensor status",
                     endpoint: "/" + this.type + "/" + this.name + '-humidity' + "/state",
                     connectionType: "mqtt",
+                    cardProps: {
+                        icon: "droplets",
+                        color: "$blue10"
+                    }
                 }
             ]
 

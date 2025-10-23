@@ -9,6 +9,368 @@ import path from 'path';
 import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
+import { gridSizes as GRID } from 'protolib/lib/gridConfig';
+
+const PER_PARAM_ROWS = 1; // tweak as needed (extra grid rows per visible param)
+const PADDING_ICON = 6; // extra padding for icon
+
+const computeCardSize = (paramsObj?: Record<string, any>) => {
+    const baseWidth = 2
+    const baseHeight = 6
+    const paramCount = Object.keys(paramsObj ?? {}).length > 1
+        ? Object.keys(paramsObj ?? {}).length
+        : 0;
+
+    const width = baseWidth;
+    const height =
+        paramCount > 0 ? baseHeight + paramCount * PER_PARAM_ROWS + PADDING_ICON : baseHeight;
+
+    return { width, height };
+};
+
+// Accepts the stored card object so we can inspect src.id and defaults.name
+const inferSubsystemFromId = (
+    idOrName: string,                // what you're currently looping (e.g., 'leds_red')
+    deviceName: string,
+    src?: any                        // the stored card object
+) => {
+    const storedId: string | undefined = src?.id;              // where addCard's id should be
+    const humanName: string | undefined = src?.defaults?.name; // e.g. 'asas leds red'
+
+    //   console.log('[inferSubsystemFromId] INPUT', { idOrName, deviceName, storedId, humanName });
+
+    // 1) Prefer the true stored ID if present (full prefix format)
+    const pick = storedId || idOrName;
+
+    // Fast-paths for full IDs
+    const monPrefix = `devices_monitors_${deviceName}_`;
+    if (pick.startsWith(monPrefix)) {
+        const rest = pick.slice(monPrefix.length);
+        // console.log('[inferSubsystemFromId] monitors fast-path', { pick, rest });
+        return rest || 'misc';
+    }
+
+    const actPrefix = `devices_${deviceName}_`;
+    if (pick.startsWith(actPrefix)) {
+        const rest = pick.slice(actPrefix.length); // <subsystem>_<action...> OR just <subsystem>
+        const firstUnderscore = rest.indexOf('_');
+        const subsys = firstUnderscore >= 0 ? rest.slice(0, firstUnderscore) : rest;
+        // console.log('[inferSubsystemFromId] actions fast-path', { pick, rest, subsys });
+        if (subsys) return subsys;
+    }
+
+    // 2) Short-key heuristic (what your API is returning: 'leds_red', 'leds_off', etc.)
+    //    Take the segment before the first underscore if it exists and is non-empty.
+    if (idOrName.includes('_')) {
+        const subsys = idOrName.split('_')[0] || '';
+        if (subsys) {
+            //   console.log('[inferSubsystemFromId] short-key heuristic', { idOrName, subsys });
+            return subsys;
+        }
+    }
+
+    // 3) Try to infer from defaults.name: usually "<deviceName> <subsystem> ..."
+    if (humanName) {
+        const prefix = `${deviceName} `;
+        let tail = humanName.startsWith(prefix) ? humanName.slice(prefix.length) : humanName;
+        // Split by space or underscore and grab first token that isn’t empty.
+        const token = (tail.split(/[\s_]+/).find(Boolean) || '').trim();
+        if (token) {
+            //   console.log('[inferSubsystemFromId] humanName heuristic', { humanName, token });
+            return token;
+        }
+    }
+
+    // 4) Last fallback
+    //   console.log('[inferSubsystemFromId] fallback -> misc', { idOrName, deviceName });
+    return 'misc';
+};
+
+
+
+// Pack items left→right and wrap
+const pack = (items: Array<{ i: string; w: number; h: number }>, cols: number) => {
+    const out: any[] = [];
+    let x = 0, y = 0, rowH = 0;
+    for (const it of items) {
+        const w = Math.min(it.w, cols);
+        if (x + w > cols) { x = 0; y += rowH; rowH = 0; }
+        out.push({ i: it.i, x, y, w, h: it.h, isResizable: true });
+        x += w; rowH = Math.max(rowH, it.h);
+    }
+    return out;
+};
+
+// Shift a layout vertically by offsetY
+const shiftY = (layout: any[], offsetY: number) =>
+    layout.map(l => ({ ...l, y: l.y + offsetY }));
+
+// Compute total height of a packed section (max y+h)
+const sectionHeight = (layout: any[]) =>
+    layout.reduce((m, l) => Math.max(m, l.y + l.h), 0);
+
+const SIZE = {
+    value: {
+        lg: { w: GRID.lg.normalW, h: GRID.lg.normalH },
+        md: { w: GRID.md.normalW, h: GRID.md.normalH },
+        sm: { w: GRID.sm.normalW, h: GRID.sm.normalH },
+        xs: { w: GRID.xs.normalW, h: GRID.xs.normalH },
+    },
+    action: {
+        lg: { w: GRID.lg.normalW, h: GRID.lg.normalH },
+        md: { w: GRID.md.normalW, h: GRID.md.normalH },
+        sm: { w: GRID.sm.normalW, h: GRID.sm.normalH },
+        xs: { w: GRID.xs.normalW, h: GRID.xs.normalH },
+    },
+};
+
+// --- Smarter board generator: groups by subsystem, uses gridSizes totals ---
+const generateDeviceBoard = async (
+  boardName: string = 'devices_all',
+  deviceName?: string          // <- NEW
+) => {
+    const token = getServiceToken();
+
+    const DEFAULT_HTML_VALUE = `//@card/react
+function Widget(card) {
+  const value = card.value;
+  return (
+    <Tinted>
+      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>
+        <YStack f={1} height="100%" ai="center" jc="center" width="100%">
+          {card.icon && card.displayIcon !== false && (
+            <Icon name={card.icon} size={48} color={card.color}/>
+          )}
+          {card.displayResponse !== false && (
+            <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? "N/A"} />
+          )}
+        </YStack>
+      </ProtoThemeProvider>
+    </Tinted>
+  );
+}
+`;
+
+    const DEFAULT_HTML_ACTION = `//@card/react
+function Widget(card) {
+  const value = card.value;
+  const content = <YStack f={1} ai="center" jc="center" width="100%">
+    {card.icon && card.displayIcon !== false && (
+      <Icon name={card.icon} size={48} color={card.color}/>
+    )}
+    {card.displayResponse !== false && (
+      <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? "N/A"} />
+    )}
+  </YStack>
+  return (
+    <Tinted>
+      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>
+        <ActionCard data={card}>
+          {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}
+        </ActionCard>
+      </ProtoThemeProvider>
+    </Tinted>
+  );
+}
+`;
+
+    const makeKey = (s: string, kind: 'value' | 'action') =>
+        `${kind}_${s.replace(/[^a-z0-9_]+/gi, '_').toLowerCase()}`;
+
+    try {
+        const treeResp = await API.get(`/api/core/v1/cards?token=${token}`);
+        const allDevicesTree = treeResp?.data?.devices || {};
+        const devicesTree = deviceName
+            ? (allDevicesTree?.[deviceName] ? { [deviceName]: allDevicesTree[deviceName] } : {})
+            : allDevicesTree;
+
+        const cards: any[] = [];
+        type Sized = { i: string; w: number; h: number; id: string; device: string; subsystem: string; };
+        const buckets = {
+            lg: new Map<string, Sized[]>(),
+            md: new Map<string, Sized[]>(),
+            sm: new Map<string, Sized[]>(),
+            xs: new Map<string, Sized[]>(),
+        };
+        const ensureBucket = (bp: 'lg' | 'md' | 'sm' | 'xs', key: string) => {
+            if (!buckets[bp].has(key)) buckets[bp].set(key, []);
+            return buckets[bp].get(key)!;
+        };
+
+        for (const deviceName of Object.keys(devicesTree)) {
+            const deviceCards = devicesTree[deviceName] || {};
+            for (const id of Object.keys(deviceCards)) {
+                if (id === 'devices_table') continue;
+                const src = deviceCards[id] || {};
+                const d = src.defaults || {};
+
+                const type: 'value' | 'action' = (d.type === 'action') ? 'action' : 'value';
+                const humanName = `${id}`;
+                const key = makeKey(`${deviceName}__${id}`, type);
+                const size = SIZE[type];
+
+                const card: any = {
+                    key,
+                    name: humanName,
+                    type: d.type || 'value',
+                    icon: d.icon || '',
+                    description: d.description || '',
+                    width: d.width,
+                    height: d.height,
+                };
+
+                if ('rulesCode' in d) card.rulesCode = d.rulesCode;
+                if ('params' in d) card.params = d.params;
+                if ('configParams' in d) card.configParams = d.configParams;
+                if ('method' in d) card.method = d.method;
+                if ('persistValue' in d) card.persistValue = d.persistValue;
+                if ('buttonMode' in d) card.buttonMode = d.buttonMode;
+                if ('buttonLabel' in d) card.buttonLabel = d.buttonLabel;
+                if ('displayButton' in d) card.displayButton = d.displayButton;
+                if ('displayButtonIcon' in d) card.displayButtonIcon = d.displayButtonIcon;
+                if ('displayIcon' in d) card.displayIcon = d.displayIcon;
+                if ('displayResponse' in d) card.displayResponse = d.displayResponse;
+                if ('html' in d && d.html) card.html = d.html;
+                if ('color' in d) card.color = d.color;
+
+                if (!card.html) {
+                    card.html = (type === 'action') ? DEFAULT_HTML_ACTION : DEFAULT_HTML_VALUE;
+                }
+
+                cards.push(card);
+
+                const subsystem = inferSubsystemFromId(id, deviceName, src);
+                if (subsystem === 'misc') {
+                    console.log('🤖 ~ generateDeviceBoard ~ subsystem: misc', { deviceName, id, storedId: src?.id, humanName: d?.name });
+                }
+                const groupKey = `${deviceName}::${subsystem}`;
+                // push sizes per breakpoint
+                ensureBucket('lg', groupKey).push({ i: key, w: size.lg.w, h: size.lg.h, id, device: deviceName, subsystem });
+                ensureBucket('md', groupKey).push({ i: key, w: size.md.w, h: size.md.h, id, device: deviceName, subsystem });
+                ensureBucket('sm', groupKey).push({ i: key, w: size.sm.w, h: size.sm.h, id, device: deviceName, subsystem });
+                ensureBucket('xs', groupKey).push({ i: key, w: size.xs.w, h: size.xs.h, id, device: deviceName, subsystem });
+            }
+        }
+        // --- after you've finished filling `buckets` (lg/md/sm/xs) ---
+        const groupWeights = new Map<string, number>();
+
+        // Use lg bucket as canonical — membership is identical across breakpoints
+        for (const [gk, items] of buckets.lg.entries()) {
+            const weight = items.length; // monitors + actions -> #cards in group
+            groupWeights.set(gk, weight);
+        }
+
+        // Pretty log of all weights once
+        console.groupCollapsed('[devices_board] Subsystem weights');
+        for (const [gk, weight] of groupWeights.entries()) {
+            const [device, subsystem] = gk.split('::');
+            console.log(`- ${device} :: ${subsystem} -> weight=${weight}`);
+        }
+        console.groupEnd();
+
+        // helper: shift both axes
+        const shiftXY = (layout: any[], dx: number, dy: number) =>
+            layout.map(l => ({ ...l, x: l.x + dx, y: l.y + dy }));
+
+        // compute width (in cols) a local packed group actually uses
+        const groupWidth = (layout: any[]) =>
+            layout.reduce((m, l) => Math.max(m, l.x + l.w), 0);
+
+        // --- after computing groupWeights + the weights log ---
+        const buildGroupedLayout = (bp: 'lg' | 'md' | 'sm' | 'xs', cols: number) => {
+            const groupKeys = Array.from(buckets[bp].keys()).sort((a, b) => {
+                const wa = groupWeights.get(a) ?? buckets[bp].get(a)?.length ?? 0;
+                const wb = groupWeights.get(b) ?? buckets[bp].get(b)?.length ?? 0;
+                if (wa !== wb) return wa - wb;
+                const [da, sa] = a.split('::');
+                const [db, sb] = b.split('::');
+                return da === db ? sa.localeCompare(sb) : da.localeCompare(db);
+            });
+
+            // log final order
+            console.groupCollapsed(`[devices_board] Order @ ${bp} (cols=${cols})`);
+            groupKeys.forEach((gk, i) => {
+                const [device, subsystem] = gk.split('::');
+                const w = groupWeights.get(gk) ?? buckets[bp].get(gk)?.length ?? 0;
+                console.log(`${i + 1}. ${device} :: ${subsystem} (weight=${w})`);
+            });
+            console.groupEnd();
+
+            let curX = 0;      // current column
+            let curY = 0;      // current row (y coord)
+            let rowH = 0;      // tallest group height in the current row
+            const result: any[] = [];
+
+            for (const gk of groupKeys) {
+                const items = buckets[bp].get(gk)!;
+
+                // Pack this group's cards locally (origin at 0,0)
+                const local = pack(items.map(({ i, w, h }) => ({ i, w, h })), cols);
+
+                // Measure this group's footprint
+                const gW = Math.min(groupWidth(local), cols);   // cols occupied
+                const gH = sectionHeight(local);                // rows occupied
+
+                // If it doesn't fit in the remaining columns, wrap to next row
+                if (curX + gW > cols) {
+                    curX = 0;
+                    curY += rowH + 1;    // +1 row spacer between rows of groups
+                    rowH = 0;
+                }
+
+                // Place this group at (curX, curY)
+                const placed = shiftXY(local, curX, curY);
+                result.push(...placed);
+
+                // Advance cursor
+                curX += gW;            // move to the right after the block
+                rowH = Math.max(rowH, gH);
+            }
+
+            return result;
+        };
+
+
+        const layouts = {
+            lg: buildGroupedLayout('lg', GRID.lg.totalCols),
+            md: buildGroupedLayout('md', GRID.md.totalCols),
+            sm: buildGroupedLayout('sm', GRID.sm.totalCols),
+            xs: buildGroupedLayout('xs', GRID.xs.totalCols),
+        };
+        const emptyLayouts = {
+            lg: [],
+            md: [],
+            sm: [],
+            xs: [],
+        }
+
+        const payload = {
+            name: boardName,
+            version: Date.now(),
+            layouts: emptyLayouts,
+            cards,
+            rules: [],
+            autopilot: false,
+            savedAt: Date.now()
+        };
+
+        try {
+            await API.get(`/api/core/v1/boards/${encodeURIComponent(boardName)}/delete?token=${token}`);
+            logger.info({ boardName }, 'Deleted existing board before re-creating');
+        } catch (e: any) {
+            const status = e?.response?.status || e?.status;
+            if (status !== 404) {
+                logger.warn({ boardName, err: e?.response?.data || e }, 'Delete board failed (non-404)');
+            }
+        }
+
+        await API.post(`/api/core/v1/boards?token=${token}`, payload);
+        logger.info({ boardName, count: cards.length }, 'Generated devices board with grouped subsystem layouts');
+    } catch (err) {
+        logger.error({ err }, 'Failed to generate devices board');
+    }
+};
+
 const deleteDeviceCards = async (deviceName: string) => {
     try {
         const token = getServiceToken();
@@ -74,7 +436,14 @@ const registerActions = async () => {
                 // console.log('monitor: ', monitor)
                 const monitorModel = deviceInfo.getMonitorByEndpoint(monitor.endpoint)
                 const stateName = deviceInfo.getStateNameByMonitor(monitorModel)
+                const iconFromValue = monitor.cardProps?.icon ?? "scan-eye";
+                const colorFromValue = monitor.cardProps?.color;
+                const { width, height } = computeCardSize({});
+                const cardWidth = monitor.cardProps?.width || width;
+                const cardHeight = monitor.cardProps?.height || height;
+
                 if (subsystem.monitors.length == 1) {
+
                     addCard({
                         group: 'devices',
                         tag: deviceInfo.data.name,
@@ -86,7 +455,10 @@ const registerActions = async () => {
                             description: monitor.description ?? "",
                             rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                             type: 'value',
-                            icon: "scan-eye"
+                            icon: iconFromValue,
+                            ...(colorFromValue ? { color: colorFromValue } : {}),
+                            width: cardWidth,
+                            height: cardHeight
                         },
                         emitEvent: true
                     })
@@ -102,7 +474,10 @@ const registerActions = async () => {
                             description: monitor.description ?? "",
                             rulesCode: `return states['devices']['${deviceInfo.data.name}']['${stateName}']`,
                             type: 'value',
-                            icon: "scan-eye"
+                            icon: iconFromValue,
+                            ...(colorFromValue ? { color: colorFromValue } : {}),
+                            width: width,
+                            height: height
                         },
                         emitEvent: true
                     })
@@ -124,7 +499,11 @@ const registerActions = async () => {
                 const url = `/api/core/v1/devices/${deviceInfo.data.name}/subsystems/${subsystem.name}/actions/${action.name}`;
                 const isJsonSchema = action.payload?.type === "json-schema";
 
-                const params = { value: "value to set" }
+                const params = { 
+                    value: {
+                        description: action.description ?? "Value to send",
+                    } 
+                };
                 if (isJsonSchema) {
                     delete params.value
                     const toParamType = (schemaType?: string) => {
@@ -229,7 +608,11 @@ const registerActions = async () => {
                     ...!action.payload?.value ? { params } : {},
                     emitEvent: true
                 })
-
+                const iconFromAction = action.cardProps?.icon ?? "rocket";
+                const colorFromAction = action.cardProps?.color;
+                const { width, height } = computeCardSize(params); // use config params to size
+                const cardWidth = action.cardProps?.width || width;
+                const cardHeight = action.cardProps?.height || height;
                 //http://localhost:8000/api/core/v1/cards to understand what this fills
                 addCard({
                     group: 'devices',
@@ -237,18 +620,30 @@ const registerActions = async () => {
                     id: 'devices_' + deviceInfo.data.name + '_' + subsystem.name + '_' + action.name,
                     templateName: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name + ' device action',
                     name: subsystem.name + '_' + action.name,
-                    defaults: {
-                        name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
-                        description: action.description ?? "",
-                        rulesCode,
-                        params: action.payload?.value ? {} : getParams(params),
-                        configParams: params,
-                        type: 'action',
-                        icon: "rocket",
-                    },
+                    defaults: (() => {
+                        const paramsForDefaults = action.payload?.value ? {} : getParams(params);
+
+                        return {
+                            width: cardWidth,
+                            height: cardHeight,
+                            icon: iconFromAction,
+                            name: deviceInfo.data.name + ' ' + subsystem.name + ' ' + action.name,
+                            description: action.description ?? '',
+                            rulesCode,
+                            params: paramsForDefaults,
+                            configParams: params,
+                            type: 'action',
+                            ...(colorFromAction ? { color: colorFromAction } : {}),
+                            displayResponse: false
+                        };
+                    })(),
                     emitEvent: true
                 })
             }
+        }
+        if(deviceInfo.data.generateAssociatedBoard !== false){
+            console.log("Generating associated board for device: ", deviceInfo.data.name)
+            await generateDeviceBoard(`${deviceInfo.data.name}_device`, deviceInfo.data.name);
         }
     }
 }
@@ -282,6 +677,17 @@ export const DevicesAutoAPI = AutoAPI({
         if(fs.existsSync(devicePath)){
             fs.rmSync(devicePath, { recursive: true, force: true });
             // console.log("🤖 ~ Deleted device path:", devicePath)
+        }
+        //delete associated board
+        const token = getServiceToken();
+        try {
+            await API.get(`/api/core/v1/boards/${encodeURIComponent(data.name + "_device")}/delete?token=${token}`);
+            logger.info({ boardName: data.name + "_device" }, 'Deleted associated device board');
+        } catch (e: any) {
+            const status = e?.response?.status || e?.status;
+            if (status !== 404) {
+                logger.warn({ boardName: data.name + "_device", err: e?.response?.data || e }, 'Delete associated device board failed (non-404)');
+            }
         }
         return data;
     }
@@ -450,17 +856,23 @@ export default (app, context) => {
             parsedMessage = JSON.parse(message);
         } catch (err) { }
         if (endpoint == 'debug') {
-            logger.trace({ from: device, deviceName, endpoint }, JSON.stringify({topic, message}))
+            // logger.error({ from: device, deviceName, endpoint }, JSON.stringify({topic, message}))
         } else {
             const db = getDB('devices')
-            const deviceInfo = DevicesModel.load(JSON.parse(await db.get(deviceName)))
+            let deviceInfo = undefined
+            try {
+                deviceInfo = DevicesModel.load(JSON.parse(await db.get(deviceName)))
+            } catch (err) {
+                logger.error({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
+                return
+            }
             // console.log("deviceInfo: ", deviceInfo)
             // console.log("subsystems: ", deviceInfo.data.subsystem)
             // console.log("endpoint: ", endpoint)
-            const monitor = deviceInfo.getMonitorByEndpoint("/"+endpoint)
+            const monitor = deviceInfo?.getMonitorByEndpoint("/"+endpoint)
             // console.log("monitor: ", monitor)
             if(!monitor){
-                logger.trace({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
+                // logger.error({ from: device, deviceName, endpoint }, "Device not found: "+JSON.stringify({topic, message}))
                 return
             }
             // const subsystem = deviceInfo.getSubsystem(req.params.subsystem)

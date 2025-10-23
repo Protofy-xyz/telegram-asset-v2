@@ -1,0 +1,486 @@
+{
+    "name": "llm_agent",
+    "tags": [
+        "system"
+    ],
+    "cards": [
+        {
+            "key": "action_1760800582118",
+            "width": 4,
+            "height": 20,
+            "icon": "globe",
+            "name": "agent_input",
+            "description": "A job queue with a list of pending jobs and a current job",
+            "type": "action",
+            "editorOptions": {},
+            "method": "post",
+            "displayResponse": true,
+            "params": {
+                "item": "",
+                "action": "action to perform in the queue: push, pop, clear",
+                "response": ""
+            },
+            "configParams": {
+                "item": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "action": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "response": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "presets": {
+                "reply": {
+                    "description": "Sends a reply to the current job and makes the next item (if any) the current job. The reply should be specified in the response param",
+                    "configParams": {
+                        "action": {
+                            "visible": false,
+                            "defaultValue": "reply"
+                        },
+                        "item": {
+                            "visible": false
+                        },
+                        "response": {
+                            "visible": true
+                        }
+                    }
+                },
+                "skip": {
+                    "description": "Skips the current job. Do not use unless you know what you are doing.",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "skip"
+                        }
+                    }
+                },
+                "reset": {
+                    "description": "resets the queue state to empty and skip curret job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "clear"
+                        }
+                    }
+                },
+                "remove": {
+                    "description": "remove the element with the given index from the job queue",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "remove"
+                        },
+                        "item": {
+                            "visible": true,
+                            "defaultValue": 0,
+                            "type": "number"
+                        }
+                    }
+                },
+                "push": {
+                    "params": {
+                        "item": "item to push"
+                    },
+                    "description": "Adds a new job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "push"
+                        },
+                        "item": {
+                            "visible": true,
+                            "defaultValue": "",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "enableAgentInputMode": true,
+            "displayButton": false,
+            "manualAPIResponse": true
+        },
+        {
+            "key": "action_1760815369680",
+            "width": 3,
+            "height": 12,
+            "icon": "sparkles",
+            "type": "action",
+            "name": "agent_core",
+            "displayResponse": true,
+            "params": {
+                "prompt": "",
+                "provider": "chatgpt or lmstudio",
+                "model": "",
+                "requestId": "the id of the request to attend"
+            },
+            "configParams": {
+                "prompt": {
+                    "visible": true,
+                    "defaultValue": "board.prompt",
+                    "type": "text"
+                },
+                "provider": {
+                    "visible": true,
+                    "defaultValue": "chatgpt",
+                    "type": "string"
+                },
+                "model": {
+                    "visible": true,
+                    "defaultValue": "gpt-4o",
+                    "type": "string"
+                },
+                "requestId": {
+                    "visible": true,
+                    "defaultValue": "board.user_request.id",
+                    "type": "string"
+                }
+            },
+            "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayIcon": false,
+            "displayButton": true,
+            "displayButtonIcon": true,
+            "color": "var(--color7)",
+            "theme": "dark",
+            "domId": "84591c7a-8056-4c3e-bcd6-beeee0d56621",
+            "cardState": {},
+            "links": [],
+            "method": "post"
+        },
+        {
+            "key": "value_1760819815820",
+            "width": 1,
+            "height": 4,
+            "icon": "scan-eye",
+            "type": "value",
+            "name": "user_request",
+            "description": "A reusable card that observes value changes on the board.\n\n  #### Key Features\n  - Real time updates.\n  - Customize parameters.\n  - Rule execution on each value change.\n  - Customize the card view (UI/render).",
+            "params": {
+                "input": "input to observe"
+            },
+            "configParams": {
+                "input": {
+                    "visible": true,
+                    "defaultValue": "board.agent_input.current",
+                    "type": "any"
+                }
+            },
+            "displayIcon": false
+        },
+        {
+            "key": "value_1760875866283",
+            "width": 3,
+            "height": 12,
+            "icon": "file-text",
+            "name": "prompt",
+            "description": "Rules of the agent",
+            "type": "value",
+            "editorOptions": {},
+            "params": {
+                "prompt": ""
+            },
+            "configParams": {
+                "prompt": {
+                    "visible": true,
+                    "defaultValue": "board.agent_input.current.params.prompt",
+                    "type": "string"
+                }
+            }
+        },
+        {
+            "key": "action_1761144753198",
+            "width": 2,
+            "height": 6,
+            "icon": "message-square-text",
+            "type": "action",
+            "name": "card reset group",
+            "description": "Reset the values of a group of cards in the board",
+            "params": {
+                "included": "array of cards to include, or * for all",
+                "excluded": "array of cards to exclude"
+            },
+            "configParams": {
+                "included": {
+                    "visible": false,
+                    "defaultValue": "[\"*\"]",
+                    "type": "array"
+                },
+                "excluded": {
+                    "visible": false,
+                    "defaultValue": "[\"\"]",
+                    "type": "array"
+                }
+            },
+            "displayResponse": false,
+            "buttonLabel": "Reset all",
+            "displayIcon": false,
+            "autoResponsive": false
+        },
+        {
+            "key": "action_1761146701452",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "reply",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "resquestId": "the id of the request to reply",
+                "response": "the response to send"
+            },
+            "configParams": {
+                "resquestId": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                },
+                "response": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "customName": "reply"
+        }
+    ],
+    "autopilot": false,
+    "layouts": {
+        "lg": [
+            {
+                "w": 18,
+                "h": 17,
+                "x": 0,
+                "y": 12,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 21,
+                "h": 25,
+                "x": 43,
+                "y": 0,
+                "i": "action_1760815369680",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 25,
+                "h": 25,
+                "x": 18,
+                "y": 0,
+                "i": "value_1760819815820",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 25,
+                "h": 25,
+                "x": 64,
+                "y": 0,
+                "i": "value_1760875866283",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 3,
+                "x": 0,
+                "y": 29,
+                "i": "action_1761144753198",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 12,
+                "x": 0,
+                "y": 0,
+                "i": "action_1761146701452",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            }
+        ],
+        "md": [
+            {
+                "w": 18,
+                "h": 13,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 25,
+                "h": 29,
+                "x": 39,
+                "y": 0,
+                "i": "action_1760815369680",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 21,
+                "h": 16,
+                "x": 18,
+                "y": 13,
+                "i": "value_1760819815820",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 21,
+                "h": 13,
+                "x": 18,
+                "y": 0,
+                "i": "value_1760875866283",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 7,
+                "x": 0,
+                "y": 22,
+                "i": "action_1761144753198",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 9,
+                "x": 0,
+                "y": 13,
+                "i": "action_1761146701452",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            }
+        ],
+        "sm": [
+            {
+                "i": "action_1760800582118",
+                "x": 0,
+                "y": 0,
+                "w": 2,
+                "h": 22,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760815369680",
+                "x": 0,
+                "y": 22,
+                "w": 2,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760819815820",
+                "x": 1,
+                "y": 57,
+                "w": 1,
+                "h": 5,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760875866283",
+                "x": 0,
+                "y": 70,
+                "w": 2,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761144753198",
+                "x": 0,
+                "y": 84,
+                "w": 1,
+                "h": 7,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761146701452",
+                "x": 1,
+                "y": 90,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            }
+        ],
+        "xs": [
+            {
+                "i": "action_1760800582118",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 22,
+                "isResizable": true
+            },
+            {
+                "i": "action_1760815369680",
+                "x": 0,
+                "y": 22,
+                "w": 1,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760819815820",
+                "x": 0,
+                "y": 58,
+                "w": 1,
+                "h": 5,
+                "isResizable": true
+            },
+            {
+                "i": "value_1760875866283",
+                "x": 0,
+                "y": 71,
+                "w": 1,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761144753198",
+                "x": 0,
+                "y": 85,
+                "w": 1,
+                "h": 7,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761146701452",
+                "x": 0,
+                "y": 92,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            }
+        ]
+    },
+    "version": 1,
+    "savedAt": 1761158922744,
+    "rules": [
+        "when board?.[\"user_request\"] changes value run await executeAction({name: \"agent_core\"}) with board?.[\"user_request\"]?.[\"id\"] and board?.[\"user_request\"]?.[\"params\"]?.[\"prompt\"] and run await executeAction({name: \"agent_input.skip\"})"
+    ],
+    "settings": {
+        "autoplay": true
+    }
+}

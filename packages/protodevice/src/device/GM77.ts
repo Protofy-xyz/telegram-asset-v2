@@ -65,6 +65,9 @@ class GM77 {
                     description: "Get barcode reading from qr sensor",
                     endpoint: "/" + this.type + "/" + this.name + "/state",
                     connectionType: "mqtt",
+                    cardProps: {
+                        icon: "qr-code",
+                    }
                 }
             ]
         }

@@ -6,6 +6,16 @@ import { manifest } from "protodevice/src/manifest";
 
 export let port;
 
+let SERIAL_VENDOR_FILTER: number[] = [
+  0x303A, // Espressif (ESP32-S2/S3 native USB)
+  0x10C4, // Silicon Labs CP210x
+  0x1A86, // WCH CH340/CH341
+  0x0403, // FTDI
+  0x067B, // Prolific PL2303
+  0x2341, // Arduino
+  0x2E8A, // Raspberry Pi (RP2040)
+];
+
 export const resetTransport = async (transport: Transport) => {
     await transport.device.setSignals({
         dataTerminalReady: false,
@@ -28,17 +38,23 @@ export const closeSerialPort = async () => {
     }
 }
 
-export function downloadLogs(logs) {
+export function downloadLogs(logs: string, deviceName?: string) {
+    const blob = new Blob([logs ?? ""], { type: "text/plain" });
 
-    const blob = new Blob([logs], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'device-logs.txt';
+    // Fallback + sanitize to avoid illegal filename characters
+    const safeName = (deviceName || "device")
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "_");
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${safeName}-logs.txt`;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+    }, 0);
 }
 
 export const resetDevice = async (): Promise<void> => {
@@ -52,7 +68,10 @@ export const resetDevice = async (): Promise<void> => {
 
 export const connectSerialPort = async (): Promise<{ port: any | null, error?: string }> => {
     try {
-        port = await (navigator as any).serial.requestPort();
+        const filters = (SERIAL_VENDOR_FILTER || []).map(v => ({ usbVendorId: v }));
+        const requestOptions: any = filters.length ? { filters } : undefined;
+
+        port = await (navigator as any).serial.requestPort(requestOptions);
         await port.open({ baudRate: 115200 });
         return { port };
     } catch (err: any) {

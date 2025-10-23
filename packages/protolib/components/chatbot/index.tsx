@@ -67,11 +67,12 @@ function App({ apiUrl }: AppProps) {
           </button>
         }
 
-        <div className="flex-1 flex flex-col overflow-hidden mt-12 md:mt-0">
+        <div className="flex-1 flex flex-col overflow-hidden mt-12 md:mt-0" style={{ backgroundColor: "var(--bgContent)" }}>
           <div
             className={`p-3 z-10 flex items-center bg-[#f8f8f8] dark:bg-[#212121] border-b 
     border-gray-300 dark:border-gray-700 top-0 text-gray-800 dark:text-gray-300 
     md:hidden fixed w-full`}
+            style={{ backgroundColor: "var(--bgContent)" }}
           >
             {menu ? (
               <button
@@ -96,7 +97,7 @@ function App({ apiUrl }: AppProps) {
             {isChatsVisible ? <Chats /> : <DefaultIdeas />}
           </div>
 
-          <div className="bg-white dark:bg-[#212121] p-2 shadow-md">
+          <div className="p-2 shadow-md" style={{ backgroundColor: "var(--bgContent)" }}>
             <div className="max-w-2xl md:max-w-[calc(100% - 260px)] mx-auto">
               <UserQuery />
             </div>

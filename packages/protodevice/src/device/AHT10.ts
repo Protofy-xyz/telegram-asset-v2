@@ -58,6 +58,10 @@ class AHT10 {
             description: `Get temperature`,
             endpoint: "/sensor/" +this.name + "_temperature"+ "/state",
             connectionType: "mqtt",
+            cardProps: {
+                icon: "thermometer",
+                color: "$red10"
+            }
         },
         {
             label: `Humidity`,
@@ -65,6 +69,10 @@ class AHT10 {
             description: `Get humidity`,
             endpoint: "/sensor/" +this.name + "_humidity"+ "/state",
             connectionType: "mqtt",
+            cardProps: {
+                icon: "droplets",
+                color: "$blue10"
+            }
         }]
         
         return {

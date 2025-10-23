@@ -160,6 +160,108 @@ module.exports = function start(rootPath) {
     });
   }
 
+
+  function wireSerialPermissions(ses) {
+    const { randomUUID } = require('crypto');
+    const { webContents } = require('electron');
+    const pendingSerialChoosers = new Map();
+    function sanitizePorts(list) {
+      return list.map(p => ({
+        portId: p.portId,
+        displayName: p.displayName || p.portId || 'Unknown device',
+        vendorId: p.vendorId,
+        productId: p.productId,
+        serialNumber: p.serialNumber,
+        portName: p.portName || p.path || p.comName || undefined,
+      }));
+    }
+
+    ses.on('serial-port-added', (_e, port) => {
+      console.log('[serial] port added:', port);
+      for (const [reqId, entry] of pendingSerialChoosers.entries()) {
+        const exists = entry.portList.some(p => p.portId === port.portId);
+        if (!exists) {
+          entry.portList.push(port);
+          sendChooserUpdate(reqId, entry);
+        }
+      }
+    });
+
+    ses.on('serial-port-removed', (_e, port) => {
+      console.log('[serial] port removed:', port);
+      for (const [reqId, entry] of pendingSerialChoosers.entries()) {
+        const before = entry.portList.length;
+        entry.portList = entry.portList.filter(p => p.portId !== port.portId);
+        if (entry.portList.length !== before) {
+          sendChooserUpdate(reqId, entry);
+        }
+      }
+    });
+
+    function sendChooserUpdate(reqId, entry) {
+      const wc = webContents.fromId(entry.webContentsId);
+      if (!wc) return;
+      wc.send('serial:chooser-update', { reqId, ports: sanitizePorts(entry.portList) });
+    }
+    ses.setPermissionCheckHandler((wc, permission, requestingOrigin, details) => {
+      if (permission === 'serial') {
+        const ok = isAllowed(details, requestingOrigin);
+        console.log('[serial][check]', { ok, requestingOrigin, url: details?.requestingUrl });
+        return ok;
+      }
+      return false;
+    });
+    
+    ses.setDevicePermissionHandler((details) => {
+      if (details.deviceType === 'serial') {
+        const origin = details?.requestingOrigin || originFromUrl(details?.requestingUrl || '');
+        const ok = origin ? isAllowed(details, origin) : true;
+        console.log('[serial][device-permission]', { ok, origin });
+        return ok;
+      }
+      return false;
+    });
+
+    ses.on('select-serial-port', (event, portList, wc, callback) => {
+      event.preventDefault();
+      const reqId = randomUUID();
+
+      pendingSerialChoosers.set(reqId, { callback, portList, webContentsId: wc.id });
+
+      const ports = sanitizePorts(portList); // 👈 use helper
+      console.log('[serial][chooser-open]', { reqId, count: ports.length });
+      wc.send('serial:chooser-open', { reqId, ports });
+    });
+
+    ipcMain.on('serial:chooser-select', (_e, { reqId, portId }) => {
+      const entry = pendingSerialChoosers.get(reqId);
+      if (!entry) {
+        console.warn('[serial][chooser-select] unknown reqId', reqId);
+        return;
+      }
+
+      const { callback, portList } = entry;
+      pendingSerialChoosers.delete(reqId);
+
+      if (!portId) {
+        console.log('[serial][chooser-select] canceled by user');
+        callback('');
+        return;
+      }
+
+      const match = portList.find(p => p.portId === portId);
+      if (!match) {
+        console.warn('[serial][chooser-select] invalid portId (not in list for reqId)', { reqId, portId });
+        callback('');
+        return;
+      }
+
+      console.log('[serial][chooser-select] OK', { reqId, portIdType: typeof portId, portId });
+      callback(portId);
+    });
+  }
+
+
   function logToRenderer(msg) {
     try {
       //if inside process.argv there is a -v argument, then log to console
@@ -361,6 +463,7 @@ module.exports = function start(rootPath) {
   app.whenReady().then(async () => {
     try {
       wirePermissions(session.defaultSession);
+      wireSerialPermissions(session.defaultSession);
 
       let resolveWhenCoreReady;
       const coreStarted = new Promise(resolve => {

@@ -288,7 +288,7 @@ function Widget(card) {
 function Widget(card) {
   const value = card.value;
 
-  const content = <YStack f={1}  mt={"20px"} ai="center" jc="center" width="100%">
+  const content = <YStack f={1} ai="center" jc="center" width="100%">
       {card.icon && card.displayIcon !== false && (
           <Icon name={card.icon} size={48} color={card.color}/>
       )}
@@ -349,9 +349,9 @@ const extraCards = [
       width: 3,
       height: 12,
       type: 'action',
-      name: 'AI Agent',
+      name: 'AI Action',
       displayResponse: true,
-      rulesCode: "const response = await context.chatgpt.prompt({\n  message: `\n<instructions>You are integrated into a board system.\nThe board is composed of states and actions.\nYou will receive a user message and your mission is to generate a json response.\nOnly respond with a JSON in the following format:\n\n{\n    \"response\": \"whatever you want to say\",\n    \"actions\": [\n        {\n            \"name\": \"action_1\",\n            \"params\": {\n                \"example_param\": \"example_value\"\n            } \n        }\n    ]\n}\n\nThe key response will be shown to the user as a response to the user prompt.\nThe actions array can be empty if the user prompt requires no actions to be executed.\nWhen executing an action, always use the action name. Never use the action id to execute actions, just the name. \n\n</instructions>\n<board_actions>\n${JSON.stringify(boardActions)}\n</board_action>\n<board_states>\n${JSON.stringify(board)}\n</board_states>\n\nThe user prompt is:\n\n${params.prompt}\n`,\n  conversation: await context.chatgpt.getSystemPrompt({\n    prompt: `You can analyze images provided in the same user turn. \nDo NOT claim you cannot see images. \nAnswer following the JSON contract only (no code fences).`,\n  }),\n  images: await context.boards.getStatesByType({\n    board: board,\n    type: \"frame\",\n    key: \"frame\",\n  }),\n  files: await context.boards.getStatesByType({\n    board: board,\n    type: \"file\",\n    key: \"path\",\n  }),\n});\n\nreturn context.chatgpt.processResponse({\n  response: response,\n  execute_action: execute_action,\n});\n",
+      rulesCode: "let visibleActions = ['*']\nlet invisibleActions = [name]\nlet visibleStates = ['*']\nlet invisibleStates = [name]\n\nfunction objectToXML(obj, rootName = 'root') {\n  function convert(o) {\n    return Object.entries(o).map(([key, value]) => {\n      if (value && typeof value === 'object') {\n        return `<${key}>${convert(value)}</${key}>`;\n      } else {\n        return `<${key}>${escapeXml(String(value))}</${key}>`;\n      }\n    }).join('');\n  }\n\n  function escapeXml(str) {\n    return str.replace(/[<>&'\"]/g, c => ({\n      '<': '&lt;',\n      '>': '&gt;',\n      '&': '&amp;',\n      \"'\": '&apos;',\n      '\"': '&quot;'\n    }[c]));\n  }\n\n  return `<${rootName}>${convert(obj)}</${rootName}>`;\n}\n\n// Filtrar acciones\nconst filteredActions = boardActions.filter(action => {\n  const name = action.name\n  // Si hay un * en visibleActions, muestra todo salvo los invisibles\n  if (visibleActions.includes('*')) {\n    return !invisibleActions.includes(name)\n  }\n  // Si no hay *, muestra solo los visibles y no invisibles\n  return visibleActions.includes(name) && !invisibleActions.includes(name)\n})\n\n// Filtrar estados (board es un objeto)\nconst filteredStates = Object.fromEntries(\n  Object.entries(board).filter(([key, value]) => {\n    if (visibleStates.includes('*')) {\n      return !invisibleStates.includes(key)\n    }\n    return visibleStates.includes(key) && !invisibleStates.includes(key)\n  })\n)\n\nconst response = await context.chatgpt.prompt({\n  message: `\n<instructions>You are integrated into a board system.\nThe board is composed of states and actions.\nYou will receive a user message and your mission is to generate a json response.\nOnly respond with a JSON in the following format:\n\n{\n    \"response\": \"whatever you want to say\",\n    \"actions\": [\n        {\n            \"name\": \"action_1\",\n            \"params\": {\n                \"example_param\": \"example_value\"\n            } \n        }\n    ]\n}\n\nThe key response will be shown to the user as a response to the user prompt.\nThe actions array can be empty if the user prompt requires no actions to be executed.\nWhen executing an action, always use the action name. Never use the action id to execute actions, just the name. \n\n</instructions>\n\n${objectToXML(filteredActions, 'board_actions')}\n${objectToXML(filteredStates, 'board_states')}\n\n<prompt>\n${params.prompt}\n</prompt>\n`,\n  conversation: await context.chatgpt.getSystemPrompt({\n    prompt: `You can analyze images provided in the same user turn. \nDo NOT claim you cannot see images. \nAnswer following the JSON contract only (no code fences).`,\n  }),\n  images: await context.boards.getStatesByType({\n    board: filteredStates,\n    type: \"frame\",\n    key: \"frame\",\n  }),\n  files: await context.boards.getStatesByType({\n    board: filteredStates,\n    type: \"file\",\n    key: \"path\",\n  }),\n});\n\nreturn context.chatgpt.processResponse({\n  response: response,\n  execute_action: execute_action,\n});\n",
       html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
       params: {
         prompt: ""
@@ -376,7 +376,7 @@ const extraCards = [
       displayButtonIcon: true,
       icon: 'sparkles'
     },
-    name: 'AI Agent',
+    name: 'AI Action',
     id: 'aiagent',
   },
   {
@@ -398,7 +398,7 @@ const extraCards = [
         input: {
           visible: true,
           defaultValue: "",
-          type: "string"
+          type: "any"
         }
       },
       rulesCode: "return params.input;\n",

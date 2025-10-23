@@ -1,3 +1,4 @@
+import { c } from 'tar';
 import { extractComponent } from './utils'
 
 class TCS34725 {
@@ -69,6 +70,10 @@ class TCS34725 {
           units: '%',
           endpoint: "/sensor/" + this.name + "_red_channel/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "circle",
+            color: "$red10"
+          }
         },
         {
           name: 'green_channel',
@@ -77,6 +82,10 @@ class TCS34725 {
           units: '%',
           endpoint: "/sensor/" + this.name + "_green_channel/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "circle",
+            color: "$green10"
+          }
         },
         {
           name: 'blue_channel',
@@ -85,6 +94,10 @@ class TCS34725 {
           units: '%',
           endpoint: "/sensor/" + this.name + "_blue_channel/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "circle",
+            color: "$blue10"
+          }
         },
         {
           name: 'clear_channel',
@@ -93,6 +106,9 @@ class TCS34725 {
           units: '%',
           endpoint: "/sensor/" + this.name + "_clear_channel/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "circle",
+          }
         },
         {
           name: 'illuminance',
@@ -101,6 +117,10 @@ class TCS34725 {
           units: 'lx',
           endpoint: "/sensor/" + this.name + "_illuminance/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "sun",
+            color: "$yellow10"
+          }
         },
         {
           name: 'color_temperature',
@@ -109,6 +129,9 @@ class TCS34725 {
           units: 'K',
           endpoint: "/sensor/" + this.name + "_color_temperature/state",
           connectionType: 'mqtt',
+          cardProps: {
+            icon: "thermometer",
+          }
         },
       ]
     }

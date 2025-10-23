@@ -9,26 +9,18 @@ export const versions = atom<number[]>([]);
 export const loading = atom(false);
 export const busy = atom(false);
 export const boardVersionId = atom(1) //internal id to track version changes. Only changes when switching versions, not when board changes
+export const boardLayer = atom("base") // current active layer
+export const layers = atom(["base"])
 
-export const useBoardVersion = () => {
-    return useAtom(boardVersion)
-} 
-
-export const useBoardVersionId = () => {
-    return useAtom(boardVersionId)
-}
-
-export const useTabVisible = () => {
-    return useAtom(tabVisible)
-}
-
+export const useBoardLayer = () => useAtom(boardLayer)
+export const useLayers = () => useAtom(layers)
+export const useBoardVersion = () =>  useAtom(boardVersion)
+export const useBoardVersionId = () => useAtom(boardVersionId)
+export const useTabVisible = () => useAtom(tabVisible)
 export const useVersions = () => useAtom(versions);
 export const useLoading  = () => useAtom(loading);
 export const useBusy = () => useAtom(busy);
-
-export const useHighlightedCard = () => {
-    return useAtom(highlightedCard)
-}
+export const useHighlightedCard = () =>  useAtom(highlightedCard)
 
 export const useIsHighlightedCard = (board, card: string) => {
     const [highlightedCard] = useHighlightedCard()

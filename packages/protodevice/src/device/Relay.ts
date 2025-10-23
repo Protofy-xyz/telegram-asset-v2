@@ -99,6 +99,10 @@ class RelayComponent {
             theme: "green",
             color: "$green10"
           },
+          cardProps: {
+            icon: "power",
+            color: "$green10"
+          },
           endpoint: "/"+this.type+"/"+this.name+"/command",
           connectionType: 'mqtt',
           payload: {
@@ -112,6 +116,10 @@ class RelayComponent {
           description: 'turns off the gpio',
           props: {
             theme: "red",
+            color: "$red10"
+          },
+          cardProps: {
+            icon: "power-off",
             color: "$red10"
           },
           endpoint: "/"+this.type+"/"+this.name+"/command",
@@ -129,6 +137,10 @@ class RelayComponent {
             theme: "purple",
             color: "$purple10"
           },
+          cardProps: {
+            icon: "shuffle",
+            color: "$purple10"
+          },
           endpoint: "/"+this.type+"/"+this.name+"/command",
           connectionType: 'mqtt',
           payload: {
@@ -144,6 +156,10 @@ class RelayComponent {
           connectionType: 'mqtt',
           payload: {
             type: 'str',
+          },
+          cardProps: {
+            icon: "clock",
+            color: "$orange10"
           },
         },
       ]

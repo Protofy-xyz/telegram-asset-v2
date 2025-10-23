@@ -97,9 +97,9 @@ export default {
               return []
             }).after("board"),
           }}
-          extraFieldsFormsAdd={{
-            device: z.boolean().after("board").label("automatic device").defaultValue(true)
-          }}
+          // extraFieldsFormsAdd={{
+          //   device: z.boolean().after("board").label("automatic device").defaultValue(true)
+          // }}
           model={DeviceDefinitionModel}
           pageState={pageState}
           icons={DeviceDefitionIcons}
