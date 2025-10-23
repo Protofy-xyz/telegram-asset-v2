@@ -246,7 +246,7 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
                 <XStack ai="center" gap="$3" p="$2.5" px="$3">
                   <XStack
                     cursor="pointer"
-                    opacity={hasChanges ? 1 : 0.4}
+                    opacity={hasChanges ? 1 : 0}
                     onPress={hasChanges ? handleSave : undefined}
                     pressStyle={{ opacity: 0.8 }}
                     hoverStyle={{ scale: 1.05 }}

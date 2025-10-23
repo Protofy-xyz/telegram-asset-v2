@@ -493,7 +493,7 @@ const Board = ({ board, icons }) => {
   }, [items, board?.layouts])
 
   boardRef.current.layouts = layouts
-  
+
   const [activeLayer] = useBoardLayer();
   const addWidget = async (card) => {
     try {
@@ -766,17 +766,17 @@ const Board = ({ board, icons }) => {
     >
       <YStack width="100%" ai="center" gap="$4" mt="$3">
         <XStack gap="$3" jc="center" width="100%">
-          <Button onPress={() => setShowUnsavedDialog(false)}>
+          <Button flex={1} onPress={() => setShowUnsavedDialog(false)}>
             Cancel
           </Button>
 
-          <Button onPress={() => { setShowUnsavedDialog(false); closeEdition(); }} borderRadius="$4" >
-            Close without saving
+          <Button flex={1} onPress={() => { setShowUnsavedDialog(false); closeEdition(); }} borderRadius="$4" >
+            Don't Save
           </Button>
 
           <Tinted>
-            <Button color="white" backgroundColor="$color6" borderRadius="$4" onPress={async () => { await saveCard(); setShowUnsavedDialog(false); closeEdition(); }}  >
-              Save & Close
+            <Button flex={1} color="white" backgroundColor="$color6" borderRadius="$4" onPress={async () => { await saveCard(); setShowUnsavedDialog(false); closeEdition(); }}  >
+              Save
             </Button>
           </Tinted>
 
