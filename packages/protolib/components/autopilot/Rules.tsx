@@ -173,7 +173,7 @@ export const Rules = ({
             footer={
               <XStack justifyContent='space-between' w="100%" ai="flex-end">
                 <XStack mt="$1" mb="$2" flex={1}>
-                  {(errorMsg || differentRulesCode) && (
+                  {(errorMsg || differentRulesCode) && !isLoadingOrGenerating && (
                     <TooltipSimple label={feedbackMessageText} restMs={0} delay={{ open: 500, close: 0 }}>
                       <Text
                         numberOfLines={2}
