@@ -37,13 +37,17 @@ export default Protofy("code", async (app:Application, context: typeof APIContex
         const prevMessages = body.messages.slice(0, body.messages.length - 1) //exclude the last message
 
 
-        const response = await context.apis.fetch(
+        let response = await context.apis.fetch(
           'get',
           agentUrl+'?token='+encodeURIComponent(token)+'&message='+encodeURIComponent(userMessage)+'&history='+encodeURIComponent(JSON.stringify(prevMessages)),
         );
 
+        if(typeof response !== 'string') {
+          response = JSON.stringify(response)
+        }
+
         // const message = "Message received"
-        chatbot.send(JSON.stringify(response, null, 4))
+        chatbot.send(response)
         chatbot.end()
         // chatbot.end()
     })
