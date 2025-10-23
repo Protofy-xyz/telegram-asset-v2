@@ -725,6 +725,8 @@ export default async (app, context) => {
         //get full board
         const board = await getBoard(from)
         board.name = '{{{name}}}'
+        delete board.version
+        delete board.savedAt
         //fill uiCode and rulesCode
 
 
