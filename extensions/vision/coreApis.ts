@@ -10,16 +10,16 @@ import path from "path";
 
 async function getImageBase64(url) {
     const response = await axios.get(url, { responseType: 'arraybuffer' });
-  
+
     const textData = Buffer.from(response.data).toString("utf8");
-  
+
     // in case the url is already a base64 image
     if (textData.startsWith("data:image")) {
-      return textData.split(",")[1];
+        return textData.split(",")[1];
     }
-  
+
     return Buffer.from(response.data, 'binary').toString('base64');
-  }
+}
 
 async function sendPromptWithImage(prompt, imageUrl) {
     const token = await getChatGPTApiKey();
@@ -119,38 +119,38 @@ export default async (app: Application, context: typeof APIContext) => {
                 cameraProtocol: 'http://'
             },
             configParams: {
-                    "cameraAddr": {
-                        "visible": true,
-                        "description": "IP Camera address",
-                        "defaultValue": "192.168.10.131",
-                        "type": "string"
-                    },
-                    "cameraPort": {
-                        "visible": true,
-                        "description": "IP Camera port",
-                        "defaultValue": "8080",
-                        "type": "string"
-                    },
-                    "streamPath": {
-                        "visible": false,
-                        "description": "Path to the video stream",
-                        "defaultValue": "/video",
-                        "type": "string"
-                    },
-                    "stillPath": {
-                        "visible": false,
-                        "description": "Path to get a still image",
-                        "defaultValue": "/photo.jpg",
-                        "type": "string"
-                    },
-                    "cameraProtocol": {
-                        "visible": false,
-                        "description": "Camera protocol",
-                        "defaultValue": "http://",
-                        "type": "string"
+                "cameraAddr": {
+                    "visible": true,
+                    "description": "IP Camera address",
+                    "defaultValue": "192.168.10.131",
+                    "type": "string"
+                },
+                "cameraPort": {
+                    "visible": true,
+                    "description": "IP Camera port",
+                    "defaultValue": "8080",
+                    "type": "string"
+                },
+                "streamPath": {
+                    "visible": false,
+                    "description": "Path to the video stream",
+                    "defaultValue": "/video",
+                    "type": "string"
+                },
+                "stillPath": {
+                    "visible": false,
+                    "description": "Path to get a still image",
+                    "defaultValue": "/photo.jpg",
+                    "type": "string"
+                },
+                "cameraProtocol": {
+                    "visible": false,
+                    "description": "Camera protocol",
+                    "defaultValue": "http://",
+                    "type": "string"
                 }
             }
-            
+
         },
         // emitEvent: true,
     })
@@ -188,6 +188,11 @@ export default async (app: Application, context: typeof APIContext) => {
         const { id } = req.body;
         if(!id) {
             return res.status(400).send({ error: "ID is required" });
+        }
+        // if has more than 20 frames, delete the oldest one
+        if(Object.keys(frames).length >= 20) {
+            const oldestKey = Object.keys(frames)[0];
+            delete frames[oldestKey];
         }
         frames[id as string] = image;
         res.send('/api/core/v1/vision/frame/get?id=' + id);
@@ -358,7 +363,7 @@ export default async (app: Application, context: typeof APIContext) => {
                 },
                 "fps": {
                     "visible": false,
-                    "defaultValue": "1"
+                    "defaultValue": "0.5"
                 }
             },
         },
