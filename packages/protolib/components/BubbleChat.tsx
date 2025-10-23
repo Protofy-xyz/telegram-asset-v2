@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Sparkles, X, Maximize, Minimize, MessageSquare } from "@tamagui/lucide-icons";
+import { Sparkles, X, Maximize, Minimize, MessageSquare, Bot } from "@tamagui/lucide-icons";
 import { Tinted } from "./Tinted";
 import { Chat } from "./Chat";
-import { YStack, Button, XStack, Paragraph, ScrollView, Separator, Spinner } from "@my/ui";
+import { YStack, Button, XStack, Paragraph, Spinner } from "@my/ui";
 import { API } from 'protobase'
 
 
@@ -31,6 +31,8 @@ export const BubbleChat = () => {
           }));
           setBots(parsed);
           setSelectedBot(parsed[0] || null);
+        } else if (response.isError) {
+          throw new Error(response.error);
         }
       } catch (err) {
         console.error("Error fetching bots:", err);
@@ -56,7 +58,7 @@ export const BubbleChat = () => {
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
   const showMenu = true
-
+  console.log({ isChatLoaded, selectedBot })
   return (
     <YStack>
       {/* FAB principal */}
@@ -113,76 +115,66 @@ export const BubbleChat = () => {
             backgroundColor="var(--bgPanel)"
             borderRightWidth={1}
             borderRightColor="$gray6"
+            gap="$2"
+            overflow="auto"
             p="$3"
-            space="$2"
           >
-            <Paragraph color="$color11" fontWeight="700" mb="$2">
+            <Paragraph mb="$4" color="$color11" fontWeight="700">
               Chatbots
             </Paragraph>
-
             {loadingBots ? (
-              <YStack ai="center" jc="center" mt="$5">
+              <YStack f={1} ai="center" jc="center" mt="$5">
                 <Spinner size="large" color="$color8" />
               </YStack>
             ) : (
-              <ScrollView>
-                {bots.map((bot, index) => {
-                  const isActive = selectedBot?.name === bot.name;
-                  return (
-                    <Tinted key={bot.name}>
-                      <YStack>
-                        <XStack
-                          ai="center"
-                          p="$2.5"
-                          borderRadius="$3"
-                          hoverStyle={{ backgroundColor: "$color1" }}
-                          backgroundColor={isActive ? "$color3" : "transparent"}
+              bots && bots.length > 0
+                ? <>
+                  {bots.map((bot, index) => {
+                    const isActive = selectedBot?.name === bot.name;
+                    return (
+                      <Tinted key={bot.name}>
+                        <Button
+                          f={1}
+                          mih="$4"
+                          mah="$4"
+                          overflow="hidden"
+                          icon={MessageSquare}
+                          jc="flex-start"
+                          backgroundColor={isActive ? "$color4" : "$bgContent"}
                           onPress={() => setSelectedBot(bot)}
-                          cursor="pointer"
-                          space="$3"
-                        >
-                          <MessageSquare
-                            size={18}
-                            color={isActive ? "var(--color8)" : "var(--gray11)"}
-                          />
-                          <Paragraph color={isActive ? "$color12" : "$gray11"}>
-                            {bot.name}
-                          </Paragraph>
-                        </XStack>
-                        {index < bots.length - 1 && <Separator borderColor="$gray6" mt="$1" mb="$1" />}
-                      </YStack>
-                    </Tinted>
-                  );
-                })}
-              </ScrollView>
+                        >{bot.name}</Button>
+                      </Tinted>
+                    );
+                  })
+                  }
+                </>
+                : <Paragraph textAlign="center" size="$4" color="$color11">No chatbots available</Paragraph>
             )}
           </YStack>
         )}
 
         {/* Área del chat */}
         <YStack flex={1} position="relative">
-          {/* Loading */}
-          <YStack
-            position="absolute"
-            height="100%"
-            width="100%"
-            ai="center"
-            jc="center"
-            top={0}
-            right={0}
-            zIndex={-2}
-          >
-            <Tinted>
-              <Spinner color="$color6" size={100} mb="$6" />
-            </Tinted>
-            <Paragraph size="$5">Loading chat...</Paragraph>
-          </YStack>
-
-          {/* Chat iframe */}
-          {isChatLoaded && selectedBot && <Chat agent={selectedBot.name} />}
+          {
+            isChatLoaded && selectedBot
+            && <Chat agent={selectedBot.name} />
+          }
+          {
+            !selectedBot
+            && <YStack flex={1} ai="center" jc="center" gap="$4">
+              <Bot size="$6" color="$color11" />
+              <Paragraph maw="300px" textAlign="center" size="$4" color="$color11" ml="$2">
+                {
+                  !loadingBots && (!bots || bots.length <= 0)
+                    ? "To get started, create an AI agent board using one of the available templates"
+                    : "Select a chatbot to get started."
+                }
+              </Paragraph>
+            </YStack>
+          }
         </YStack>
-      </XStack>
-    </YStack>
+      </XStack >
+    </YStack >
   );
 };
 
