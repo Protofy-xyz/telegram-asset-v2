@@ -60,7 +60,7 @@ export const BubbleChat = () => {
   const showMenu = true
   console.log({ isChatLoaded, selectedBot })
   return (
-    <YStack>
+    <>
       {/* FAB principal */}
       <Tinted>
         <Button
@@ -138,9 +138,9 @@ export const BubbleChat = () => {
                           mih="$4"
                           mah="$4"
                           overflow="hidden"
-                          icon={MessageSquare}
+                          icon={<Bot size={"$1"} color={isActive && "$color10"} />}
                           jc="flex-start"
-                          backgroundColor={isActive ? "$color4" : "$bgContent"}
+                          bc={!isActive ? "transparent" : "$color2"}
                           onPress={() => setSelectedBot(bot)}
                         >{bot.name}</Button>
                       </Tinted>
@@ -174,7 +174,7 @@ export const BubbleChat = () => {
           }
         </YStack>
       </XStack >
-    </YStack >
+    </ >
   );
 };
 
