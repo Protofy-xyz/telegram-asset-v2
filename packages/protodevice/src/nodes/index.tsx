@@ -58,6 +58,7 @@ import WK2168 from './WK2168';
 import GPS from './GPS';
 import TCS34725 from './TCS34725';
 import PIDClimate from './PIDClimate';
+import ProtofyXIAOESP32S3devBoard from './ProtofyXIAOESP32S3devBoard';
 
 const deviceMasks = [
   Wifi,
@@ -65,6 +66,7 @@ const deviceMasks = [
   Seeed_xiao_esp32s3,
   Esp32s3devkitc1,
   ProtofyESP32S3devBoard,
+  ProtofyXIAOESP32S3devBoard,
   Mqtt,
   Relay,
   GPIOSwitch,

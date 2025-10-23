@@ -339,6 +339,50 @@ const initialData = {
                 }
             }
         }
+    },
+    "Protofy XIAO ESP32S3 devBoard": {
+        "id": "5",
+        "name": "Protofy XIAO ESP32S3 devBoard",
+        "core": "esp32s3",
+        "ports": [
+            { "number": 1, "side": "left", "name": "43", "type": "IO", "analog": true, "description": "GPIO43, ADC1_CH1", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 10, "y": 498 }, "handleSide": "left"} },
+            { "number": 2, "side": "left", "name": "44", "type": "IO", "analog": true, "description": "GPIO44, ADC1_CH0", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 10, "y": 630 }, "handleSide": "left"} },
+            { "number": 3, "side": "left", "name": "7", "type": "IO", "analog": true, "description": "GPIO7, ADC1_CH5", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 10, "y": 760 }, "handleSide": "left"} },
+
+            { "number": 1, "side": "bottom", "name": "8", "type": "IO", "analog": true, "description": "GPIO8, ADC2_CH4", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 259, "y": 925 }, "handleSide": "left"} },
+            { "number": 2, "side": "bottom", "name": "9", "type": "IO", "analog": true, "description": "GPIO9", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 392, "y": 925 }, "handleSide": "left"} },
+            { "number": 3, "side": "bottom", "name": "1", "type": "IO", "analog": true, "description": "GPIO1", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 520, "y": 925 }, "handleSide": "right"} },
+
+            { "number": 1, "side": "right", "name": "6", "type": "IO", "analog": true, "description": "GPIO6, ADC1_CH4", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 355 }, "handleSide": "right"} },
+            { "number": 2, "side": "right", "name": "5", "type": "IO", "analog": true, "description": "GPIO5, ADC1_CH2", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 405 }, "handleSide": "right"} },
+            { "number": 3, "side": "right", "name": "4", "type": "IO", "analog": true, "description": "GPIO4, ADC1_CH3", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 520 }, "handleSide": "right"} },
+            { "number": 4, "side": "right", "name": "3", "type": "IO", "analog": true, "description": "RTC_GPIO3, GPIO3, TOUCH3, ADC1_CH2", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 649 }, "handleSide": "right"} },
+            { "number": 5, "side": "right", "name": "2", "type": "IO", "analog": true, "description": "GPIO2", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 778 }, "handleSide": "right"} }
+        ],
+        "config": {
+            "esphome-arduino":{
+                "esphome":{},
+                "esp32":{
+                    "board": "seeed_xiao_esp32s3",
+                    "variant": "esp32s3",
+                    "framework": { 
+                        "type": "arduino",
+                        "version": "latest",
+                        "platform_version": "6.5.0"
+                    }
+                }
+            },
+            "esphome-idf":{
+                "esphome":{},
+                "esp32":{
+                    "board": "seeed_xiao_esp32s3",
+                    "variant": "esp32s3", 
+                    "framework": { 
+                        "type": "esp-idf"
+                    }
+                }
+            }
+        }
     }
 }
 
