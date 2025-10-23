@@ -138,6 +138,10 @@ const InputEditor = ({ onClose, show, addRow }) => {
           onPress={() => {
             onClose()
             addRow(title, description, type, defaultValue)
+            setTitle("")
+            setDescription("")
+            setType("")
+            setDefaultValue("")
           }}
         >Create input</Button>
       </YStack>
