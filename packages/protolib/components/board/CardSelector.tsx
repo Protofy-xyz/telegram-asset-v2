@@ -467,6 +467,7 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
 
   const [selectedCard, setSelectedCard] = useState(null)
   const [card, setCard] = useState(null)
+  const [loading, setLoading] = useState(false)
   const [remountKey, setRemountKey] = useState(uuidv4())
 
   useEffect(() => {
@@ -506,7 +507,9 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
           hideHeader={true}
           styles={{ f: 1, w: "90vw", maw: 1400, h: "90vh", mah: 1200 }}
           lastButtonCaption="Create"
+          disabled={loading || !card}
           onFinish={async () => {
+            setLoading(true)
             try {
               const existingNames = board?.cards.map(c => c.name) ?? []
               card["name"] = card.customName ?? generateVersionatedName(card.name, existingNames)
@@ -515,6 +518,7 @@ export const CardSelector = ({ defaults = {}, board, addOpened, setAddOpened, on
             } catch (e) {
               console.error("Error creating card: ", e)
             }
+            setLoading(false)
           }}
           slides={[
             {
