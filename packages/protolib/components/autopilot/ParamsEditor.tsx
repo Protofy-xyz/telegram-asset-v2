@@ -405,7 +405,7 @@ export const ParamsEditor = ({
             Action before run
           </Text>
           <Text h={"fit-content"} lineHeight={"fit-content"} color="$gray9" fontSize="$5" fontWeight={500}>
-            Input parameter for the card execution
+            Link actions to be executed before running the card
           </Text>
         </YStack>
         {/* <Button

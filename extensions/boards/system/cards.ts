@@ -1043,6 +1043,13 @@ return card({
             params: {
                 name: "Name of the card to reset"
             },
+            configParams: {
+                name: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                }
+            },
             rulesCode: `return await execute_action("/api/core/v1/board/cardreset", userParams)`,
             displayResponse: true,
             buttonLabel: "Reset card",

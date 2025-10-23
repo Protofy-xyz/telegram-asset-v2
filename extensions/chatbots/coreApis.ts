@@ -191,7 +191,14 @@ export default (app, context) => {
       params: {
         message: "Message to send to the user, just a text"
       },
-      width: 2, 
+      configParams: {
+        message: {
+          visible: true,
+          defaultValue: "",
+          type: "string"
+        }
+      },
+      width: 2,
       height: 10,
       rulesCode: `return await execute_action("/api/core/v1/chatbot/send", userParams)`,
     },
@@ -210,7 +217,7 @@ export default (app, context) => {
       name: 'chat_message',
       description: 'Last chat message',
       rulesCode: `return states.chat?.messages?.lastMessage;`,
-      width: 3, 
+      width: 3,
       height: 7
     },
     emitEvent: true,
