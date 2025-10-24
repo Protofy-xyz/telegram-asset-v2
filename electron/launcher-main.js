@@ -109,8 +109,18 @@ protocol.registerSchemesAsPrivileged([
 ]);
 
 
+const respond = ({ statusCode = 200, data = Buffer.from(""), mimeType = "text/plain" } = {}) => {
+  if (!Buffer.isBuffer(data)) {
+    throw new Error("Response data is not a buffer")
+  }
+
+  let headers = {}
+  headers['Content-Type'] = mimeType
+  return new Response(data, { status: statusCode, headers })
+}
+
 app.whenReady().then(async () => {
-  protocol.registerBufferProtocol('app', async (request, respond) => {
+  protocol.handle('app', async (request) => {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
@@ -126,11 +136,10 @@ app.whenReady().then(async () => {
         pages: 1
       });
 
-      respond({
+      return respond({
         mimeType: 'application/json',
         data: Buffer.from(responseBody)
       });
-      return;
     } else if (
       request.method === 'GET' &&
       /^\/api\/v1\/projects\/[^\/]+\/download$/.test(pathname)
@@ -143,8 +152,7 @@ app.whenReady().then(async () => {
         const projects = readProjects();
         const project = projects.find(p => p.name === projectName);
         if (!project) {
-          respond({ statusCode: 404, data: Buffer.from('Project not found') });
-          return;
+          return respond({ statusCode: 404, data: Buffer.from('Project not found') });
         }
 
         // >>> ADD: mark JSON status
@@ -156,16 +164,14 @@ app.whenReady().then(async () => {
         const data = await response.json();
         const zipBallUrl = data?.assets[0]?.browser_download_url;
         if (!zipBallUrl) {
-          respond({ statusCode: 404, data: Buffer.from('Release not found') });
-          return;
+          return respond({ statusCode: 404, data: Buffer.from('Release not found') });
         }
 
         // download the zip file to PROJECTS_DIR
         const zipFilePath = path.join(PROJECTS_DIR, `${projectName}.zip`);
         const zipResponse = await fetch(zipBallUrl);
         if (!zipResponse.ok) {
-          respond({ statusCode: zipResponse.status, data: Buffer.from('Failed to download project zip') });
-          return;
+          return respond({ statusCode: zipResponse.status, data: Buffer.from('Failed to download project zip') });
         }
         const arrayBuffer = await zipResponse.arrayBuffer();
         const zipBuffer = Buffer.from(arrayBuffer);
@@ -193,18 +199,16 @@ app.whenReady().then(async () => {
         // >>> ADD: mark JSON status
         updateProjectStatus(projectName, 'downloaded');
 
-        respond({
+        return respond({
           mimeType: 'application/json',
           data: Buffer.from(JSON.stringify({ success: true, message: 'done' }))
         });
-        return;
       } catch (err) {
         console.error('Download failed:', err);
         // >>> ADD: mark JSON status
         updateProjectStatus(projectName, 'error');
 
-        respond({ statusCode: 500, data: Buffer.from('Failed to download project') });
-        return;
+        return respond({ statusCode: 500, data: Buffer.from('Failed to download project') });
       }
     } else if (
       request.method === 'GET' &&
@@ -223,17 +227,17 @@ app.whenReady().then(async () => {
           notifyProjectStatus(projectName, 'deleted');
           console.log('Project deleted:', projectPath);
         }
-        respond({
+        return respond({
           mimeType: 'application/json',
           data: Buffer.from(JSON.stringify({ success: true, message: 'Project deleted successfully' }))
         });
       } else {
-        respond({
+        return respond({
           mimeType: 'application/json',
           data: Buffer.from(JSON.stringify({ success: false, message: 'Invalid project name' }))
         });
       }
-      return;
+
     } else if (
       request.method === 'GET' &&
       /^\/api\/v1\/projects\/[^\/]+\/open-folder$/.test(pathname)
@@ -242,43 +246,40 @@ app.whenReady().then(async () => {
       const projectName = match?.[1];
 
       if (!projectName) {
-        respond({
+        return respond({
           statusCode: 400,
           data: Buffer.from('Invalid project name')
         });
-        return;
+
       }
 
       const projectFolderPath = path.join(PROJECTS_DIR, projectName);
       if (!fs.existsSync(projectFolderPath)) {
-        respond({
+        return respond({
           statusCode: 404,
           data: Buffer.from('Project folder not found')
         });
-        return;
       }
 
       try {
         const openError = await shell.openPath(projectFolderPath);
         if (openError) {
-          respond({
+          return respond({
             statusCode: 500,
             data: Buffer.from(openError || 'Failed to open folder')
           });
-          return;
         }
 
-        respond({
+        return respond({
           mimeType: 'application/json',
           data: Buffer.from(JSON.stringify({ success: true }))
         });
-        return;
       } catch (err) {
-        respond({
+        return respond({
           statusCode: 500,
           data: Buffer.from('Failed to open folder')
         });
-        return;
+
       }
 
     } else if (
@@ -292,11 +293,10 @@ app.whenReady().then(async () => {
       const projects = readProjects();
       const project = projects.find(p => p.name === projectName);
       if (!project) {
-        respond({
+        return respond({
           statusCode: 404,
           data: Buffer.from('Project not found')
         });
-        return;
       }
 
       try {
@@ -323,18 +323,16 @@ app.whenReady().then(async () => {
           mainWindow.close();
         }
         //reply to the renderer process
-        respond({
+        return respond({
           mimeType: 'application/json',
           data: Buffer.from(JSON.stringify({ success: true, message: 'done' }))
         });
-        return;
       } catch (e) {
         console.error('Run project failed:', e);
-        respond({ statusCode: 500, data: Buffer.from(JSON.stringify(e)) });
-        return;
+        return respond({ statusCode: 500, data: Buffer.from(JSON.stringify(e)) });
       }
     }
-    respond({ statusCode: 404, data: Buffer.from('not found') });
+    return respond({ statusCode: 404, data: Buffer.from('not found') });
   });
 
 
