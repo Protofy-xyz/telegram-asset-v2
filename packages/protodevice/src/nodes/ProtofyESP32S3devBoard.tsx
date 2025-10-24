@@ -119,9 +119,31 @@ const ProtofyESP32S3devBoard = ({ node = {}, nodeData = {}, topics = {}, color }
   const portsWithPositions = calculatePortPositions(ports);
 
   // Preserve your devicePositioning init (unchanged behavior)
-  const devicePositioning = Array(ports.length)
-    .fill(1)
-    .map((x, i) => `${i + 2}-${i > ports.length / 2 - 1 ? "l" : "r"}-${i}`);
+  const containerWidth = 800;
+  const devicePositioning = portsWithPositions.map((p, i) => {
+    let sideFlag: "l" | "r";
+
+    if (typeof p.position.left === "number") {
+      const x = p.position.left;
+
+      if (typeof containerWidth === "number") {
+        // Decide by absolute pixel position vs half the container
+        sideFlag = x > containerWidth / 2 ? "l" : "r";
+      } else {
+        // No known width: interpret common cases gracefully
+        // 0–1 => percentage (0..1), 0–100 => percentage (0..100), else px with a light heuristic
+        sideFlag =
+          x <= 1 ? (x > 0.5 ? "r" : "l")
+            : x <= 100 ? (x > 50 ? "r" : "l")
+              : x > 150 ? "r" : "l";
+      }
+    } else {
+      // No absolute x provided: fall back to resolved handle side
+      sideFlag = p.position.side === Position.Right ? "r" : "l";
+    }
+
+    return `${i + 2}-${sideFlag}-${i}`;
+  });
 
   if (!nodeData._devicePositioning) {
     setNodeData(node.id, { ...nodeData, _devicePositioning: devicePositioning });
