@@ -349,9 +349,9 @@ const initialData = {
             { "number": 2, "side": "left", "name": "44", "type": "IO", "analog": true, "description": "GPIO44, ADC1_CH0", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 10, "y": 630 }, "handleSide": "left"} },
             { "number": 3, "side": "left", "name": "7", "type": "IO", "analog": true, "description": "GPIO7, ADC1_CH5", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 10, "y": 760 }, "handleSide": "left"} },
 
-            { "number": 1, "side": "bottom", "name": "8", "type": "IO", "analog": true, "description": "GPIO8, ADC2_CH4", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 259, "y": 925 }, "handleSide": "left"} },
-            { "number": 2, "side": "bottom", "name": "9", "type": "IO", "analog": true, "description": "GPIO9", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 392, "y": 925 }, "handleSide": "left"} },
-            { "number": 3, "side": "bottom", "name": "1", "type": "IO", "analog": true, "description": "GPIO1", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 520, "y": 925 }, "handleSide": "right"} },
+            { "number": 1, "side": "bottom", "name": "8", "type": "IO", "analog": true, "description": "GPIO8, ADC2_CH4", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 272, "y": 915 }, "handleSide": "bottom"} },
+            { "number": 2, "side": "bottom", "name": "9", "type": "IO", "analog": true, "description": "GPIO9", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 405, "y": 915 }, "handleSide": "bottom"} },
+            { "number": 3, "side": "bottom", "name": "1", "type": "IO", "analog": true, "description": "GPIO1", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 533, "y": 915 }, "handleSide": "bottom"} },
 
             { "number": 1, "side": "right", "name": "6", "type": "IO", "analog": true, "description": "GPIO6, ADC1_CH4", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 355 }, "handleSide": "right"} },
             { "number": 2, "side": "right", "name": "5", "type": "IO", "analog": true, "description": "GPIO5, ADC1_CH2", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 405 }, "handleSide": "right"} },

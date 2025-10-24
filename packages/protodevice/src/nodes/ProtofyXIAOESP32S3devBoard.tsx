@@ -9,9 +9,11 @@ const isHandleConnected = (edges: any[], handleId: string) =>
   edges.find((e) => e.targetHandle == handleId || e.sourceHandle == handleId);
 
 // Types that fit your data shape
+type HandleSide = "left" | "right" | "top" | "bottom";
+
 type Port = {
   number: number;
-  side: "left" | "right";
+  side: HandleSide;
   name: string;
   type: string;
   analog: boolean;
@@ -20,40 +22,56 @@ type Port = {
   rtc: boolean;
   nodeRendering?: {
     position?: { x?: number; y?: number }; // pixels
-    handleSide?: "left" | "right";
+    handleSide?: HandleSide;
   };
   [k: string]: any;
 };
 
 type PortWithPosition = Port & {
   position: {
-    top: number;    // style.top (px)
-    left?: number;  // optional absolute x (px)
-    side: Position; // React Flow handle side
+    top?: number;     // style.top (px)
+    left?: number;    // style.left (px)
+    bottom?: number;  // style.bottom (px)
+    right?: number;   // style.right (px)
+    side: Position;   // React Flow handle side
   };
 };
 
 /**
- * calculatePortPositions (no legacy):
- * - Uses per-port nodeRendering.position.{x,y} + nodeRendering.handleSide exclusively.
- * - If handleSide is missing, falls back to port.side.
- * - If y is missing, defaults to 0.
- * - If x is missing, we anchor at 10px from the chosen side (handled in render).
+ * calculatePortPositions:
+ * - Uses per-port nodeRendering.position.{x,y} + nodeRendering.handleSide.
+ * - Supports "left", "right", "top", "bottom".
  */
 const calculatePortPositions = (ports: Port[]): PortWithPosition[] => {
   return ports.map((port) => {
     const nr = port.nodeRendering;
+    const handleSide: HandleSide = nr?.handleSide ?? port.side ?? "right";
 
-    const handleSide = nr?.handleSide ?? (port.side === "left" ? "left" : "right");
-    const side = handleSide === "left" ? Position.Left : Position.Right;
+    let side: Position;
+    switch (handleSide) {
+      case "left":
+        side = Position.Left;
+        break;
+      case "right":
+        side = Position.Right;
+        break;
+      case "top":
+        side = Position.Top;
+        break;
+      case "bottom":
+        side = Position.Bottom;
+        break;
+      default:
+        side = Position.Right;
+    }
 
-    const top = typeof nr?.position?.y === "number" ? nr!.position!.y! : 0;
-    const left = typeof nr?.position?.x === "number" ? nr!.position!.x! : undefined;
+    const x = nr?.position?.x;
+    const y = nr?.position?.y;
 
-    return {
-      ...port,
-      position: { top, left, side },
-    };
+    // Position logic: keep both x and y for all sides
+    const position = { left: x, top: y, side };
+
+    return { ...port, position };
   });
 };
 
@@ -73,13 +91,37 @@ const renderHandles = (portsWithPositions: PortWithPosition[], edges: any[], id:
 
     const connected = isHandleConnected(edges, idString);
 
-    // If absolute x is provided, use it; else anchor 10px from the side.
-    const horizontalStyle =
-      typeof left === "number"
-        ? { left: `${left}px`, right: "auto" }
-        : side === Position.Left
-        ? { left: "10px", right: "auto" }
-        : { left: "auto", right: "10px" };
+    let style: any = {
+      position: "absolute",
+      width: "25px",
+      height: "25px",
+      backgroundColor: connected ? "#BA68C8" : "white",
+      border: connected ? "2px solid #BA68C8" : "2px solid white",
+    };
+
+    switch (side) {
+      case Position.Left:
+        style.top = `${top ?? 0}px`;
+        style.left = left !== undefined ? `${left}px` : "10px";
+        break;
+      case Position.Right:
+        style.top = `${top ?? 0}px`;
+        style.right = "10px";
+        break;
+      case Position.Top:
+        style.left = `${left ?? 0}px`;
+        style.top = `${top ?? 10}px`; // use y directly if provided
+        break;
+      case Position.Bottom:
+        style.left = `${left ?? 0}px`;
+        // if y is provided, interpret as offset from top (so use top instead of bottom)
+        if (typeof top === "number") {
+          style.top = `${top}px`;
+        } else {
+          style.bottom = "10px";
+        }
+        break;
+    }
 
     return (
       <Handle
@@ -88,15 +130,7 @@ const renderHandles = (portsWithPositions: PortWithPosition[], edges: any[], id:
         isValidConnection={(c) => !isHandleConnected(edges, c.sourceHandle)}
         type="target"
         title={JSON.stringify(description, null, 2)}
-        style={{
-          position: "absolute",
-          top: `${top}px`,
-          width: "25px",
-          height: "25px",
-          backgroundColor: connected ? "#BA68C8" : "white",
-          border: connected ? "2px solid #BA68C8" : "2px solid white",
-          ...horizontalStyle,
-        }}
+        style={style}
         position={side}
         id={idString}
       />
