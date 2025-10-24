@@ -482,7 +482,15 @@ export const HandleOutput = ({ id, param, position = null, style = {}, isConnect
     return (
         <div style={{ display: 'flex', flexDirection: 'column', zIndex: 222 }}>
             {param.label ? <div style={{ padding: '2px 6px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
-                <Text style={{ marginRight: '12px' }}>{param.label}</Text>
+                <Text
+                    style={{
+                        marginRight: '12px',
+                        color: param.labelColor,
+                        ...(param.labelStyle ?? {}),
+                    }}
+                >
+                    {param.label}
+                </Text>
             </div> : null}
             <Handle
                 type={"source"}
