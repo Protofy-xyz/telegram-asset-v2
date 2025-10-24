@@ -168,7 +168,7 @@ const ProtofyXIAOESP32S3devBoard = ({ node = {}, nodeData = {}, topics = {}, col
       node={node}
       color={color}
       isPreview={!id}
-      title="Protofy ESP32S3 devBoard"
+      title="Protofy XIAO ESP32S3 devBoard"
       id={id}
       margin="200px"
     >
