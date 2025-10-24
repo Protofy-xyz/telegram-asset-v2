@@ -138,13 +138,44 @@ const ProtofyESP32S3devBoard = ({ node = {}, nodeData = {}, topics = {}, color }
       id={id}
       margin="200px"
     >
-      <div style={{ marginTop: "20px", marginBottom: "20px" }}>
+      <div style={{ marginTop: "20px", marginBottom: "80px" }}>
         <img
           src={"/public/images/device/ProtofyESP32S3devBoard.png"}
           style={{ width: "100%" }}
         />
-      </div>
+        <div
+          style={{
+            margin: "70px auto 0",
+            width: "90%",
+            height: "160px",
+            padding: "24px 20px",
+            borderRadius: "12px",
+            background: "rgba(0,0,0,0.05)",
+            border: "1px solid rgba(0,0,0,0.1)",
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "20px",
+              fontWeight: 600,
+              color: "#555",
+              position: "absolute",
+              top: "12px",
+              left: "50%",
+              transform: "translateX(-50%)",
+            }}
+          >
+            Virtual ports
+          </div>
+        </div>
 
+
+      </div>
       {renderHandles(portsWithPositions, edges as any[], id)}
     </Node>
   );

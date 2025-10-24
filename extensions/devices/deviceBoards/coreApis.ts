@@ -291,7 +291,15 @@ const initialData = {
             { "number": 8, "side": "right", "name": "40", "type": "IO", "analog": true, "description": "GPIO40", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 1433 }, "handleSide": "right"} },
             { "number": 9, "side": "right", "name": "41", "type": "IO", "analog": true, "description": "GPIO41", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 1561 }, "handleSide": "right"} },
             { "number": 10, "side": "right", "name": "2", "type": "IO", "analog": true, "description": "GPIO2", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 1689 }, "handleSide": "right"} },
-            { "number": 11, "side": "right", "name": "1", "type": "IO", "analog": true, "description": "GPIO1", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 1817 }, "handleSide": "right"} }
+            { "number": 11, "side": "right", "name": "1", "type": "IO", "analog": true, "description": "GPIO1", "maxVoltage": 3.3, "rtc": true, "nodeRendering": {"position": { "x": 765, "y": 1817 }, "handleSide": "right"} },
+
+            { "number": 1, "side": "bottom", "name": "virtual1", "type": "virtual", "analog": false, "description": "virtual port", "maxVoltage": 0, "rtc": false, "nodeRendering": {"position": { "x": 100, "y": 2105 }, "handleSide": "bottom"} },
+            { "number": 2, "side": "bottom", "name": "virtual2", "type": "virtual", "analog": false, "description": "virtual port", "maxVoltage": 0, "rtc": false, "nodeRendering": {"position": { "x": 200, "y": 2105 }, "handleSide": "bottom"} },
+            { "number": 3, "side": "bottom", "name": "virtual3", "type": "virtual", "analog": false, "description": "virtual port", "maxVoltage": 0, "rtc": false, "nodeRendering": {"position": { "x": 300, "y": 2105 }, "handleSide": "bottom"} },
+            { "number": 4, "side": "bottom", "name": "virtual4", "type": "virtual", "analog": false, "description": "virtual port", "maxVoltage": 0, "rtc": false, "nodeRendering": {"position": { "x": 400, "y": 2105 }, "handleSide": "bottom"} },
+            { "number": 5, "side": "bottom", "name": "virtual5", "type": "virtual", "analog": false, "description": "virtual port", "maxVoltage": 0, "rtc": false, "nodeRendering": {"position": { "x": 500, "y": 2105 }, "handleSide": "bottom"} },
+            { "number": 6, "side": "bottom", "name": "virtual6", "type": "virtual", "analog": false, "description": "virtual port", "maxVoltage": 0, "rtc": false, "nodeRendering": {"position": { "x": 600, "y": 2105 }, "handleSide": "bottom"} },
+            { "number": 7, "side": "bottom", "name": "virtual7", "type": "virtual", "analog": false, "description": "virtual port", "maxVoltage": 0, "rtc": false, "nodeRendering": {"position": { "x": 700, "y": 2105 }, "handleSide": "bottom"} }
         ],
         "config": {
             "esphome-arduino":{
