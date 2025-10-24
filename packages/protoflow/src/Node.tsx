@@ -628,6 +628,7 @@ const Node = ({ adaptiveTitleSize = true, modeParams = 'column', mode = 'column'
     if (node.id && !isRendered) extraStyle.opacity = '0'
 
     //console.log('meta data: ', nodeData?._metadata)
+    const wantLeftOutput = nodeData?._metadata?.outputPos === 'left'
 
     return (
         <DiagramNode
@@ -647,9 +648,30 @@ const Node = ({ adaptiveTitleSize = true, modeParams = 'column', mode = 'column'
                 ...style,
                 ...extraStyle
             }}
-            headerContent={<>
-                {!disableOutput && !isPreview && output ? <HandleOutput position={nodeData?._metadata?.outputPos == 'right' ? Position.Right : undefined} id={id} param={output} dataOutput={dataOutput} /> : null}
-            </>}
+            headerLeftContent={
+                !disableOutput && !isPreview && output && wantLeftOutput
+                    ? (
+                        <HandleOutput
+                            position={Position.Left}
+                            id={id}
+                            param={output}
+                            dataOutput={dataOutput}
+                        />
+                    )
+                    : null
+            }
+            headerContent={
+                !disableOutput && !isPreview && output && !wantLeftOutput
+                    ? (
+                        <HandleOutput
+                            position={Position.Right}
+                            id={id}
+                            param={output}
+                            dataOutput={dataOutput}
+                        />
+                    )
+                    : null
+            }
         >
             <div ref={content}>
                 {DEVMODE ? <div>{id}</div> : null}

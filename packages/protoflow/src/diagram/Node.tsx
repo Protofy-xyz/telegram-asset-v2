@@ -11,7 +11,23 @@ import { write } from '../lib/memory';
 import { generateBoxShadow } from '../lib/shadow';
 import { useHover } from 'usehooks-ts'
 
-const Node = ({ adaptiveTitleSize = true, mode = 'column', draggable = true, icon = null, container = false, title = '', children, isPreview = false, id, color, node, headerContent = null, style = {}, contentStyle = {} }) => {
+const Node = ({
+  adaptiveTitleSize = true,
+  mode = 'column',
+  draggable = true,
+  icon = null,
+  container = false,
+  title = '',
+  children,
+  isPreview = false,
+  id,
+  color,
+  node,
+  headerContent = null,
+  headerLeftContent = null,
+  style = {},
+  contentStyle = {}
+}) => {
     const useFlowsStore = useContext(FlowStoreContext)
     const errorData = useFlowsStore(state => state.errorData)
     const flexRef = useRef()
@@ -72,7 +88,7 @@ const Node = ({ adaptiveTitleSize = true, mode = 'column', draggable = true, ico
             }}
             className={draggable ? '' : 'nodrag'}
             >
-          {(title || headerContent) && !isNodePreviewMode ? (
+          {(title || headerContent || headerLeftContent) && !isNodePreviewMode ? (
             <div
                 ref={boxRef}
                 style={{
@@ -97,6 +113,7 @@ const Node = ({ adaptiveTitleSize = true, mode = 'column', draggable = true, ico
 
                     {typeof icon === "string" && <img src={"/public/icons/"+icon+".svg"} style={{ opacity: 0.7, width: titleSize, height: titleSize, color: hColor }} alt="icon" />}
             </div>)}
+            {headerLeftContent}
             {title && (
                 <Text
                 style={{
