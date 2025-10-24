@@ -1,6 +1,7 @@
 import React from "react";
 import { Node, Field, HandleOutput, NodeParams } from "protoflow";
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 
 const SdOfflineLogger = ({ node = {}, nodeData = {}, children, color }: any) => {
     const nameErrorMsg = 'Reserved name'
@@ -22,7 +23,7 @@ const SdOfflineLogger = ({ node = {}, nodeData = {}, children, color }: any) => 
 
     ] as Field[]
     return (
-        <Node node={node} isPreview={!node.id} title='SD offline logger' color={color} id={node.id} skipCustom={true} disableInput disableOutput>
+        <Node node={node} isPreview={!node.id} title='SD offline logger' color={color} id={node.id} skipCustom={true} disableInput disableOutput output={{label: 'CS Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
         </Node>
     )

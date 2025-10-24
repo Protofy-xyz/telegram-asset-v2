@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { Node, Field, NodeParams, FlowStoreContext } from 'protoflow';
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 
 const MicrofirePhEcTemp = ({ node = {}, nodeData = {}, children, color }: any) => {
     const transitionErrorMsg = 'Add units s/ms'
@@ -20,7 +21,7 @@ const MicrofirePhEcTemp = ({ node = {}, nodeData = {}, children, color }: any) =
         },
     ] as Field[]
     return (
-        <Node node={node} isPreview={!node.id} title='pH & EC & WaterTemp Microfire' color={color} id={node.id} skipCustom={true}>
+        <Node node={node} isPreview={!node.id} title='pH & EC & WaterTemp Microfire' color={color} id={node.id} skipCustom={true} output={{label: 'SDA Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
         </Node>
     )

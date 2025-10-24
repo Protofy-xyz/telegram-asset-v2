@@ -1,6 +1,7 @@
 import React from "react";
 import { Node, Field, NodeParams } from 'protoflow';
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 
 const LEDCOutput = ({ node = {}, nodeData = {}, children, color }: any) => {
     const [name, setName] = React.useState(nodeData['param-1'])
@@ -17,7 +18,7 @@ const LEDCOutput = ({ node = {}, nodeData = {}, children, color }: any) => {
         }
     ] as Field[]
     return (
-        <Node node={node} isPreview={!node.id} title='PWM output' color={color} id={node.id} skipCustom={true} >
+        <Node node={node} isPreview={!node.id} title='PWM output' color={color} id={node.id} skipCustom={true} output={{label: 'Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}} >
             <NodeParams id={node.id} params={nodeParams} />
         </Node>
     )

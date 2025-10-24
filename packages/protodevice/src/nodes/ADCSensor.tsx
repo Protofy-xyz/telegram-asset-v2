@@ -1,6 +1,7 @@
 import React from "react";
 import { Node, Field, NodeParams } from 'protoflow';
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 
 const ADCSensor = ({ node = {}, nodeData = {}, children, color }: any) => {
     const [name, setName] = React.useState(nodeData['param-1'])
@@ -32,7 +33,7 @@ const ADCSensor = ({ node = {}, nodeData = {}, children, color }: any) => {
     //     setAdcValue(parseFloat(message?.message?.toString())*100/3.3)
     // }, [message])
     return (
-        <Node node={node} isPreview={!node.id} title='Analog Sensor' color={color} id={node.id} skipCustom={true}>
+        <Node node={node} isPreview={!node.id} title='Analog Sensor' color={color} id={node.id} skipCustom={true} output={{label: 'Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
             {/* <HandleOutput id={node.id} param={nodeOutput} /> */}
             {/* <XStack>

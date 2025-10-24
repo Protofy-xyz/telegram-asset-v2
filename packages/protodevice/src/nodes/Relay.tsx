@@ -1,5 +1,6 @@
 import { Node, Field, NodeParams } from 'protoflow';
 import { getColor } from '.';
+import useTheme from 'protoflow/src/diagram/Theme';
 // import subsystem from "./utils/subsystem";
 
 const Relay = ({ node = {}, nodeData = {}, children, color }: any) => {
@@ -10,7 +11,7 @@ const Relay = ({ node = {}, nodeData = {}, children, color }: any) => {
     ] as Field[]
 
     return (
-        <Node node={node} isPreview={!node.id} title='Relay' color={color} id={node.id} skipCustom={true} disableInput disableOutput>
+        <Node node={node} isPreview={!node.id} title='Relay' color={color} id={node.id} skipCustom={true} disableInput disableOutput output={{label: 'Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
             {/* <div style={{marginTop: "10px", marginBottom: "10px"}}>
                 {subsystem(subsystemData, nodeData, type)}

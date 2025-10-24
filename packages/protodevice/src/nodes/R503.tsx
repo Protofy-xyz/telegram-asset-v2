@@ -1,5 +1,6 @@
 import { Node, Field, NodeParams } from 'protoflow';
 import { getColor } from '.';
+import useTheme from 'protoflow/src/diagram/Theme';
 
 const R503 = ({ node = {}, nodeData = {}, children, color }: any) => {
     const nodeParams: Field[] = [
@@ -9,7 +10,7 @@ const R503 = ({ node = {}, nodeData = {}, children, color }: any) => {
         }
     ] as Field[]
     return (
-        <Node node={node} isPreview={!node.id} title='Fingerprint reader' color={color} id={node.id} skipCustom={true} disableInput disableOutput>
+        <Node node={node} isPreview={!node.id} title='Fingerprint reader' color={color} id={node.id} skipCustom={true} disableInput disableOutput output={{label: 'Sensing Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
         </Node>
     )

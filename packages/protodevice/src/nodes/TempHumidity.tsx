@@ -1,6 +1,7 @@
 import React from "react";
 import { Node, Field, NodeParams } from 'protoflow';
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 // import { Node, Field, HandleOutput, NodeParams } from '../../flowslib';
 // import { pinTable } from '../../../lib/device/Device'
 
@@ -19,7 +20,7 @@ const TempHumidity = ({ node = {}, nodeData = {}, children, color }: any) => {
         }
     ] as Field[]
     return (
-        <Node node={node} isPreview={!node.id} title='Temperature & Humidity' color={color} id={node.id} skipCustom={true} disableInput disableOutput>
+        <Node node={node} isPreview={!node.id} title='Temperature & Humidity' color={color} id={node.id} skipCustom={true} disableInput disableOutput output={{label: 'Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
         </Node>
     )
