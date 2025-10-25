@@ -34,6 +34,7 @@ import { BasicPlaceHolder } from 'protolib/visualui/visualuiWrapper';
 import { StorageView } from 'protolib/components/StorageView';
 import { useEventEffect } from '@extensions/events/hooks';
 import { useKeyState } from 'protolib/components/KeySetter';
+import { InteractiveGrid } from 'protolib/components/InteractiveGrid';
 
 
 const layoutMetadata = {
@@ -62,6 +63,7 @@ const textMetadata = {
 }
 
 export const transferExtensionComponents = () => {
+    TransferComponent(InteractiveGrid, 'InteractiveGrid');
     TransferComponent(XStack, 'XStack', layoutMetadata);
     TransferComponent(YStack, 'YStack', layoutMetadata);
     TransferComponent(Paragraph, 'Paragraph');
