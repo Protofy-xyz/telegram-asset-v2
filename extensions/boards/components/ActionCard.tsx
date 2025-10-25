@@ -183,7 +183,7 @@ export const ActionCard = ({
 
     const isAutoResponsive = data?.autoResponsive !== false;
     const isCardMinimized = isAutoResponsive && cardRef.current?.offsetHeight < 200;
-    const valueString = (value === undefined || value == "") ? "N/A" : JSON.stringify(value);
+    const valueString = (value === undefined || value === "") ? "N/A" : JSON.stringify(value);
     const POPOVER_MAX_HEIGHT = 500
     const [popoverOpen, setPopoverOpen] = useState(false)
     const [popoverPlacement, setPopoverPlacement] = useState<'top' | 'bottom'>('bottom')
