@@ -8,7 +8,7 @@ export const InteractiveGrid = ({ data = [], onChange = (data) => { } }) => {
     const changeCell = (row: number, col: number) => {
         const newGrid = [...grid];
         newGrid[row] = [...newGrid[row]];
-        newGrid[row][col] = newGrid[row][col].value === "false" ? "true" : "false";
+        newGrid[row][col] = newGrid[row][col].value === "false" ? { value: "true" } : { value: "false" };
         setGrid(newGrid);
         onChange(newGrid);
     }
