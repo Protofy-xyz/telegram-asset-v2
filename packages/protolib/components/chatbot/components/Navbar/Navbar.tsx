@@ -78,7 +78,6 @@ export default function Navbar({ active, setActive, }: { active: boolean; setAct
           disablePreventBodyScroll
         >
           <Select.Trigger
-            f={1}
             iconAfter={ChevronDown}
             bc="$bgContent"
             hoverStyle={{

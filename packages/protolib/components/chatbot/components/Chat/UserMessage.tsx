@@ -1,8 +1,8 @@
-import Avatar from "../Avatar/Avatar";
-import { PenSquare } from "lucide-react";
-import classNames from "classnames";
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { PenIcon } from "lucide-react";
+import { XStack, YStack, Button, TextArea } from "tamagui";
 import useChat, { ChatMessageType } from "../../store/store";
+import { Tinted } from "../../../../components/Tinted";
 
 type Props = {
   chat: ChatMessageType;
@@ -12,13 +12,13 @@ type Props = {
 export default function UserMessage({ chat, chatIndex }: Props) {
   const [edit, setEdit] = useState(false);
   const [updatedQuery, setUpdatedQuery] = useState(chat.content);
-  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const editTextareaRef = useRef<any>(null);
   const [editChatMessage, resetChatAt] = useChat((state) => [
     state.editChatMessage,
     state.resetChatAt,
   ]);
 
-  function handelChatEdit() {
+  function handleChatEdit() {
     editChatMessage(updatedQuery, chatIndex);
     resetChatAt(chatIndex + 1);
     setEdit(false);
@@ -31,65 +31,67 @@ export default function UserMessage({ chat, chatIndex }: Props) {
   }, [edit]);
 
   return (
-    <div className={classNames("py-4 px-2 md:px-0")}>
-      <div style={{ paddingLeft: "75px", maxWidth: "900px", display: 'flex', justifyContent: 'flex-end' }} className="mx-auto md:flex md:items-center group">
-        <div className="mr-5 md:invisible group-hover:visible text-right">
-          {!edit && (
-            <button
-              className="edit md:ml-8 dark:text-gray-200  text-gray-500 text-xl "
-              onClick={() => setEdit((prev) => !prev)}
-            >
-              <PenSquare />
-            </button>
-          )}
-        </div>
-        <div style={{}} className="bg-gray-100 dark:bg-[#2f2f2f] p-4 rounded-2xl">
-          <div className="flex items-start w-full max-w-[620px]">
-            {/* <div className="mr-4  rounded-md flex items-center flex-shrink-0">
-              <Avatar className=" h-11 w-11" />
-            </div> */}
-
-            {!edit ? (
-              <p
-                className={classNames(
-                  " dark:text-gray-200 overflow-x-auto"
-                )}
-              >
-                {chat.content}
-              </p>
-            ) : (
-              <textarea
-                name="query"
-                ref={editTextareaRef}
-                value={updatedQuery}
-                onChange={(e) => {
-                  setUpdatedQuery(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                className="w-full bg-transparent border-0 dark:text-white outline-none resize-none"
-                autoFocus
-              ></textarea>
-            )}
-          </div>
-        </div>
-        {edit && (
-          <div className=" max-w-2xl mx-auto flex items-center group justify-center font-bold mt-4">
-            <button
-              className=" p-2 bg-teal-600 hover:bg-teal-700 focus:border-2  rounded-md text-white mr-2 "
-              onClick={handelChatEdit}
-            >
-              Save & submit
-            </button>
-            <button
-              className=" p-2 bg-transparent border dark:hover:bg-gray-700 hover:bg-gray-200 focus:border-2 hover:border border-gray-600 rounded-md text-black dark:text-white"
-              onClick={() => setEdit((prev) => !prev)}
-            >
-              Cancel
-            </button>
-          </div>
+    <YStack p="$3" gap="$2" ai="flex-end">
+      <XStack
+        jc="flex-end"
+        ai="center"
+        w="100%"
+        gap="$2"
+      >
+        {!edit && (
+          <Button
+            chromeless
+            circular
+            onPress={() => setEdit((prev) => !prev)}
+            icon={PenIcon}
+            size="$3"
+          />
         )}
-      </div>
-    </div>
+        {!edit ? (
+          <YStack
+            bg="$background"
+            br="$6"
+            px="$3"
+            py="$2"
+            maxWidth={620}
+          >
+            {chat.content}
+          </YStack>
+        ) : (
+          <TextArea
+            ref={editTextareaRef}
+            value={updatedQuery}
+            onChangeText={(val) => {
+              setUpdatedQuery(val);
+              const el = editTextareaRef.current;
+              if (el) {
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
+            autoFocus
+            multiline
+            rows={1}
+            borderWidth={0}
+            focusStyle={{ outlineWidth: 0 }}
+            w="100%"
+            minHeight={0}
+            h="auto"
+          />
+        )}
+      </XStack>
+      {edit && (
+        <XStack gap="$2">
+          <Tinted>
+            <Button onPress={handleChatEdit} hoverStyle={{ bg: "$teal11" }}>
+              Save
+            </Button>
+          </Tinted>
+          <Button chromeless theme="red" onPress={() => setEdit(false)}>
+            Cancel
+          </Button>
+        </XStack>
+      )}
+    </YStack>
   );
 }
