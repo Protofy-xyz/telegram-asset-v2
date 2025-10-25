@@ -83,7 +83,7 @@ export default {
           onEdit={data => { console.log("DATA (onEdit): ", data); return data }}
           columns={DataTable2.columns(
             DataTable2.column("", () => "", false, (row) => {
-              return <InteractiveIcon onPress={() => replace('item', row.name)} Icon={Cog}></InteractiveIcon>
+              return <InteractiveIcon mt="$2" onPress={() => replace('item', row.name)} Icon={Cog}></InteractiveIcon>
             }, true, '50px'),
             DataTable2.column("name", row => row.name, "name"),
             DataTable2.column("board", row => row.board, "board", (row) => <Chip text={row.board.name} color={'$gray5'} />),
