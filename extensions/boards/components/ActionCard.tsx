@@ -23,6 +23,9 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
     // console.log("🤖 ~ CardActions ~ data:", data)
     const [menuOpened, setMenuOpened] = useState(false)
     const [cardStatesOpen, setCardStatesOpen] = useState(false)
+    const cardActionRef = useRef(null)
+    const hasSpace = cardActionRef.current?.offsetWidth > 200
+
     const MenuButton = ({ text, Icon, onPress }: { text: string, Icon: any, onPress: any }) => {
         return (
             <XStack width="100%" id={id} opacity={1} borderRadius="$5" padding="$3" alignSelf="flex-start" cursor="pointer" pressStyle={{ opacity: 0.7 }} hoverStyle={{ backgroundColor: "$color5" }}
@@ -70,9 +73,9 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
     }
 
     return <Tinted>
-        <XStack paddingTop="$1" flex={1} paddingRight="$4" justifyContent="space-between" alignItems="center">
+        <XStack ref={cardActionRef} paddingTop="$1" flex={1} paddingRight="$4" justifyContent={hasSpace ? "space-between" : "flex-end"} alignItems="center">
             <Popover key="card-states" onOpenChange={setCardStatesOpen} open={cardStatesOpen} allowFlip={true} stayInFrame={true} placement='bottom-start'>
-                <Popover.Trigger>
+                <Popover.Trigger display={hasSpace ? 'block' : 'none'}>
                     <CardIcon className='no-drag' Icon={Book} onPress={(e) => { e.stopPropagation(); setCardStatesOpen(true) }} />
                 </Popover.Trigger>
                 {/* @ts-ignore */}
@@ -107,7 +110,7 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
 
             <XStack className='no-drag'>
                 {data?.sourceFile && <CardIcon Icon={Cable} onPress={onEditCode} />}
-                <CardIcon Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "params")} />
+                <CardIcon display={hasSpace ? 'block' : 'none'} Icon={Settings} onPress={() => onEdit(data?.editorOptions?.defaultTab ?? "params")} />
 
                 <Popover key="card-menu" onOpenChange={setMenuOpened} open={menuOpened} allowFlip={true} stayInFrame={true} placement='bottom-end'>
                     <Popover.Trigger>
