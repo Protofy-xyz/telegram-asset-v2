@@ -332,7 +332,7 @@ export const DisplayEditor = ({
                 </YStack>
             </YStack >
 
-            <YStack pb="$7" pr="$5" overflowBlock='scroll' flex={1}>
+            <YStack pb="$7" pr="$5" overflow='auto' overflowBlock='scroll' flex={1}>
                 <YStack
                     pos='sticky' top="0px" left="0px" zIndex={20} pt="$11" px="$3"
                 >
