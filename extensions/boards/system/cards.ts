@@ -281,7 +281,7 @@ export const registerCards = async () => {
             params: {},
             configParams: {},
             description: "Blank card for layout purposes.",
-            rulesCode: "if (params.action == \"create\") {\n\n    return Array.from({ length: params.rows }, () =>\n        Array.from({ length: params.columns }, () => ({ value: \"false\" }))\n    )\n\n} else if (params.action == \"update\") {\n    return params.grid\n}",
+            rulesCode: "",
             html: "//@card/react\n\nfunction Widget(card) {\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n            <YStack f={1} height=\"100%\" ai=\"center\" jc=\"center\" width=\"100%\">\n           \n            </YStack>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n\n",
         }
     })
