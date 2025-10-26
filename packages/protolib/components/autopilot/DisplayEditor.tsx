@@ -339,7 +339,7 @@ export const DisplayEditor = ({
                         mode='custom'
                         presetColors={presetColors}
                         popoverProps={{ width: "325px" }}
-                        placeholder='default'
+                        placeholder='#F7B500 or var(--yellow9)'
                         onChange={(color) => {
                             if (color === "default") {
                                 delete cardData.color
@@ -348,7 +348,13 @@ export const DisplayEditor = ({
                             }
                             setCardData({ ...cardData })
                         }}
-                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
+                        inputProps={{ 
+                            backgroundColor: '$bgPanel', 
+                            borderColor: error ? '$red9' : '$gray6',
+                            onChange: e => {
+                                setCardData({ ...cardData, color: e.target.value })
+                            }
+                        }}
                     />
                 </YStack>
                 <YStack w={400} display={cardData.displayFrame == false ? "none" : "block"}>
@@ -357,7 +363,7 @@ export const DisplayEditor = ({
                         br={"8px"}
                         color={cardData.bgColor ?? ""}
                         mode='custom'
-                        placeholder='default'
+                        placeholder='#F7B500 or var(--yellow9)'
                         presetColors={presetColors}
                         popoverProps={{ width: "325px" }}
                         onChange={(color) => {
@@ -368,7 +374,13 @@ export const DisplayEditor = ({
                             }
                             setCardData({ ...cardData })
                         }}
-                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
+                        inputProps={{ 
+                            backgroundColor: '$bgPanel', 
+                            borderColor: error ? '$red9' : '$gray6',
+                            onChange: e => {
+                                setCardData({ ...cardData, bgColor: e.target.value })
+                            }
+                        }}
                     />
                 </YStack>
             </YStack >
@@ -382,7 +394,6 @@ export const DisplayEditor = ({
                         br={"8px"}
                         value={filter}
                         fontSize={"$5"}
-                        color="$color"
                         placeholderTextColor={"$gray8"}
                         style={{
                             backdropFilter: 'blur(20px)',
