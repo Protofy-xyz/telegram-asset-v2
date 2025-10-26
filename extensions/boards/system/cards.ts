@@ -212,6 +212,36 @@ export const registerCards = async () => {
         }
     })
 
+        addCard({
+        group: 'board',
+        tag: "grid",
+        id: 'board_grid_interactive',
+        templateName: "Interactive Grid",
+        name: "interactive_grid",
+        emitEvent: true,
+        defaults: {
+            width: 4,
+            height: 12,
+            icon: "grid-3x3",
+            type: "action",
+            name: "interactive_grid",
+            displayResponse: true,
+            displayIcon: true,
+            params: {
+                grid: "2D array representing the grid state"
+            },
+            configParams: {
+                grid: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "array"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "return params.grid",
+            html: "//@card/react\n\nfunction Widget(card) {\n\nreturn <InteractiveGrid \n  onChange={(data) => execute_action(card?.[name], {grid: data}) }\n  data={ card.value } \n  />\n}\n",
+            }
+    })
 
     addCard({
         group: 'board',

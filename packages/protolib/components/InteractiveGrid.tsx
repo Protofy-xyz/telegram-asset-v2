@@ -37,7 +37,7 @@ export const InteractiveGrid = ({ data = [], onChange = (data) => {} }) => {
         className="no-drag"
       >
         {grid.length ? (
-          grid.map((row, rowI) => (
+          grid?.map((row, rowI) => (
             <View
               key={rowI}
               style={{
