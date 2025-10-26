@@ -290,6 +290,7 @@ export const ActionCard = ({
             containerProps={{
                 onHoverIn: () => setHovered(true),
                 onHoverOut: () => setHovered(false),
+                backgroundColor: data.bgColor,
                 ...containerProps,
             }}
             status={status}

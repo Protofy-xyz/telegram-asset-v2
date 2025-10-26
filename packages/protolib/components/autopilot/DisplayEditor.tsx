@@ -1,11 +1,21 @@
 import React, { useMemo, useState, useCallback } from 'react'
-import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView, ToggleGroup } from '@my/ui'
+import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView, ToggleGroup, useTheme } from '@my/ui'
 import { Check } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import { IconSelect } from '../IconSelect'
 import { InputColor } from '../InputColor'
 import { Toggle } from '../Toggle'
 import { useBoardLayer } from '@extensions/boards/store/boardStore'
+
+const colors = ["orange", "yellow", "green", "blue", "purple", "pink", "red"]
+const colorShades = [11, 9, 7, 5]
+const presetColors = [...colorShades.reduce((total, current) => {
+    colors.forEach((val) => {
+        total.push(`var(--${val}${current})`)
+    })
+    return total
+}, []), "default"]
+
 
 export const SettingsTitle = ({ children, error = "", ...props }) => {
     return (
@@ -322,11 +332,42 @@ export const DisplayEditor = ({
                 </YStack>
 
                 <YStack w={400}>
-                    <SettingsTitle>Color</SettingsTitle>
+                    <SettingsTitle>Main Color</SettingsTitle>
                     <InputColor
                         br={"8px"}
-                        color={cardData.color}
-                        onChange={(e) => setCardData({ ...cardData, color: e.hex })}
+                        color={cardData.color ?? ""}
+                        mode='custom'
+                        presetColors={presetColors}
+                        popoverProps={{ width: "290px" }}
+                        placeholder='default'
+                        onChange={(color) => {
+                            if (color === "default") {
+                                delete cardData.color
+                            } else {
+                                cardData.color = color
+                            }
+                            setCardData({ ...cardData })
+                        }}
+                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
+                    />
+                </YStack>
+                <YStack w={400} display={cardData.displayFrame == false ? "none" : "block"}>
+                    <SettingsTitle>Background Color</SettingsTitle>
+                    <InputColor
+                        br={"8px"}
+                        color={cardData.bgColor ?? ""}
+                        mode='custom'
+                        placeholder='default'
+                        presetColors={presetColors}
+                        popoverProps={{ width: "290px" }}
+                        onChange={(color) => {
+                            if (color === "default") {
+                                delete cardData.bgColor
+                            } else {
+                                cardData.bgColor = color
+                            }
+                            setCardData({ ...cardData })
+                        }}
                         inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
                     />
                 </YStack>
