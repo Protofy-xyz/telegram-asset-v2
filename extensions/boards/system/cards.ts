@@ -263,6 +263,29 @@ export const registerCards = async () => {
 
     addCard({
         group: 'board',
+        tag: "blank",
+        id: 'board_blank',
+        templateName: "Blank Card",
+        name: "blank",
+        emitEvent: true,
+        defaults: {
+            width: 2,
+            height: 6,
+            icon: "square-dashed",
+            type: "action",
+            name: "blank",
+            displayResponse: true,
+            displayIcon: true,
+            params: {},
+            configParams: {},
+            description: "Blank card for layout purposes.",
+            rulesCode: "if (params.action == \"create\") {\n\n    return Array.from({ length: params.rows }, () =>\n        Array.from({ length: params.columns }, () => ({ value: \"false\" }))\n    )\n\n} else if (params.action == \"update\") {\n    return params.grid\n}",
+            html: "//@card/react\n\nfunction Widget(card) {\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n            <YStack f={1} height=\"100%\" ai=\"center\" jc=\"center\" width=\"100%\">\n           \n            </YStack>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n\n",
+        }
+    })
+
+    addCard({
+        group: 'board',
         tag: "agents",
         id: 'board_agents_input',
         templateName: "Agent Input to receive agent calls",
