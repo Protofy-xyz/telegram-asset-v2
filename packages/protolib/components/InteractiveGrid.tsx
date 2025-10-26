@@ -1,6 +1,29 @@
-import { Button, View, Text } from "@my/ui";
+import { Button as BaseButton, View, Text } from "@my/ui";
 import { Tinted } from "./Tinted";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
+import { styled } from "tamagui";
+
+
+const GridButton = styled(BaseButton, {
+  name: "GridButton",
+  unstyled: true,
+  flex: 1,
+  flexShrink: 1,
+  minWidth: 0,
+  height: "100%",
+  borderRadius: 6,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "$gray2",
+  pressStyle: { opacity: 0.8 },
+  variants: {
+    active: {
+      true: {
+        backgroundColor: "$color8",
+      },
+    },
+  },
+});
 
 export const InteractiveGrid = ({ data = [], onChange = (data) => {} }) => {
   const [grid, setGrid] = useState(data);
@@ -27,7 +50,7 @@ export const InteractiveGrid = ({ data = [], onChange = (data) => {} }) => {
     <Tinted>
       <View
         style={{
-          gap: 10,
+          gap: 2,
           justifyContent: "space-between",
           alignItems: "center",
           height: "100%",
@@ -37,23 +60,23 @@ export const InteractiveGrid = ({ data = [], onChange = (data) => {} }) => {
         className="no-drag"
       >
         {grid.length ? (
-          grid?.map((row, rowI) => (
+          grid.map((row, rowI) => (
             <View
               key={rowI}
               style={{
-                gap: 10,
+                gap: 2,
                 width: "100%",
                 flexDirection: "row",
                 justifyContent: "space-between",
                 flex: 1,
+                minHeight: 0,
               }}
             >
               {row.map((column, columnI) => (
-                <Button
+                <GridButton
                   key={`${rowI}-${columnI}`}
+                  active={column.value === "true"}
                   onPress={() => changeCell(rowI, columnI)}
-                  bc={column.value === "true" ? "$color8" : "$gray2"}
-                  style={{ flex: 1, height: "100%" }}
                 />
               ))}
             </View>
