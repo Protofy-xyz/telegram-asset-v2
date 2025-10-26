@@ -7,7 +7,7 @@ import { InputColor } from '../InputColor'
 import { Toggle } from '../Toggle'
 import { useBoardLayer } from '@extensions/boards/store/boardStore'
 
-const colors = ["orange", "yellow", "green", "blue", "purple", "pink", "red"]
+const colors = ["orange", "yellow", "green", "blue", "purple", "pink", "red", "gray"]
 const colorShades = [11, 9, 7, 5]
 const presetColors = [...colorShades.reduce((total, current) => {
     colors.forEach((val) => {
@@ -338,7 +338,7 @@ export const DisplayEditor = ({
                         color={cardData.color ?? ""}
                         mode='custom'
                         presetColors={presetColors}
-                        popoverProps={{ width: "290px" }}
+                        popoverProps={{ width: "325px" }}
                         placeholder='default'
                         onChange={(color) => {
                             if (color === "default") {
@@ -359,7 +359,7 @@ export const DisplayEditor = ({
                         mode='custom'
                         placeholder='default'
                         presetColors={presetColors}
-                        popoverProps={{ width: "290px" }}
+                        popoverProps={{ width: "325px" }}
                         onChange={(color) => {
                             if (color === "default") {
                                 delete cardData.bgColor

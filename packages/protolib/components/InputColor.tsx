@@ -50,7 +50,7 @@ export const InputColor = ({ color, onChange, placeholder, inputProps, mode, pre
                                     borderRadius="$2"
                                     cursor="pointer"
                                     borderWidth={color === presetColor ? 3 : 1}
-                                    borderColor={presetColor == "default" ? "$red8" : color === presetColor ? "$color" : "$borderColor"}
+                                    borderColor={presetColor == "default" ? "$red8" : color === presetColor ? "$color" : "$gray7"}
                                     onPress={() => onChange(presetColor)}
                                 />
                             ))
