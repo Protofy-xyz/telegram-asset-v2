@@ -31,6 +31,7 @@ import { getFlowMasks, getFlowsCustomComponents } from "app/bundles/masks"
 import { Rules } from 'protolib/components/autopilot/Rules'
 import { Panel, PanelGroup } from "react-resizable-panels";
 import CustomPanelResizeHandle from 'protolib/components/MainPanel/CustomPanelResizeHandle'
+import { useSettingValue } from '@extensions/settings/hooks';
 
 const GLTFViewer = dynamic(() => import('protolib/adminpanel/features/components/ModelViewer'), {
   loading: () => <Center>
@@ -216,6 +217,8 @@ export const CodeView = ({
   const { resolvedTheme } = useThemeSetting()
   const [mode, setMode] = useState(disableAIPanels ? 'code' : defaultMode)
   const [savedRules, setSavedRules] = useState(rules)
+  const codeVisibleSetting: any = useSettingValue('code.visible', true);
+  const isCodeVisible = codeVisibleSetting != "false"
 
   console.log('sourceCode: ', sourceCode)
   const monaco = useMemo(() => {
@@ -374,7 +377,7 @@ export const CodeView = ({
           </YStack>
         </Panel>
         <CustomPanelResizeHandle direction="horizontal" borderLess={false} borderColor="var(--gray4)" />
-        <Panel defaultSize={50} minSize={0}>
+        <Panel defaultSize={isCodeVisible ? 50 : 0} minSize={0}>
           <YStack flex={1} h="100%" paddingTop="$3">
             {monaco}
           </YStack>
