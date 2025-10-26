@@ -14,6 +14,7 @@ const GridButton = styled(BaseButton, {
   borderRadius: 6,
   justifyContent: "center",
   alignItems: "center",
+  hoverStyle: { scale: 1.1, bc: "$color4" },
   backgroundColor: "$gray2",
   pressStyle: { opacity: 0.8 },
   variants: {
