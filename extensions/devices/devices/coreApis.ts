@@ -251,6 +251,17 @@ function Widget(card) {
                 ensureBucket('xs', groupKey).push({ i: key, w: size.xs.w, h: size.xs.h, id, device: deviceName, subsystem });
             }
         }
+
+        const aiTemplatePath = path.join(process.cwd(), '..', '..', 'data', 'templates', 'boards', 'ai agent', 'ai agent.json');
+        let aiTemplateJson: any = {};
+        if (fs.existsSync(aiTemplatePath)) {
+            const aiTemplateData = fs.readFileSync(aiTemplatePath, 'utf-8');
+            aiTemplateJson = JSON.parse(aiTemplateData);
+            for (const card of aiTemplateJson.cards || []) {
+                cards.push(card);
+            }
+        }
+
         // --- after you've finished filling `buckets` (lg/md/sm/xs) ---
         const groupWeights = new Map<string, number>();
 
