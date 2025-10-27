@@ -10,9 +10,11 @@ const isHandleConnected = (edges: any[], handleId: string) =>
   edges.find((e) => e.targetHandle == handleId || e.sourceHandle == handleId);
 
 // Types that fit your data shape
+type HandleSide = "left" | "right" | "top" | "bottom";
+
 type Port = {
   number: number;
-  side: "left" | "right";
+  side: HandleSide;
   name: string;
   type: string;
   analog: boolean;
@@ -21,7 +23,7 @@ type Port = {
   rtc: boolean;
   nodeRendering?: {
     position?: { x?: number; y?: number }; // pixels
-    handleSide?: "left" | "right";
+    handleSide?: HandleSide;
   };
   [k: string]: any;
 };
@@ -44,20 +46,35 @@ type PortWithPosition = Port & {
 const calculatePortPositions = (ports: Port[]): PortWithPosition[] => {
   return ports.map((port) => {
     const nr = port.nodeRendering;
+    const handleSide: HandleSide = nr?.handleSide ?? port.side ?? "right";
 
-    const handleSide = nr?.handleSide ?? (port.side === "left" ? "left" : "right");
-    const side = handleSide === "left" ? Position.Left : Position.Right;
+    let side: Position;
+    switch (handleSide) {
+      case "left":
+        side = Position.Left;
+        break;
+      case "right":
+        side = Position.Right;
+        break;
+      case "top":
+        side = Position.Top;
+        break;
+      case "bottom":
+        side = Position.Bottom;
+        break;
+      default:
+        side = Position.Right;
+    }
 
-    const top = typeof nr?.position?.y === "number" ? nr!.position!.y! : 0;
-    const left = typeof nr?.position?.x === "number" ? nr!.position!.x! : undefined;
+    const x = nr?.position?.x;
+    const y = nr?.position?.y;
 
-    return {
-      ...port,
-      position: { top, left, side },
-    };
+    // Position logic: keep both x and y for all sides
+    const position = { left: x, top: y, side };
+
+    return { ...port, position };
   });
 };
-
 // Render handles using positions computed above
 const renderHandles = (
   portsWithPositions: PortWithPosition[],
