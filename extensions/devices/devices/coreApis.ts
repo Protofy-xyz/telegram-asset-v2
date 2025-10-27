@@ -362,6 +362,7 @@ function Widget(card) {
             cards,
             rules: [],
             autopilot: false,
+            icon: 'router',
             savedAt: Date.now()
         };
 
