@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { PORT_TYPES, Node, FlowStoreContext } from "protoflow";
 import { Handle, Position, useEdges } from "reactflow";
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 
 // --- helpers -----------------------------
 
@@ -76,7 +77,13 @@ const calculatePortPositions = (ports: Port[]): PortWithPosition[] => {
 };
 
 // Render handles using positions computed above
-const renderHandles = (portsWithPositions: PortWithPosition[], edges: any[], id: string) => {
+const renderHandles = (
+  portsWithPositions: PortWithPosition[],
+  edges: any[],
+  id: string,
+  theme: { plusColor: string; edgeColor: string }
+) => {
+  const { plusColor, edgeColor } = theme;
   return portsWithPositions.map((port, i) => {
     const idString = `${id}${PORT_TYPES.data}element-${i + 2}`;
     const { top, side, left } = port.position;
@@ -95,8 +102,8 @@ const renderHandles = (portsWithPositions: PortWithPosition[], edges: any[], id:
       position: "absolute",
       width: "25px",
       height: "25px",
-      backgroundColor: connected ? "#BA68C8" : "white",
-      border: connected ? "2px solid #BA68C8" : "2px solid white",
+      backgroundColor: connected ? "#BA68C8" : plusColor,
+      border: connected ? "2px solid #BA68C8" : `2px solid ${edgeColor}`,
     };
 
     switch (side) {
@@ -149,6 +156,13 @@ const ProtofyXIAOESP32S3devBoard = ({ node = {}, nodeData = {}, topics = {}, col
   const metadata = useFlowsStore((state: any) => state.metadata);
   const ports: Port[] = metadata.board.ports;
 
+  // Theme colors
+  const plusColor = useTheme("plusColor");
+  const edgeColor = useTheme("edgeColor");
+  const menuBackground = useTheme("menuBackground");
+  const nodeBorderColor = useTheme("nodeBorderColor");
+  const textColor = useTheme("textColor");
+  
   // Compute positions (ONLY from nodeRendering)
   const portsWithPositions = calculatePortPositions(ports);
 
@@ -205,8 +219,8 @@ const ProtofyXIAOESP32S3devBoard = ({ node = {}, nodeData = {}, topics = {}, col
             height: "160px",
             padding: "24px 20px",
             borderRadius: "12px",
-            background: "rgba(0,0,0,0.05)",
-            border: "1px solid rgba(0,0,0,0.1)",
+            background: menuBackground,
+            border: `1px solid ${nodeBorderColor}`,
             position: "relative",
             display: "flex",
             flexDirection: "column",
@@ -218,7 +232,7 @@ const ProtofyXIAOESP32S3devBoard = ({ node = {}, nodeData = {}, topics = {}, col
             style={{
               fontSize: "20px",
               fontWeight: 600,
-              color: "#555",
+              color: textColor,
               position: "absolute",
               top: "12px",
               left: "50%",
@@ -232,7 +246,7 @@ const ProtofyXIAOESP32S3devBoard = ({ node = {}, nodeData = {}, topics = {}, col
 
       </div>
 
-      {renderHandles(portsWithPositions, edges as any[], id)}
+      {renderHandles(portsWithPositions, edges as any[], id, { plusColor, edgeColor })}
     </Node>
   );
 };
