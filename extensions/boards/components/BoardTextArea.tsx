@@ -7,6 +7,19 @@ import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardS
 import { generateActionCode, generateStateCode } from '@extensions/boards/utils/ActionsAndStates';
 import { isElectron } from 'protolib/lib/isElectron';
 
+// ===================== NUEVO: utilidades selección de tokens =====================
+const TOKEN_RE = /^<[@#][^>]+>$/;
+
+function getTokenBoundsAt(text: string, index: number): { start: number; end: number } | null {
+  const start = text.lastIndexOf('<', index);
+  if (start === -1) return null;
+  const end = text.indexOf('>', Math.max(index - 1, 0));
+  if (end === -1) return null;
+  const candidate = text.slice(start, end + 1);
+  if (!TOKEN_RE.test(candidate)) return null;
+  return { start, end: end + 1 }; // end exclusivo
+}
+// ================================================================================
 function renderHighlightedHTML(text: string) {
   // scape html
   const esc = (s: string) => s
@@ -51,19 +64,14 @@ const sortEntriesByKeyLengthDesc = (obj: Record<string, string>) => Object.entri
 const dump = (text, symbols = {}) => {
   let dumped = text;
   for (const [key, value] of sortEntriesByKeyLengthDesc(symbols)) {
-    // key: await executeAction({....
-    // value: <@card 3>
     dumped = dumped.replaceAll(key, value);
   }
-
   return dumped;
 }
 
 const dedump = (text, symbols = {}) => {
   let dedumped = text;
   for (const [key, value] of sortEntriesByKeyLengthDesc(symbols)) {
-    // key: await executeAction({....
-    // value: <@card 3>
     dedumped = dedumped.replaceAll(value, key);
   }
   return dedumped;
@@ -72,20 +80,15 @@ const dedump = (text, symbols = {}) => {
 const getSymbols = (text, pattern: RegExp, matchCb = (match) => { }) => {
   const matches = [...text.matchAll(pattern)];
   const symbols = {};
-
   matches.forEach((match, i) => {
     const key = match[0];
     symbols[key] = matchCb(key) ?? "unknown";
   });
-
   return symbols;
 };
 
-
 const updateSymbols = (value, setSymbols) => {
-  // update the text symbols
   let states = getSymbols(value, /\bboard(?:\?\.\[\s*"(?:[^"\\]|\\.)*"\s*\])+/g, (match) => {
-    // get the property access strings in "board?.["card"]?.["test"]... -> ["card", "test"]
     let matches = [...match.matchAll(/\?\.\["([^"]+)"\]/g)]
     let properties = matches.map((m) => m[1]);
     return "<#" + properties.join(".") + ">"
@@ -106,11 +109,9 @@ const updateSymbols = (value, setSymbols) => {
 }
 
 const removeUnknownTags = (value, symbols) => {
-  // replace raw manually setted tags for "unknown"
   let cleanedText = value.replace(
     /<([^&][\s\S]*?)>/g,
     (_m, inner) => {
-      console.log("symbols:::", symbols, _m, inner)
       if (!Object.values(symbols).includes(_m)) {
         let prefix = ""
         if (inner.startsWith("@")) {
@@ -120,7 +121,6 @@ const removeUnknownTags = (value, symbols) => {
         }
         return "<" + prefix + "unknown>"
       }
-
       return _m
     }
   );
@@ -375,9 +375,9 @@ export const BoardTextArea = ({
       : generateStateCode(Array.isArray(selection) ? selection : [selection])
 
     const dropdownFilter = dumpedValue
-      .slice(0, inputInsertIndex) // get the left side of the cursor
-      .replace(/<[^>]*>/g, '') // remove tags to avoid collisions
-      .match(/[@#]([^\s@#]+)(?!.*[@#][^\s@#]+)/)?.[1] // get the last #filter-string
+      .slice(0, inputInsertIndex)
+      .replace(/<[^>]*>/g, '')
+      .match(/[@#]([^\s@#]+)(?!.*[@#][^\s@#]+)/)?.[1]
     if (!dropdownFilter) {
       onChange({
         target: {
@@ -410,7 +410,7 @@ export const BoardTextArea = ({
   }
 
   useEffect(() => {
-    // clean unknown tags (manually setted) -> dedump → recalc symbols → dump with new symbols
+    // clean unknown tags (manualmente escritos) -> dedump → recalc symbols → dump con nuevos símbolos
     let cleaned = removeUnknownTags(value, symbols);
     const dedumped = dedump(cleaned, symbols);
     const nextSymbolsCollector = {};
@@ -420,7 +420,6 @@ export const BoardTextArea = ({
     setDumpedValue(dump(value, nextSymbolsCollector));
   }, [value]);
 
-  // events with dropdown open
   useEffect(() => {
     const el = itemRefs.current[selectedIndex];
     el?.scrollIntoView({ block: 'nearest' });
@@ -454,30 +453,37 @@ export const BoardTextArea = ({
   const filteredOptions = useMemo(() => {
     if (!dropDown || !showDropdown) return []
     const left = dumpedValue
-      .slice(0, inputInsertIndex) // get the left side of the cursor
-      .replace(/<[^>]*>/g, '');   // remove tags to avoid collisions
+      .slice(0, inputInsertIndex)
+      .replace(/<[^>]*>/g, '');
 
     const dropdownFilter =
       /[@#]\s*$/.test(left)
         ? null
         : (() => {
           const all = [...left.matchAll(/[@#]([^\s@#]+)/g)];
-          return all.length ? all[all.length - 1][1] : null; // last match
+          return all.length ? all[all.length - 1][1] : null; // último match
         })();
 
     if (!dropdownFilter) return dropDown[showDropdown];
-
-    // set the index to 0 on each update, to avoid, hidden indexes in 
-    // the dropdown
     return dropDown[showDropdown]
-      .filter(key => {
-        return key.toLowerCase().startsWith(dropdownFilter.toLowerCase())
-      })
+      .filter(key => key.toLowerCase().startsWith(dropdownFilter.toLowerCase()))
   }, [showDropdown, dumpedValue, inputInsertIndex]);
 
   useEffect(() => {
     setSelectedIndex(0)
   }, [filteredOptions])
+
+  // ===================== NUEVO: callback para seleccionar token entero =====================
+  const selectWholeTokenIfAny = useCallback((ta: HTMLTextAreaElement | null) => {
+    if (!ta) return false;
+    if (showDropdown) return false; // no interferir con dropdown abierto
+    const idx = ta.selectionStart ?? 0;
+    const bounds = getTokenBoundsAt(dumpedValue, idx);
+    if (!bounds) return false;
+    ta.setSelectionRange(bounds.start, bounds.end);
+    return true;
+  }, [dumpedValue, showDropdown]);
+  // =======================================================================
 
   return (
     <XStack
@@ -524,9 +530,7 @@ export const BoardTextArea = ({
               alignSelf="center"
               cursor="pointer"
               onClick={() => { setShowDropdown("actions"); setSelectedIndex(0) }}
-              style={{
-                transition: "all ease-in-out 80ms"
-              }}
+              style={{ transition: "all ease-in-out 80ms" }}
             >actions</Text>
             <Text
               color={showDropdown === "states" ? "$green11" : "$gray9"}
@@ -538,9 +542,7 @@ export const BoardTextArea = ({
               textAlign="center"
               alignSelf="center"
               cursor="pointer"
-              style={{
-                transition: "all ease-in-out 80ms"
-              }}
+              style={{ transition: "all ease-in-out 80ms" }}
               onClick={() => { setShowDropdown("states"); setSelectedIndex(0) }}
             >states</Text>
           </XStack>
@@ -549,9 +551,7 @@ export const BoardTextArea = ({
               ? filteredOptions.map((v, i) => <button
                 ref={el => (itemRefs.current[i] = el)}
                 key={v}
-                onMouseEnter={(e) => {
-                  setSelectedIndex(i)
-                }}
+                onMouseEnter={(e) => { setSelectedIndex(i) }}
                 style={{
                   backgroundColor: i === selectedIndex ? "var(--gray6)" : "transparent",
                   paddingBlock: "5px",
@@ -565,21 +565,16 @@ export const BoardTextArea = ({
                     ? <ActionRow action={actions[v]} rowClick={() => {
                       selectDropdownOption(getDropdownSelection(), dumpedValue)
                       setShowDropdown(null)
-                      setTimeout(() => {
-                        ref.current?.focus()
-                      }, 50)
+                      setTimeout(() => { ref.current?.focus() }, 50)
                     }} />
                     : <StateRow state={{ name: v, value: states[v], }} rowClick={(k = null) => {
                       let selection = getDropdownSelection()
-                      // property access of object selection 
                       if (k !== null) {
                         selection = [selection, k]
                       }
                       selectDropdownOption(selection, dumpedValue)
                       setShowDropdown(null)
-                      setTimeout(() => {
-                        ref.current?.focus()
-                      }, 50)
+                      setTimeout(() => { ref.current?.focus() }, 50)
                     }}
                     />
                 }</button>)
@@ -607,20 +602,8 @@ export const BoardTextArea = ({
           r={0}
           b={0}
           style={{
-            // whiteSpace: 'pre-wrap',
-            // overflowWrap: 'break-word',
-            // wordBreak: 'normal',
-            // boxSizing: 'border-box',
-            // borderRadius: '8px',
-            // fontFamily: 'inherit',
-            // fontSize: 'inherit',
-            // fontWeight: 'inherit',
-            // letterSpacing: 'inherit',
-            // overflow: 'hidden',
-            // transform: 'translate(0,0)',
-            // lineHeight: '1.4',
             boxSizing: 'border-box',
-            overflow: 'hidden',       // sin scroll propio
+            overflow: 'hidden',
             lineHeight: '1.4',
             fontFamily: 'inherit',
             fontSize: 'inherit',
@@ -630,7 +613,6 @@ export const BoardTextArea = ({
             overflowWrap: 'break-word',
             wordBreak: 'normal',
           }}
-        // dangerouslySetInnerHTML={{ __html: renderHighlightedHTML(dumpedValue) }}
         >
           <div
             ref={overlayContentRef}
@@ -651,9 +633,30 @@ export const BoardTextArea = ({
           disabled={disabled}
           onBlur={rest.onBlur}
           onFocus={rest.onFocus}
+          onMouseDown={(e) => {
+            // Dejar que el navegador ponga el caret y luego expandir si procede
+            requestAnimationFrame(() => {
+              selectWholeTokenIfAny(e.currentTarget);
+            });
+          }}
+          onClick={(e) => {
+            selectWholeTokenIfAny(e.currentTarget);
+          }}
+          onDoubleClick={(e) => {
+            if (selectWholeTokenIfAny(e.currentTarget)) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
           onSelect={(e) => {
             const index = e.currentTarget.selectionStart ?? 0;
             handleInputIndexChange(index, e.currentTarget.value);
+
+            // Si el caret cae dentro de un token, expande a token completo
+            if (e.currentTarget.selectionStart === e.currentTarget.selectionEnd) {
+              selectWholeTokenIfAny(e.currentTarget);
+            }
+
             if (showDropdown) {
               if (typeof window !== 'undefined') {
                 window.requestAnimationFrame(() => updateDropdownPosition());
@@ -664,15 +667,12 @@ export const BoardTextArea = ({
           }}
           onChange={(e) => {
             const index = e.currentTarget.selectionStart ?? 0;
-            // shortcut to trigger dropdown
             handleInputIndexChange(index, e.currentTarget.value);
 
-            // dedump and set the new symbols
             let cleaned = removeUnknownTags(e.currentTarget.value, symbols);
             let dedumped = dedump(cleaned, symbols);
             updateSymbols(dedumped, setSymbols)
 
-            // set the dumped
             onChange({ target: { value: dedumped } });
           }}
           onKeyUp={(e) => {
@@ -696,7 +696,6 @@ export const BoardTextArea = ({
                   const end = input.selectionEnd;
 
                   if (start === end) {
-                    // check if a tag must be removed 
                     const before = dumpedValue.slice(0, start);
                     const after = dumpedValue.slice(start);
 
@@ -709,7 +708,6 @@ export const BoardTextArea = ({
                       onChange({ target: { value: newValue } })
 
                       setTimeout(() => {
-                        // set the cursor after tag remove
                         input?.setSelectionRange(tokenStart, tokenStart);
                       }, 0);
                     }
@@ -718,19 +716,18 @@ export const BoardTextArea = ({
                 case 'Enter':
                   if (e.shiftKey) return
                   e.preventDefault();
-                  // dedump and set the new symbols
-                  let cleaned = removeUnknownTags(dumpedValue, symbols);
-                  let dedumped = dedump(cleaned, symbols);
-                  updateSymbols(dedumped, setSymbols)
-
-                  // set the dumped
-                  if (typeof onEnter === 'function') {
-                    onEnter({ target: { value: dedumped } });
+                  // dedump y símbolos actualizados
+                  {
+                    let cleaned = removeUnknownTags(dumpedValue, symbols);
+                    let dedumped = dedump(cleaned, symbols);
+                    updateSymbols(dedumped, setSymbols)
+                    if (typeof onEnter === 'function') {
+                      onEnter({ target: { value: dedumped } });
+                    }
                   }
                   break;
               }
             } else { // dropdown mode
-              // handle backspaces, without preventing default behaviour
               if (e.key === "Backspace") {
                 const input = e.currentTarget;
                 const start = input.selectionStart;
@@ -751,7 +748,6 @@ export const BoardTextArea = ({
               e.preventDefault()
               e.stopPropagation()
 
-              // custom key handle for dropdown navigation
               switch (e.key) {
                 case 'ArrowLeft':
                   setShowDropdown("actions")
@@ -785,6 +781,7 @@ export const BoardTextArea = ({
                   selectDropdownOption(selection, dumpedValue)
                   setShowDropdown(null)
                   setTimeout(() => {
+                    if(!selection) return
                     const textarea = ref.current;
                     textarea?.setSelectionRange(inputInsertIndex + selection.length + 3, inputInsertIndex + selection.length + 3)
                     textarea?.focus()
@@ -816,7 +813,7 @@ export const BoardTextArea = ({
             height: "100%",
             boxSizing: 'border-box',
             color: 'transparent',
-            caretColor: 'var(--color)',  // this caret, has color, to use for the overlay text
+            caretColor: 'var(--color)',
             fontSize: "inherit",
             padding: textAreaPadding,
             ...style,
@@ -829,12 +826,10 @@ export const BoardTextArea = ({
           if (speechRecognitionEnabled) {
             setSpeechRecognitionEnabled(false);
             SpeechRecognition.stopListening();
-            // Stop speech recognition logic here
           } else {
             resetTranscript();
             setSpeechRecognitionEnabled(true);
             SpeechRecognition.startListening({ continuous: true });
-            // Start speech recognition logic here
           }
         }} gap="$2" h="fit-content" w="fit-content" backgroundColor={speechRecognitionEnabled ? "$red6" : "$gray4"} p="$3" jc="center"
           ai="center" hoverStyle={{ opacity: 0.9 }} pressStyle={{ opacity: 1.0 }}
