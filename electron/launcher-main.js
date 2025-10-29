@@ -1,4 +1,4 @@
-const { app, BrowserWindow, protocol, session, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, protocol, session, ipcMain, shell, dialog, systemPreferences } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { Readable } = require('stream');
@@ -117,6 +117,28 @@ const respond = ({ statusCode = 200, data = Buffer.from(""), mimeType = "text/pl
   let headers = {}
   headers['Content-Type'] = mimeType
   return new Response(data, { status: statusCode, headers })
+}
+
+const cameraPermission = async () => {
+  const status = systemPreferences.getMediaAccessStatus('camera'); // 'not-determined' | 'granted' | 'denied' | 'restricted'
+  await dialog.showErrorBox("CameraPermission", `Status: ${status}`)
+  if (status === 'not-determined') {
+    const granted = await systemPreferences.askForMediaAccess('camera');
+    return { status: granted ? 'granted' : 'denied' };
+  }
+  if (status === 'denied' || status === 'restricted') {
+    // opcional: abre Preferencias si está denegado
+    try {
+      // Electron tiene openSystemPreferences en macOS; si no, abre la URL
+      if (systemPreferences.openSystemPreferences) {
+        await systemPreferences.openSystemPreferences('security', 'Privacy_Camera');
+      } else {
+        shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_Camera');
+      }
+    } catch { }
+    return { status };
+  }
+  return { status }; // 'granted'
 }
 
 app.whenReady().then(async () => {
