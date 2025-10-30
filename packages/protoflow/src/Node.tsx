@@ -636,7 +636,18 @@ const Node = ({ adaptiveTitleSize = true, modeParams = 'column', mode = 'column'
     if (node.id && !isRendered) extraStyle.opacity = '0'
 
     //console.log('meta data: ', nodeData?._metadata)
-    const wantLeftOutput = nodeData?._metadata?.outputPos === 'left'
+    let wantLeftInput= true
+    if(nodeData?._metadata?.outputPos != undefined && nodeData?._metadata?.outputPos == 'right'){
+        wantLeftInput = false
+    }
+    const renderHandle = (position: Position) =>
+        (!disableOutput && !isPreview && output)
+            ? <HandleOutput position={position} id={id} param={output} dataOutput={dataOutput} />
+            : null
+
+    const headerProps = wantLeftInput
+        ? { headerContent: null, headerLeftContent: renderHandle(Position.Left) }
+        : { headerContent: renderHandle(Position.Right), headerLeftContent: null }
 
     return (
         <DiagramNode
@@ -656,30 +667,7 @@ const Node = ({ adaptiveTitleSize = true, modeParams = 'column', mode = 'column'
                 ...style,
                 ...extraStyle
             }}
-            headerLeftContent={
-                !disableOutput && !isPreview && output && wantLeftOutput
-                    ? (
-                        <HandleOutput
-                            position={Position.Left}
-                            id={id}
-                            param={output}
-                            dataOutput={dataOutput}
-                        />
-                    )
-                    : null
-            }
-            headerContent={
-                !disableOutput && !isPreview && output && !wantLeftOutput
-                    ? (
-                        <HandleOutput
-                            position={Position.Right}
-                            id={id}
-                            param={output}
-                            dataOutput={dataOutput}
-                        />
-                    )
-                    : null
-            }
+            {...headerProps}
         >
             <div ref={content}>
                 {DEVMODE ? <div>{id}</div> : null}
