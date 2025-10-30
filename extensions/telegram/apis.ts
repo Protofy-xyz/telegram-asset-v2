@@ -155,6 +155,17 @@ const registerActions = async (context) => {
     token: await getServiceToken()
   })
 
+  addAction({
+    group: 'telegram',
+    name: 'sendChatAction',
+    url: `/api/v1/telegram/sendChatAction`,
+    tag: "send",
+    description: "Send a chat action (like 'typing') to a chat id",
+    params: { chat_id: "Telegram chat id (number). Example: 123456789", action: "Action to send (e.g., typing, upload_photo, record_video, etc.)" },
+    emitEvent: true,
+    token: await getServiceToken()
+  })
+
 }
 
 const registerCards = async (context, botUsername) => {
@@ -344,6 +355,43 @@ const registerCards = async (context, botUsername) => {
     emitEvent: true,
     token: await getServiceToken()
   })
+  //sendChatAction card
+  addCard({
+    group: 'telegram',
+    tag: "chat_action",
+    id: 'telegram_send_chat_action',
+    templateName: "Telegram send chat action",
+    name: "chat_action_send",
+    defaults: {
+      width: 3,
+      height: 10,
+      name: "Telegram send chat action",
+      icon: "activity",
+      color: "#24A1DE",
+      html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const readme = `#### Add Telegram keys here. \\n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Connector card.`\n  const requiredKeys = card.keys\n\n  const content = <YStack f={1} mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n    <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <KeyGate requiredKeys={requiredKeys} readme={readme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </KeyGate>\n      </ProtoThemeProvider>\n    </Tinted>\n  );\n}\n",
+      description: "Send a Telegram chat action (e.g., typing) to a chat id",
+      rulesCode: `return execute_action("/api/v1/telegram/sendChatAction", { chat_id: userParams.chat_id, action: userParams.action });`,
+      params: {
+        chat_id: "chat id",
+        action: "typing | upload_photo | record_video | upload_video | record_voice | upload_voice | upload_document | choose_sticker | find_location | record_video_note | upload_video_note"
+      },
+      // Optional visible defaults for the form inputs
+      configParams: {
+        chat_id: { visible: true, defaultValue: "", type: "string" },
+        action: { visible: true, defaultValue: "typing", type: "string" }
+      },
+      type: 'action',
+      displayButton: true,
+      buttonLabel: "Send Chat Action",
+      keys: [
+        "TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_USERNAME"
+      ]
+    },
+    emitEvent: true,
+    token: await getServiceToken()
+  })
+
+
 }
 
 const registerActionsAndCards = async (context, botUsername) => {
@@ -760,6 +808,45 @@ export default async (app, context) => {
       return
     } catch (e: any) {
       logger.error("TelegramAPI cannot add allowed chats. error", e);
+      res.status(500).send({ result: "error", error: e?.message || String(e) });
+    }
+  }));
+
+  // send chat action
+  app.get('/api/v1/telegram/sendChatAction', handler(async (req, res, session) => {
+    const { chat_id, action } = req.query as {
+      chat_id?: string | number;
+      action?: string;
+    };
+
+    if (!chat_id || !action) {
+      res.status(400).send({ error: `Missing ${chat_id ? 'action' : 'chat_id'}` });
+      return;
+    }
+    if (!session || !session.user?.admin) {
+      res.status(401).send({ error: "Unauthorized" });
+      return;
+    }
+
+    // Validate action
+    const validActions = new Set([
+      "typing", "upload_photo", "record_video", "upload_video",
+      "record_voice", "upload_voice", "upload_document",
+      "choose_sticker", "find_location", "record_video_note",
+      "upload_video_note"
+    ]);
+    if (!validActions.has(action)) {
+      res.status(400).send({ error: `Invalid action. Valid actions are: ${Array.from(validActions).join(', ')}` });
+      return;
+    }
+
+    try {
+      if (!bot) throw new Error('Bot not initialized');
+
+      await bot.telegram.sendChatAction(chat_id.toString(), action as any);
+      res.send({ result: 'done', chat_id, action });
+    } catch (e: any) {
+      logger.error("TelegramAPI sendChatAction error", e);
       res.status(500).send({ result: "error", error: e?.message || String(e) });
     }
   }));
