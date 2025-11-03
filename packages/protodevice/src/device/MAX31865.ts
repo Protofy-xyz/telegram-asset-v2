@@ -67,9 +67,24 @@ class MAX31865 {
         })
         return deviceComponents
     }
-
     getSubsystem() {
-        return {}
+        return {
+            name: this.id,
+            type: this.type,
+            monitors: [
+                {
+                    name: 'temperature',
+                    description: 'Get temperature status',
+                    units: 'ºC',
+                    endpoint: "/" + this.type + "/" + this.id + "/state",
+                    connectionType: 'mqtt',
+                    cardProps: {
+                        icon: "thermometer",
+                        color: "$red10"
+                    }
+                },
+            ]
+        }
     }
 }
 
