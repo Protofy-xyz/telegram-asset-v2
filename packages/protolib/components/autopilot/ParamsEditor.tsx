@@ -1,16 +1,15 @@
-import { YStack, XStack, Label, Button, Input, ScrollView, TooltipSimple, Popover, Text, TextArea } from '@my/ui'
-import { Eye, Plus, Trash, Maximize2, Cable } from '@tamagui/lucide-icons'
+import { YStack, XStack, Label, Button, Input, Popover, Text, TextArea } from '@my/ui'
+import { Eye, Trash, Maximize2, Cable } from '@tamagui/lucide-icons'
 import { useState, useCallback } from 'react'
 import { InteractiveIcon } from '../InteractiveIcon'
 import { nanoid } from 'nanoid'
 import { useUpdateEffect } from 'usehooks-ts'
 import { SelectList } from '../SelectList'
 import { TextEditDialog } from '../TextEditDialog'
-import { TabContainer, TabTitle } from './Tab'
 import { LinksEditor } from './LinksEditor'
 
 const types = ["any", "string", "number", "boolean", "json", "array", "text", "path", "markdown", "html"]
-const inputDefProps = { backgroundColor: "$bgContent", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
+const inputDefProps = { backgroundColor: "$bgPanel", borderColor: "$gray6", placeholderTextColor: "$gray9", flex: 1, w: "100%" }
 const selectTriggerDefProps = { ...inputDefProps, hoverStyle: { borderColor: "$color7", bc: "$gray1" } }
 
 const InputTitle = ({ children, ...props }) => {
@@ -300,8 +299,8 @@ export const ParamsEditor = ({
             <YStack>
               <InteractiveIcon Icon={Eye} h="fit-content" IconColor={visible ? 'var(--color10)' : 'var(--gray9)'} onPress={() => handleToggleVisible(rowId)} />
             </YStack>
-            <Input {...inputDefProps} placeholder={"Param Key"} bg="$bgPanel" value={paramKey} onChange={(e) => handleChangeParamKey(rowId, e.target.value)} />
-            <Input {...inputDefProps} placeholder={"Description"} bg="$bgPanel" value={description} onChange={(e) => handleChangeDescription(rowId, e.target.value)} />
+            <Input {...inputDefProps} placeholder={"Param Key"} value={paramKey} onChange={(e) => handleChangeParamKey(rowId, e.target.value)} />
+            <Input {...inputDefProps} placeholder={"Description"} value={description} onChange={(e) => handleChangeDescription(rowId, e.target.value)} />
 
             <XStack width="150px">
               <SelectList
@@ -412,17 +411,6 @@ export const ParamsEditor = ({
             Link actions to be executed before running the card
           </Text>
         </YStack>
-        {/* <Button
-            style={{
-              whiteSpace: "nowrap"
-            }}
-            h="fit-content"
-            w="fit-content"
-            px="$4"
-            py="$2"
-            bc="$color8"
-            onPress={handleAddParam}
-          >Add param</Button> */}
       </XStack>
       <YStack borderRadius="$3" p="$3">
         <LinksEditor
