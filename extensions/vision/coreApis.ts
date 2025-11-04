@@ -213,9 +213,18 @@ export default async (app: Application, context: typeof APIContext) => {
     })
 
     app.get('/api/core/v1/vision/frame/get', async (req, res) => {
-        const { id } = req.query;
+        const { id, mode } = req.query;
         if(frames[id as string]) {
-            return res.send(frames[id as string]);
+            if (mode == "image/png") {
+                const imgBuffer = Buffer.from(frames[id as string].split(",")[1], 'base64');
+                res.writeHead(200, {
+                    'Content-Type': 'image/png',
+                    'Content-Length': imgBuffer.length
+                });
+                return res.end(imgBuffer);
+            } else {
+                return res.send(frames[id as string]);
+            }
         }
         return res.status(404).send({ error: "Frame not found" });
     })
@@ -385,7 +394,7 @@ export default async (app: Application, context: typeof APIContext) => {
             "type": "action",
             "method": "post",
             "displayButton": true,
-            "rulesCode": "return {\r\n    frame: params.picture,\r\n    type: \"frame\",\r\n    key: Math.random()\r\n}",
+            "rulesCode": "const id =  Math.random()\r\nreturn {\r\n    frame: params.picture,\r\n    type: \"frame\",\r\n    key: id,\r\n    imageUrl: params.picture + \"&mode=image/png&key=\" + id \r\n}",
             "params": {
                 "mode": "manual or auto (auto is experimental)",
                 "fps": "fps to capture"
