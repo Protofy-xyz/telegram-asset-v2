@@ -550,6 +550,7 @@ export const AutoActions = ({
             height: 10,
             icon: 'search',
             displayResponse: true,
+            method: 'post',
             name: `${modelName} storage manager`,
             html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\"" + (object ?? modelName) + "\" onItemsChange={() => execute_action(card.name, {})}/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
             type: 'action',
