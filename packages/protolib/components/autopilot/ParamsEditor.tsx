@@ -405,7 +405,7 @@ export const ParamsEditor = ({
       <XStack justifyContent='space-between' ai="flex-end">
         <YStack>
           <Text h={"fit-content"} lineHeight={"fit-content"} color="$color" fontSize="$7" fontWeight={500}>
-            Action before run
+            Actions before run
           </Text>
           <Text h={"fit-content"} lineHeight={"fit-content"} color="$gray9" fontSize="$5" fontWeight={500}>
             Link actions to be executed before running the card
@@ -417,7 +417,7 @@ export const ParamsEditor = ({
           mode={"pre"}
           links={links}
           setLinks={setLinks}
-          inputProps={inputDefProps}
+          selectProps={inputDefProps}
         />
       </YStack>
     </YStack>

@@ -15,14 +15,14 @@ interface LinksEditorProps {
   links: LinksEditor[];
   setLinks: (links: LinksEditor[]) => void; // controlado por el padre
   mode?: 'all' | 'pre' | 'post';
-  inputProps?: any;
+  selectProps?: any;
 }
 
 export const LinksEditor: React.FC<LinksEditorProps> = ({
   links,
   setLinks,
   mode = 'all',
-  inputProps = {},
+  selectProps = {},
 }) => {
   const actions = useBoardActions();
   const actionOptions = useMemo(() => Object.keys(actions || {}), [actions]);
@@ -79,7 +79,7 @@ export const LinksEditor: React.FC<LinksEditorProps> = ({
               setValue={(val) => updateField(idx, 'type', val as LinksEditorType)}
               triggerProps={{
                 maxWidth: 200,
-                ...inputProps,
+                ...selectProps,
               }}
             />
           )}
@@ -89,8 +89,8 @@ export const LinksEditor: React.FC<LinksEditorProps> = ({
             value={name ?? ''}
             setValue={(val) => updateField(idx, 'name', val)}
             placeholder={"Select an action..."}
-            triggerProps={{ f: 1, ...inputProps }}
-            selectorStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { backgroundColor: "var(--bgPanel)", filter: "brightness(0.9)" } }}
+            triggerProps={{ f: 1, ...selectProps }}
+            selectorStyle={{ normal: { backgroundColor: "var(--bgPanel)", ...selectProps }, hover: { backgroundColor: "var(--bgPanel)", filter: "brightness(0.9)" } }}
             rowStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { backgroundColor: "var(--bgContent)" } }}
             titleStyle={{ normal: { backgroundColor: "var(--bgPanel)" } }}
           />
