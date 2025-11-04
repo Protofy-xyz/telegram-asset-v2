@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
-import { YStack, XStack, Label, Button, Input, ScrollView, TooltipSimple } from '@my/ui';
+import { XStack, Button, TooltipSimple } from '@my/ui';
 import { SelectList } from '../SelectList';
 import { Plus, Trash } from '@tamagui/lucide-icons';
 import { InteractiveIcon } from '../InteractiveIcon';
+import { useBoardActions } from '@extensions/boards/store/boardStore';
 
 export type LinksEditorType = 'pre' | 'post';
 export interface LinksEditor {
@@ -23,6 +24,8 @@ export const LinksEditor: React.FC<LinksEditorProps> = ({
   mode = 'all',
   inputProps = {},
 }) => {
+  const actions = useBoardActions();
+  const actionOptions = useMemo(() => Object.keys(actions || {}), [actions]);
   const typeOptions = [
     { value: 'pre', caption: 'Before' },
     { value: 'post', caption: 'After' },
@@ -80,15 +83,17 @@ export const LinksEditor: React.FC<LinksEditorProps> = ({
               }}
             />
           )}
-
-          <Input
-            placeholder="Name"
-            f={1}
-            {...inputProps}
+          <SelectList
+            title="Actions"
+            elements={actionOptions}
             value={name ?? ''}
-            onChangeText={(text) => updateField(idx, 'name', text)}
+            setValue={(val) => updateField(idx, 'name', val)}
+            placeholder={"Select an action..."}
+            triggerProps={{ f: 1, ...inputProps }}
+            selectorStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { backgroundColor: "var(--bgPanel)", filter: "brightness(0.9)" } }}
+            rowStyle={{ normal: { backgroundColor: "var(--bgPanel)" }, hover: { backgroundColor: "var(--bgContent)" } }}
+            titleStyle={{ normal: { backgroundColor: "var(--bgPanel)" } }}
           />
-
           <InteractiveIcon
             mt="4px"
             Icon={Trash}
