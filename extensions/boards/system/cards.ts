@@ -688,14 +688,18 @@ return card({
             icon: "image",
             description: "Display an image that scales without distortion",
             type: 'value',
-            rulesCode: 'return `/public/vento-square.png`',
-            html: `
-// data contains: data.value, data.icon and data.color
-return card({
-  content: boardImage({ src: \`\${data.value}\` }),
-  padding: '3px'
-});
-`,
+            rulesCode: "return params.url",
+            params: {
+                "url": "image url"
+            },
+            configParams: {
+                "url": {
+                    "visible": true,
+                    "defaultValue": "/public/vento-logo.png",
+                    "type": "string"
+                }
+            },
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            <img style={{width: \"100%\", height: \"100%\", objectFit: \"contain\"}} src={value}/>\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
             editorOptions: {
                 // defaultTab: "value"
             },
