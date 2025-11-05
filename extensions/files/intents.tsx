@@ -373,6 +373,8 @@ export const CodeView = ({
               }}
               loadingIndex={-1}
               disabledConfig={rulesConfig}
+              availableParams={rulesProps["availableParams"] ?? []}
+              allowParams={!!rulesProps["allowParams"]}
             />
           </YStack>
         </Panel>

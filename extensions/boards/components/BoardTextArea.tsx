@@ -1,14 +1,14 @@
-import React, { useRef, useState, useLayoutEffect, useEffect, useMemo, useCallback } from 'react'
-import { TextArea } from '@my/ui'
-import { XStack, YStack, Button, Spinner, Text } from '@my/ui'
-import { Trash, Plus, Mic, Binary, ALargeSmall, Braces, ListTree, ArrowDown, ChevronDown, Zap } from '@tamagui/lucide-icons'
+import * as React from 'react';
+import { useRef, useState, useLayoutEffect, useEffect, useMemo, useCallback } from 'react';
+import { XStack, YStack } from '@my/ui'
+import { Mic } from '@tamagui/lucide-icons'
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
-import { generateActionCode, generateStateCode } from '@extensions/boards/utils/ActionsAndStates';
+import { generateActionCode, generateStateCode, generateParamCode } from '@extensions/boards/utils/ActionsAndStates';
 import { isElectron } from 'protolib/lib/isElectron';
+import { ShortcutDropdown } from './ShortcutDropdown';
 
-// ===================== NUEVO: utilidades selección de tokens =====================
-const TOKEN_RE = /^<[@#][^>]+>$/;
+const TOKEN_RE = /^<[@#$][^>]+>$/;
 
 function getTokenBoundsAt(text: string, index: number): { start: number; end: number } | null {
   const start = text.lastIndexOf('<', index);
@@ -19,7 +19,7 @@ function getTokenBoundsAt(text: string, index: number): { start: number; end: nu
   if (!TOKEN_RE.test(candidate)) return null;
   return { start, end: end + 1 }; // end exclusivo
 }
-// ================================================================================
+
 function renderHighlightedHTML(text: string) {
   // scape html
   const esc = (s: string) => s
@@ -47,6 +47,16 @@ function renderHighlightedHTML(text: string) {
           style="
             background-color: var(--blue6); 
             color: var(--blue11); 
+            width: fit-content; 
+            display: inline; 
+            paddingBlock: 3px; 
+            border-radius: 5px; 
+          "><span style="color:transparent">&lt;</span>${inner ?? ""}<span style="color:transparent">&gt;</span></span>`
+      } else if (inner.startsWith("$")) {
+        return `<span 
+          style="
+            background-color: var(--purple6); 
+            color: var(--purple11); 
             width: fit-content; 
             display: inline; 
             paddingBlock: 3px; 
@@ -101,9 +111,19 @@ const updateSymbols = (value, setSymbols) => {
       return "<@" + name[1] + ">";
     }
   );
+  let params = getSymbols(
+    value,
+    /\bparams(?:\?\.\[\s*"(?:[^"]|\\.)*"\s*\])+/g,
+    (match) => {
+      let matches = [...match.matchAll(/\?\.\["([^"]+)"\]/g)]
+      let properties = matches.map((m) => m[1]);
+      return "<$" + properties.join(".") + ">"
+    }
+  );
   let _symbols = {
     ...states,
-    ...actions
+    ...actions,
+    ...params
   }
   setSymbols(_symbols)
 }
@@ -116,6 +136,8 @@ const removeUnknownTags = (value, symbols) => {
         let prefix = ""
         if (inner.startsWith("@")) {
           prefix = "@"
+        } else if (inner.startsWith("$")) {
+          prefix = "$"
         } else {
           prefix = "#"
         }
@@ -205,88 +227,7 @@ const getCaretMetrics = (textarea: HTMLTextAreaElement, position: number) => {
   };
 };
 
-const ActionRow = ({ action, rowClick }) => {
-  return <XStack justifyContent="space-between" gap="$3" alignItems="center" onClick={rowClick}
-  >
-    <XStack justifyContent="flex-start" gap="$3" alignItems="center">
-      <Zap
-        style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
-      />
-      {action.name}
-    </XStack>
-    <Text color="$blue11">{(action?.description ?? "")?.length >= 30 ? (action?.description ?? "").slice(0, 30) + "..." : (action?.description ?? "")}</Text>
-  </XStack>
-}
-
-const StateRow = ({ state, rowClick }) => {
-  const type = typeof state.value
-  const [showProperties, setShowProperties] = useState(false)
-
-  if (type === "number") {
-    return <XStack onClick={() => rowClick()} justifyContent="space-between" gap="$3" alignItems="center">
-      <XStack justifyContent="flex-start" gap="$3" alignItems="center">
-        <Binary
-          style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
-        />
-        {state.name}
-      </XStack>
-      <Text color="$green11">{state.value}</Text>
-    </XStack>
-  }
-
-  if (type === "string") {
-    return <XStack onClick={() => rowClick()} justifyContent="space-between" gap="$3" alignItems="center">
-      <XStack justifyContent="flex-start" gap="$3" alignItems="center">
-        <ALargeSmall
-          style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
-        />
-        {state.name}
-      </XStack>
-      <Text color="$green11" textAlign="right">{state.value.length > 30 ? state.value.slice(0, 30) + "..." : state.value}</Text>
-    </XStack>
-  }
-
-  if (type === "object") {
-    return <YStack onClick={() => setShowProperties(prev => !prev)} gap="$3">
-      <XStack justifyContent="space-between" gap="$3" alignItems="center">
-        <XStack justifyContent="flex-start" gap="$3" alignItems="center">
-          <ListTree
-            style={{ color: "var(--gray9)", stroke: "1px", height: "20px" }}
-          />
-          {state.name}
-        </XStack>
-        <YStack br="$2" hoverStyle={{ backgroundColor: "$gray8" }}
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowProperties(prev => !prev)
-          }} >
-          <ChevronDown
-            height="20px"
-            color="$gray9"
-            rotate={showProperties ? "180deg" : "0deg"}
-            style={{
-              transition: "all ease-in-out 120ms"
-            }}
-          />
-        </YStack>
-      </XStack>
-      {
-        showProperties && <YStack px="$5" pb="$2">
-          {Object.keys(state.value).map(key => {
-            return <XStack gap="$3" br="$2" pl="$3" py="$1" hoverStyle={{ backgroundColor: "var(--gray8)" }} onClick={() => rowClick(key)}>
-              <Text>{key}</Text>
-              <Text color="$green11">{typeof state.value[key]}</Text>
-            </XStack>
-          })}
-        </YStack>
-      }
-    </YStack>
-  }
-
-  return <XStack justifyContent="flex-start" gap="$3" alignItems="center">
-    {state.name}
-  </XStack>
-}
+// using plain props as in the original implementation
 
 export const BoardTextArea = ({
   value = "",
@@ -300,6 +241,9 @@ export const BoardTextArea = ({
   enableShortcuts = false,
   disabled = false,
   footer = null,
+  actionInsertMode = 'code',
+  availableParams = [],
+  allowParams = false,
   ...rest
 }: any) => {
   let states = useBoardStates()
@@ -307,7 +251,7 @@ export const BoardTextArea = ({
   const dropDownActions = Object.keys(actions)
   const dropDownStates = Object.keys(states)
   const dropDown = {
-    states: dropDownStates, actions: dropDownActions
+    states: dropDownStates, actions: dropDownActions, params: availableParams
   }
   const [symbols, setSymbols] = useState({})
   const [dumpedValue, setDumpedValue] = useState(value)
@@ -330,6 +274,7 @@ export const BoardTextArea = ({
     resetTranscript,
     browserSupportsSpeechRecognition
   } = useSpeechRecognition();
+  // derived values
 
   const updateDropdownPosition = useCallback(() => {
     if (!showDropdown) return;
@@ -372,12 +317,14 @@ export const BoardTextArea = ({
     if (selection === undefined || selection === null) return
     let text = showDropdown === "actions"
       ? generateActionCode(selection)
-      : generateStateCode(Array.isArray(selection) ? selection : [selection])
+      : showDropdown === "states"
+        ? generateStateCode(Array.isArray(selection) ? selection : [selection])
+        : generateParamCode(Array.isArray(selection) ? selection : [selection])
 
     const dropdownFilter = dumpedValue
       .slice(0, inputInsertIndex)
       .replace(/<[^>]*>/g, '')
-      .match(/[@#]([^\s@#]+)(?!.*[@#][^\s@#]+)/)?.[1]
+      .match(/[@#$]([^\s@#$]+)(?!.*[@#$][^\s@#$]+)/)?.[1]
     if (!dropdownFilter) {
       onChange({
         target: {
@@ -404,7 +351,10 @@ export const BoardTextArea = ({
       setShowDropdown("states");
     } else if (lastSegmentFirstChar === "@") {
       setShowDropdown("actions");
-    } else if ((lastSegmentFirstChar != "@" && lastSegmentFirstChar != "#")) {
+    } else if (lastSegmentFirstChar === "$") {
+      if (allowParams) setShowDropdown("params");
+      else setShowDropdown(null)
+    } else if ((lastSegmentFirstChar != "@" && lastSegmentFirstChar != "#" && lastSegmentFirstChar != "$")) {
       setShowDropdown(null)
     }
   }
@@ -457,10 +407,10 @@ export const BoardTextArea = ({
       .replace(/<[^>]*>/g, '');
 
     const dropdownFilter =
-      /[@#]\s*$/.test(left)
+      /[@#$]\s*$/.test(left)
         ? null
         : (() => {
-          const all = [...left.matchAll(/[@#]([^\s@#]+)/g)];
+          const all = [...left.matchAll(/[@#$]([^\s@#$]+)/g)];
           return all.length ? all[all.length - 1][1] : null; // último match
         })();
 
@@ -473,7 +423,6 @@ export const BoardTextArea = ({
     setSelectedIndex(0)
   }, [filteredOptions])
 
-  // ===================== NUEVO: callback para seleccionar token entero =====================
   const selectWholeTokenIfAny = useCallback((ta: HTMLTextAreaElement | null) => {
     if (!ta) return false;
     if (showDropdown) return false; // no interferir con dropdown abierto
@@ -483,7 +432,6 @@ export const BoardTextArea = ({
     ta.setSelectionRange(bounds.start, bounds.end);
     return true;
   }, [dumpedValue, showDropdown]);
-  // =======================================================================
 
   return (
     <XStack
@@ -498,98 +446,23 @@ export const BoardTextArea = ({
       flexDirection='column'
     >
       {
-        enableShortcuts && showDropdown && <YStack
-          ref={dropdownRef}
-          style={{
-            position: "absolute",
-            minWidth: "220px",
-            maxWidth: "100%",
-            width: "max-content",
-            zIndex: 10,
-            top: dropdownPosition.top,
-            left: dropdownPosition.left,
-          }}
-          maxHeight={"200px"}
-          overflowY="scroll"
-          p="10px"
-          br="$4"
-          bg="$gray4"
-          borderWidth="1px"
-          borderColor={"$gray6"}
-          gap="$2"
-        >
-          <XStack gap="$1">
-            <Text
-              color={showDropdown === "actions" ? "$blue11" : "$gray9"}
-              bg={showDropdown === "actions" ? "$blue6" : "transparent"}
-              px="$3"
-              py="$1"
-              br="$2"
-              fontSize={"$5"}
-              textAlign="center"
-              alignSelf="center"
-              cursor="pointer"
-              onClick={() => { setShowDropdown("actions"); setSelectedIndex(0) }}
-              style={{ transition: "all ease-in-out 80ms" }}
-            >actions</Text>
-            <Text
-              color={showDropdown === "states" ? "$green11" : "$gray9"}
-              bg={showDropdown === "states" ? "$green6" : "transparent"}
-              px="$3"
-              py="$1"
-              br="$2"
-              fontSize={"$5"}
-              textAlign="center"
-              alignSelf="center"
-              cursor="pointer"
-              style={{ transition: "all ease-in-out 80ms" }}
-              onClick={() => { setShowDropdown("states"); setSelectedIndex(0) }}
-            >states</Text>
-          </XStack>
-          {
-            filteredOptions?.length
-              ? filteredOptions.map((v, i) => <button
-                ref={el => (itemRefs.current[i] = el)}
-                key={v}
-                onMouseEnter={(e) => { setSelectedIndex(i) }}
-                style={{
-                  backgroundColor: i === selectedIndex ? "var(--gray6)" : "transparent",
-                  paddingBlock: "5px",
-                  paddingInline: "10px",
-                  borderRadius: "5px",
-                  scrollMarginTop: '50px',
-                  scrollMarginBottom: '6px',
-                }}
-              >{
-                  showDropdown === "actions"
-                    ? <ActionRow action={actions[v]} rowClick={() => {
-                      selectDropdownOption(getDropdownSelection(), dumpedValue)
-                      setShowDropdown(null)
-                      setTimeout(() => { ref.current?.focus() }, 50)
-                    }} />
-                    : <StateRow state={{ name: v, value: states[v], }} rowClick={(k = null) => {
-                      let selection = getDropdownSelection()
-                      if (k !== null) {
-                        selection = [selection, k]
-                      }
-                      selectDropdownOption(selection, dumpedValue)
-                      setShowDropdown(null)
-                      setTimeout(() => { ref.current?.focus() }, 50)
-                    }}
-                    />
-                }</button>)
-              : <div
-                style={{
-                  backgroundColor: "var(--gray6)",
-                  paddingBlock: "5px",
-                  paddingInline: "10px",
-                  borderRadius: "5px",
-                  scrollMarginTop: '40px',
-                  scrollMarginBottom: '6px',
-                }}
-              >no {showDropdown} found</div>
-          }
-        </YStack>}
+        enableShortcuts && showDropdown &&
+        <ShortcutDropdown
+          ref={ref}
+          itemRefs={itemRefs}
+          states={states}
+          actions={actions}
+          selectedIndex={selectedIndex}
+          setSelectedIndex={setSelectedIndex}
+          dropdownPosition={dropdownPosition}
+          showDropdown={showDropdown}
+          setShowDropdown={setShowDropdown}
+          filteredOptions={filteredOptions}
+          selectDropdownOption={selectDropdownOption}
+          dumpedValue={dumpedValue}
+          disableShortCuts={allowParams ? [] : ["params"]}
+        />
+      }
       <YStack pos="relative" f={1} w="100%">
         <YStack
           ref={overlayRef}
@@ -699,7 +572,7 @@ export const BoardTextArea = ({
                     const before = dumpedValue.slice(0, start);
                     const after = dumpedValue.slice(start);
 
-                    const match = before.match(/<[@#][^>]+>$/);
+                    const match = before.match(/<[@#$][^>]+>$/);
                     if (match) {
                       e.preventDefault();
 
@@ -716,13 +589,12 @@ export const BoardTextArea = ({
                 case 'Enter':
                   if (e.shiftKey) return
                   e.preventDefault();
-                  // dedump y símbolos actualizados
                   {
                     let cleaned = removeUnknownTags(dumpedValue, symbols);
                     let dedumped = dedump(cleaned, symbols);
                     updateSymbols(dedumped, setSymbols)
                     if (typeof onEnter === 'function') {
-                      onEnter({ target: { value: dedumped } });
+                      onEnter(dedumped);
                     }
                   }
                   break;
@@ -733,7 +605,7 @@ export const BoardTextArea = ({
                 const start = input.selectionStart;
                 const end = input.selectionEnd;
                 if (start === end) {
-                  if (dumpedValue[start - 1] === "@" || dumpedValue[start - 1] === "#") {
+                  if (dumpedValue[start - 1] === "@" || dumpedValue[start - 1] === "#" || dumpedValue[start - 1] === "$") {
                     setShowDropdown(null)
                   }
                 }
@@ -747,14 +619,15 @@ export const BoardTextArea = ({
 
               e.preventDefault()
               e.stopPropagation()
-
+              const types = ["actions", "states", "params"]
+              const currentTypeIndex = types.indexOf(showDropdown)
               switch (e.key) {
                 case 'ArrowLeft':
-                  setShowDropdown("actions")
+                  setShowDropdown(types[(currentTypeIndex - 1 + types.length) % types.length])
                   setSelectedIndex(0)
                   break;
                 case 'ArrowRight':
-                  setShowDropdown("states")
+                  setShowDropdown(types[(currentTypeIndex + 1) % types.length])
                   setSelectedIndex(0)
                   break;
                 case 'ArrowUp':
@@ -781,7 +654,7 @@ export const BoardTextArea = ({
                   selectDropdownOption(selection, dumpedValue)
                   setShowDropdown(null)
                   setTimeout(() => {
-                    if(!selection) return
+                    if (!selection) return
                     const textarea = ref.current;
                     textarea?.setSelectionRange(inputInsertIndex + selection.length + 3, inputInsertIndex + selection.length + 3)
                     textarea?.focus()
