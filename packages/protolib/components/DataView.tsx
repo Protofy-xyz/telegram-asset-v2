@@ -748,7 +748,7 @@ const DataViewInternal = forwardRef(({
                     </YStack>
                 </AlertDialog>
                 {!state.editFile && <>
-                    <XStack pt="$3" px="$3" mb="$1">
+                    <XStack pt="$3" px="$3" mb="$1" flexWrap='wrap'>
                         <XStack ml="$2" f={1} ai="center" gap="$2">
                             <Paragraph>
                                 {title ?? <Text fontSize="$9" fontWeight="600" color="$color11">{displayName.charAt(0).toUpperCase() + displayName.slice(1)}</Text>}
@@ -758,7 +758,7 @@ const DataViewInternal = forwardRef(({
                             {!isXs && toolBarContent}
                         </XStack>
 
-                        <XStack ai="center" ml="$2">
+                        <XStack ai="center" ml="$2" jc="flex-end" flexWrap='wrap' flex={1}>
                             {!hidePagination && <XStack ai="center">
                                 {currentItems.isLoaded && <XStack>
                                     <XStack ai="center">
@@ -790,7 +790,7 @@ const DataViewInternal = forwardRef(({
                                     </XStack>
                                 </XStack>}
                             </XStack>}
-                            <XStack ai="center" marginLeft="$3" mb={"$1"} $xs={{ display: 'none' }}>
+                            <XStack ai="center" flexWrap='wrap' marginLeft="$3" mb={"$1"} $xs={{ display: 'none' }}>
                                 {!hideSearch && <SearchAIModalButton
                                     placeholder={"Search in " + name}
                                     initialState={search}
