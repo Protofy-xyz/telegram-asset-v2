@@ -9,7 +9,7 @@ const BoardTextArea = dynamic(() =>
   { ssr: false }
 );
 
-export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur = (e) => { }, ...props }) => {
+export const RuleItem = ({ value, loading, onDelete, onEdit, availableParams = [], allowParams = false, onBlur = (e) => { }, ...props }) => {
   return (
     <XStack ai="flex-end" gap="$2" mb="$2" width="100%" {...props}>
       <BoardTextArea
@@ -21,6 +21,8 @@ export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur = (e) => { }
         placeholder="Rule Value..."
         enableShortcuts={false}
         style={{ width: '100%' }}
+        availableParams={availableParams}
+        allowParams={allowParams}
       />
       <Button
         disabled={loading}
@@ -54,6 +56,8 @@ export const Rules = ({
   onEditRule,
   loadingIndex,
   disabledConfig = {},
+  availableParams = [],
+  allowParams = false,
   onReloadRules = async (_rules) => { }
 }) => {
   const [draftRules, setDraftRules] = useState(rules ?? [])
@@ -170,6 +174,8 @@ export const Rules = ({
             style={{ width: '100%', paddingBottom: 30 }}
             disabled={isLoadingOrGenerating}
             enableShortcuts={true}
+            availableParams={availableParams}
+            allowParams={allowParams}
             footer={
               <XStack justifyContent='space-between' w="100%" ai="flex-end">
                 <XStack mt="$1" mb="$2" flex={1}>

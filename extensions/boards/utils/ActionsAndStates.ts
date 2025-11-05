@@ -37,3 +37,16 @@ export const generateActionCode = (actionName, params = null, type?: "board" | "
         return ''
     }
 }
+
+export const generateParamCode = (properties) => {
+    try {
+        const root = 'params'
+        return root + properties
+            .filter(v => v)
+            .map(k => `?.[${JSON.stringify(k)}]`)
+            .join('')
+    } catch (err) {
+        console.error("cannot generate param code for " + properties + ", ", err)
+        return ''
+    }
+}

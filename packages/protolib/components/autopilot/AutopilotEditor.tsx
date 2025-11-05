@@ -78,7 +78,7 @@ ${cardData.type == 'action' ? generateParamsDeclaration(cardData) : ''}`
 
     const flows = useMemo(() => {
         return <CodeView
-            rulesProps={{ title: `Card Rules` }}
+            rulesProps={{ title: `Card Rules`, allowParams: true, availableParams: Object.keys(cardData?.params ?? {}) }}
             pathname={cardData.type == 'action' ? '/rules' : '/observerCard'}
             onApplyRules={async (rules) => {
                 return await setRules(rules)
