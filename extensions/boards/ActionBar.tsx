@@ -262,20 +262,20 @@ const getActionBar = (generateEvent) => {
       <LogsButton selected={tabVisible == "logs"} showDot={showLogsDot} onPress={() => generateEvent({ type: "toggle-logs" })} />,
       <ActionBarButton tooltipText="Board Settings" selected={tabVisible == "board-settings"} Icon={Settings} onPress={() => generateEvent({ type: "board-settings" })} />,
       <LayersButton layers={layers} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />,
-      // <>
-      //   <Separator vertical borderColor="var(--gray7)" h="30px" />
-      //   <ActionBarButton tooltipText="Presentation Mode" selected={viewMode === "ui"} Icon={Presentation} onPress={() => setViewMode(viewMode === "ui" ? "board" : "ui")} />
-      // </>,
+      <>
+        <Separator vertical borderColor="var(--gray7)" h="30px" />
+        <ActionBarButton tooltipText="Presentation Mode" selected={viewMode === "ui"} Icon={Presentation} onPress={() => setViewMode(viewMode === "ui" ? "board" : "ui")} />
+      </>,
     ],
     'uiView': [
       <ActionBarButton tooltipText="Code" selected={tabVisible == "uicode"} Icon={Code} onPress={() => generateEvent({ type: "toggle-uicode" })} />,
       <ActionBarButton tooltipText={"Visual UI (Beta)"} selected={tabVisible == "visualui"} Icon={UserPen} onPress={() => generateEvent({ type: "toggle-visualui" })} />,
       <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
-      // <>
-      //   <Separator vertical borderColor="var(--gray8)" h="30px" ml="$2.5" />
-      //   <ActionBarButton tooltipText="Board Mode" Icon={LayoutDashboard} onPress={() => setViewMode(viewMode === "ui" ? "board" : "ui")} />
-      // </>,
+      <>
+        <Separator vertical borderColor="var(--gray8)" h="30px" ml="$2.5" />
+        <ActionBarButton tooltipText="Board Mode" Icon={LayoutDashboard} onPress={() => setViewMode(viewMode === "ui" ? "board" : "ui")} />
+      </>,
     ]
   };
 

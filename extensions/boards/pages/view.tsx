@@ -185,7 +185,7 @@ const BoardStateView = ({ board }) => {
 
 const MAX_BUFFER_MSG = 1000
 const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardRef, actions, states, uicodeInfo, setUICodeInfo, onEditBoard }) => {
-  const { panelSide, setPanelSide } = useBoardControls()
+  const { panelSide, setPanelSide } = useBoardControls() || {};
   const [logs, setLogs] = useState([])
   useLog((log) => {
     setLogs(prev => {
@@ -273,14 +273,18 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
 
 
 
-const Board = ({ board, icons }) => {
-  const {
+export const Board = ({ board, icons, forceViewMode = undefined }: { board: any, icons: any[], forceViewMode?: "ui" }) => {
+  let {
     addOpened,
     setAddOpened,
     viewMode,
     tabVisible,
     setTabVisible
-  } = useBoardControls();
+  } = useBoardControls() ?? {};
+
+  if (forceViewMode) {
+    viewMode = forceViewMode
+  }
 
   window['board'] = board;
 
@@ -790,6 +794,13 @@ const Board = ({ board, icons }) => {
       </YStack>
     </AlertDialog>)
 
+  if (forceViewMode === "ui") {
+    return <HTMLView style={{ display: viewMode == 'ui' ? 'block' : 'none', position: 'absolute', width: "100%", height: "100%" }}
+      html={uicodeInfo?.code ?? ''} data={{ board, state: states?.boards?.[board.name] }} setData={(data) => {
+        console.log('wtf set data from board', data)
+      }} />
+  }
+
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
 
@@ -1068,12 +1079,26 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
   }
 
   __currentBoardVersion = boardData?.data?.version
+
+  if (params?.mode === 'ui') {
+    if (boardData.status == 'error') {
+      return <ErrorMessage
+        msg="Error loading board"
+        details={boardData.error.error}
+      />
+    }
+    if (boardData.status == 'loaded') {
+      return <Board forceViewMode={'ui'} key={boardData?.data?.name + '_' + boardVersionId} board={boardData.data} icons={iconsData.data?.icons} />;
+    }
+    return null;
+  }
+
   return <AdminPage
     title={params.board + " board"}
     workspace={workspace}
     pageSession={pageSession}
     onActionBarEvent={onFloatingBarEvent}
-    actionBar={{ visible: tabVisible != 'visualui' }}
+    actionBar={{ visible: tabVisible != 'visualui' && params?.mode !== 'ui' }}
   >
     {boardData.status == 'error' && <ErrorMessage
       msg="Error loading board"

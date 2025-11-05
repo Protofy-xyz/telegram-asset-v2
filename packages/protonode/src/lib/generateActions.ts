@@ -564,6 +564,56 @@ export const AutoActions = ({
                 action: "action to perform in the storage: list, read, create, update, delete, exists",
                 id: "id (required for actions: read, create, update, delete, exists)"
             },
+            presets: {
+                "create": {
+                    "description": "creates/adds item to the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "create"
+                        }
+                    }
+                },
+                "update": {
+                    "description": "updates field of item of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "update"
+                        }
+                    }
+                },
+                "read": {
+                    "description": "reads item of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "read"
+                        }
+                    }
+                },
+                "delete": {
+                    "description": "deletes item of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "delete"
+                        }
+                    }
+                },
+                "list": {
+                    "description": "list items of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "list"
+                        }
+                    }
+                },
+                "exists": {
+                    "description": "checks if exists item on the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "exists"
+                        }
+                    }
+                }
+            },
             rulesCode: `const action = userParams.action;\n\ndelete userParams[\"action\"];\n\nif (action == \"create\") {\n  return execute_action(\"/api/v1/actions/${modelName}/create\", userParams);\n} else if (action == \"update\") {\n  return execute_action(\"/api/v1/actions/${modelName}/update\", userParams);\n} else if (action == \"read\") {\n  return execute_action(\"/api/v1/actions/${modelName}/read\", userParams);\n} else if (action == \"delete\") {\n  return execute_action(\"/api/v1/actions/${modelName}/delete\", userParams);\n} else if (action == \"exists\") {\n  return execute_action(\"/api/v1/actions/${modelName}/exists\", userParams);\n} else {\n  return execute_action(\"/api/v1/actions/${modelName}/list\", userParams);\n}\n`,
         },
         token: getServiceToken(),
