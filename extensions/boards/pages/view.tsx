@@ -39,6 +39,7 @@ import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard } from '../u
 import { ActionCard } from '../components/ActionCard'
 import { VersionTimeline } from '../VersionTimeline'
 import { useBoardVersions, latestVersion } from '../utils/versions'
+import { GraphView } from './graphView'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -803,7 +804,7 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
 
   const isGraphView = forceViewMode == 'graph'
   const getGraphView = () => {
-    return <h1>Graph View Coming Soon!</h1>
+    return <GraphView />
   }
 
   return (
