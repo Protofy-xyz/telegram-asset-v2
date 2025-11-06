@@ -1,12 +1,15 @@
-import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button, TooltipSimple } from '@my/ui';
+import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button, TooltipSimple, Checkbox } from '@my/ui';
 import { Tinted } from '../Tinted';
-import { Sparkles, Cog, Type, LayoutTemplate, AlertTriangle } from "@tamagui/lucide-icons";
+import { Sparkles, Cog, Type, LayoutTemplate, AlertTriangle, Check } from "@tamagui/lucide-icons";
 import { BoardModel } from '@extensions/boards/boardsSchemas';
 import { useRouter } from 'solito/navigation';
 import { getIconUrl } from '../IconSelect';
 import { ItemMenu } from '../ItemMenu';
 import { useState } from 'react';
 import { API, set, setErrorMap } from 'protobase';
+import { Toggle } from '../Toggle';
+
+
 
 export default ({ element, width, onDelete, ...props }: any) => {
     const board = new BoardModel(element);
@@ -15,25 +18,37 @@ export default ({ element, width, onDelete, ...props }: any) => {
     const [selectedBoard, setSelectedBoard] = useState(null);
     const [description, setDescription] = useState('');
     const [templateName, setTemplateName] = useState(selectedBoard?.data.name);
+
+    const hasSystemTag = (tags?: string[]) =>
+        Array.isArray(tags) && tags.includes('system')
+
+    const addSystemTag = (tags?: string[]) =>
+        Array.from(new Set([...(tags ?? []), 'system']))
+
+    const removeSystemTag = (tags?: string[]) =>
+        (tags ?? []).filter(t => t !== 'system')
+
+    const [tags, setTags] = useState<string[]>(board.get('tags') ?? [])
+    const [checked, setChecked] = useState<boolean>(hasSystemTag(tags))
+
     const router = useRouter();
-    // console.log("Board", board);
+
 
     return (
-        <YStack
-            cursor="pointer"
-            bg="$bgPanel"
-            elevation={4}
-            br="$4"
-            width={'100%'}
-            f={1}
-            display="flex"
-            maxWidth={width ?? 474}
-            p="$4"
-            gap="$4"
-            {...props}
-        >
-
-            {board?.get("tags")?.length && board.get("tags").includes("system") && <Tinted>
+        <YStack 
+        cursor="pointer" 
+        bg="$bgPanel" 
+        elevation={4} 
+        br="$4" 
+        width={'100%'} 
+        f={1} 
+        display="flex" 
+        maxWidth={width ?? 474} 
+        p="$4" 
+        gap="$4" 
+        pointerEvents={editSettingsDialog || createTemplateDialog ? 'none' : 'auto'}
+        {...props} >
+            {Array.isArray(board?.get('tags')) && board.get('tags').includes('system') && <Tinted>
                 <TooltipSimple label="This is a system board if you edit or delete it, it may affect core functionality." delay={{ open: 500, close: 0 }} restMs={0}>
                     <XStack pos='absolute' gap="$2" right="14px" top="-10px" jc="center" ai="center" br="$2" bg="$yellow9" px="$2" py="$1">
                         <AlertTriangle color={"black"} size={14} />
@@ -70,7 +85,13 @@ export default ({ element, width, onDelete, ...props }: any) => {
                             {
                                 text: "Settings",
                                 icon: Cog,
-                                action: (element) => { seteditSettingsDialog(true); setSelectedBoard(element) },
+                                action: (element) => {
+                                    seteditSettingsDialog(true)
+                                    setSelectedBoard(element)
+                                    const nextTags = element?.data?.tags ?? []
+                                    setTags(nextTags)
+                                    setChecked(hasSystemTag(nextTags))
+                                },
                                 isVisible: () => true
                             },
                             {
@@ -138,10 +159,13 @@ export default ({ element, width, onDelete, ...props }: any) => {
                 }
             </YStack>
 
-            <Dialog open={createTemplateDialog} onOpenChange={setCreateTemplateDialog}>
+            <Dialog key={selectedBoard?.id} open={createTemplateDialog} onOpenChange={setCreateTemplateDialog}>
                 <Dialog.Portal className='DialogPopup'>
                     <Dialog.Overlay className='DialogPopup' />
-                    <Dialog.Content overflow="hidden" p={"$8"} height={'400px'} width={"400px"} className='DialogPopup'>
+                    <Dialog.Content overflow="hidden" p={"$8"} height={'400px'} width={"400px"} className='DialogPopup'
+                        onClick={(e) => { e.stopPropagation(); }}
+                        onMouseDown={(e) => { e.stopPropagation(); }}
+                        onPointerDown={(e) => { e.stopPropagation(); }}>
                         <YStack height="100%" justifyContent="space-between">
                             <Text fos="$8" fow="600" mb="$3" className='DialogPopup'>Board Template</Text>
                             <XStack ai={"center"} className='DialogPopup'>
@@ -170,19 +194,22 @@ export default ({ element, width, onDelete, ...props }: any) => {
                             />
 
                             <YStack flex={1} className='DialogPopup' />
-                            <Button className='DialogPopup' onPress={async () => {
-                                try {
-                                    await API.post(`/api/core/v2/templates/boards`, {
-                                        name: templateName,
-                                        description,
-                                        from: selectedBoard?.data?.name
-                                    })
-                                    setSelectedBoard(null);
-                                    setCreateTemplateDialog(false);
-                                } catch (e) {
-                                    console.log('e: ', e)
-                                }
-                            }}>Create
+                            <Button className='DialogPopup'
+                                onMouseDown={(e) => { e.stopPropagation(); }}
+                                onPointerDown={(e) => { e.stopPropagation(); }} onPress={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                        await API.post(`/api/core/v2/templates/boards`, {
+                                            name: templateName,
+                                            description,
+                                            from: selectedBoard?.data?.name
+                                        })
+                                        setSelectedBoard(null);
+                                        setCreateTemplateDialog(false);
+                                    } catch (e) {
+                                        console.log('e: ', e)
+                                    }
+                                }}>Create
                             </Button>
                         </YStack>
                         <Dialog.Close />
@@ -215,6 +242,29 @@ export default ({ element, width, onDelete, ...props }: any) => {
                                 }
                                 }
                             />
+                            <XStack ai="center" gap="$2" mt="$4" 
+                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+                                onMouseDown={(e) => { e.stopPropagation(); }}
+                                onPointerDown={(e) => { e.stopPropagation(); }}>
+                                <Label h={"$3.5"} size={"$5"} >Hide board</Label>
+                                <Toggle
+                                    checked={checked}
+                                    onChange={(next) => {
+                                        setChecked(next)
+                                        const updatedTags = next ? addSystemTag(tags) : removeSystemTag(tags)
+                                        setTags(updatedTags)
+                                        setSelectedBoard(prev => {
+                                            if (!prev) return prev
+                                            return {
+                                                data: {
+                                                    ...prev.data,
+                                                    tags: updatedTags,
+                                                },
+                                            }
+                                        })
+                                    }}
+                                />
+                            </XStack>
                             <YStack flex={1} className='DialogPopup' />
                             <Button className='DialogPopup' onPress={async () => {
                                 try {
