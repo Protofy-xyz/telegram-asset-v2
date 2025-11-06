@@ -804,7 +804,7 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
 
   const isGraphView = forceViewMode == 'graph'
   const getGraphView = () => {
-    return <GraphView />
+    return <GraphView board={board} />
   }
 
   return (
