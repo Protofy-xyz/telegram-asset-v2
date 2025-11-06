@@ -45,6 +45,15 @@ export const DashboardGrid = ({
         return cardLayer === boardLayer;
     });
 
+    const allHandles = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
+
+    const layoutsWithHandles = Object.fromEntries(
+        Object.entries(layouts).map(([bp, arr]: any) => [
+            bp,
+            arr.map(item => ({ ...item, resizeHandles: allHandles }))
+        ])
+    );
+
     return (
         <Tinted>
             <Stack style={mergedWrapperStyle}>
@@ -52,7 +61,7 @@ export const DashboardGrid = ({
                     key={boardLayer}  // force re-render when layer changes
                     {...props}
                     className="layout"
-                    layouts={layouts}
+                    layouts={layoutsWithHandles}
                     margin={[6, 6]}
                     breakpoints={breakpoints}
                     rowHeight={30}
