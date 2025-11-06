@@ -801,6 +801,11 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
       }} />
   }
 
+  const isGraphView = forceViewMode == 'graph'
+  const getGraphView = () => {
+    return <h1>Graph View Coming Soon!</h1>
+  }
+
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
 
@@ -938,7 +943,7 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
                   formatOnType: true
                 }}
               />
-              : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
+              : isGraphView ? getGraphView() : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
                 extraScrollSpace={50}
                 items={cards}
                 settings={board.settings}
@@ -1104,7 +1109,7 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
       msg="Error loading board"
       details={boardData.error.error}
     />}
-    {boardData.status == 'loaded' && <Board key={boardData?.data?.name + '_' + boardVersionId} board={boardData.data} icons={iconsData.data?.icons} />}
+    {boardData.status == 'loaded' && <Board forceViewMode={params.view} key={boardData?.data?.name + '_' + boardVersionId} board={boardData.data} icons={iconsData.data?.icons} />}
   </AdminPage>
 }
 
