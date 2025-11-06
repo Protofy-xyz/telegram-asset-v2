@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { ReactFlow, Background, Controls, MiniMap } from 'reactflow';
-import 'reactflow/dist/style.css';
 
 const DefaultNode = memo(({ data }) => {
     return (
