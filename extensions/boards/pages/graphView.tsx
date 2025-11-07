@@ -34,6 +34,8 @@ const DefaultNode = memo(({ data }) => {
         borderRadius: 8,
         display: 'flex',
         backgroundColor: 'var(--bgPanel)',
+        textAlign: 'left',
+        alignItems: 'flex-start',
         color: 'var(--color)',
         position: 'relative',
       }}
