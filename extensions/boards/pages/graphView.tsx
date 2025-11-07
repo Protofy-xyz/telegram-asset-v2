@@ -227,6 +227,31 @@ const LayerGroupNode = memo(({ data }: { data: any }) => (
 
 const nodeTypes = { default: DefaultNode, layerGroup: LayerGroupNode };
 
+/* ==== helpers mínimos para URL <-> viewport ==== */
+function readViewportFromURL() {
+    try {
+        const sp = new URLSearchParams(window.location.search);
+        // ✅ Solo consideramos la URL válida si están presentes las 3 claves
+        if (!(sp.has('x') && sp.has('y') && sp.has('zoom'))) return null;
+        const xStr = sp.get('x'); const yStr = sp.get('y'); const zoomStr = sp.get('zoom');
+        if (xStr == null || yStr == null || zoomStr == null) return null;
+        const x = Number(xStr); const y = Number(yStr); const zoom = Number(zoomStr);
+        if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(zoom)) return null;
+        return { x, y, zoom };
+    } catch { /* noop */ }
+    return null;
+}
+
+function writeViewportToURL(vp: { x: number; y: number; zoom: number }) {
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('x', (Math.round(vp.x * 100) / 100).toString());
+        url.searchParams.set('y', (Math.round(vp.y * 100) / 100).toString());
+        url.searchParams.set('zoom', (Math.round(vp.zoom * 1000) / 1000).toString());
+        window.history.replaceState({}, '', url.toString());
+    } catch { /* noop */ }
+}
+
 function normalizeGroupNodes(nds: RFNode[]) {
     const next = nds.map((n) => ({ ...n, style: { ...(n.style || {}) } }));
     const groups = next.filter((n) => n.type === 'layerGroup');
@@ -292,8 +317,21 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
     const graphCenterX = (graphBounds.minX + graphBounds.maxX) / 2;
     const graphCenterY = (graphBounds.minY + graphBounds.maxY) / 2;
     const zoom = CFG.VIEWPORT.zoom;
+
+    // ✅ Si hay x,y,zoom en la URL, los usamos; si no, centramos como en tu versión que funciona
+    const urlViewport = typeof window !== 'undefined' ? readViewportFromURL() : null;
     const initialX = (window.innerWidth / 2) - graphCenterX * zoom;
     const initialY = (window.innerHeight / 2) - graphCenterY * zoom;
+    const defaultViewport = urlViewport ?? {
+        x: initialX + CFG.VIEWPORT.x,
+        y: initialY + CFG.VIEWPORT.y,
+        zoom,
+    };
+
+    // Guardamos en la URL cuando terminas pan/zoom
+    const handleMoveEnd = useCallback((_e: any, vp: { x: number; y: number; zoom: number }) => {
+        writeViewportToURL(vp);
+    }, []);
 
     return (
         <Tinted>
@@ -303,8 +341,9 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 edges={edges}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
+                onMoveEnd={handleMoveEnd}
                 fitViewOptions={{ padding: CFG.FITVIEW_PADDING }}
-                defaultViewport={{ x: initialX + CFG.VIEWPORT.x, y: initialY + CFG.VIEWPORT.y, zoom }}
+                defaultViewport={defaultViewport}
                 minZoom={0.1}
                 maxZoom={2}
                 nodesDraggable={false}
