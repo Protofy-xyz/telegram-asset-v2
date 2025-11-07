@@ -196,7 +196,7 @@
         {
             "key": "action_1762528976758",
             "width": 3,
-            "height": 12,
+            "height": 18,
             "icon": "sparkles",
             "type": "action",
             "name": "agent_prepare",
@@ -256,7 +256,7 @@
         {
             "key": "action_1762528985558",
             "width": 3,
-            "height": 12,
+            "height": 18,
             "icon": "sparkles",
             "type": "action",
             "name": "agent_core",
