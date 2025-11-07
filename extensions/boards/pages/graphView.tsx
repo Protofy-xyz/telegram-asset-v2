@@ -19,6 +19,7 @@ const GROUP_PAD_TOP = GROUP_PADDING + GROUP_HEADER_HEIGHT; // padding superior t
 const GROUP_BG = 'rgba(0,0,0,0.04)';     // gris muy suave y semi-transparente
 const GROUP_BORDER = '1px solid rgba(0,0,0,0.12)';
 const LAYER_VERTICAL_GAP = 200;          // separación vertical entre layers (grupos o base)
+const BASE_LAYER_IN_GROUP = true;    // si true, la layer 'base' también va en grupo
 
 /* ========== Node UI (nodos de contenido) ========== */
 const DefaultNode = memo(({ data }) => {
@@ -456,7 +457,7 @@ export const GraphView = ({ board }) => {
         const layerWidth = Math.max(0, maxX - minX);
         const layerHeight = Math.max(0, maxY - minY);
 
-        const isBaseLayer = layerName === 'base';
+        const isBaseLayer = !BASE_LAYER_IN_GROUP && layerName === 'base';
 
         if (!isBaseLayer) {
             // Crear el nodo "grupo" de esta layer
