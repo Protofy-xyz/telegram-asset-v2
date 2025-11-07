@@ -347,7 +347,7 @@ const extraCards = [
   {
     defaults: {
       width: 3,
-      height: 12,
+      height: 18,
       type: 'action',
       name: 'AI Action',
       displayResponse: true,
