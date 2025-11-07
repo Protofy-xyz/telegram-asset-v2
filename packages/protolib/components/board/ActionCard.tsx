@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
-import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple } from "@my/ui";
+import { useState, useCallback } from "react";
+import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple  } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
@@ -8,10 +8,8 @@ import { FilePicker } from "../FilePicker";
 import { SelectList } from "../SelectList";
 import { Pin } from "@tamagui/lucide-icons";
 import { useTheme, getVariableValue } from 'tamagui';
+import { CardPicker } from "./CardPicker";
 
-const CardSelector = ({ type }) => {
-    return <h1>TODO IMPLEMENT SELECTOR FOR: {type}</h1>
-}
 
 export const Icon = ({ name, size = 24, color, style }) => {
     const theme = useTheme();
@@ -231,7 +229,20 @@ export const ParamsForm = ({ data, children }) => {
 
                             {/* -------------------- ARRAY -------------------- */}
                             {type == 'array' && (cfg.cardSelector ? (
-                                <CardSelector type={cfg.cardSelectorType} />
+                                <CardPicker
+                                    type={cfg.cardSelectorType}
+                                    value={(() => {
+                                        try {
+                                            const parsed = Array.isArray(value) ? value : JSON.parse(value);
+                                            return Array.isArray(parsed) ? parsed : [];
+                                        } catch {
+                                            return [];
+                                        }
+                                    })()}
+                                    onChange={(arr) => {
+                                        setParam(key, JSON.stringify(arr));
+                                    }}
+                                />
                             ) : (
                                 <Input
                                     className="no-drag"
