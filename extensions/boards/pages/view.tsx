@@ -1041,8 +1041,15 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     toggleAutopilot,
     openAdd,
     setTabVisible,
-    tabVisible
+    tabVisible,
+    viewMode,
+    setViewMode
   } = useBoardControls();
+
+  const setModeAndHash = (mode: 'ui' | 'board' | 'graph') => {
+    setViewMode(mode); // el efecto de arriba sincroniza el hash
+  };
+
   const [boardVersionId] = useBoardVersionId();
 
   const onFloatingBarEvent = (event) => {
@@ -1079,6 +1086,9 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     if (event.type === 'board-settings') {
       setTabVisible(tabVisible === 'board-settings' ? "" : 'board-settings');
     }
+    if (event.type === 'mode-ui') setModeAndHash('ui');
+    if (event.type === 'mode-board') setModeAndHash('board');
+    if (event.type === 'mode-graph') setModeAndHash('graph');
   }
 
   __currentBoardVersion = boardData?.data?.version

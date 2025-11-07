@@ -758,7 +758,7 @@ const DataViewInternal = forwardRef(({
                             {!isXs && toolBarContent}
                         </XStack>
 
-                        <XStack ai="center" ml="$2" jc="flex-end" flexWrap='wrap' flex={1}>
+                        <XStack ai="center" ml="$2" jc="flex-end" flexWrap='wrap' maxWidth={"100%"}>
                             {!hidePagination && <XStack ai="center">
                                 {currentItems.isLoaded && <XStack>
                                     <XStack ai="center">
