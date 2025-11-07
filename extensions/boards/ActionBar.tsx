@@ -32,8 +32,8 @@ const ModeMenu = ({ viewMode, setViewMode }: {
   // keep internal keys, only present them with labels/icons
   const modes = [
     { key: 'graph' as const, label: 'Graph', Icon: Workflow },
-    { key: 'ui' as const, label: 'Presentation', Icon: Presentation },
     { key: 'board' as const, label: 'Dashboard', Icon: LayoutDashboard },
+    { key: 'ui' as const, label: 'Presentation', Icon: Presentation },
   ];
 
   // choose icon for current mode
