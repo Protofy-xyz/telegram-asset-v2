@@ -9,6 +9,10 @@ import { SelectList } from "../SelectList";
 import { Pin } from "@tamagui/lucide-icons";
 import { useTheme, getVariableValue } from 'tamagui';
 
+const CardSelector = ({ type }) => {
+    return <h1>TODO IMPLEMENT SELECTOR FOR: {type}</h1>
+}
+
 export const Icon = ({ name, size = 24, color, style }) => {
     const theme = useTheme();
 
@@ -218,7 +222,7 @@ export const ParamsForm = ({ data, children }) => {
                                     </TextEditDialog>)
                             }
                             {(type == 'json' || type == 'array')
-                                && <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}
+                                && (cfg.cardSelector ? <CardSelector type={cfg.cardSelectorType}/>:<XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}
                                 >
                                     <Monaco
                                         language='json'
@@ -232,7 +236,7 @@ export const ParamsForm = ({ data, children }) => {
                                             lineNumbers: "off"
                                         }}
                                     />
-                                </XStack>}
+                                </XStack>)}
 
                             {type == 'boolean' && <Tinted><Switch
                                 ml="12px"
