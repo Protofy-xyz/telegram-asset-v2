@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
@@ -47,33 +47,34 @@ export const Icon = ({ name, size = 24, color, style }) => {
     );
 };
 
- function setIn<T>(obj: T, path: any, value: unknown): T {
-  if (!Array.isArray(path) || path.length === 0) return obj;
+function setIn<T>(obj: T, path: any, value: unknown): T {
+    if (!Array.isArray(path) || path.length === 0) return obj;
 
-  const [k, ...rest] = path;
-  const key = String(k);
+    const [k, ...rest] = path;
+    const key = String(k);
 
-  const base: any =
-    obj == null
-      ? (typeof rest[0] === 'number' ? [] : {})
-      : Array.isArray(obj)
-      ? obj.slice()
-      : { ...(obj as any) };
+    const base: any =
+        obj == null
+            ? (typeof rest[0] === 'number' ? [] : {})
+            : Array.isArray(obj)
+                ? obj.slice()
+                : { ...(obj as any) };
 
-  if (rest.length === 0) {
-    (base as any)[k] = value;
+    if (rest.length === 0) {
+        (base as any)[k] = value;
+        return base;
+    }
+
+    const next = (base as any)[k];
+    (base as any)[k] = setIn(next, rest, value);
     return base;
-  }
-
-  const next = (base as any)[k];
-  (base as any)[k] = setIn(next, rest, value);
-  return base;
 }
 
 export const ParamsForm = ({ data, children }) => {
     const allKeys = Object.keys(data.params || {});
     const [loading, setLoading] = useState(false);
-    const { resolvedTheme } = useThemeSetting()
+    const { resolvedTheme } = useThemeSetting();
+
     const [paramsState, setParamsState] = useState<Record<string, any>>(() => {
         const initial: Record<string, any> = {};
         for (const key of Object.keys(data.params || {})) {
@@ -82,17 +83,18 @@ export const ParamsForm = ({ data, children }) => {
         }
         return initial;
     });
+
     const setParam = useCallback((key: string, val: any) => {
         setParamsState(prev => ({ ...prev, [key]: val }));
     }, []);
 
-    const isButtonFull = data.buttonMode === "full"
+    const isButtonFull = data.buttonMode === "full";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const cleanedParams = {};
+            const cleanedParams: Record<string, any> = {};
             for (const key of allKeys) {
                 const param = data.configParams?.[key] || {};
                 const defaultValue = param.defaultValue;
@@ -100,11 +102,11 @@ export const ParamsForm = ({ data, children }) => {
                 const state = paramsState[key];
                 if (state !== undefined && state !== "" && visible) {
                     cleanedParams[key] = state;
-                } else if (defaultValue !== undefined && defaultValue !== "" || !visible) {
+                } else if ((defaultValue !== undefined && defaultValue !== "") || !visible) {
                     cleanedParams[key] = defaultValue;
                 }
             }
-            await window['executeAction'](data.name, cleanedParams);
+            await (window as any)['executeAction'](data.name, cleanedParams);
         } finally {
             setLoading(false);
         }
@@ -113,11 +115,15 @@ export const ParamsForm = ({ data, children }) => {
     const editCardField = async (path, value) => {
         const newData = setIn(data, path, value);
         try {
-            await window['onChangeCardData'][data.name](newData);
+            await (window as any)['onChangeCardData'][data.name](newData);
         } catch (error) {
             console.error("Error editing card:", error);
         }
-    }
+    };
+
+    // -------------------- NUEVO: estado local para inputs de tipo array --------------------
+    const [arrayText, setArrayText] = useState<Record<string, string>>({});
+    // --------------------------------------------------------------------------------------
 
     return (
         <YStack h="100%" w={"100%"} ai="center" p="10px">
@@ -170,6 +176,7 @@ export const ParamsForm = ({ data, children }) => {
                                     />
                                 </TooltipSimple>
                             </XStack>
+
                             {(!['json', 'array', 'boolean', 'path'].includes(type)) &&
                                 (cfg?.options?.length
                                     ? <YStack mx="10px">
@@ -221,15 +228,49 @@ export const ParamsForm = ({ data, children }) => {
                                         />
                                     </TextEditDialog>)
                             }
-                            {type == 'array' && (cfg.cardSelector ? <CardSelector type={cfg.cardSelectorType}/> : <Input
-                                                className="no-drag"
-                                                value={JSON.parse(value).join(', ')}
-                                                placeholder={placeholder}
-                                                minWidth={100}
-                                                onChangeText={(val) => setParam(key, JSON.stringify(val.split(',').map((s) => s.trim())))}
-                                            />)}
-                            {type == 'json' && <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}
-                                >
+
+                            {/* -------------------- ARRAY -------------------- */}
+                            {type == 'array' && (cfg.cardSelector ? (
+                                <CardSelector type={cfg.cardSelectorType} />
+                            ) : (
+                                <Input
+                                    className="no-drag"
+                                    // Mostrar lo que escribe el usuario si existe, si no el valor canónico
+                                    value={
+                                        arrayText[key] ??
+                                        (() => {
+                                            try {
+                                                const parsed = Array.isArray(value) ? value : JSON.parse(value);
+                                                return Array.isArray(parsed) ? parsed.join(', ') : '';
+                                            } catch {
+                                                return '';
+                                            }
+                                        })()
+                                    }
+                                    placeholder={placeholder}
+                                    minWidth={100}
+                                    onChangeText={(val) => {
+                                        // Mantener lo que el usuario ve/escribe
+                                        setArrayText(prev => ({ ...prev, [key]: val }));
+
+                                        // Actualizar JSON sin perder espacios internos, ignorando espacios alrededor de comas
+                                        const items = val.split(/\s*,\s*/).filter(Boolean);
+                                        setParam(key, JSON.stringify(items));
+                                    }}
+                                    onBlur={() => {
+                                        // Al salir del campo, volvemos a mostrar el valor canónico
+                                        setArrayText(prev => {
+                                            const next = { ...prev };
+                                            delete next[key];
+                                            return next;
+                                        });
+                                    }}
+                                />
+                            ))}
+                            {/* -------------------------------------------------------------------------------- */}
+
+                            {type == 'json' && (
+                                <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}>
                                     <Monaco
                                         language='json'
                                         darkMode={resolvedTheme === 'dark'}
@@ -242,24 +283,28 @@ export const ParamsForm = ({ data, children }) => {
                                             lineNumbers: "off"
                                         }}
                                     />
-                                </XStack>}
+                                </XStack>
+                            )}
 
-                            {type == 'boolean' && <Tinted><Switch
-                                ml="12px"
-                                id="autopilot-switch"
-                                size="$4"
-                                checked={(value ?? "") === "true"}
-                                onCheckedChange={(checked) => {
-                                    setParam(key, checked ? "true" : "false");
-                                }}
-                                className="no-drag" // Hace que el switch no sea draggable
-                            >
-                                <Switch.Thumb className="no-drag" animation="quick" />
-                            </Switch></Tinted>}
+                            {type == 'boolean' && (
+                                <Tinted>
+                                    <Switch
+                                        ml="12px"
+                                        id="autopilot-switch"
+                                        size="$4"
+                                        checked={(value ?? "") === "true"}
+                                        onCheckedChange={(checked) => {
+                                            setParam(key, checked ? "true" : "false");
+                                        }}
+                                        className="no-drag"
+                                    >
+                                        <Switch.Thumb className="no-drag" animation="quick" />
+                                    </Switch>
+                                </Tinted>
+                            )}
 
-
-                            {type == 'path'
-                                && <FilePicker
+                            {type == 'path' && (
+                                <FilePicker
                                     allowMultiple={true}
                                     mx="10px"
                                     initialPath={"/data/public"}
@@ -267,7 +312,7 @@ export const ParamsForm = ({ data, children }) => {
                                         setParam(key, filePath);
                                     }}
                                 />
-                            }
+                            )}
                         </YStack>
                     );
                 })}
@@ -284,7 +329,6 @@ export const ParamsForm = ({ data, children }) => {
                         w={"100%"}
                         maw={"100%"}
                         f={isButtonFull && 1}
-                        // mt={isButtonFull ? 0 : "$5"}
                         p={"10px"}
                         textAlign="center"
                         bc={data.color}
@@ -295,22 +339,22 @@ export const ParamsForm = ({ data, children }) => {
                         color={data.color}
                         textProps={{ fow: "400", filter: "brightness(0.5)", fos: "$5" }}
                         icon={(props) =>
-                            data.icon && (data.displayButtonIcon || data.buttonMode === 'full')
-                            && <Icon
-                                {...props}
-                                style={{ filter: "brightness(0.5)" }}
-                                name={data.icon}
-                                size={data.buttonMode === 'full' ? 48 : 24}
-                            />
+                            data.icon && (data.displayButtonIcon || data.buttonMode === 'full') && (
+                                <Icon
+                                    {...props}
+                                    style={{ filter: "brightness(0.5)" }}
+                                    name={data.icon}
+                                    size={data.buttonMode === 'full' ? 48 : 24}
+                                />
+                            )
                         }
                     >
                         {loading ? "..." : (data.buttonLabel || "Run")}
                     </Button>
                 </YStack>
-
             )}
         </YStack>
-    )
+    );
 };
 
 export const ActionCard = ({ data, children }) => {
