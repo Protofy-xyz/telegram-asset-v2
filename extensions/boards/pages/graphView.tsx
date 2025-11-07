@@ -13,11 +13,11 @@ import {
 /* ===========================
  *  Constantes de layout/grupo
  * =========================== */
-const GROUP_PADDING = 24;                // padding lateral/inferior
-const GROUP_HEADER_HEIGHT = 28;          // altura de la cabecera
+const GROUP_PADDING = 100;                // padding lateral/inferior
+const GROUP_HEADER_HEIGHT = 60;          // altura de la cabecera
 const GROUP_PAD_TOP = GROUP_PADDING + GROUP_HEADER_HEIGHT; // padding superior total
 const GROUP_BG = 'rgba(0,0,0,0.04)';     // gris muy suave y semi-transparente
-const GROUP_BORDER = '1px solid rgba(0,0,0,0.12)';
+const GROUP_BORDER = '2px solid var(--gray6)';
 const LAYER_VERTICAL_GAP = 200;          // separación vertical entre layers (grupos o base)
 const BASE_LAYER_IN_GROUP = true;    // si true, la layer 'base' también va en grupo
 
@@ -95,10 +95,10 @@ const LayerGroupNode = memo(({ data }) => {
                     display: 'flex',
                     alignItems: 'center',
                     padding: '0 12px',
-                    fontSize: 12,
+                    fontSize: GROUP_HEADER_HEIGHT * 0.4,
                     fontWeight: 600,
-                    color: 'rgba(0,0,0,0.65)',
-                    background: 'rgba(255,255,255,0.6)',
+                    color: 'var(--gray11)',
+                    background: 'var(--bgPanel)',
                     borderTopLeftRadius: 12,
                     borderTopRightRadius: 12,
                     borderBottom: '1px solid rgba(0,0,0,0.08)',
@@ -291,8 +291,8 @@ const getInitialEdgesFromBoard = (board) => {
                 style: {
                     stroke:
                         linkType === 'pre'
-                            ? 'var(--edgePre, #f59e0b)'
-                            : 'var(--edgePost, #22d3ee)',
+                            ? 'var(--edgePre, var(--color9))'
+                            : 'var(--edgePost, var(--color9))',
                     strokeWidth: 2,
                 },
             });
