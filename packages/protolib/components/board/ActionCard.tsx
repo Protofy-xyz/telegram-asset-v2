@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple  } from "@my/ui";
+import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple, Stack } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
@@ -241,6 +241,11 @@ export const ParamsForm = ({ data, children }) => {
                                     })()}
                                     onChange={(arr) => {
                                         setParam(key, JSON.stringify(arr));
+                                    }}
+                                    onApply={(arr) => {
+                                        const json = JSON.stringify(arr);
+                                        setParam(key, json);
+                                        editCardField(["configParams", key, "defaultValue"], json);
                                     }}
                                 />
                             ) : (
