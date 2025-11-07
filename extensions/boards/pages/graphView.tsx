@@ -41,7 +41,7 @@ const GROUP_PAD_TOP = CFG.GROUP_PADDING + CFG.GROUP_HEADER_HEIGHT;
  *  Tipos ligeros del dominio
  * ========================= */
 // Sin añadir imports externos; estos tipos son orientativos.
-type Link = { name: string; type?: 'pre' | 'post' };
+type Link = { name: string; type?: 'pre' | 'post' | 'code' };
 type Card = {
     name: string;
     layer?: string;
@@ -127,8 +127,21 @@ function buildEdgesFromCards(cards: Card[]): RFEdge[] {
     const seenOutIdx = new Map<string, number>();
     const seenInIdx = new Map<string, number>();
 
+    console.log('Building edges from cards:', cards);
+
+    
     for (const card of cards) {
         const links = Array.isArray(card.links) ? card.links : [];
+        //search inside rulesCode string for executeAction({name: "targetName", ...})
+        const regex = /executeAction\(\s*\{\s*name:\s*["']([\w-]+)["']/g;
+        let match;
+        while ((match = regex.exec(card.rulesCode)) !== null) {
+            const targetName = match[1];
+            if (!targetName || !nodeIds.has(targetName)) continue;
+
+            links.push({ name: targetName, type: 'code' });
+        }
+
         for (const link of links) {
             const targetName = link?.name;
             if (!targetName || !nodeIds.has(targetName)) continue;
@@ -143,9 +156,7 @@ function buildEdgesFromCards(cards: Card[]): RFEdge[] {
             const outIdx = seenOutIdx.get(card.name) ?? 0;
             const inIdx = seenInIdx.get(targetName) ?? 0;
             seenOutIdx.set(card.name, outIdx + 1);
-            seenInIdx.set(targetName, inIdx + 1);
-
-            const linkType: 'pre' | 'post' = link?.type === 'pre' ? 'pre' : 'post';
+            seenInIdx.set(targetName, inIdx + 1)
 
             edges.push({
                 id: edgeId,
@@ -154,11 +165,9 @@ function buildEdgesFromCards(cards: Card[]): RFEdge[] {
                 sourceHandle: `output-${outIdx}`,
                 targetHandle: `input-${inIdx}`,
                 type: 'smoothstep',
-                data: { linkType },
+                data: { linkType: link.type || 'pre' },
                 style: {
-                    stroke: linkType === 'pre'
-                        ? 'var(--edgePre, var(--color9))'
-                        : 'var(--edgePost, var(--color9))',
+                    stroke: link.type === 'pre' ? 'var(--edgePre, var(--color9))' : link.type === 'post' ? 'var(--edgePost, var(--color9))' : 'var(--edgeDefault, var(--color5))',
                     strokeWidth: 2,
                 },
             });
@@ -350,7 +359,7 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 defaultViewport={{ x: initialX + CFG.VIEWPORT.x, y: initialY + CFG.VIEWPORT.y, zoom: CFG.VIEWPORT.zoom }}
                 minZoom={0.1}
                 maxZoom={2}
-                nodesDraggable
+                nodesDraggable={false}
                 nodesConnectable
                 elementsSelectable
                 zoomOnScroll
