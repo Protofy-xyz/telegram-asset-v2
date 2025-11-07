@@ -1344,6 +1344,17 @@ export default async (app, context) => {
         res.send({ message: "Boards reloaded" })
     })
 
+    app.get('/api/core/v1/boards/:boardId/reload', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            await reloadBoard(boardId)
+            res.send({ message: `Board ${boardId} reloaded` })
+        } catch (error) {
+            logger.error({ error }, "Error reloading board")
+            res.status(500).send({ error: "Internal Server Error" })
+        }
+    })
+
     const registerActions = async () => {
         //register actions for each board
         const boards = await getBoards()
