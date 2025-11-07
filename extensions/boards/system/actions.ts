@@ -77,6 +77,12 @@ const setActionValue = async (Manager, context, boardId, action, value) => {
     if (action?.alwaysReportValue || JSON.stringify(value) !== JSON.stringify(prevValue)) {
         await context.state.set({ group: 'boards', tag: boardId, name: action.name, value: value, emitEvent: true });
         Manager.update(`../../data/boards/${boardId}.js`, 'states', action.name, value);
+        // Ensure dependent value-cards recompute immediately, not waiting for interval
+        try {
+            await API.get(`/api/core/v1/boards/${boardId}/reload?token=${token}`)
+        } catch (e) {
+            getLogger({ module: 'boards', board: boardId, card: action.name }).warn({ err: e }, 'Failed to trigger immediate board reload')
+        }
     }
 }
 
