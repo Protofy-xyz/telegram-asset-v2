@@ -33,15 +33,13 @@ const DefaultNode = memo(({ data }) => {
         height: '100%',
         borderRadius: 8,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         backgroundColor: 'var(--bgPanel)',
         color: 'var(--color)',
         position: 'relative',
       }}
     >
-      {data.name}
-
+      {/* {data.name} */}
+      {data.content}
       {/* Handles distribuidos verticalmente */}
       {data?.ports?.inputs?.map((port, index) => (
         <Handle
@@ -89,7 +87,6 @@ const LayerGroupNode = memo(({ data }) => {
           right: 0,
           height: GROUP_HEADER_HEIGHT,
           display: 'flex',
-          alignItems: 'center',
           padding: '0 12px',
           fontSize: GROUP_HEADER_HEIGHT * 0.4,
           fontWeight: 600,
@@ -376,8 +373,8 @@ const computeDirectedLayout = ({
 
 /* ========== Main Graph View ========== */
 export const GraphView = ({ cards }) => {
-  const hPixelRatio = 150;
-  const vPixelRatio = 30;
+  const hPixelRatio = 200;
+  const vPixelRatio = 50;
 
   // agrupar por layer
   const grouped = new Map();
