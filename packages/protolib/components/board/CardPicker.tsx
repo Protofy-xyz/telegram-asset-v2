@@ -1,46 +1,32 @@
 import { useState, useEffect, useMemo } from "react";
 import {
-    XStack,
-    YStack,
-    Text,
-    Input,
-    Button,
-    Checkbox,
-    ScrollView,
-    Dialog,
+    XStack, YStack, Text, Input, Button, Checkbox, ScrollView, Dialog,
 } from "@my/ui";
 import { Check, Eye, Plus, Rocket, X as XIcon } from "@tamagui/lucide-icons";
 import { Tinted } from "../Tinted";
 
 type CardPickerProps = {
-    // optional filter: only show cards of this type ("action" | "value" | ...)
     type?: string;
-    // current selected card names
     value?: string[];
-    // notify parent with full array of selected names
     onChange: (names: string[]) => void;
 };
 
 export const CardPicker = ({ type, value, onChange }: CardPickerProps) => {
-    // --- data sources ---
     const [allCards, setAllCards] = useState<{ name: string; type?: string }[]>(
         []
     );
 
-    // --- ui state ---
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [modalSelection, setModalSelection] = useState<string[]>([]);
 
-    // --- selected from props ---
     const selected = Array.isArray(value) ? value : [];
 
-    // Load cards from global window.board (kept up-to-date by the Board)
     useEffect(() => {
         const b = (window as any)?.board;
         if (!b?.cards) return;
 
-        const filtered = type ? b.cards.filter((c) => c.type === type) : b.cards;
+        const filtered = type ? b.cards.filter((c: any) => c.type === type) : b.cards;
         setAllCards(
             filtered.map((c: any) => ({
                 name: String(c.name ?? ""),
@@ -49,14 +35,12 @@ export const CardPicker = ({ type, value, onChange }: CardPickerProps) => {
         );
     }, [type]);
 
-    // Memoized filtering by search
     const filteredCards = useMemo(() => {
         const q = search.trim().toLowerCase();
         if (!q) return allCards;
         return allCards.filter((c) => c.name.toLowerCase().includes(q));
     }, [allCards, search]);
 
-    // Toggle one in the external value (chips remove)
     const toggleDirect = (name: string) => {
         onChange(
             selected.includes(name)
@@ -65,23 +49,11 @@ export const CardPicker = ({ type, value, onChange }: CardPickerProps) => {
         );
     };
 
-    // Toggle inside the modal temp selection
     const toggleModalSelect = (arr: string[], name: string) =>
         arr.includes(name) ? arr.filter((n) => n !== name) : [...arr, name];
 
-    // --- chips ---
     const chips = selected.map((name) => (
-        <XStack
-            key={name}
-            ai="center"
-            br="$4"
-            px="$2.5"
-            py="$1"
-            bg="$color3"
-            mr="$2"
-            mb="$2"
-            hoverStyle={{ bg: "$color4" }}
-        >
+        <XStack key={name} ai="center" br="$4" px="$2.5" py="$1" bg="$color3" mr="$2" mb="$2" hoverStyle={{ bg: "$color4" }} >
             <Text mr="$1">{name}</Text>
             <Button
                 size="$1"
@@ -94,16 +66,70 @@ export const CardPicker = ({ type, value, onChange }: CardPickerProps) => {
         </XStack>
     ));
 
+    const Row = ({ card }: { card: { name: string; type?: string } }) => {
+        const checked = modalSelection.includes(card.name);
+        const IconComp =
+            card.type === "action" ? Rocket :
+                card.type === "value" ? Eye :
+                    null;
+
+        return (
+            <XStack
+                key={card.name}
+                ai="center"
+                jc="space-between"
+                py="$2"
+                px="$2.5"
+                hoverStyle={{ backgroundColor: "$gray2" }}
+            >
+                <XStack
+                    flex={1}
+                    ai="center"
+                    gap="$3"
+                    onPress={() =>
+                        setModalSelection((prev) => toggleModalSelect(prev, card.name))
+                    }
+                >
+                    {IconComp && (
+                        <IconComp size={20} color="var(--color10)" style={{ opacity: 0.7 }} />
+                    )}
+                    <Text fos="$5">{card.name}</Text>
+                </XStack>
+
+                <XStack ml="$1">
+                    <Checkbox
+                        pointerEvents="auto"
+                        w="$2.5"
+                        h="$2.5"
+                        focusStyle={{ outlineWidth: 0 }}
+                        checked={checked}
+                        onCheckedChange={() =>
+                            setModalSelection((prev) => toggleModalSelect(prev, card.name))
+                        }
+                        className="no-drag"
+                        borderColor="$gray6"
+                        backgroundColor="$background"
+                    >
+                        <Checkbox.Indicator>
+                            <Check color="var(--color8)" size={16} />
+                        </Checkbox.Indicator>
+                    </Checkbox>
+                </XStack>
+            </XStack>
+        );
+    };
+
+    const colA = filteredCards.filter((_, i) => i % 2 === 0);
+    const colB = filteredCards.filter((_, i) => i % 2 === 1);
+
     return (
         <>
-            {/* Everything tinted EXCEPT the Dialog */}
             <Tinted>
                 <YStack>
                     <Text fos="$5" mb="$2">
                         Select cards{type ? ` (${type})` : ""}
                     </Text>
 
-                    {/* Chips row + "+" */}
                     <XStack flexWrap="wrap" ai="center">
                         {chips}
 
@@ -126,26 +152,15 @@ export const CardPicker = ({ type, value, onChange }: CardPickerProps) => {
                 </YStack>
             </Tinted>
 
-
             <Dialog modal open={open} onOpenChange={setOpen}>
                 <Dialog.Portal>
                     <Dialog.Overlay bg="rgba(0,0,0,0.5)" animation="quick" />
-                    <Dialog.Content
-                        elevate
-                        bordered
-                        br="$6"
-                        p="$4"
-                        mx="auto"
-                        my="10%"
-                        maxWidth={480}
-                        bg="$bgContent" // default dialog surface
-                    >
+                    <Dialog.Content elevate bordered br="$6" p="$4" mx="auto" my="10%" height={460} width={640} bg="$bgContent" >
                         <Tinted>
                             <Text fos="$7" mb="$3" fow="600">
                                 Add cards
                             </Text>
 
-                            {/* Search */}
                             <Input
                                 value={search}
                                 onChangeText={setSearch}
@@ -153,74 +168,23 @@ export const CardPicker = ({ type, value, onChange }: CardPickerProps) => {
                                 mb="$3"
                             />
 
-                            {/* List */}
                             <ScrollView maxHeight={320}>
-                                {filteredCards.map((card) => {
-                                    const checked = modalSelection.includes(card.name);
+                                <XStack gap="$8">
+                                    <YStack flex={1} gap="$1">
+                                        {colA.map((card) => (
+                                            <Row key={card.name} card={card} />
+                                        ))}
+                                    </YStack>
 
-                                    // Pick icon based on card.type
-                                    const IconComp =
-                                        card.type === "action" ? Rocket :
-                                            card.type === "value" ? Eye :
-                                                null; // fallback: no icon
-
-                                    return (
-                                        <XStack
-                                            key={card.name}
-                                            ai="center"
-                                            jc="space-between"
-                                            py="$2"
-                                            px="$2"
-                                            hoverStyle={{ backgroundColor: "$gray2" }}
-                                        >
-                                            {/* Clickable row (except checkbox) */}
-                                            <XStack
-                                                flex={1}
-                                                ai="center"
-                                                gap="$3"
-                                                onPress={() =>
-                                                    setModalSelection((prev) => toggleModalSelect(prev, card.name))
-                                                }
-                                            >
-                                                {/* Icon */}
-                                                {IconComp && (
-                                                    <IconComp
-                                                        size={20}
-                                                        color="var(--color10)"
-                                                        style={{ opacity: 0.7 }}
-                                                    />
-                                                )}
-
-                                                {/* Name */}
-                                                <Text fos="$5">{card.name}</Text>
-                                            </XStack>
-
-                                            {/* Checkbox */}
-                                            <Checkbox
-                                                pointerEvents="auto"
-                                                w="$2"
-                                                h="$2"
-                                                focusStyle={{ outlineWidth: 0 }}
-                                                checked={checked}
-                                                onCheckedChange={() =>
-                                                    setModalSelection((prev) => toggleModalSelect(prev, card.name))
-                                                }
-                                                className="no-drag"
-                                                borderColor="$gray6"
-                                                backgroundColor="$background"
-                                            >
-                                                <Checkbox.Indicator>
-                                                    <Check color="var(--color8)" size={16} />
-                                                </Checkbox.Indicator>
-                                            </Checkbox>
-                                        </XStack>
-                                    );
-                                })}
-
+                                    <YStack flex={1} gap="$1">
+                                        {colB.map((card) => (
+                                            <Row key={card.name} card={card} />
+                                        ))}
+                                    </YStack>
+                                </XStack>
                             </ScrollView>
 
-                            {/* Actions */}
-                            <XStack mt="$4" jc="flex-end" gap="$3">
+                            <XStack mt="$4" jc="center" gap="$3">
                                 <Button
                                     onPress={() => setOpen(false)}
                                     bg="$gray3"
