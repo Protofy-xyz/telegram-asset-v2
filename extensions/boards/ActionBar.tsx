@@ -1,4 +1,4 @@
-import { X, Save, Plus, Pause, Play, Activity, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot, Undo, Redo, FileClock, Layers } from 'lucide-react';
+import { X, Save, Plus, Pause, Play, Workflow, Settings, Presentation, LayoutDashboard, Book, Code, UserPen, Bot, Undo, Redo, FileClock, Layers, Activity, } from 'lucide-react';
 import { useBoardControls } from './BoardControlsContext';
 import { ActionBarButton } from 'protolib/components/ActionBarWidget';
 import { Separator } from '@my/ui';
@@ -22,6 +22,78 @@ const AutopilotButton = ({ generateEvent, autopilot }) => <ActionBarButton
   bc={autopilot ? 'var(--color8)' : "var(--color)"}
   br={"$20"}
 />
+
+const ModeMenu = ({ viewMode, setViewMode }: {
+  viewMode: 'board' | 'ui' | 'json' | 'graph';
+  setViewMode: (m: 'board' | 'ui' | 'json' | 'graph') => void;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  // keep internal keys, only present them with labels/icons
+  const modes = [
+    { key: 'graph' as const, label: 'Graph', Icon: Workflow },
+    { key: 'ui' as const, label: 'Presentation', Icon: Presentation },
+    { key: 'board' as const, label: 'Dashboard', Icon: LayoutDashboard },
+  ];
+
+  // choose icon for current mode
+  const CurrentIcon =
+    viewMode === 'ui' ? Presentation : viewMode === 'graph' ? Workflow : LayoutDashboard;
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <ActionBarButton
+        tooltipText="View mode"
+        Icon={CurrentIcon}
+        selected={open}
+        onPress={() => setOpen(v => !v)}
+      />
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            right: 0,
+            background: 'var(--bgPanel)',
+            border: '1px solid var(--gray7)',
+            borderRadius: 6,
+            padding: 6,
+            minWidth: 160,
+            zIndex: 1000,
+            boxShadow: '0 -2px 6px rgba(0,0,0,0.15)',
+            marginBottom: 6,
+          }}
+        >
+          {modes.map(({ key, label, Icon }) => {
+            const active = viewMode === key;
+            return (
+              <div
+                key={key}
+                onClick={() => {
+                  setViewMode(key); // set exactly the internal key: 'graph' | 'ui' | 'board'
+                  setOpen(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '6px 10px',
+                  cursor: 'pointer',
+                  borderRadius: 4,
+                  background: active ? 'var(--color8)' : 'transparent',
+                  color: active ? 'var(--bgPanel)' : 'var(--color)',
+                }}
+              >
+                <Icon size={16} />
+                <span>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const LayersButton = ({ layers, activeLayer, setActiveLayer }) => {
   const [open, setOpen] = useState(false);
@@ -237,8 +309,6 @@ const getActionBar = (generateEvent) => {
   />,
   ] : []
 
-
-
   const historyVersion = [<ActionBarButton
     tooltipText={tabVisible == "history" ? "Close History" : "Open History"}
     selected={tabVisible == "history"}
@@ -264,7 +334,7 @@ const getActionBar = (generateEvent) => {
       <LayersButton layers={layers} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />,
       <>
         <Separator vertical borderColor="var(--gray7)" h="30px" />
-        <ActionBarButton tooltipText="Presentation Mode" selected={viewMode === "ui"} Icon={Presentation} onPress={() => setViewMode(viewMode === "ui" ? "board" : "ui")} />
+        <ModeMenu viewMode={viewMode} setViewMode={setViewMode} />
       </>,
     ],
     'uiView': [
@@ -274,7 +344,7 @@ const getActionBar = (generateEvent) => {
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
       <>
         <Separator vertical borderColor="var(--gray8)" h="30px" ml="$2.5" />
-        <ActionBarButton tooltipText="Board Mode" Icon={LayoutDashboard} onPress={() => setViewMode(viewMode === "ui" ? "board" : "ui")} />
+        <ModeMenu viewMode={viewMode} setViewMode={setViewMode} />
       </>,
     ]
   };
