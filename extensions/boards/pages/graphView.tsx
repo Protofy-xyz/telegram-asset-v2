@@ -1,312 +1,258 @@
 import { Tinted } from 'protolib/components/Tinted';
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useEffect } from 'react';
 import {
-    ReactFlow,
-    Background,
-    useNodesState,
-    useEdgesState,
-    Handle,
-    Position,
-    applyNodeChanges,
+  ReactFlow,
+  Background,
+  useNodesState,
+  useEdgesState,
+  Handle,
+  Position,
+  applyNodeChanges,
 } from 'reactflow';
 
 /* ===========================
  *  Constantes de layout/grupo
  * =========================== */
-const GROUP_PADDING = 100;                // padding lateral/inferior
-const GROUP_HEADER_HEIGHT = 60;          // altura de la cabecera
+const GROUP_PADDING = 100; // padding lateral/inferior
+const GROUP_HEADER_HEIGHT = 60; // altura de la cabecera
 const GROUP_PAD_TOP = GROUP_PADDING + GROUP_HEADER_HEIGHT; // padding superior total
-const GROUP_BG = 'rgba(0,0,0,0.04)';     // gris muy suave y semi-transparente
+const GROUP_BG = 'rgba(0,0,0,0.04)'; // gris muy suave y semi-transparente
 const GROUP_BORDER = '2px solid var(--gray6)';
-const LAYER_VERTICAL_GAP = 200;          // separación vertical entre layers (grupos o base)
-const BASE_LAYER_IN_GROUP = true;    // si true, la layer 'base' también va en grupo
+const LAYER_VERTICAL_GAP = 200; // separación vertical entre layers (grupos o base)
+const BASE_LAYER_IN_GROUP = true; // si true, la layer 'base' también va en grupo
 
 /* ========== Node UI (nodos de contenido) ========== */
 const DefaultNode = memo(({ data }) => {
-    const inCount = data?.ports?.inputs?.length ?? 0;
-    const outCount = data?.ports?.outputs?.length ?? 0;
+  const inCount = data?.ports?.inputs?.length ?? 0;
+  const outCount = data?.ports?.outputs?.length ?? 0;
 
-    return (
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'var(--bgPanel)',
-                color: 'var(--color)',
-                position: 'relative',
-            }}
-        >
-            {data.name}
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        borderRadius: 8,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'var(--bgPanel)',
+        color: 'var(--color)',
+        position: 'relative',
+      }}
+    >
+      {data.name}
 
-            {/* Handles distribuidos verticalmente */}
-            {data?.ports?.inputs?.map((port, index) => (
-                <Handle
-                    key={`in-${port}-${index}`}
-                    id={`input-${index}`}
-                    type="target"
-                    position={Position.Left}
-                    style={{
-                        top: `${((index + 1) * 100) / (inCount + 1)}%`,
-                    }}
-                />
-            ))}
+      {/* Handles distribuidos verticalmente */}
+      {data?.ports?.inputs?.map((port, index) => (
+        <Handle
+          key={`in-${port}-${index}`}
+          id={`input-${index}`}
+          type="target"
+          position={Position.Left}
+          style={{ top: `${((index + 1) * 100) / (inCount + 1)}%` }}
+        />
+      ))}
 
-            {data?.ports?.outputs?.map((port, index) => (
-                <Handle
-                    key={`out-${port}-${index}`}
-                    id={`output-${index}`}
-                    type="source"
-                    position={Position.Right}
-                    style={{
-                        top: `${((index + 1) * 100) / (outCount + 1)}%`,
-                    }}
-                />
-            ))}
-        </div>
-    );
+      {data?.ports?.outputs?.map((port, index) => (
+        <Handle
+          key={`out-${port}-${index}`}
+          id={`output-${index}`}
+          type="source"
+          position={Position.Right}
+          style={{ top: `${((index + 1) * 100) / (outCount + 1)}%` }}
+        />
+      ))}
+    </div>
+  );
 });
 
 /* ========== Node UI (grupo de layer con cabecera) ========== */
 const LayerGroupNode = memo(({ data }) => {
-    return (
-        <div
-            style={{
-                width: '100%',
-                height: '100%',
-                borderRadius: 12,
-                background: GROUP_BG,
-                border: GROUP_BORDER,
-                position: 'relative',
-                zIndex: 0,
-            }}
-        >
-            {/* Cabecera del grupo */}
-            <div
-                style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: GROUP_HEADER_HEIGHT,
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 12px',
-                    fontSize: GROUP_HEADER_HEIGHT * 0.4,
-                    fontWeight: 600,
-                    color: 'var(--gray11)',
-                    background: 'var(--bgPanel)',
-                    borderTopLeftRadius: 12,
-                    borderTopRightRadius: 12,
-                    borderBottom: '1px solid rgba(0,0,0,0.08)',
-                    pointerEvents: 'none', // la cabecera no bloquea interacciones con los hijos
-                }}
-            >
-                {data?.label}
-            </div>
-        </div>
-    );
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        borderRadius: 12,
+        background: GROUP_BG,
+        border: GROUP_BORDER,
+        position: 'relative',
+        zIndex: 0,
+      }}
+    >
+      {/* Cabecera del grupo */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: GROUP_HEADER_HEIGHT,
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 12px',
+          fontSize: GROUP_HEADER_HEIGHT * 0.4,
+          fontWeight: 600,
+          color: 'var(--gray11)',
+          background: 'var(--bgPanel)',
+          borderTopLeftRadius: 12,
+          borderTopRightRadius: 12,
+          borderBottom: '1px solid rgba(0,0,0,0.08)',
+          pointerEvents: 'none',
+        }}
+      >
+        {data?.label}
+      </div>
+    </div>
+  );
 });
 
-const nodeTypes = {
-    default: DefaultNode,
-    layerGroup: LayerGroupNode,
-};
+const nodeTypes = { default: DefaultNode, layerGroup: LayerGroupNode };
 
-/* ========== ReactFlow Wrapper con auto‑resize de grupos ========== */
+/* ========== ReactFlow Wrapper con sincronización automática ========== */
 const Flow = ({ initialNodes, initialEdges }) => {
-    const [nodes, setNodes] = useNodesState(initialNodes);
-    const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-    // Obtiene tamaño numérico de un nodo (prioriza style.width/height en px)
-    const getNodeSize = (n) => {
-        const sw = typeof n?.style?.width === 'string'
-            ? parseFloat(n.style.width)
-            : (typeof n?.style?.width === 'number' ? n.style.width : undefined);
-        const sh = typeof n?.style?.height === 'string'
-            ? parseFloat(n.style.height)
-            : (typeof n?.style?.height === 'number' ? n.style.height : undefined);
+  // 🔄 sincroniza cuando cambian desde fuera (no se pierde viewport)
+  useEffect(() => { setNodes(initialNodes); }, [initialNodes, setNodes]);
+  useEffect(() => { setEdges(initialEdges); }, [initialEdges, setEdges]);
 
-        const fallbackW = (n?.width && Number(n.width)) || 300;
-        const fallbackH = (n?.height && Number(n.height)) || 210;
+  // tamaño numérico del nodo
+  const getNodeSize = (n) => {
+    const sw = typeof n?.style?.width === 'string'
+      ? parseFloat(n.style.width)
+      : (typeof n?.style?.width === 'number' ? n.style.width : undefined);
+    const sh = typeof n?.style?.height === 'string'
+      ? parseFloat(n.style.height)
+      : (typeof n?.style?.height === 'number' ? n.style.height : undefined);
+    return { width: sw ?? 300, height: sh ?? 210 };
+  };
 
-        return {
-            width: sw ?? fallbackW,
-            height: sh ?? fallbackH,
-        };
-    };
+  // auto‑resize de grupos al mover hijos
+  const autoSizeGroupNodes = useCallback((nds) => {
+    const next = nds.map((n) => ({ ...n, style: { ...(n.style || {}) } }));
+    const groups = next.filter((n) => n.type === 'layerGroup');
+    if (!groups.length) return next;
 
-    // Recalcula posición/tamaño de nodos tipo "layerGroup" para contener a sus hijos
-    const autoSizeGroupNodes = useCallback((nds) => {
-        // Copia superficial para no mutar estado anterior
-        const next = nds.map((n) => ({ ...n, style: { ...(n.style || {}) } }));
+    for (const g of groups) {
+      const children = next.filter((n) => n.parentNode === g.id);
+      if (!children.length) continue;
 
-        const groups = next.filter((n) => n.type === 'layerGroup');
-        if (groups.length === 0) return next;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const c of children) {
+        const { width, height } = getNodeSize(c);
+        minX = Math.min(minX, c.position.x);
+        minY = Math.min(minY, c.position.y);
+        maxX = Math.max(maxX, c.position.x + width);
+        maxY = Math.max(maxY, c.position.y + height);
+      }
 
-        // Índice por id para accesos rápidos
-        const byId = new Map(next.map((n) => [n.id, n]));
-
-        for (const g of groups) {
-            const children = next.filter((n) => n.parentNode === g.id);
-            if (children.length === 0) continue;
-
-            // Bounding relativo al grupo (coord relativas)
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-            for (const c of children) {
-                const { width, height } = getNodeSize(c);
-                minX = Math.min(minX, c.position.x);
-                minY = Math.min(minY, c.position.y);
-                maxX = Math.max(maxX, c.position.x + width);
-                maxY = Math.max(maxY, c.position.y + height);
-            }
-
-            // Si algún hijo se fue hacia coords negativas, movemos el grupo y
-            // reajustamos posiciones relativas de los hijos para mantener padding.
-            const shiftX = minX - GROUP_PADDING;
-            const shiftY = minY - GROUP_PAD_TOP; // respeta cabecera + padding
-
-            if (shiftX !== 0 || shiftY !== 0) {
-                g.position = {
-                    x: (g.position?.x || 0) + shiftX,
-                    y: (g.position?.y || 0) + shiftY,
-                };
-
-                for (const c of children) {
-                    c.position = {
-                        x: c.position.x - shiftX,
-                        y: c.position.y - shiftY,
-                    };
-                }
-                // Actualizar bounding tras el shift
-                minX = GROUP_PADDING;
-                minY = GROUP_PAD_TOP;
-                // maxX/maxY siguen válidos porque restamos el mismo shift a todos
-            }
-
-            const RIGHT_MARGIN_EXTRA = 60; // margen extra a la derecha del grupo
-
-            const newWidth = Math.max(
-                0,
-                (maxX - minX) + GROUP_PADDING * 2 + RIGHT_MARGIN_EXTRA
-            );
-            const newHeight = Math.max(
-                0,
-                (maxY - minY) + GROUP_PADDING * 2 + GROUP_HEADER_HEIGHT
-            );
-
-            g.style.width = newWidth;
-            g.style.height = newHeight;
-            // Asegura dimensiones numéricas (ReactFlow acepta números en style)
+      const shiftX = minX - GROUP_PADDING;
+      const shiftY = minY - GROUP_PAD_TOP;
+      if (shiftX !== 0 || shiftY !== 0) {
+        g.position = { x: (g.position?.x || 0) + shiftX, y: (g.position?.y || 0) + shiftY };
+        for (const c of children) {
+          c.position = { x: c.position.x - shiftX, y: c.position.y - shiftY };
         }
+        minX = GROUP_PADDING;
+        minY = GROUP_PAD_TOP;
+      }
 
-        return next;
-    }, []);
+      const RIGHT_MARGIN_EXTRA = 60;
+      g.style.width  = (maxX - minX) + GROUP_PADDING * 2 + RIGHT_MARGIN_EXTRA;
+      g.style.height = (maxY - minY) + GROUP_PADDING * 2 + GROUP_HEADER_HEIGHT;
+    }
+    return next;
+  }, []);
 
-    // Interceptamos cambios en nodos para aplicar auto‑resize de grupos
-    const onNodesChange = useCallback((changes) => {
-        setNodes((nds) => {
-            const updated = applyNodeChanges(changes, nds);
-            return autoSizeGroupNodes(updated);
-        });
-    }, [setNodes, autoSizeGroupNodes]);
+  const onNodesChange = useCallback((changes) => {
+    setNodes((nds) => autoSizeGroupNodes(applyNodeChanges(changes, nds)));
+  }, [setNodes, autoSizeGroupNodes]);
 
-    return (
-        <Tinted>
-            <ReactFlow
-                nodeTypes={nodeTypes}
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                fitView
-                fitViewOptions={{ padding: 0.2 }}
-                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                minZoom={0.1}
-                maxZoom={2}
-                nodesDraggable
-                nodesConnectable
-                elementsSelectable
-                zoomOnScroll
-                zoomOnPinch
-                panOnDrag
-                proOptions={{ hideAttribution: true }}
-            >
-                <Background gap={20} color="#555" />
-            </ReactFlow>
-        </Tinted>
-    );
+  return (
+    <Tinted>
+      <ReactFlow
+        nodeTypes={nodeTypes}
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        minZoom={0.1}
+        maxZoom={2}
+        nodesDraggable
+        nodesConnectable
+        elementsSelectable
+        zoomOnScroll
+        zoomOnPinch
+        panOnDrag
+        proOptions={{ hideAttribution: true }}
+      >
+        <Background gap={20} color="#555" />
+      </ReactFlow>
+    </Tinted>
+  );
 };
 
 /* ========== Edge Builder ========== */
-/**
- * Construye edges desde board.cards[*].links[]:
- *  - source = card.name
- *  - target = link.name
- *  - link.type ('pre'|'post') colorea y se guarda en edge.data.linkType
- *  - sourceHandle/targetHandle alineados con orden de outputs/inputs
- */
-const getInitialEdgesFromBoard = (board) => {
-    const cards = Array.isArray(board?.cards)
-        ? board.cards.filter((c) => c?.name)
-        : [];
+const getInitialEdgesFromBoard = (cards) => {
+  const nodeIds = new Set(cards.map((c) => c.name));
+  const edges = [];
+  const duplicateCounter = new Map();
+  const seenOutIdx = new Map();
+  const seenInIdx = new Map();
 
-    const nodeIds = new Set(cards.map((c) => c.name));
-    const edges = [];
-    const duplicateCounter = new Map();
-    const seenOutIdx = new Map();
-    const seenInIdx = new Map();
+  for (const card of cards) {
+    const links = Array.isArray(card.links) ? card.links : [];
+    for (const link of links) {
+      const targetName = link?.name;
+      if (!targetName || !nodeIds.has(targetName)) continue;
 
-    for (const card of cards) {
-        const links = Array.isArray(card.links) ? card.links : [];
-        for (const link of links) {
-            const targetName = link?.name;
-            if (!targetName) continue;
-            if (!nodeIds.has(targetName)) continue;
+      const baseKey = `${card.name}->${targetName}`;
+      const dup = duplicateCounter.get(baseKey) ?? 0;
+      duplicateCounter.set(baseKey, dup + 1);
+      const edgeId = dup === 0 ? baseKey : `${baseKey}#${dup}`;
 
-            const baseKey = `${card.name}->${targetName}`;
-            const dup = duplicateCounter.get(baseKey) ?? 0;
-            duplicateCounter.set(baseKey, dup + 1);
-            const edgeId = dup === 0 ? baseKey : `${baseKey}#${dup}`;
+      const outIdx = seenOutIdx.get(card.name) ?? 0;
+      const inIdx  = seenInIdx.get(targetName) ?? 0;
+      seenOutIdx.set(card.name, outIdx + 1);
+      seenInIdx.set(targetName, inIdx + 1);
 
-            const outIdx = seenOutIdx.get(card.name) ?? 0;
-            const inIdx = seenInIdx.get(targetName) ?? 0;
-            seenOutIdx.set(card.name, outIdx + 1);
-            seenInIdx.set(targetName, inIdx + 1);
+      const linkType = link?.type === 'pre' ? 'pre' : 'post';
 
-            const linkType = link?.type === 'pre' ? 'pre' : 'post';
-
-            edges.push({
-                id: edgeId,
-                source: card.name,
-                target: targetName,
-                sourceHandle: `output-${outIdx}`,
-                targetHandle: `input-${inIdx}`,
-                type: 'smoothstep',
-                data: { linkType },
-                style: {
-                    stroke:
-                        linkType === 'pre'
-                            ? 'var(--edgePre, var(--color9))'
-                            : 'var(--edgePost, var(--color9))',
-                    strokeWidth: 2,
-                },
-            });
-        }
+      edges.push({
+        id: edgeId,
+        source: card.name,
+        target: targetName,
+        sourceHandle: `output-${outIdx}`,
+        targetHandle: `input-${inIdx}`,
+        type: 'smoothstep',
+        data: { linkType },
+        style: {
+          stroke: linkType === 'pre'
+            ? 'var(--edgePre, var(--color9))'
+            : 'var(--edgePost, var(--color9))',
+          strokeWidth: 2,
+        },
+      });
     }
-
-    return edges;
+  }
+  return edges;
 };
 
-/* ========== Directed Layout (por subconjunto) ========== */
-/**
- * Calcula layout dirigido (izq→der) para un subconjunto de cards.
- * Sólo considera edges **internos** al subconjunto (evita bloquear por dependencias externas).
- */
+/* ========== Directed Layout con baricentro (orgánico) ========== */
+
+// mediana numérica
+const median = (arr) => {
+  if (!arr?.length) return 0;
+  const a = [...arr].sort((x, y) => x - y);
+  const m = Math.floor(a.length / 2);
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+};
+
 const computeDirectedLayout = ({
   cards,
   edges,
@@ -319,250 +265,223 @@ const computeDirectedLayout = ({
   const nodeIds = nodes.map((c) => c.name);
   const nodeSet = new Set(nodeIds);
 
+  // tamaños
   const sizeById = new Map(
     nodes.map((c) => [
       c.name,
-      {
-        width: (c.width || 2) * hPixelRatio,
-        height: (c.height || 7) * vPixelRatio,
-      },
+      { width: (c.width || 2) * hPixelRatio, height: (c.height || 7) * vPixelRatio },
     ])
   );
 
-  // Crear relaciones dirigidas internas
+  // grafos internos
   const preds = new Map(nodeIds.map((id) => [id, []]));
   const succs = new Map(nodeIds.map((id) => [id, []]));
   const indeg = new Map(nodeIds.map((id) => [id, 0]));
 
   for (const e of edges) {
-    if (!nodeSet.has(e.source) || !nodeSet.has(e.target)) continue;
+    if (!nodeSet.has(e.source) || !nodeSet.has(e.target)) continue; // sólo internos
     preds.get(e.target).push(e.source);
     succs.get(e.source).push(e.target);
     indeg.set(e.target, indeg.get(e.target) + 1);
   }
 
-  // Topological sort
+  // niveles por Kahn (con fallback en ciclos)
   const queue = nodeIds.filter((id) => indeg.get(id) === 0);
   const level = new Map(nodeIds.map((id) => [id, 0]));
+  const visited = new Set(queue);
+
   while (queue.length) {
     const id = queue.shift();
     for (const nxt of succs.get(id) || []) {
       indeg.set(nxt, indeg.get(nxt) - 1);
       level.set(nxt, Math.max(level.get(nxt), level.get(id) + 1));
-      if (indeg.get(nxt) === 0) queue.push(nxt);
+      if (indeg.get(nxt) === 0 && !visited.has(nxt)) {
+        queue.push(nxt);
+        visited.add(nxt);
+      }
     }
   }
+  // nodos en ciclos: colócalos al final de su mejor estimación
+  for (const id of nodeIds) {
+    if (!visited.has(id)) level.set(id, Math.max(level.get(id), 0));
+  }
 
-  // Agrupar por columnas (niveles)
+  // capas (columnas)
   const maxLevel = Math.max(0, ...level.values());
   const layers = Array.from({ length: maxLevel + 1 }, () => []);
   for (const id of nodeIds) layers[level.get(id)].push(id);
+
+  // orden estable inicial por nombre/entrada
+  const baseOrder = new Map(nodeIds.map((id, i) => [id, i]));
 
   const nodeX = new Map();
   const nodeY = new Map();
   let xOffset = 0;
 
   for (let col = 0; col < layers.length; col++) {
-    const ids = layers[col];
+    let ids = layers[col];
+
+    // ordenar por baricentro respecto a predecesores ya colocados
+    if (col > 0) {
+      const scored = ids.map((id) => {
+        const centers = (preds.get(id) || [])
+          .filter((p) => nodeY.has(p))
+          .map((p) => (nodeY.get(p) ?? 0) + (sizeById.get(p)?.height ?? 0) / 2);
+        return {
+          id,
+          hasPred: centers.length > 0,
+          score: centers.length ? median(centers) : baseOrder.get(id) ?? 0,
+        };
+      });
+
+      scored.sort((a, b) => {
+        if (a.hasPred !== b.hasPred) return a.hasPred ? -1 : 1;
+        if (a.score !== b.score) return a.score - b.score;
+        return (baseOrder.get(a.id) ?? 0) - (baseOrder.get(b.id) ?? 0);
+      });
+
+      ids = scored.map((s) => s.id);
+    } else {
+      ids = [...ids].sort((a, b) => (baseOrder.get(a) ?? 0) - (baseOrder.get(b) ?? 0));
+    }
+
+    // colocación vertical: cerca del objetivo (mediana de preds) + evitar solape
     let yOffset = 0;
     let maxW = 0;
 
     for (const id of ids) {
       const sz = sizeById.get(id);
+      const centers = (preds.get(id) || [])
+        .filter((p) => nodeY.has(p))
+        .map((p) => (nodeY.get(p) ?? 0) + (sizeById.get(p)?.height ?? 0) / 2);
 
-      // Intentar alinear con su(s) predecesor(es)
-      const predsOfNode = preds.get(id) || [];
-      let targetY = 0;
-      if (predsOfNode.length > 0) {
-        const avgY =
-          predsOfNode
-            .map((p) => (nodeY.get(p) ?? 0) + (sizeById.get(p)?.height ?? 0) / 2)
-            .reduce((a, b) => a + b, 0) / predsOfNode.length;
-        targetY = avgY - sz.height / 2;
-      } else {
-        targetY = yOffset;
-      }
-
-      // Evitar solapamiento vertical con nodos anteriores en la misma columna
-      let safeY = targetY;
-      for (const otherId of ids) {
-        if (!nodeY.has(otherId)) continue;
-        const otherY = nodeY.get(otherId);
-        const otherH = sizeById.get(otherId).height;
-        if (Math.abs(safeY - otherY) < (otherH + marginY)) {
-          safeY = otherY + otherH + marginY;
-        }
-      }
+      const targetTop = centers.length ? median(centers) - sz.height / 2 : yOffset;
+      const top = Math.max(targetTop, yOffset); // compacción y no solape
 
       nodeX.set(id, xOffset);
-      nodeY.set(id, safeY);
-      yOffset = Math.max(yOffset, safeY + sz.height + marginY);
+      nodeY.set(id, top);
+
+      yOffset = top + sz.height + marginY;
       maxW = Math.max(maxW, sz.width);
     }
 
     xOffset += maxW + marginX;
   }
 
+  // salida
   const positions = {};
-  for (const id of nodeIds) {
-    positions[id] = { x: nodeX.get(id) || 0, y: nodeY.get(id) || 0 };
-  }
-
+  for (const id of nodeIds) positions[id] = { x: nodeX.get(id) || 0, y: nodeY.get(id) || 0 };
   return { positions, sizes: sizeById };
 };
 
 /* ========== Main Graph View ========== */
-export const GraphView = ({ board }) => {
-    const hPixelRatio = 150;
-    const vPixelRatio = 30;
+export const GraphView = ({ cards }) => {
+  const hPixelRatio = 150;
+  const vPixelRatio = 30;
 
-    // 1) Agrupar por layer (undefined → 'base')
-    const grouped = new Map();
-    for (const card of board.cards || []) {
-        const layer = card.layer || 'base';
-        if (!grouped.has(layer)) grouped.set(layer, []);
-        grouped.get(layer).push(card);
+  // agrupar por layer
+  const grouped = new Map();
+  for (const card of cards || []) {
+    const layer = card.layer || 'base';
+    if (!grouped.has(layer)) grouped.set(layer, []);
+    grouped.get(layer).push(card);
+  }
+
+  const initialEdges = getInitialEdgesFromBoard(cards);
+  const initialNodes = [];
+  const groupNodes = [];
+  let yOffsetLayer = 0;
+
+  for (const [layerName, cardsGroup] of grouped.entries()) {
+    const { positions, sizes } = computeDirectedLayout({
+      cards: cardsGroup,
+      edges: initialEdges,
+      hPixelRatio,
+      vPixelRatio,
+      marginX: 120,
+      marginY: 60,
+    });
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const c of cardsGroup) {
+      const sz = sizes.get(c.name);
+      const pos = positions[c.name];
+      minX = Math.min(minX, pos.x);
+      minY = Math.min(minY, pos.y);
+      maxX = Math.max(maxX, pos.x + sz.width);
+      maxY = Math.max(maxY, pos.y + sz.height);
     }
 
-    // 2) Edges globales
-    const initialEdges = getInitialEdgesFromBoard(board);
+    const layerWidth  = Math.max(0, maxX - minX);
+    const layerHeight = Math.max(0, maxY - minY);
+    const isBaseLayer = !BASE_LAYER_IN_GROUP && layerName === 'base';
 
-    // 3) Crear nodos y grupos
-    const initialNodes = [];
-    const groupNodes = [];
+    if (!isBaseLayer) {
+      const groupId = `group-${layerName}`;
+      const RIGHT_MARGIN_EXTRA = 60;
+      const groupWidth  = layerWidth + GROUP_PADDING * 2 + RIGHT_MARGIN_EXTRA;
+      const groupHeight = layerHeight + GROUP_PAD_TOP + GROUP_PADDING * 2 + 20;
 
-    let yOffsetLayer = 0;
+      groupNodes.push({
+        id: groupId,
+        type: 'layerGroup',
+        position: { x: 0, y: yOffsetLayer },
+        data: { label: layerName },
+        style: { width: groupWidth, height: groupHeight },
+      });
 
-    for (const [layerName, cards] of grouped.entries()) {
-        const { positions, sizes } = computeDirectedLayout({
-            cards,
-            edges: initialEdges,
-            hPixelRatio,
-            vPixelRatio,
-            marginX: 120,
-            marginY: 60,
+      for (const c of cardsGroup) {
+        const sz = sizes.get(c.name);
+        const pos = positions[c.name];
+        initialNodes.push({
+          id: c.name,
+          type: 'default',
+          parentNode: groupId,
+          position: {
+            x: (pos.x - minX) + GROUP_PADDING,
+            y: (pos.y - minY) + GROUP_PAD_TOP,
+          },
+          data: {
+            ...c,
+            ports: {
+              inputs: initialEdges.filter((e) => e.target === c.name).map((e) => e.source),
+              outputs: initialEdges.filter((e) => e.source === c.name).map((e) => e.target),
+            },
+          },
+          style: {
+            width: `${sz.width}px`,
+            height: `${sz.height}px`,
+            background: 'transparent',
+          },
         });
+      }
 
-        // Bounding local de los nodos de esta layer (coords del layout local)
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        for (const card of cards) {
-            const sz = sizes.get(card.name);
-            const pos = positions[card.name];
-            minX = Math.min(minX, pos.x);
-            minY = Math.min(minY, pos.y);
-            maxX = Math.max(maxX, pos.x + sz.width);
-            maxY = Math.max(maxY, pos.y + sz.height);
-        }
-
-        const layerWidth = Math.max(0, maxX - minX);
-        const layerHeight = Math.max(0, maxY - minY);
-
-        const isBaseLayer = !BASE_LAYER_IN_GROUP && layerName === 'base';
-
-        if (!isBaseLayer) {
-            // Crear el nodo "grupo" de esta layer
-            const groupId = `group-${layerName}`;
-            const groupWidth = layerWidth + GROUP_PADDING * 2 + 60;
-            const groupHeight = layerHeight + GROUP_PAD_TOP + GROUP_PADDING * 2 + 20;
-
-            groupNodes.push({
-                id: groupId,
-                type: 'layerGroup',
-                position: { x: 0, y: yOffsetLayer },
-                data: { label: layerName },
-                style: {
-                    width: groupWidth,
-                    height: groupHeight,
-                    zIndex: 0,
-                },
-                selectable: true,
-                draggable: true,
-            });
-
-            // Añadir nodos hijos con posiciones relativas al grupo (respetando padding y cabecera)
-            for (const card of cards) {
-                const sz = sizes.get(card.name);
-                const pos = positions[card.name];
-
-                initialNodes.push({
-                    id: card.name,
-                    type: 'default',
-                    parentNode: groupId,
-                    position: {
-                        x: (pos.x - minX) + GROUP_PADDING,
-                        y: (pos.y - minY) + GROUP_PAD_TOP,
-                    },
-                    data: {
-                        ...card,
-                        ports: {
-                            inputs: initialEdges
-                                .filter((e) => e.target === card.name)
-                                .map((e) => e.source),
-                            outputs: initialEdges
-                                .filter((e) => e.source === card.name)
-                                .map((e) => e.target),
-                        },
-                    },
-                    style: {
-                        border: 'none',
-                        boxShadow: 'none',
-                        padding: 0,
-                        width: `${sz.width}px`,
-                        height: `${sz.height}px`,
-                        background: 'transparent',
-                        zIndex: 1,
-                    },
-                });
-            }
-
-            // Aumentar el offset vertical para la siguiente layer
-            yOffsetLayer += groupHeight + LAYER_VERTICAL_GAP;
-        } else {
-            // Layer "base": sin grupo, pero se respeta un offset vertical para separarla de las siguientes capas
-            for (const card of cards) {
-                const sz = sizes.get(card.name);
-                const pos = positions[card.name];
-
-                initialNodes.push({
-                    id: card.name,
-                    type: 'default',
-                    position: {
-                        x: pos.x,
-                        y: pos.y + yOffsetLayer,
-                    },
-                    data: {
-                        ...card,
-                        ports: {
-                            inputs: initialEdges
-                                .filter((e) => e.target === card.name)
-                                .map((e) => e.source),
-                            outputs: initialEdges
-                                .filter((e) => e.source === card.name)
-                                .map((e) => e.target),
-                        },
-                    },
-                    style: {
-                        border: 'none',
-                        boxShadow: 'none',
-                        padding: 0,
-                        width: `${sz.width}px`,
-                        height: `${sz.height}px`,
-                        background: 'transparent',
-                        zIndex: 1,
-                    },
-                });
-            }
-
-            // Avanza el offset usando el alto de esta layer "base"
-            const baseHeight = layerHeight;
-            yOffsetLayer += baseHeight + LAYER_VERTICAL_GAP;
-        }
+      yOffsetLayer += groupHeight + LAYER_VERTICAL_GAP;
+    } else {
+      for (const c of cardsGroup) {
+        const sz = sizes.get(c.name);
+        const pos = positions[c.name];
+        initialNodes.push({
+          id: c.name,
+          type: 'default',
+          position: { x: pos.x, y: pos.y + yOffsetLayer },
+          data: {
+            ...c,
+            ports: {
+              inputs: initialEdges.filter((e) => e.target === c.name).map((e) => e.source),
+              outputs: initialEdges.filter((e) => e.source === c.name).map((e) => e.target),
+            },
+          },
+          style: {
+            width: `${sz.width}px`,
+            height: `${sz.height}px`,
+            background: 'transparent',
+          },
+        });
+      }
+      yOffsetLayer += layerHeight + LAYER_VERTICAL_GAP;
     }
+  }
 
-    return (
-        <Flow
-            initialEdges={initialEdges}
-            initialNodes={[...groupNodes, ...initialNodes]}
-        />
-    );
+  return <Flow initialNodes={[...groupNodes, ...initialNodes]} initialEdges={initialEdges} />;
 };

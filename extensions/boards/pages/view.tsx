@@ -803,9 +803,6 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
   }
 
   const isGraphView = forceViewMode == 'graph'
-  const getGraphView = () => {
-    return <GraphView board={board} />
-  }
 
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
@@ -944,7 +941,7 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
                   formatOnType: true
                 }}
               />
-              : isGraphView ? getGraphView() : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
+              : isGraphView ? <GraphView cards={cards} /> : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
                 extraScrollSpace={50}
                 items={cards}
                 settings={board.settings}
