@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from 'next/router';
 import { BookOpen, Tag, Router } from '@tamagui/lucide-icons';
 import { DevicesModel } from './devicesSchemas';
 import { API } from 'protobase';
@@ -613,6 +614,8 @@ export default {
       setLogSource(null);
     }
 
+    const router = useRouter();
+
     return (<AdminPage title="Devices" pageSession={pageSession}>
       <Connector brokerUrl={onlineCompilerSecureWebSocketUrl()}>
         <DeviceModal
@@ -665,7 +668,7 @@ export default {
         toolBarContent={
           <XStack mr={"$2"} f={1} jc='flex-end'>
             <Tinted>
-              <Button icon={BookOpen} mah="30px" onPress={() => document.location.href = '/workspace/deviceDefinitions'}>
+              <Button icon={BookOpen} mah="30px" onPress={() => router.push('/deviceDefinitions')}>
                 Definitions
               </Button>
             </Tinted>
@@ -692,7 +695,7 @@ export default {
                   : <YStack f={1} ai="center" p={"$2"} py={"$6"} gap="$4">
                     <Tinted>
                       <Text fos={14} fow={"600"}>You don't have any definitions yet</Text>
-                      <Button icon={Navigation} onPress={() => document.location.href = '/workspace/deviceDefinitions'} >
+                      <Button icon={Navigation} onPress={() => router.push('/deviceDefinitions')} >
                         Go to definitions
                       </Button>
                     </Tinted>
