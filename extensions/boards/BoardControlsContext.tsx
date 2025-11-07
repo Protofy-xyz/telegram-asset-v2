@@ -18,8 +18,8 @@ interface Controls {
   setTabVisible: (value: string) => void;
   tabVisible: string;
 
-  viewMode: "board" | "json" | "ui";
-  setViewMode: (mode: "board" | "json" | "ui") => void;
+  viewMode: 'board' | 'json' | 'ui' | 'graph';
+  setViewMode: (mode: 'board' | 'json' | 'ui' | 'graph') => void;
 
   saveJson: () => void;
 

@@ -274,18 +274,17 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
 
 
 
-export const Board = ({ board, icons, forceViewMode = undefined }: { board: any, icons: any[], forceViewMode?: "ui" }) => {
+export const Board = ({ board, icons, forceViewMode = undefined }: { board: any, icons: any[], forceViewMode?: 'ui' | 'board' | 'graph' }) => {
   let {
     addOpened,
     setAddOpened,
-    viewMode,
     tabVisible,
-    setTabVisible
+    setTabVisible,
+    viewMode
   } = useBoardControls() ?? {};
 
-  if (forceViewMode) {
-    viewMode = forceViewMode
-  }
+  const effectiveView: 'ui' | 'board' | 'graph' =
+    (forceViewMode ?? viewMode ?? 'ui') as 'ui' | 'board' | 'graph';
 
   window['board'] = board;
 
@@ -795,14 +794,7 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
       </YStack>
     </AlertDialog>)
 
-  if (forceViewMode === "ui") {
-    return <HTMLView style={{ display: viewMode == 'ui' ? 'block' : 'none', position: 'absolute', width: "100%", height: "100%" }}
-      html={uicodeInfo?.code ?? ''} data={{ board, state: states?.boards?.[board.name] }} setData={(data) => {
-        console.log('wtf set data from board', data)
-      }} />
-  }
-
-  const isGraphView = forceViewMode == 'graph'
+  const isGraphView = effectiveView === 'graph'
 
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
@@ -963,7 +955,7 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
                   }
 
                   console.log('programming layout change: ', breakpointRef.current)
-                  clearInterval(dedupRef.current)
+                  clearTimeout(dedupRef.current)
                   dedupRef.current = setTimeout(() => {
                     console.log('Layout changed: ', breakpointRef.current)
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
@@ -998,10 +990,18 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
               </YStack> : null)}</YStack>
           }
         </YStack>
-        <HTMLView style={{ display: viewMode == 'ui' ? 'block' : 'none', position: 'absolute', width: "100%", height: "100%", backgroundColor: "var(--bgContent)" }}
-          html={uicodeInfo?.code ?? ''} data={{ board, state: states?.boards?.[board.name] }} setData={(data) => {
-            console.log('wtf set data from board', data)
-          }} />
+        <HTMLView
+          style={{
+            display: effectiveView === 'ui' ? 'block' : 'none',
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'var(--bgContent)',
+          }}
+          html={uicodeInfo?.code ?? ''}
+          data={{ board, state: states?.boards?.[board.name] }}
+          setData={(data) => console.log('set data from board', data)}
+        />
         <FloatingArea tabVisible={tabVisible} setTabVisible={setTabVisible} board={board} automationInfo={automationInfo} boardRef={boardRef} actions={actions} states={states} uicodeInfo={uicodeInfo} setUICodeInfo={setUICodeInfo} onEditBoard={onEditBoard} />
         <YStack
           position={"fixed" as any}
