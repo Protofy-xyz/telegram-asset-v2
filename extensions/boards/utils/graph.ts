@@ -34,7 +34,7 @@ export const computeDirectedLayout = ({
   const indeg = new Map(nodeIds.map((id) => [id, 0]));
 
   for (const e of edges) {
-    if (!nodeSet.has(e.source) || !nodeSet.has(e.target)) continue; // sólo internos
+    if (!nodeSet.has(e.source) || !nodeSet.has(e.target) || e.data.linkType === 'code') continue; // sólo internos y no 'code'
     preds.get(e.target).push(e.source);
     succs.get(e.source).push(e.target);
     indeg.set(e.target, indeg.get(e.target) + 1);
