@@ -29,7 +29,7 @@ export const CardPicker = ({ type, value, onChange, onApply }: CardPickerProps) 
         type: c.type,
       }))
     );
-  }, [type]);
+  });
 
   const filteredCards = useMemo(() => {
     const q = search.trim().toLowerCase();
