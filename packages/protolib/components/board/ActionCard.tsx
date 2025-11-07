@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple, Stack  } from "@my/ui";
+import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple, Stack } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
 import { Tinted } from "../Tinted";
@@ -230,20 +230,25 @@ export const ParamsForm = ({ data, children }) => {
                             {/* -------------------- ARRAY -------------------- */}
                             {type == 'array' && (cfg.cardSelector ? (
                                 <Stack ml="15px">
-                                <CardPicker
-                                    type={cfg.cardSelectorType}
-                                    value={(() => {
-                                        try {
-                                            const parsed = Array.isArray(value) ? value : JSON.parse(value);
-                                            return Array.isArray(parsed) ? parsed : [];
-                                        } catch {
-                                            return [];
-                                        }
-                                    })()}
-                                    onChange={(arr) => {
-                                        setParam(key, JSON.stringify(arr));
-                                    }}
-                                />
+                                    <CardPicker
+                                        type={cfg.cardSelectorType}
+                                        value={(() => {
+                                            try {
+                                                const parsed = Array.isArray(value) ? value : JSON.parse(value);
+                                                return Array.isArray(parsed) ? parsed : [];
+                                            } catch {
+                                                return [];
+                                            }
+                                        })()}
+                                        onChange={(arr) => {
+                                            setParam(key, JSON.stringify(arr));
+                                        }}
+                                        onApply={(arr) => {
+                                            const json = JSON.stringify(arr);
+                                            setParam(key, json);
+                                            editCardField(["configParams", key, "defaultValue"], json);
+                                        }}
+                                    />
                                 </Stack>
                             ) : (
                                 <Input
