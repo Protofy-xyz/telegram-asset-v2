@@ -9,6 +9,8 @@ import {
     Handle,
     Position,
     applyNodeChanges,
+    BezierEdge,
+    getBezierPath
 } from 'reactflow';
 
 /* =========================================================
@@ -135,7 +137,7 @@ function buildEdgesFromCards(cards: Card[]): RFEdge[] {
                 target: targetName,
                 sourceHandle: `output-${outIdx}`,
                 targetHandle: `input-${inIdx}`,
-                type: 'smoothstep',
+                type: 'curvy',
                 data: { linkType: link.type || 'pre' },
                 style: {
                     stroke: link.type === 'pre' ? 'var(--edgePre, var(--color9))'
@@ -164,6 +166,7 @@ const DefaultNode = memo(({ data }: { data: any }) => {
                 alignItems: 'flex-start',
                 color: 'var(--color)',
                 position: 'relative',
+                zIndex: 2,              // 👈 nodos por encima
             }}
         >
             {data.content}
@@ -188,6 +191,27 @@ const DefaultNode = memo(({ data }: { data: any }) => {
         </div>
     );
 });
+
+const CurvyEdge = (props: any) => {
+  const [edgePath] = getBezierPath({ ...props, curvature: 0.4 }); // curva más orgánica
+  return (
+    <path
+      id={props.id}
+      className="react-flow__edge-path"
+      d={edgePath}
+      style={{
+        stroke: props.style?.stroke || 'var(--edgeDefault, var(--color5))',
+        strokeWidth: 5,
+        fill: 'none',
+        pointerEvents: 'none',   // 👈 no intercepta clics
+        mixBlendMode: 'multiply' // opcional: mezcla estética
+      }}
+      markerEnd={props.markerEnd}
+    />
+  );
+};
+
+const edgeTypes = { curvy: CurvyEdge };
 
 const LayerGroupNode = memo(({ data }: { data: any }) => (
     <div
@@ -336,6 +360,7 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
     return (
         <Tinted>
             <ReactFlow
+                edgeTypes={edgeTypes}
                 nodeTypes={nodeTypes}
                 nodes={nodes}
                 edges={edges}
@@ -353,6 +378,9 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 zoomOnPinch
                 panOnDrag
                 proOptions={{ hideAttribution: true }}
+                elevateEdgesOnSelect={false}   // 👈 edges nunca suben por encima
+                elevateNodesOnSelect            // 👈 nodos sí pueden elevarse al seleccionar
+                style={{ zIndex: 0 }}
             >
                 <Background gap={20} color="#555" />
             </ReactFlow>

@@ -1,3 +1,20 @@
 input::placeholder {
     color: var(--placeholderColor);
 }
+
+.react-flow__edges {
+  z-index: 0 !important;
+}
+
+.react-flow__connection {
+  z-index: 1 !important;
+}
+
+.react-flow__nodes {
+  z-index: 2 !important;
+  position: relative;
+}
+
+.react-flow__edge-path {
+  pointer-events: none;
+}
