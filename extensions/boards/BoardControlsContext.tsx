@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useTabVisible } from './store/boardStore';
 import { API } from 'protobase'
 
 type PanelSide = 'right' | 'left';
+type Mode = 'board' | 'json' | 'ui' | 'graph';
 
 interface Controls {
   isJSONView: boolean;
@@ -18,8 +19,8 @@ interface Controls {
   setTabVisible: (value: string) => void;
   tabVisible: string;
 
-  viewMode: 'board' | 'json' | 'ui' | 'graph';
-  setViewMode: (mode: 'board' | 'json' | 'ui' | 'graph') => void;
+  viewMode: Mode;
+  setViewMode: (mode: Mode) => void;
 
   saveJson: () => void;
 
@@ -29,17 +30,43 @@ interface Controls {
 
 const BoardControlsContext = createContext<Controls | null>(null);
 export const useBoardControls = () => useContext(BoardControlsContext)!;
-
 export const BoardControlsProvider: React.FC<{
   boardName: string;
   children: React.ReactNode;
   board: any;
-}> = ({ boardName, children, mode='board', addMenu = 'closed', dialog = '', autopilotRunning = false, rules='closed', board }) => {
+  mode?: Mode;
+  addMenu?: 'open' | 'closed';
+  dialog?: string;
+  autopilotRunning?: boolean;
+  rules?: 'open' | 'closed';
+}> = ({
+  boardName,
+  children,
+  board,
+  mode = 'board',
+  addMenu = 'closed',
+  dialog = '',
+  autopilotRunning = false,
+  rules = 'closed',
+}) => {
   const [isJSONView, setIsJSONView] = useState(mode === 'json');
   const [addOpened, setAddOpened] = useState(addMenu === 'open');
   const [autopilot, setAutopilot] = useState(autopilotRunning);
   const [tabVisible, setTabVisible] = useTabVisible();
-  const [viewMode, setViewMode] = useState<"board" | "json" | "ui">('board');
+
+  const isValid = (m: string): m is Mode =>
+    m === 'ui' || m === 'board' || m === 'graph' || m === 'json';
+
+  const [viewMode, setViewMode] = useState<Mode>(() => {
+    if (typeof window !== 'undefined') {
+      const h = (window.location.hash || '').slice(1);
+      if (isValid(h)) return h;
+    }
+    return 'board';
+  });
+
+  const userForcedRef = useRef(false);
+  const initedRef = useRef(false);
 
   const [panelSide, setPanelSide] = useState<PanelSide>(
     (board?.settings?.panelSide as PanelSide) || 'right'
@@ -47,33 +74,64 @@ export const BoardControlsProvider: React.FC<{
 
   const toggleJson = () => setIsJSONView(v => !v);
   const openAdd = () => setAddOpened(true);
+
   useEffect(() => {
-    if (board?.settings?.showBoardUIWhilePlaying) {
-      setViewMode(autopilot ? 'ui' : 'board');
+    const h = (window.location.hash || '').slice(1);
+    if (isValid(h)) {
+      setViewMode(h as Mode);
+      userForcedRef.current = true;
+    } else {
+      history.replaceState(null, '', `#${viewMode}`);
     }
+    initedRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const h = (window.location.hash || '').slice(1);
+      if (isValid(h)) {
+        setViewMode(h as Mode);
+        userForcedRef.current = true;
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  useEffect(() => {
+    if (!initedRef.current) return;
+    const current = (window.location.hash || '').slice(1);
+    if (current !== viewMode) {
+      history.replaceState(null, '', `#${viewMode}`);
+    }
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (!board?.settings?.showBoardUIWhilePlaying) return;
+    if (userForcedRef.current) return;
+    setViewMode(autopilot ? 'ui' : 'board');
   }, [autopilot, board?.settings?.showBoardUIWhilePlaying]);
 
   const toggleAutopilot = useCallback(async () => {
     setAutopilot(v => !v);
     await API.get(`/api/core/v1/boards/${boardName}/autopilot/${!autopilot ? 'on' : 'off'}`);
-    console.log('board:', board)
-    if(board?.settings?.showBoardUIOnPlay) {
-      if(!autopilot) setViewMode('ui');
-      if(autopilot) setViewMode('board');
+    if (board?.settings?.showBoardUIOnPlay) {
+      if (!autopilot) setViewMode('ui');
+      if (autopilot) setViewMode('board');
     }
-  }, [boardName, autopilot]);
+  }, [boardName, autopilot, board?.settings?.showBoardUIOnPlay]);
 
-  const saveJson = () => {/* llama a onEditBoard o lógica equivalente */ };
+  const saveJson = () => {};
 
   return (
     <BoardControlsContext.Provider value={{
       isJSONView, toggleJson,
-      addOpened, openAdd,
+      addOpened, openAdd, setAddOpened,
       autopilot, toggleAutopilot,
-      saveJson, setAddOpened,
-      viewMode, setViewMode,
       setTabVisible, tabVisible,
-      panelSide, setPanelSide
+      viewMode, setViewMode,
+      saveJson,
+      panelSide, setPanelSide,
     }}>
       {children}
     </BoardControlsContext.Provider>
