@@ -182,7 +182,7 @@ const registerCards = async (context, botUsername) => {
       icon: "send",
       color: "#24A1DE",
       description: "Gets Telegram bot last received message",
-      html: "//@card/react\n\nfunction Widget(card) {\n    const value = card.value;\n    const message = value?.content ?? \"No message\"\n    const sender = value?.from ?? \"\"\n    const chatId = value?.chat_id ?? \"\"\n\n    const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n    const requiredKeys = card.keys\n\n    return (\n        <Tinted>\n            <ProtoThemeProvider forcedTheme= { window.TamaguiTheme }>\n                <KeyGate requiredKeys={requiredKeys} readme={readme} >\n                    <YStack gap=\"$3\" p=\"$3\" className=\"no-drag\">\n                        <XStack gap=\"$2\" ai=\"center\">\n                            <YStack jc=\"center\" ai=\"center\" p=\"$2\" bc={card.color} br=\"$20\" mr=\"$1\">\n                                <Icon name={data.icon} size={16} color={\"white\"}/>\n                            </YStack>\n                            <Text cursor=\"text\" fow=\"600\" fos=\"$3\">{sender}</Text>\n                            <Text cursor=\"text\" fow=\"100\" fos=\"$3\" o={0.3}>{chatId}</Text>\n                        </XStack>\n                        <YStack bc={\"$bgContent\"} p=\"$2\" br=\"$4\">\n                            <Markdown readOnly={ true } data={message} />\n                        </YStack>\n                    </YStack>\n                </KeyGate>\n            </ProtoThemeProvider>\n        </Tinted>\n  );\n}\n",
+      html: "//@card/react\n\nfunction Widget(card) {\n    const value = card.value;\n    const imageUrl = value?.photo?.url;\n    const hasImage = !!imageUrl;\n    const sender = value?.from ?? \"\"\n    const chatId = value?.chat_id ?? \"\"\n    const messageContent = value?.content ?? (value?.photo?.caption ?? \"No message\")\n    const textForImage = hasImage ? (value?.photo?.caption || (messageContent === \"[Image]\" ? \"\" : messageContent)) : messageContent\n\n    const readme = `#### Add Telegram keys here. \n  Note: If you need help obtaining the telegram keys, the necessary information can be found on the Telegram Conector card.`\n    const requiredKeys = card.keys\n\n    return (\n        <Tinted>\n            <ProtoThemeProvider forcedTheme= { window.TamaguiTheme }>\n                <KeyGate requiredKeys={requiredKeys} readme={readme} >\n                    <YStack gap=\"$3\" p=\"$3\" className=\"no-drag\">\n                        <XStack gap=\"$2\" ai=\"center\">\n                            <YStack jc=\"center\" ai=\"center\" p=\"$2\" bc={card.color} br=\"$20\" mr=\"$1\">\n                                <Icon name={data.icon} size={16} color={\"white\"}/>\n                            </YStack>\n                            <Text cursor=\"text\" fow=\"600\" fos=\"$3\">{sender}</Text>\n                            <Text cursor=\"text\" fow=\"100\" fos=\"$3\" o={0.3}>{chatId}</Text>\n                        </XStack>\n                        <YStack bc={\"$bgContent\"} p=\"$2\" br=\"$4\" gap=\"$2\">\n                            {hasImage && imageUrl ? (\n                                <YStack gap=\"$2\">\n                                    <img\n                                        src={imageUrl}\n                                        alt={value?.photo?.caption ?? \"Telegram image\"}\n                                        style={{ width: \"100%\", borderRadius: 8, objectFit: \"contain\", maxHeight: 280 }}\n                                    />\n                                    {textForImage && <Markdown readOnly={ true } data={textForImage} />}\n                                </YStack>\n                            ) : (\n                                <Markdown readOnly={ true } data={messageContent} />\n                            )}\n                        </YStack>\n                    </YStack>\n                </KeyGate>\n            </ProtoThemeProvider>\n        </Tinted>\n  );\n}\n",
       rulesCode: `return states?.telegram?.received?.message`,
       type: 'value',
       keys: [
@@ -413,34 +413,89 @@ export default async (app, context) => {
 
   // Handlers del bot (reutilizables)
   const attachHandlers = (b: Telegraf) => {
+    const formatFromLabel = (ctx) => {
+      if (ctx.from?.username) return `@${ctx.from.username}`
+      const fullName = `${ctx.from?.first_name || ''}${ctx.from?.last_name ? ` ${ctx.from.last_name}` : ''}`.trim()
+      if (fullName) return fullName
+      return `${ctx.from?.id ?? ''}`.trim()
+    }
+
+    const emitIncomingMessage = (ctx, extra) => {
+      const message: any = ctx.message
+      const receivedAt = typeof message?.date === 'number'
+        ? new Date(message.date * 1000).toISOString()
+        : undefined
+
+      const basePayload = {
+        from: formatFromLabel(ctx),
+        chat_id: ctx.chat?.id,
+        username: ctx.from?.username,
+        first_name: ctx.from?.first_name,
+        last_name: ctx.from?.last_name,
+        received_at: receivedAt,
+      }
+
+      context.state.set({
+        group: 'telegram',
+        tag: 'received',
+        name: 'message',
+        value: { ...basePayload, ...extra },
+        emitEvent: true
+      });
+    }
+
     b.start((ctx) => {
       const userId = String(ctx.from.id);
       return ctx.reply(`Your chat_id is: ${userId}`);
     });
 
-    b.on('text', async (ctx) => {
+    b.on('message', async (ctx) => {
       try {
         if (allowedChats.length && !allowedChats.includes(String(ctx.chat?.id))) {
           console.log("blocked telegram message from user: ", ctx.from?.username)
           return
         }
 
-        const fromLabel = ctx.from?.username
-          ? `@${ctx.from.username}`
-          : (ctx.from?.first_name || '') + (ctx.from?.last_name ? ` ${ctx.from.last_name}` : '') || `${ctx.from?.id}`
-        const payload = {
-          from: fromLabel,
-          content: ctx.message.text,
-          chat_id: ctx.chat?.id
+        const message: any = ctx.message
+        if (!message) return
+
+        if (typeof message.text === 'string') {
+          emitIncomingMessage(ctx, {
+            type: 'text',
+            content: message.text,
+          })
+          return
         }
-        context.state.set({ group: 'telegram', tag: 'received', name: 'message', value: payload, emitEvent: true });
+
+        const photos = Array.isArray(message.photo) ? message.photo : []
+        if (photos.length) {
+          const bestPhoto = photos[photos.length - 1]
+          let fileUrl: string | undefined
+          try {
+            const link = await ctx.telegram.getFileLink(bestPhoto.file_id)
+            fileUrl = typeof link === 'string' ? link : link.href || link.toString()
+          } catch (err) {
+            logger.warn('TelegramAPI getFileLink error', err)
+          }
+
+          emitIncomingMessage(ctx, {
+            type: 'photo',
+            content: message.caption || '[Image]',
+            photo: {
+              file_id: bestPhoto.file_id,
+              file_unique_id: bestPhoto.file_unique_id,
+              width: bestPhoto.width,
+              height: bestPhoto.height,
+              file_size: bestPhoto.file_size,
+              url: fileUrl,
+              caption: message.caption || undefined,
+            },
+          })
+          return
+        }
       } catch (e) {
         console.error('Error handling telegram message', e)
       }
-    })
-
-    b.on('message', async (ctx) => {
-      console.log('Received non-text message', ctx)
     })
   }
 

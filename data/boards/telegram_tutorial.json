@@ -54,7 +54,7 @@
             "width": 3,
             "height": 10,
             "icon": "send",
-            "name": "last_message",
+            "name": "telegram last message",
             "color": "#24A1DE",
             "description": "Gets Telegram bot last received message",
             "type": "value",
@@ -207,7 +207,7 @@
                 "w": 53,
                 "h": 13,
                 "x": 37,
-                "y": 18,
+                "y": 14,
                 "i": "action_1760957111235",
                 "moved": false,
                 "static": false,
@@ -215,7 +215,7 @@
             },
             {
                 "w": 53,
-                "h": 12,
+                "h": 8,
                 "x": 37,
                 "y": 3,
                 "i": "value_1760958112091",
@@ -247,7 +247,7 @@
                 "w": 52,
                 "h": 3,
                 "x": 37,
-                "y": 15,
+                "y": 11,
                 "i": "value_1761036475309",
                 "moved": false,
                 "static": false,
@@ -525,6 +525,6 @@
             }
         ]
     },
-    "version": 121,
-    "savedAt": 1761036986614
+    "version": 1,
+    "savedAt": 1762511871858
 }
