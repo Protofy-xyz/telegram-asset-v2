@@ -221,15 +221,14 @@ export const ParamsForm = ({ data, children }) => {
                                         />
                                     </TextEditDialog>)
                             }
-                            {type == 'array' && <Input
+                            {type == 'array' && (cfg.cardSelector ? <CardSelector type={cfg.cardSelectorType}/> : <Input
                                                 className="no-drag"
                                                 value={JSON.parse(value).join(', ')}
                                                 placeholder={placeholder}
                                                 minWidth={100}
                                                 onChangeText={(val) => setParam(key, JSON.stringify(val.split(',').map((s) => s.trim())))}
-                                            />}
-                            {(type == 'json')
-                                && (cfg.cardSelector ? <CardSelector type={cfg.cardSelectorType}/> : <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}
+                                            />)}
+                            {type == 'json' && <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}
                                 >
                                     <Monaco
                                         language='json'
@@ -243,7 +242,7 @@ export const ParamsForm = ({ data, children }) => {
                                             lineNumbers: "off"
                                         }}
                                     />
-                                </XStack>)}
+                                </XStack>}
 
                             {type == 'boolean' && <Tinted><Switch
                                 ml="12px"
