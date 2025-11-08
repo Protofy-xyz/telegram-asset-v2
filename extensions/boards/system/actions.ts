@@ -191,6 +191,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
             }
         }
         let response = null;
+        let failed = false;
         try {
             response = await wrapper(req, res, boardId, action.name, states, actions, states?.boards?.[boardId] ?? {}, params, params, token, context, API, fetch, getLogger({ module: 'boards', board: boardId, card: action.name }), stackTrace);
             response = action.returnType && typeof TypeParser?.[action.returnType] === "function"
@@ -222,48 +223,49 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
 
             getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err }, "Error executing card: ");
             res.status(500).send({ _err: "e_code", error: "Error executing action code", message: err.message, stack: err.stack, stackTrace, name: err.name, code: err.code });
-            return;
+            failed = true;
         }
 
-        if (action.responseKey && response && typeof response === 'object' && action.responseKey in response) {
-            response = response[action.responseKey];
-        }
+        if (!failed) {
+            if (action.responseKey && response && typeof response === 'object' && action.responseKey in response) {
+                response = response[action.responseKey];
+            }
 
-        await setActionValue(Manager, context, boardId, action, response);
+            await setActionValue(Manager, context, boardId, action, response);
 
-        if (responseCb) {
-            responseCb(response);
-        } else {
-            if (rawResponse) {
-                res.send(response);
+            if (responseCb) {
+                responseCb(response);
             } else {
-                res.json(response);
+                if (rawResponse) {
+                    res.send(response);
+                } else {
+                    res.json(response);
+                }
+            }
+
+
+            await generateEvent({
+                path: `actions/boards/${boardId}/${action.name}/done`,
+                from: 'system',
+                user: 'system',
+                ephemeral: true,
+                payload: {
+                    status: 'done',
+                    action: action.name,
+                    boardId: boardId,
+                    params,
+                    response,
+                    stackTrace
+                },
+            }, getServiceToken());
+            await updateActionStatus(context, boardId, action.name, 'idle');
+
+            // if persistValue is true
+            if (action.persistValue) {
+                const db = dbProvider.getDB('board_' + boardId);
+                await db.put(action.name, response === undefined ? '' : JSON.stringify(response, null, 4));
             }
         }
-
-
-        await generateEvent({
-            path: `actions/boards/${boardId}/${action.name}/done`,
-            from: 'system',
-            user: 'system',
-            ephemeral: true,
-            payload: {
-                status: 'done',
-                action: action.name,
-                boardId: boardId,
-                params,
-                response,
-                stackTrace
-            },
-        }, getServiceToken());
-        await updateActionStatus(context, boardId, action.name, 'idle');
-
-        // if persistValue is true
-        if (action.persistValue) {
-            const db = dbProvider.getDB('board_' + boardId);
-            await db.put(action.name, response === undefined ? '' : JSON.stringify(response, null, 4));
-        }
-
 
         if (action.links && Array.isArray(action.links)) {
             const postLinks = action.links.filter(t => t.type === 'post' && t.name);
