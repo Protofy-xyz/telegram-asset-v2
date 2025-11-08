@@ -629,5 +629,6 @@
         "autoplay": true
     },
     "icon": "bot-message-square",
-    "autopilot": false
+    "autopilot": false,
+    "priority": 2
 }
