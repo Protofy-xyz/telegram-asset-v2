@@ -169,6 +169,8 @@ const DefaultNode = memo(({ data }: { data: any }) => {
                 color: 'var(--color)',
                 position: 'relative',
                 zIndex: 2,              // 👈 nodos por encima
+                border: '1px solid var(--gray6)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
             }}
         >
             {data.content}
@@ -385,12 +387,19 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 elevateNodesOnSelect            // 👈 nodos sí pueden elevarse al seleccionar
                 style={{ zIndex: 0 }}
             >
+                <style>{`
+    .react-flow__node {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+  `}</style>
                 <Background gap={20} />
                 <MiniMap
                     position="bottom-left"
                     zoomable
                     pannable
-                    maskColor={"rgba(0,0,0,0."+(darkMode ? "4" : "05")+")"}
+                    maskColor={"rgba(0,0,0,0." + (darkMode ? "4" : "05") + ")"}
                     nodeStrokeColor={(n) => n.style?.borderColor || 'black'}
                     nodeColor={(n) => n.type != 'layerGroup' ? 'var(--bgPanel)' : 'var(--bgContent)'}
                     style={{
@@ -479,7 +488,7 @@ function materializeNodesFlat(
             style: {
                 width: `${sz.width}px`,
                 height: `${sz.height}px`,
-                background: 'transparent',
+                background: 'transparent'
             },
         };
     });
