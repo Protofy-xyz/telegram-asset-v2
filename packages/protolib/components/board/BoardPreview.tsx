@@ -49,10 +49,10 @@ export default ({ element, width, onDelete, ...props }: any) => {
         pointerEvents={editSettingsDialog || createTemplateDialog ? 'none' : 'auto'}
         {...props} >
             {Array.isArray(board?.get('tags')) && board.get('tags').includes('system') && <Tinted>
-                <TooltipSimple label="This is a system board if you edit or delete it, it may affect core functionality." delay={{ open: 500, close: 0 }} restMs={0}>
+                <TooltipSimple label="This is a system agent if you edit or delete it, it may affect core functionality." delay={{ open: 500, close: 0 }} restMs={0}>
                     <XStack pos='absolute' gap="$2" right="14px" top="-10px" jc="center" ai="center" br="$2" bg="$yellow9" px="$2" py="$1">
                         <AlertTriangle color={"black"} size={14} />
-                        <Text color={"black"} fow="600" fos="$1">System Board</Text>
+                        <Text color={"black"} fow="600" fos="$1">System Agent</Text>
                     </XStack>
                 </TooltipSimple>
             </Tinted>}
@@ -167,7 +167,7 @@ export default ({ element, width, onDelete, ...props }: any) => {
                         onMouseDown={(e) => { e.stopPropagation(); }}
                         onPointerDown={(e) => { e.stopPropagation(); }}>
                         <YStack height="100%" justifyContent="space-between">
-                            <Text fos="$8" fow="600" mb="$3" className='DialogPopup'>Board Template</Text>
+                            <Text fos="$8" fow="600" mb="$3" className='DialogPopup'>Agent Template</Text>
                             <XStack ai={"center"} className='DialogPopup'>
                                 <Label ml={"$2"} h={"$3.5"} size={"$5"} className='DialogPopup'>Name</Label>
                             </XStack>

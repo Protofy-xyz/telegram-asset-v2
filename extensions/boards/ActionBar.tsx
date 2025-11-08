@@ -330,7 +330,7 @@ const getActionBar = (generateEvent) => {
       <AutopilotButton generateEvent={generateEvent} autopilot={autopilot} />,
       <ActionBarButton tooltipText={tabVisible == "states" ? "Close States" : "Open States"} selected={tabVisible == "states"} Icon={Book} onPress={() => generateEvent({ type: "toggle-states" })} />,
       <LogsButton selected={tabVisible == "logs"} showDot={showLogsDot} onPress={() => generateEvent({ type: "toggle-logs" })} />,
-      <ActionBarButton tooltipText="Board Settings" selected={tabVisible == "board-settings"} Icon={Settings} onPress={() => generateEvent({ type: "board-settings" })} />,
+      <ActionBarButton tooltipText="Agent Settings" selected={tabVisible == "board-settings"} Icon={Settings} onPress={() => generateEvent({ type: "board-settings" })} />,
       <LayersButton layers={layers} activeLayer={activeLayer} setActiveLayer={setActiveLayer} />,
       <>
         <Separator vertical borderColor="var(--gray7)" h="30px" />

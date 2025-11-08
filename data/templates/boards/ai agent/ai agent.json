@@ -497,5 +497,6 @@
         "autoplay": false
     },
     "icon": "bot",
-    "autopilot": false
+    "autopilot": false,
+    "priority": 3
 }

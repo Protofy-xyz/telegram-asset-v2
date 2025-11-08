@@ -628,6 +628,7 @@
     "settings": {
         "autoplay": true
     },
-    "icon": "bot",
-    "autopilot": false
+    "icon": "bot-message-square",
+    "autopilot": false,
+    "priority": 2
 }

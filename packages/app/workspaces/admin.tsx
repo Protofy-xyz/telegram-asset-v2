@@ -1,5 +1,5 @@
 import { Router, Cog, Boxes, Box, LayoutDashboard, Zap, Blocks } from '@tamagui/lucide-icons'
-import { MonitorCog as RawMonitorCog } from 'lucide-react'
+import { Bot, MonitorCog as RawMonitorCog } from 'lucide-react'
 import { styled } from 'tamagui'
 
 const MonitorCog = styled(RawMonitorCog, {
@@ -14,6 +14,7 @@ export default ({ boards, objects }) => {
     const objectsWithPage = objects ? objects.filter(o => o?.features?.adminPage) : []
 
     const integrations = [
+        { name: 'Agents', icon: Bot, href: '/workspace/boards' },
         { name: 'Assets', icon: Blocks, href: '/workspace/assets' },
         { name: 'Tasks', icon: Zap, href: '/workspace/tasks' },
         { name: 'Devices', icon: Router, href: '/workspace/devices' },
@@ -24,7 +25,7 @@ export default ({ boards, objects }) => {
     ]
     if (enableArduinos) integrations.push({ name: 'Arduinos', icon: Router, href: '/workspace/arduinos' })
 
-    const manageBoards = { name: 'Manage Boards', icon: MonitorCog, href: '/workspace/boards' }
+    // const manageBoards = { name: 'Manage Boards', icon: MonitorCog, href: '/workspace/boards' }
 
     const objectsMenu = (objectsWithPage.length
         ? objectsWithPage.map((obj) => ({
@@ -45,7 +46,7 @@ export default ({ boards, objects }) => {
     // 1. Group boards by category (preserve tags for later)
     if (Array.isArray(boards)) {
         boards.forEach((board) => {
-            const category = board?.category || 'Boards'
+            const category = board?.category || 'Agents'
             if (!menuByGroup[category]) menuByGroup[category] = []
 
             const display = (board.displayName ?? board.name) ?? ''
@@ -63,10 +64,10 @@ export default ({ boards, objects }) => {
     // 2. Process tags inside the "Boards" group only
     const tagOrder: string[] = []
 
-    if (Array.isArray(menuByGroup['Boards'])) {
+    if (Array.isArray(menuByGroup['Agents'])) {
         const remainingInBoards: any[] = []
 
-        menuByGroup['Boards'].forEach((item) => {
+        menuByGroup['Agents'].forEach((item) => {
             const tags: string[] = item.__tags || []
             const cleanItem = { name: item.name, icon: item.icon, href: item.href }
 
@@ -86,24 +87,24 @@ export default ({ boards, objects }) => {
                 if (!menuByGroup[tabName]) menuByGroup[tabName] = []
                 menuByGroup[tabName].push(cleanItem)
 
-                if (!tagOrder.includes(tabName) && tabName !== 'Boards') tagOrder.push(tabName)
+                if (!tagOrder.includes(tabName) && tabName !== 'Agents') tagOrder.push(tabName)
             })
         })
 
-        // Replace "Boards" with the remaining items (those without tags)
-        menuByGroup['Boards'] = remainingInBoards
+        // Replace "Agents" with the remaining items (those without tags)
+        menuByGroup['Agents'] = remainingInBoards
     }
 
-    // 3. Append "Manage Boards" at the end of the Boards group
-    if (!menuByGroup['Boards']) menuByGroup['Boards'] = []
-    menuByGroup['Boards'].push(manageBoards)
+    // 3. Append "Manage Agents" at the end of the Agents group
+    if (!menuByGroup['Agents']) menuByGroup['Agents'] = []
+    //menuByGroup['Agents'].push(manageBoards)
 
     // 4. Build the final menu order:
     //    Boards → tags → all remaining groups (in their original order)
     const finalMenu: Record<string, any[]> = {}
 
     // a) Boards first
-    if (menuByGroup['Boards']) finalMenu['Boards'] = menuByGroup['Boards']
+    if (menuByGroup['Agents']) finalMenu['Agents'] = menuByGroup['Agents']
 
     // b) Then the tabs generated from tags (in order of appearance)
     tagOrder.forEach((tab) => {
@@ -112,7 +113,7 @@ export default ({ boards, objects }) => {
 
     // c) Finally, the rest of the categories (preserve insertion order)
     Object.keys(menuByGroup).forEach((key) => {
-        if (key === 'Boards') return
+        if (key === 'Agents') return
         if (tagOrder.includes(key)) return
         finalMenu[key] = menuByGroup[key]
     })

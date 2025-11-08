@@ -82,7 +82,7 @@ const SecondSlide = ({ selected, setName, errorMessage=''}) => {
 
   return <YStack minHeight={"200px"} jc="center" ai="center">
     <YStack width="400px" gap="$2">
-      <Input f={1} value={selected?.name} onChangeText={handleChange} placeholder="Enter board name" />
+      <Input f={1} value={selected?.name} onChangeText={handleChange} placeholder="Enter agent name" />
       <Text ml="$2" h={"$1"} fos="$2" color="$red8">{error}</Text>
     </YStack>
   </YStack>
@@ -124,13 +124,13 @@ export default {
                 }}
                 slides={[
                   {
-                    name: "Create new Board",
+                    name: "Create new Agent",
                     title: "Select your Template",
                     component: <FirstSlide selected={data?.template} setSelected={(template) => setData({...data, template})} />
                   },
                   {
-                    name: "Configure your Board",
-                    title: "Board Name",
+                    name: "Configure your Agent",
+                    title: "Agent Name",
                     component: <SecondSlide selected={data} setName={(name) => setData({ ...data, name })} />
                   }
                 ]
@@ -140,7 +140,7 @@ export default {
         </AlertDialog>
 
         <DataView
-          entityName={"boards"}
+          entityName={"agents"}
           itemData={itemData}
           sourceUrl={sourceUrl}
           sourceUrlParams={query}
@@ -149,7 +149,7 @@ export default {
               <DataViewActionButton
                 id="admin-dataview-add-btn"
                 icon={query.all === 'true' ? EyeOff : Eye}
-                description={query.all === 'true' ? `Hide system boards` : `Show hidden boards` }
+                description={query.all === 'true' ? `Hide system boards` : `Show hidden agents` }
                 onPress={() => {
                   push('all', query.all === 'true' ? 'false' : 'true')
                 }}
@@ -160,7 +160,7 @@ export default {
           initialItems={initialItems}
           numColumnsForm={1}
           onAdd={(data) => { router.push(`/boards/view?board=${data.name}`); return data }}
-          name="Board"
+          name="Agent"
           disableViews={['raw']}
           onEdit={data => { console.log("DATA (onEdit): ", data); return data }}
           onSelectItem={(item) => router.push(`/boards/view?board=${item.data.name}`)}

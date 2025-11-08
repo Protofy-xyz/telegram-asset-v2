@@ -1,1 +1,1 @@
-Basic AI agent able to execute actions or answer questions
+Intelligent agent using AI to answer questions or execute actions

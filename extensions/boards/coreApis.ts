@@ -682,6 +682,8 @@ export default async (app, context) => {
 
         const boardTemplate = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + template.id + '/' + template.id + '.json', 'utf-8');
         const boardContent = JSON.parse(boardTemplate.replace(/{{{name}}}/g, name));
+        delete boardContent.version;
+        delete boardContent.priority;
 
 
         //first create the board
@@ -704,8 +706,10 @@ export default async (app, context) => {
         const templates = fsSync.readdirSync(TemplatesDir(getRoot())).filter(file => fsSync.statSync(TemplatesDir(getRoot()) + '/' + file).isDirectory()).map(dir => {
             const description = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/README.md', 'utf-8') || ''
             const json = JSON.parse(fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/' + dir + '.json', 'utf-8'));
-            return { id: dir, name: dir, description, icon: json.icon, disabled: json?.disabled };
+            return { id: dir, name: dir, description, icon: json.icon, disabled: json?.disabled, priority: json?.priority || 0 };
         }).filter(tplJson => !tplJson.disabled);
+        //the templates should appear ordered by priority
+        templates.sort((a, b) => b.priority - a.priority);
         res.send(templates);
     });
 
