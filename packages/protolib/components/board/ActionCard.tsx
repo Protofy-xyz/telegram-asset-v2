@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple, Stack } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
-import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
 import { SelectList } from "../SelectList";
@@ -125,7 +124,7 @@ export const ParamsForm = ({ data, children }) => {
     // --------------------------------------------------------------------------------------
 
     return (
-        <YStack h="100%" w={"100%"} ai="center" p="10px">
+        <YStack h="100%" w={"100%"} ai="center" p="15px">
             {children}
             <YStack w={"100%"} ai="center" jc="center">
                 {allKeys.map((key) => {
@@ -152,7 +151,7 @@ export const ParamsForm = ({ data, children }) => {
                                 flexDirection: "column",
                             }}
                         >
-                            <XStack ai="center" jc="space-between" px="20px" pb="$2">
+                            <XStack ai="center" jc="space-between" pb="$2">
                                 <XStack ai="center" gap="$3">
                                     {isBoolean && (
                                         <Toggle
@@ -213,7 +212,6 @@ export const ParamsForm = ({ data, children }) => {
                                                         rows={6}
                                                     />
                                                 ) : (
-                                                    <Stack mx="15px">
                                                     <Input
                                                         className="no-drag"
                                                         value={value}
@@ -221,7 +219,6 @@ export const ParamsForm = ({ data, children }) => {
                                                         minWidth={100}
                                                         onChangeText={(val) => setParam(key, val)}
                                                     />
-                                                    </Stack>
                                                 )}
                                                 <TextEditDialog.Trigger
                                                     bc="$gray1"
@@ -246,7 +243,6 @@ export const ParamsForm = ({ data, children }) => {
 
                                     {type === "array" &&
                                         (cfg.cardSelector ? (
-                                            <Stack mx="15px">
                                                 <CardPicker
                                                     type={cfg.cardSelectorType}
                                                     value={(() => {
@@ -266,7 +262,6 @@ export const ParamsForm = ({ data, children }) => {
                                                         editCardField(["configParams", key, "defaultValue"], json);
                                                     }}
                                                 />
-                                            </Stack>
                                         ) : (
                                             <Input
                                                 className="no-drag"
