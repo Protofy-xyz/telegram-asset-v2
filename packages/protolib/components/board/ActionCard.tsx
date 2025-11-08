@@ -2,7 +2,6 @@ import { useState, useCallback } from "react";
 import { XStack, YStack, Text, Switch, Input, TextArea, Button, TooltipSimple, Stack } from "@my/ui";
 import { useThemeSetting } from '@tamagui/next-theme'
 import { Monaco } from "../Monaco";
-import { Tinted } from "../Tinted";
 import { TextEditDialog } from "../TextEditDialog";
 import { FilePicker } from "../FilePicker";
 import { SelectList } from "../SelectList";
@@ -125,23 +124,19 @@ export const ParamsForm = ({ data, children }) => {
     // --------------------------------------------------------------------------------------
 
     return (
-        <YStack h="100%" w={"100%"} ai="center" p="10px">
+        <YStack h="100%" w={"100%"} ai="center" p="15px">
             {children}
             <YStack w={"100%"} ai="center" jc="center">
                 {allKeys.map((key) => {
                     const cfg = data.configParams?.[key] || {};
-                    const { visible = true, defaultValue = "", type = 'string' } = cfg;
+                    const { visible = true, defaultValue = "", type = "string" } = cfg;
                     const value = paramsState[key] ?? defaultValue ?? "";
                     const placeholder = data.params[key] ?? "";
+                    const isBoolean = type === "boolean";
 
                     if (!visible) {
                         return (
-                            <input
-                                key={key}
-                                type="hidden"
-                                name={key}
-                                defaultValue={defaultValue}
-                            />
+                            <input key={key} type="hidden" name={key} defaultValue={defaultValue} />
                         );
                     }
 
@@ -156,8 +151,20 @@ export const ParamsForm = ({ data, children }) => {
                                 flexDirection: "column",
                             }}
                         >
-                            <XStack ai="center" jc="space-between" px="20px" pb="$2">
-                                <Text>{key}</Text>
+                            <XStack ai="center" jc="space-between" pb="$2">
+                                <XStack ai="center" gap="$3">
+                                    {isBoolean && (
+                                        <Toggle
+                                            id={`${key}-toggle`}
+                                            size="$4"
+                                            className="no-drag"
+                                            checked={(value ?? "") === "true"}
+                                            onChange={(checked) => setParam(key, checked ? "true" : "false")}
+                                        />
+                                    )}
+                                    <Text>{key}</Text>
+                                </XStack>
+
                                 <TooltipSimple label={"set as default"} delay={{ open: 500, close: 0 }} restMs={0}>
                                     <Button
                                         color={value == defaultValue ? "transparent" : "$gray10"}
@@ -176,162 +183,159 @@ export const ParamsForm = ({ data, children }) => {
                                 </TooltipSimple>
                             </XStack>
 
-                            {(!['json', 'array', 'boolean', 'path'].includes(type)) &&
-                                (cfg?.options?.length
-                                    ? <YStack mx="10px">
-                                        <SelectList
-                                            title={key}
-                                            elements={cfg.options}
-                                            value={value ?? defaultValue}
-                                            onValueChange={(v) => setParam(key, v)}
-                                            selectorStyle={{
-                                                normal: {
-                                                    backgroundColor: "$gray1",
-                                                    borderColor: "$gray7"
-                                                },
-                                                hover: {
-                                                    backgroundColor: "$gray2",
+                            {!isBoolean && (
+                                <>
+                                    {(!["json", "array", "boolean", "path"].includes(type)) &&
+                                        (cfg?.options?.length ? (
+                                            <YStack mx="10px">
+                                                <SelectList
+                                                    title={key}
+                                                    elements={cfg.options}
+                                                    value={value ?? defaultValue}
+                                                    onValueChange={(v) => setParam(key, v)}
+                                                    selectorStyle={{
+                                                        normal: { backgroundColor: "$gray1", borderColor: "$gray7" },
+                                                        hover: { backgroundColor: "$gray2" },
+                                                    }}
+                                                />
+                                            </YStack>
+                                        ) : (
+                                            <TextEditDialog f={1}>
+                                                {["text"].includes(type) ? (
+                                                    <TextArea
+                                                        className="no-drag"
+                                                        f={1}
+                                                        focusStyle={{ outlineWidth: "1px" }}
+                                                        value={value}
+                                                        onChangeText={(val) => setParam(key, val)}
+                                                        placeholder={placeholder}
+                                                        rows={6}
+                                                    />
+                                                ) : (
+                                                    <Input
+                                                        className="no-drag"
+                                                        value={value}
+                                                        placeholder={placeholder}
+                                                        minWidth={100}
+                                                        onChangeText={(val) => setParam(key, val)}
+                                                    />
+                                                )}
+                                                <TextEditDialog.Trigger
+                                                    bc="$gray1"
+                                                    pl="$2"
+                                                    pos="absolute"
+                                                    right={"$2"}
+                                                    m="$3"
+                                                    bottom={0}
+                                                    cursor="pointer"
+                                                >
+                                                    <Icon name="maximize-2" size={20} color={"var(--gray8)"} />
+                                                </TextEditDialog.Trigger>
+                                                <TextEditDialog.Editor
+                                                    placeholder={placeholder}
+                                                    value={value}
+                                                    readValue={() => paramsState[key] ?? ""}
+                                                    onChange={(val) => setParam(key, val)}
+                                                    type={type}
+                                                />
+                                            </TextEditDialog>
+                                        ))}
+
+                                    {type === "array" &&
+                                        (cfg.cardSelector ? (
+                                                <CardPicker
+                                                    type={cfg.cardSelectorType}
+                                                    value={(() => {
+                                                        try {
+                                                            const parsed = Array.isArray(value) ? value : JSON.parse(value);
+                                                            return Array.isArray(parsed) ? parsed : [];
+                                                        } catch {
+                                                            return [];
+                                                        }
+                                                    })()}
+                                                    onChange={(arr) => {
+                                                        setParam(key, JSON.stringify(arr));
+                                                    }}
+                                                    onApply={(arr) => {
+                                                        const json = JSON.stringify(arr);
+                                                        setParam(key, json);
+                                                        editCardField(["configParams", key, "defaultValue"], json);
+                                                    }}
+                                                />
+                                        ) : (
+                                            <Input
+                                                className="no-drag"
+                                                value={
+                                                    arrayText[key] ??
+                                                    (() => {
+                                                        try {
+                                                            const parsed = Array.isArray(value) ? value : JSON.parse(value);
+                                                            return Array.isArray(parsed) ? parsed.join(", ") : "";
+                                                        } catch {
+                                                            return "";
+                                                        }
+                                                    })()
                                                 }
-                                            }}
-                                        />
-                                    </YStack>
-                                    : <TextEditDialog f={1}>
-                                        {["text"].includes(type)
-                                            ? <TextArea
-                                                className="no-drag"
-                                                f={1}
-                                                focusStyle={{ outlineWidth: "1px" }}
-                                                value={value}
-                                                onChangeText={(val) => setParam(key, val)}
-                                                placeholder={placeholder}
-                                                rows={6}
-                                            />
-                                            // html, markdown, string, number
-                                            : <Input
-                                                className="no-drag"
-                                                value={value}
                                                 placeholder={placeholder}
                                                 minWidth={100}
-                                                onChangeText={(val) => setParam(key, val)}
+                                                onChangeText={(val) => {
+                                                    setArrayText((prev) => ({ ...prev, [key]: val }));
+                                                    const items = val.split(/\s*,\s*/).filter(Boolean);
+                                                    setParam(key, JSON.stringify(items));
+                                                }}
+                                                onBlur={() => {
+                                                    setArrayText((prev) => {
+                                                        const next = { ...prev };
+                                                        delete next[key];
+                                                        return next;
+                                                    });
+                                                }}
                                             />
-                                        }
-                                        <TextEditDialog.Trigger bc="$gray1" pl="$2" pos="absolute" right={"$2"} m="$3" bottom={0} cursor="pointer" >
-                                            <Icon name="maximize-2" size={20} color={"var(--gray8)"} style={{}} />
-                                        </TextEditDialog.Trigger>
-                                        <TextEditDialog.Editor
-                                            placeholder={placeholder}
-                                            value={value}
-                                            readValue={() => paramsState[key] ?? ""}
-                                            onChange={(val) => setParam(key, val)}
-                                            type={type}
+                                        ))}
+
+                                    {type === "json" && (
+                                        <XStack
+                                            p="$3"
+                                            bc="$gray1"
+                                            borderColor="$gray8"
+                                            bw={1}
+                                            br="$4"
+                                            overflow="hidden"
+                                            mx="10px"
+                                            f={1}
+                                            height={200}
+                                        >
+                                            <Monaco
+                                                language="json"
+                                                darkMode={resolvedTheme === "dark"}
+                                                sourceCode={value}
+                                                onChange={(code) => setParam(key, code)}
+                                                options={{
+                                                    formatOnPaste: true,
+                                                    formatOnType: true,
+                                                    minimap: { enabled: false },
+                                                    lineNumbers: "off",
+                                                }}
+                                            />
+                                        </XStack>
+                                    )}
+
+                                    {type === "path" && (
+                                        <FilePicker
+                                            allowMultiple={true}
+                                            mx="10px"
+                                            initialPath={"/data/public"}
+                                            onFileChange={(filePath) => {
+                                                setParam(key, filePath);
+                                            }}
                                         />
-                                    </TextEditDialog>)
-                            }
-
-                            {/* -------------------- ARRAY -------------------- */}
-                            {type == 'array' && (cfg.cardSelector ? (
-                                <CardPicker
-                                    type={cfg.cardSelectorType}
-                                    value={(() => {
-                                        try {
-                                            const parsed = Array.isArray(value) ? value : JSON.parse(value);
-                                            return Array.isArray(parsed) ? parsed : [];
-                                        } catch {
-                                            return [];
-                                        }
-                                    })()}
-                                    onChange={(arr) => {
-                                        setParam(key, JSON.stringify(arr));
-                                    }}
-                                    onApply={(arr) => {
-                                        const json = JSON.stringify(arr);
-                                        setParam(key, json);
-                                        editCardField(["configParams", key, "defaultValue"], json);
-                                    }}
-                                />
-                            ) : (
-                                <Input
-                                    className="no-drag"
-                                    // Mostrar lo que escribe el usuario si existe, si no el valor canónico
-                                    value={
-                                        arrayText[key] ??
-                                        (() => {
-                                            try {
-                                                const parsed = Array.isArray(value) ? value : JSON.parse(value);
-                                                return Array.isArray(parsed) ? parsed.join(', ') : '';
-                                            } catch {
-                                                return '';
-                                            }
-                                        })()
-                                    }
-                                    placeholder={placeholder}
-                                    minWidth={100}
-                                    onChangeText={(val) => {
-                                        // Mantener lo que el usuario ve/escribe
-                                        setArrayText(prev => ({ ...prev, [key]: val }));
-
-                                        // Actualizar JSON sin perder espacios internos, ignorando espacios alrededor de comas
-                                        const items = val.split(/\s*,\s*/).filter(Boolean);
-                                        setParam(key, JSON.stringify(items));
-                                    }}
-                                    onBlur={() => {
-                                        // Al salir del campo, volvemos a mostrar el valor canónico
-                                        setArrayText(prev => {
-                                            const next = { ...prev };
-                                            delete next[key];
-                                            return next;
-                                        });
-                                    }}
-                                />
-                            ))}
-                            {/* -------------------------------------------------------------------------------- */}
-
-                            {type == 'json' && (
-                                <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}>
-                                    <Monaco
-                                        language='json'
-                                        darkMode={resolvedTheme === 'dark'}
-                                        sourceCode={value}
-                                        onChange={(code) => setParam(key, code)}
-                                        options={{
-                                            formatOnPaste: true,
-                                            formatOnType: true,
-                                            minimap: { enabled: false },
-                                            lineNumbers: "off"
-                                        }}
-                                    />
-                                </XStack>
-                            )}
-
-                            {type == 'boolean' && (
-                                <Tinted>
-                                    <Toggle
-                                        ml="12px"
-                                        id="autopilot-switch"
-                                        size="$4"
-                                        className="no-drag"
-                                        checked={(value ?? "") === "true"}
-                                        onChange={(checked) => {
-                                            setParam(key, checked ? "true" : "false");
-                                        }}
-                                    >
-                                    </Toggle>
-                                </Tinted>
-                            )}
-
-                            {type == 'path' && (
-                                <FilePicker
-                                    allowMultiple={true}
-                                    mx="10px"
-                                    initialPath={"/data/public"}
-                                    onFileChange={filePath => {
-                                        setParam(key, filePath);
-                                    }}
-                                />
+                                    )}
+                                </>
                             )}
                         </YStack>
                     );
                 })}
+
             </YStack>
 
             {data.type === "action" && (
