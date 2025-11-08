@@ -213,6 +213,7 @@ export const ParamsForm = ({ data, children }) => {
                                                         rows={6}
                                                     />
                                                 ) : (
+                                                    <Stack mx="15px">
                                                     <Input
                                                         className="no-drag"
                                                         value={value}
@@ -220,6 +221,7 @@ export const ParamsForm = ({ data, children }) => {
                                                         minWidth={100}
                                                         onChangeText={(val) => setParam(key, val)}
                                                     />
+                                                    </Stack>
                                                 )}
                                                 <TextEditDialog.Trigger
                                                     bc="$gray1"
@@ -244,25 +246,27 @@ export const ParamsForm = ({ data, children }) => {
 
                                     {type === "array" &&
                                         (cfg.cardSelector ? (
-                                            <CardPicker
-                                                type={cfg.cardSelectorType}
-                                                value={(() => {
-                                                    try {
-                                                        const parsed = Array.isArray(value) ? value : JSON.parse(value);
-                                                        return Array.isArray(parsed) ? parsed : [];
-                                                    } catch {
-                                                        return [];
-                                                    }
-                                                })()}
-                                                onChange={(arr) => {
-                                                    setParam(key, JSON.stringify(arr));
-                                                }}
-                                                onApply={(arr) => {
-                                                    const json = JSON.stringify(arr);
-                                                    setParam(key, json);
-                                                    editCardField(["configParams", key, "defaultValue"], json);
-                                                }}
-                                            />
+                                            <Stack mx="15px">
+                                                <CardPicker
+                                                    type={cfg.cardSelectorType}
+                                                    value={(() => {
+                                                        try {
+                                                            const parsed = Array.isArray(value) ? value : JSON.parse(value);
+                                                            return Array.isArray(parsed) ? parsed : [];
+                                                        } catch {
+                                                            return [];
+                                                        }
+                                                    })()}
+                                                    onChange={(arr) => {
+                                                        setParam(key, JSON.stringify(arr));
+                                                    }}
+                                                    onApply={(arr) => {
+                                                        const json = JSON.stringify(arr);
+                                                        setParam(key, json);
+                                                        editCardField(["configParams", key, "defaultValue"], json);
+                                                    }}
+                                                />
+                                            </Stack>
                                         ) : (
                                             <Input
                                                 className="no-drag"
