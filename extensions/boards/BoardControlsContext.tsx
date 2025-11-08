@@ -62,7 +62,7 @@ export const BoardControlsProvider: React.FC<{
       const h = (window.location.hash || '').slice(1);
       if (isValid(h)) return h;
     }
-    return 'board';
+    return 'graph';
   });
 
   const userForcedRef = useRef(false);
@@ -105,6 +105,7 @@ export const BoardControlsProvider: React.FC<{
       history.replaceState(null, '', `#${viewMode}`);
     }
   }, [viewMode]);
+
 
   useEffect(() => {
     if (!board?.settings?.showBoardUIWhilePlaying) return;
