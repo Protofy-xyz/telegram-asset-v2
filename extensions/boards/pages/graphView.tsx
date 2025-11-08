@@ -374,7 +374,7 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 onMoveEnd={handleMoveEnd}
                 fitViewOptions={{ padding: CFG.FITVIEW_PADDING }}
                 defaultViewport={defaultViewport}
-                minZoom={0.1}
+                minZoom={0.03}
                 maxZoom={2}
                 nodesDraggable={false}
                 nodesConnectable
@@ -386,6 +386,10 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 elevateEdgesOnSelect={false}   // 👈 edges nunca suben por encima
                 elevateNodesOnSelect            // 👈 nodos sí pueden elevarse al seleccionar
                 style={{ zIndex: 0 }}
+                translateExtent={[
+                    [-25000, -25000],           // esquina superior izquierda permitida
+                    [25000, 25000],     // esquina inferior derecha permitida
+                ]}
             >
                 <style>{`
     .react-flow__node {
