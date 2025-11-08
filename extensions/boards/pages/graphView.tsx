@@ -397,8 +397,8 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 <Background gap={20} />
                 <MiniMap
                     position="bottom-left"
-                    zoomable
-                    pannable
+                    // zoomable
+                    // pannable
                     maskColor={"rgba(0,0,0,0." + (darkMode ? "4" : "05") + ")"}
                     nodeStrokeColor={(n) => n.style?.borderColor || 'black'}
                     nodeColor={(n) => n.type != 'layerGroup' ? 'var(--bgPanel)' : 'var(--bgContent)'}
