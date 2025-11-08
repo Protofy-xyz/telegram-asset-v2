@@ -221,7 +221,15 @@ export const ParamsForm = ({ data, children }) => {
                                                         onChangeText={(val) => setParam(key, val)}
                                                     />
                                                 )}
-                                                <TextEditDialog.Trigger bc="$gray1" pl="$2" pos="absolute" right={"$2"} m="$3" bottom={0} cursor="pointer" >
+                                                <TextEditDialog.Trigger
+                                                    bc="$gray1"
+                                                    pl="$2"
+                                                    pos="absolute"
+                                                    right={"$2"}
+                                                    m="$3"
+                                                    bottom={0}
+                                                    cursor="pointer"
+                                                >
                                                     <Icon name="maximize-2" size={20} color={"var(--gray8)"} />
                                                 </TextEditDialog.Trigger>
                                                 <TextEditDialog.Editor
@@ -286,20 +294,32 @@ export const ParamsForm = ({ data, children }) => {
                                             />
                                         ))}
 
-                                    <XStack p="$3" bc="$gray1" borderColor="$gray8" bw={1} br="$4" overflow="hidden" mx="10px" f={1} height={200}>
-                                        <Monaco
-                                            language='json'
-                                            darkMode={resolvedTheme === 'dark'}
-                                            sourceCode={value}
-                                            onChange={(code) => setParam(key, code)}
-                                            options={{
-                                                formatOnPaste: true,
-                                                formatOnType: true,
-                                                minimap: { enabled: false },
-                                                lineNumbers: "off"
-                                            }}
-                                        />
-                                    </XStack>
+                                    {type === "json" && (
+                                        <XStack
+                                            p="$3"
+                                            bc="$gray1"
+                                            borderColor="$gray8"
+                                            bw={1}
+                                            br="$4"
+                                            overflow="hidden"
+                                            mx="10px"
+                                            f={1}
+                                            height={200}
+                                        >
+                                            <Monaco
+                                                language="json"
+                                                darkMode={resolvedTheme === "dark"}
+                                                sourceCode={value}
+                                                onChange={(code) => setParam(key, code)}
+                                                options={{
+                                                    formatOnPaste: true,
+                                                    formatOnType: true,
+                                                    minimap: { enabled: false },
+                                                    lineNumbers: "off",
+                                                }}
+                                            />
+                                        </XStack>
+                                    )}
 
                                     {type === "path" && (
                                         <FilePicker
