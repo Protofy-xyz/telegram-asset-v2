@@ -9,6 +9,7 @@ import { SelectList } from "../SelectList";
 import { Pin } from "@tamagui/lucide-icons";
 import { useTheme, getVariableValue } from 'tamagui';
 import { CardPicker } from "./CardPicker";
+import { Toggle } from "../Toggle";
 
 
 export const Icon = ({ name, size = 24, color, style }) => {
@@ -304,18 +305,17 @@ export const ParamsForm = ({ data, children }) => {
 
                             {type == 'boolean' && (
                                 <Tinted>
-                                    <Switch
+                                    <Toggle
                                         ml="12px"
                                         id="autopilot-switch"
                                         size="$4"
+                                        className="no-drag"
                                         checked={(value ?? "") === "true"}
-                                        onCheckedChange={(checked) => {
+                                        onChange={(checked) => {
                                             setParam(key, checked ? "true" : "false");
                                         }}
-                                        className="no-drag"
                                     >
-                                        <Switch.Thumb className="no-drag" animation="quick" />
-                                    </Switch>
+                                    </Toggle>
                                 </Tinted>
                             )}
 
