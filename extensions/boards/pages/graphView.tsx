@@ -1,6 +1,7 @@
 import { Tinted } from 'protolib/components/Tinted';
 import React, { memo, useCallback, useLayoutEffect, useMemo, useEffect } from 'react';
 import { computeDirectedLayout } from '../utils/graph';
+import { useThemeSetting } from '@tamagui/next-theme'
 import {
     ReactFlow,
     Background,
@@ -10,7 +11,8 @@ import {
     Position,
     applyNodeChanges,
     BezierEdge,
-    getBezierPath
+    getBezierPath,
+    MiniMap
 } from 'reactflow';
 
 /* =========================================================
@@ -193,22 +195,22 @@ const DefaultNode = memo(({ data }: { data: any }) => {
 });
 
 const CurvyEdge = (props: any) => {
-  const [edgePath] = getBezierPath({ ...props, curvature: 0.4 }); // curva más orgánica
-  return (
-    <path
-      id={props.id}
-      className="react-flow__edge-path"
-      d={edgePath}
-      style={{
-        stroke: props.style?.stroke || 'var(--edgeDefault, var(--color5))',
-        strokeWidth: 5,
-        fill: 'none',
-        pointerEvents: 'none',   // 👈 no intercepta clics
-        mixBlendMode: 'multiply' // opcional: mezcla estética
-      }}
-      markerEnd={props.markerEnd}
-    />
-  );
+    const [edgePath] = getBezierPath({ ...props, curvature: 0.4 }); // curva más orgánica
+    return (
+        <path
+            id={props.id}
+            className="react-flow__edge-path"
+            d={edgePath}
+            style={{
+                stroke: props.style?.stroke || 'var(--edgeDefault, var(--color5))',
+                strokeWidth: 5,
+                fill: 'none',
+                pointerEvents: 'none',   // 👈 no intercepta clics
+                mixBlendMode: 'multiply' // opcional: mezcla estética
+            }}
+            markerEnd={props.markerEnd}
+        />
+    );
 };
 
 const edgeTypes = { curvy: CurvyEdge };
@@ -321,7 +323,8 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
     const normalizedInitial = useMemo(() => normalizeGroupNodes(initialNodes), [initialNodes]);
     const [nodes, setNodes] = useNodesState(normalizedInitial);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
+    const { resolvedTheme } = useThemeSetting()
+    const darkMode = resolvedTheme == 'dark'
     useLayoutEffect(() => { setNodes(normalizedInitial); }, [normalizedInitial, setNodes]);
     useEffect(() => { setEdges(initialEdges); }, [initialEdges, setEdges]);
 
@@ -382,7 +385,18 @@ const Flow = ({ initialNodes, initialEdges }: { initialNodes: RFNode[]; initialE
                 elevateNodesOnSelect            // 👈 nodos sí pueden elevarse al seleccionar
                 style={{ zIndex: 0 }}
             >
-                <Background gap={20} color="#555" />
+                <Background gap={20} />
+                <MiniMap
+                    position="bottom-left"
+                    zoomable
+                    pannable
+                    maskColor={"rgba(0,0,0,0."+(darkMode ? "4" : "05")+")"}
+                    nodeStrokeColor={(n) => n.style?.borderColor || 'black'}
+                    nodeColor={(n) => n.type != 'layerGroup' ? 'var(--bgPanel)' : 'var(--bgContent)'}
+                    style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',  // 👈 elimina el fondo blanco
+                    }}
+                />
             </ReactFlow>
         </Tinted>
     );
