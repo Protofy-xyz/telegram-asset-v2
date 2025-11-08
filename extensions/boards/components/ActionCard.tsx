@@ -1,4 +1,4 @@
-import { Cable, Copy, Trash2, Settings, MoreVertical, Book, FileJson, ClipboardList, FileCode, FileInput, ExternalLink, Globe, ArrowDownRight, Play } from '@tamagui/lucide-icons'
+import { Cable, Copy, Trash2, Settings, MoreVertical, Book, FileJson, ClipboardList, FileCode, FileInput, ExternalLink, Globe, Layers as LayersIcon, Play, Layers, Check } from '@tamagui/lucide-icons'
 import { YStack, XStack, Popover, Text, TooltipSimple, Paragraph, Button } from '@my/ui'
 import { CenterCard } from '@extensions/services/widgets'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -6,7 +6,7 @@ import { Tinted } from 'protolib/components/Tinted'
 import dynamic from 'next/dynamic'
 import { useEventEffect } from '@extensions/events/hooks'
 import { JSONView } from 'protolib/components/JSONView'
-import { useIsHighlightedCard, executeAction } from '../store/boardStore'
+import { useIsHighlightedCard, executeAction, useLayers } from '../store/boardStore'
 import { PublicIcon } from 'protolib/components/IconSelect'
 
 const ActionRunner = dynamic(() => import('protolib/components/ActionRunner').then(mod => mod.ActionRunner), { ssr: false })
@@ -19,12 +19,26 @@ const CardIcon = ({ Icon, onPress, ...props }) => {
     </Tinted>
 }
 
-const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails, states }) => {
+type CardActionsProps = {
+    id: string
+    data: any
+    states: any
+    onEdit: (tab: string) => void
+    onDelete: () => void
+    onEditCode: () => void
+    onCopy: () => void
+    onDetails: () => void
+    onMoveLayer: (layer: string) => void
+}
+
+const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails, states, onMoveLayer }: CardActionsProps) => {
     // console.log("🤖 ~ CardActions ~ data:", data)
     const [menuOpened, setMenuOpened] = useState(false)
     const [cardStatesOpen, setCardStatesOpen] = useState(false)
     const cardActionRef = useRef(null)
     const hasSpace = cardActionRef.current?.offsetWidth > 200
+    const [layers] = useLayers()
+    const [layersOpen, setLayersOpen] = useState(false)
 
     const MenuButton = ({ text, Icon, onPress }: { text: string, Icon: any, onPress: any }) => {
         return (
@@ -125,6 +139,56 @@ const CardActions = ({ id, data, onEdit, onDelete, onEditCode, onCopy, onDetails
                                             <MenuButton key={index} text={menu.text} Icon={menu.icon} onPress={() => onEdit(menu.id)} />
                                         ))
                                     }
+                                    <Popover open={layersOpen} onOpenChange={setLayersOpen} placement="right-start" allowFlip stayInFrame>
+                                        <Popover.Trigger>
+                                            <XStack
+                                                width="100%"
+                                                borderRadius="$5"
+                                                padding="$3"
+                                                cursor="pointer"
+                                                pressStyle={{ opacity: 0.7 }}
+                                                hoverStyle={{ backgroundColor: "$color5" }}
+                                                onPress={(e) => { e.stopPropagation(); setLayersOpen((v) => !v) }}
+                                            >
+                                                <LayersIcon size="$1" color="var(--color9)" strokeWidth={2} />
+                                                <Text marginLeft="$3">Move to layer</Text>
+                                            </XStack>
+                                        </Popover.Trigger>
+                                        <Popover.Content
+                                            padding="$2"
+                                            space="$1"
+                                            borderWidth={1}
+                                            borderColor="$gray6"
+                                            backgroundColor="$gray1"
+                                            minWidth={180}
+                                        >
+                                            <YStack>
+                                                {layers?.map((layer: string) => {
+                                                    const active = (data?.layer ?? 'base') === layer
+                                                    return (
+                                                        <XStack
+                                                            key={layer}
+                                                            ai="center"
+                                                            jc="space-between"
+                                                            padding="$2"
+                                                            br="$4"
+                                                            cursor="pointer"
+                                                            hoverStyle={{ backgroundColor: "$color5" }}
+                                                            pressStyle={{ opacity: 0.7 }}
+                                                            onPress={() => {
+                                                                onMoveLayer(layer)
+                                                                setLayersOpen(false)
+                                                                setMenuOpened(false)
+                                                            }}
+                                                        >
+                                                            <Text>{layer}</Text>
+                                                            {active && <Check size={16} color="var(--color10)" />}
+                                                        </XStack>
+                                                    )
+                                                })}
+                                            </YStack>
+                                        </Popover.Content>
+                                    </Popover>
                                     {data?.publicRead && (
                                         <MenuButton
                                             text="Visit public Read"
@@ -341,6 +405,9 @@ export const ActionCard = ({
                             onEdit={onEdit}
                             onEditCode={onEditCode}
                             onCopy={onCopy}
+                            onMoveLayer={(layer) => {
+                                setData({ layer }, id)
+                            }}
                         />
                     </XStack>
                 </>
