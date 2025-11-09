@@ -302,6 +302,34 @@ export const computeDirectedLayout = ({
   const layers: string[][] = Array.from({ length: maxLevel + 1 }, () => []);
   for (const id of nodeIds) layers[level.get(id)!].push(id);
 
+  // 3b) Coloca nodos AISLADOS horizontalmente (cada uno en su propia columna)
+  // Aislado = sin ninguna arista válida (ni in ni out) en el grafo original (no solo en 'forward')
+  const degree = new Map<string, number>(nodeIds.map((id) => [id, 0]));
+  for (const e of validEdges) {
+    degree.set(e.source, (degree.get(e.source) || 0) + 1);
+    degree.set(e.target, (degree.get(e.target) || 0) + 1);
+  }
+  const isolated = nodeIds.filter((id) => (degree.get(id) || 0) === 0);
+
+  if (isolated.length) {
+    // Quita los aislados de sus capas actuales (suelen estar en layer 0)
+    for (const id of isolated) {
+      const lv = level.get(id)!;
+      const col = layers[lv];
+      const k = col.indexOf(id);
+      if (k >= 0) col.splice(k, 1);
+    }
+    // Elimina columnas vacías que hayan quedado
+    for (let i = layers.length - 1; i >= 0; i--) {
+      if (layers[i].length === 0) layers.splice(i, 1);
+    }
+    // Crea una columna por aislado (derecha del layout) manteniendo orden estable
+    for (const id of isolated) {
+      layers.push([id]);                 // => horizontal, a la derecha
+      level.set(id, layers.length - 1);  // ajuste informativo (no imprescindible)
+    }
+  }
+
   // 4) Cruces mínimos: sweeps de baricentros arriba/abajo
   const baseOrder = new Map<string, number>(nodeIds.map((id, i) => [id, i]));
   minimizeCrossings(layers, preds, succs, baseOrder, 8);
