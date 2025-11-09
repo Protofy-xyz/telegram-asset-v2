@@ -125,6 +125,7 @@ export const AutoActions = ({
     //read
     app.get(actionUrlPrefix + '/read', handler(async (req, res, session) => {
         const params = req.query;
+        delete params._stackTrace;
         const id = params.id;
         try {
             const result = await API.get(`${urlPrefix}/${id}?token=${session.token}`);
@@ -241,6 +242,7 @@ export const AutoActions = ({
 
     app.post(actionUrlPrefix + '/create', handler(async (req, res, session) => {
         const params = req.body;
+        delete params._stackTrace;
         // console.log("create params: ", JSON.stringify(params));
         fixParamsForModel(params, modelType);
         try {
@@ -364,6 +366,7 @@ export const AutoActions = ({
     //update
     app.get(actionUrlPrefix + '/update', handler(async (req, res, session) => {
         const params = req.query;
+        delete params._stackTrace;
         fixParamsForUpdate(params, modelType);
         const id = params.id;
         const field: any = params.field;
@@ -442,6 +445,8 @@ export const AutoActions = ({
         templateName: 'Last created ' + modelName,
         id: 'storage_' + modelName + '_lastCreated',
         defaults: {
+            width: 2,
+            height: 8,
             html: getHTML('lastCreated'),
             type: "value",
             icon: 'rss',
