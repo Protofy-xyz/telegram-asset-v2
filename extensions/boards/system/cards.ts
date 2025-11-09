@@ -302,6 +302,7 @@ export const registerCards = async () => {
             type: "action",
             editorOptions: {},
             displayResponse: true,
+            graphOrder: 1000,
             params: {
                 item: "",
                 action: "action to perform in the queue: push, pop, clear",
