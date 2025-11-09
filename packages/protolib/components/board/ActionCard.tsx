@@ -129,10 +129,23 @@ export const ParamsForm = ({ data, children }) => {
             <YStack w={"100%"} ai="center" jc="center">
                 {allKeys.map((key) => {
                     const cfg = data.configParams?.[key] || {};
-                    const { visible = true, defaultValue = "", type = "string" } = cfg;
+                    let { visible = true, defaultValue = "", type = "string" } = cfg;
                     const value = paramsState[key] ?? defaultValue ?? "";
                     const placeholder = data.params[key] ?? "";
                     const isBoolean = type === "boolean";
+
+                    if (cfg.visibility !== undefined) {
+                        let field = cfg.visibility?.field
+                        let mode = cfg.visibility?.mode
+                        if (mode == "boolean") {
+                            let inverted = cfg.visibility?.inverted
+                            if (inverted) {
+                                visible = paramsState[field] === "false" || paramsState[field] === false
+                            } else {
+                                visible = paramsState[field] === "true" || paramsState[field] === true
+                            }
+                        }
+                    }
 
                     if (!visible) {
                         return (
@@ -243,25 +256,25 @@ export const ParamsForm = ({ data, children }) => {
 
                                     {type === "array" &&
                                         (cfg.cardSelector ? (
-                                                <CardPicker
-                                                    type={cfg.cardSelectorType}
-                                                    value={(() => {
-                                                        try {
-                                                            const parsed = Array.isArray(value) ? value : JSON.parse(value);
-                                                            return Array.isArray(parsed) ? parsed : [];
-                                                        } catch {
-                                                            return [];
-                                                        }
-                                                    })()}
-                                                    onChange={(arr) => {
-                                                        setParam(key, JSON.stringify(arr));
-                                                    }}
-                                                    onApply={(arr) => {
-                                                        const json = JSON.stringify(arr);
-                                                        setParam(key, json);
-                                                        editCardField(["configParams", key, "defaultValue"], json);
-                                                    }}
-                                                />
+                                            <CardPicker
+                                                type={cfg.cardSelectorType}
+                                                value={(() => {
+                                                    try {
+                                                        const parsed = Array.isArray(value) ? value : JSON.parse(value);
+                                                        return Array.isArray(parsed) ? parsed : [];
+                                                    } catch {
+                                                        return [];
+                                                    }
+                                                })()}
+                                                onChange={(arr) => {
+                                                    setParam(key, JSON.stringify(arr));
+                                                }}
+                                                onApply={(arr) => {
+                                                    const json = JSON.stringify(arr);
+                                                    setParam(key, json);
+                                                    editCardField(["configParams", key, "defaultValue"], json);
+                                                }}
+                                            />
                                         ) : (
                                             <Input
                                                 className="no-drag"
