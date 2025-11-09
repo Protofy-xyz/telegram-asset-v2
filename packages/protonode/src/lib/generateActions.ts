@@ -506,8 +506,9 @@ export const AutoActions = ({
         const search = params.search;
         const orderBy = params.orderBy;
         const orderDirection = params.orderDirection;
+        const mode = params.mode || 'normal';
 
-        const finalUrl = `${urlPrefix}?token=${session.token}&${itemsPerPage ? `itemsPerPage=${itemsPerPage}` : ''}${page ? `&page=${page}` : ''}${search ? `&search=${search}` : ''}${orderBy ? `&orderBy=${orderBy}` : ''}${orderDirection ? `&orderDirection=${orderDirection}` : ''}`;
+        const finalUrl = `${urlPrefix}?token=${session.token}&${itemsPerPage ? `itemsPerPage=${itemsPerPage}` : ''}${page ? `&page=${page}` : ''}${search ? `&search=${search}` : ''}${orderBy ? `&orderBy=${orderBy}` : ''}${orderDirection ? `&orderDirection=${orderDirection}` : ''}${mode ? `&mode=${mode}` : ''}`;
         try {
             const result = await API.get(finalUrl);
             if (result.isLoaded) {
@@ -615,6 +616,44 @@ export const AutoActions = ({
                 }
             },
             rulesCode: `const action = userParams.action;\n\ndelete userParams[\"action\"];\n\nif (action == \"create\") {\n  return execute_action(\"/api/v1/actions/${modelName}/create\", userParams);\n} else if (action == \"update\") {\n  return execute_action(\"/api/v1/actions/${modelName}/update\", userParams);\n} else if (action == \"read\") {\n  return execute_action(\"/api/v1/actions/${modelName}/read\", userParams);\n} else if (action == \"delete\") {\n  return execute_action(\"/api/v1/actions/${modelName}/delete\", userParams);\n} else if (action == \"exists\") {\n  return execute_action(\"/api/v1/actions/${modelName}/exists\", userParams);\n} else {\n  return execute_action(\"/api/v1/actions/${modelName}/list\", userParams);\n}\n`,
+        },
+        token: getServiceToken(),
+        emitEvent: true
+    })
+
+    await context.cards.add({
+        group: 'storages',
+        tag: modelName,
+        name: 'search',
+        id: 'storage_' + modelName + '_search',
+        templateName: modelName + ' storage search',
+        defaults: {
+            width: 2,
+            height: 8,
+            icon: 'search',
+            displayResponse: true,
+            method: 'post',
+            name: `Search ${modelName} in storage`,
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
+            type: 'action',
+            description: `Search ${modelName} in the storage and returns a list of ${modelName} objects. You can use use querys in natural language for searching`,
+            params: {
+                search: "search term",
+                ai_mode: "enables natural language search mode"
+            },
+            configParams: {
+                search: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                },
+                ai_mode: {
+                    visible: true,
+                    defaultValue: "true",
+                    type: "boolean"
+                }
+            },
+            rulesCode: "return execute_action(\"/api/v1/actions/productos/list\", {\r\n    ...params,\r\n    mode: params.ai_mode ? 'ai' : 'normal'\r\n})",
         },
         token: getServiceToken(),
         emitEvent: true
