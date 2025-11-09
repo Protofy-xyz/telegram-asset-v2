@@ -116,7 +116,7 @@ export const AutoActions = ({
             description: "Displays a table with the last " + plurName,
             type: 'value',
             html: getHTML("last_table", "\n//data contains: data.value, data.icon and data.color\nreturn card({\n    content: cardTable(data.value), padding: '3px'\n});\n"),
-            rulesCode: `return states.objects?.${modelName}.lastEntries`
+            rulesCode: `return states.storages?.${modelName}.lastEntries`
         },
 
         token: getServiceToken()
@@ -259,7 +259,8 @@ export const AutoActions = ({
     }))
 
     const def = modelType.getObjectFieldsDefinition()
-    const params = Object.keys(def).map((key) => {
+    
+    const params = Object.keys(def).filter(key => def[key].autogenerate == false).map((key) => {
         return {
             [key]: def[key].description + " (" + def[key].type + ")" + (def[key].isId ? " (this will be used as the id of the element)" : "")
         }
@@ -446,7 +447,7 @@ export const AutoActions = ({
             icon: 'rss',
             name: `lastCreated ${modelName}`,
             description: `Last Created ${modelName}`,
-            rulesCode: `return states.objects?.${modelName}.lastCreated;`,
+            rulesCode: `return states.storages?.${modelName}.lastCreated;`,
         },
 
         token: getServiceToken()
@@ -475,7 +476,7 @@ export const AutoActions = ({
             icon: 'rss',
             name: `lastUpdated ${modelName}`,
             description: `Last updated ${modelName}`,
-            rulesCode: `return states.objects?.${modelName}.lastUpdated;`,
+            rulesCode: `return states.storages?.${modelName}.lastUpdated;`,
         },
 
         token: getServiceToken()
@@ -493,7 +494,7 @@ export const AutoActions = ({
             icon: 'boxes',
             name: `Total ${plurName}`,
             description: `Total ${plurName}`,
-            rulesCode: `return states.objects?.${modelName}.total;`,
+            rulesCode: `return states.storages?.${modelName}.total;`,
         },
 
         token: getServiceToken()

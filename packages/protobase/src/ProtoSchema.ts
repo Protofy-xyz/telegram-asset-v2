@@ -17,7 +17,8 @@ export class ProtoSchema {
             fields[key] = {
                 type: this.shape[key]._def.typeName.replace("Zod", "").toLowerCase(), 
                 description: this.shape[key]._def.hint || "",
-                isId: this.shape[key]._def.id || false
+                isId: this.shape[key]._def.id || false,
+                autogenerate: this.shape[key]._def.generate ? true : false
             }
         })
         return fields
