@@ -12,16 +12,17 @@ const median = (arr: number[]) => {
 function greedyCycleRemoval(
   nodeIds: string[],
   edges: { source: string; target: string; data?: any }[],
-  nodeSet: Set<string>
+  nodeSet: Set<string>,
+  priority?: Map<string, number> // usa graphOrder si se pasa
 ) {
-  // consruimos in/out degree y adyacencias
+  // construimos in/out degree y adyacencias
   const inDeg = new Map(nodeIds.map((id) => [id, 0]));
   const outDeg = new Map(nodeIds.map((id) => [id, 0]));
   const adj = new Map(nodeIds.map((id) => [id, new Set<string>()]));
   const radj = new Map(nodeIds.map((id) => [id, new Set<string>()]));
 
   for (const e of edges) {
-    if (!nodeSet.has(e.source) || !nodeSet.has(e.target) || e?.data?.linkType === 'code') continue;
+    if (!nodeSet.has(e.source) || !nodeSet.has(e.target)) continue; // ahora incluye 'code'
     adj.get(e.source)!.add(e.target);
     radj.get(e.target)!.add(e.source);
     outDeg.set(e.source, (outDeg.get(e.source) || 0) + 1);
@@ -47,31 +48,54 @@ function greedyCycleRemoval(
   while (S.size) {
     let progress = false;
 
-    // quita sumideros => a la derecha
-    for (const v of [...S]) {
-      if ((outDeg.get(v) || 0) === 0) {
+    // sumideros => a la derecha
+    const sinks = [...S].filter((v) => (outDeg.get(v) || 0) === 0);
+    if (sinks.length) {
+      sinks.sort((a, b) => {
+        const pa = priority?.get(a) ?? 0;
+        const pb = priority?.get(b) ?? 0;
+        if (pa !== pb) return pa - pb;
+        const da = (outDeg.get(a) || 0) - (inDeg.get(a) || 0);
+        const db = (outDeg.get(b) || 0) - (inDeg.get(b) || 0);
+        return da - db || (a < b ? -1 : a > b ? 1 : 0);
+      });
+      for (const v of sinks) {
         remove(v);
         R.push(v);
-        progress = true;
       }
+      progress = true;
     }
-    // quita fuentes => a la izquierda
-    for (const v of [...S]) {
-      if ((inDeg.get(v) || 0) === 0) {
+
+    // fuentes => a la izquierda
+    const sources = [...S].filter((v) => (inDeg.get(v) || 0) === 0);
+    if (sources.length) {
+      sources.sort((a, b) => {
+        const pa = priority?.get(a) ?? 0;
+        const pb = priority?.get(b) ?? 0;
+        if (pa !== pb) return pb - pa;
+        const da = (outDeg.get(a) || 0) - (inDeg.get(a) || 0);
+        const db = (outDeg.get(b) || 0) - (inDeg.get(b) || 0);
+        return db - da || (a < b ? -1 : a > b ? 1 : 0);
+      });
+      for (const v of sources) {
         remove(v);
         L.push(v);
-        progress = true;
       }
+      progress = true;
     }
+
     if (progress) continue;
 
-    // elige nodo con mayor (out - in)
+    // ciclo puro => elige el de mayor prioridad
     let best: string | null = null;
-    let bestScore = -Infinity;
+    let bestPriority = -Infinity;
+    let bestDelta = -Infinity;
     for (const v of S) {
-      const score = (outDeg.get(v) || 0) - (inDeg.get(v) || 0);
-      if (score > bestScore) {
-        bestScore = score;
+      const p = priority?.get(v) ?? 0;
+      const delta = (outDeg.get(v) || 0) - (inDeg.get(v) || 0);
+      if (p > bestPriority || (p === bestPriority && delta > bestDelta)) {
+        bestPriority = p;
+        bestDelta = delta;
         best = v;
       }
     }
@@ -86,9 +110,8 @@ function greedyCycleRemoval(
 
   const forward: typeof edges = [];
   const back: typeof edges = [];
-
   for (const e of edges) {
-    if (!nodeSet.has(e.source) || !nodeSet.has(e.target) || e?.data?.linkType === 'code') continue;
+    if (!nodeSet.has(e.source) || !nodeSet.has(e.target)) continue; // ahora incluye 'code'
     const iu = index.get(e.source)!;
     const iv = index.get(e.target)!;
     if (iu <= iv) forward.push(e);
@@ -108,42 +131,26 @@ function minimizeCrossings(
 ) {
   for (let it = 0; it < sweeps; it++) {
     const topDown = it % 2 === 0;
+    const ref = topDown ? preds : succs;
 
-    if (topDown) {
-      for (let col = 1; col < layers.length; col++) {
-        const prevPos = new Map(layers[col - 1].map((id, i) => [id, i]));
-        const scored = layers[col].map((id) => {
-          const neigh = (preds.get(id) || []).filter((p) => prevPos.has(p)).map((p) => prevPos.get(p)!);
-          const score = neigh.length ? median(neigh) : (baseOrder.get(id) ?? 0);
-          return { id, score, has: neigh.length > 0 };
-        });
-        scored.sort((a, b) =>
-          a.has !== b.has ? (a.has ? -1 : 1)
-            : a.score !== b.score ? a.score - b.score
-              : (baseOrder.get(a.id)! - baseOrder.get(b.id)!)
-        );
-        layers[col] = scored.map((s) => s.id);
-      }
-    } else {
-      for (let col = layers.length - 2; col >= 0; col--) {
-        const nextPos = new Map(layers[col + 1].map((id, i) => [id, i]));
-        const scored = layers[col].map((id) => {
-          const neigh = (succs.get(id) || []).filter((s) => nextPos.has(s)).map((s) => nextPos.get(s)!);
-          const score = neigh.length ? median(neigh) : (baseOrder.get(id) ?? 0);
-          return { id, score, has: neigh.length > 0 };
-        });
-        scored.sort((a, b) =>
-          a.has !== b.has ? (a.has ? -1 : 1)
-            : a.score !== b.score ? a.score - b.score
-              : (baseOrder.get(a.id)! - baseOrder.get(b.id)!)
-        );
-        layers[col] = scored.map((s) => s.id);
-      }
+    for (let col = topDown ? 1 : layers.length - 2; topDown ? col < layers.length : col >= 0; topDown ? col++ : col--) {
+      const neighborPos = new Map((topDown ? layers[col - 1] : layers[col + 1]).map((id, i) => [id, i]));
+      const scored = layers[col].map((id) => {
+        const neigh = (ref.get(id) || []).filter((p) => neighborPos.has(p)).map((p) => neighborPos.get(p)!);
+        const score = neigh.length ? median(neigh) : (baseOrder.get(id) ?? 0);
+        return { id, score, has: neigh.length > 0 };
+      });
+      scored.sort((a, b) =>
+        a.has !== b.has ? (a.has ? -1 : 1)
+          : a.score !== b.score ? a.score - b.score
+            : (baseOrder.get(a.id)! - baseOrder.get(b.id)!)
+      );
+      layers[col] = scored.map((s) => s.id);
     }
   }
 }
 
-/** Asigna Y dentro de cada columna con compacción + relajación hacia baricentro de vecinos */
+/** Asigna Y con alineación por la parte superior (no centrado) */
 function assignYPositions(
   layers: string[][],
   preds: Map<string, string[]>,
@@ -153,86 +160,30 @@ function assignYPositions(
 ) {
   const y = new Map<string, number>();
 
-  // Paso 1: colocación básica (stack vertical) con objetivo hacia mediana de predecesores
+  // Paso 1: apila desde arriba (alineación top)
   for (let col = 0; col < layers.length; col++) {
     const ids = layers[col];
     let yOffset = 0;
-
     for (const id of ids) {
-      const sz = sizes.get(id)!;
-      const centers = (preds.get(id) || []).filter((p) => y.has(p)).map((p) => y.get(p)! + (sizes.get(p)!.height / 2));
-      const targetTop = centers.length ? median(centers) - sz.height / 2 : yOffset;
-      const top = Math.max(targetTop, yOffset); // no solape
-      y.set(id, top);
-      yOffset = top + sz.height + marginY;
+      y.set(id, yOffset);
+      yOffset += sizes.get(id)!.height + marginY;
     }
   }
 
-  // Paso 2: relajación global (suaviza y hace el layout más “orgánico”):
-  // varias pasadas top-down / bottom-up acercando los centros a la mediana de sus vecinos
-  const relaxIters = 4;
+  // Paso 2: ligera relajación para suavizar saltos
+  const relaxIters = 2;
   for (let it = 0; it < relaxIters; it++) {
-    // top-down respecto a pred
-    for (let col = 0; col < layers.length; col++) {
-      const ids = layers[col];
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        const sz = sizes.get(id)!;
-        const neighC = (preds.get(id) || []).filter((p) => y.has(p)).map((p) => y.get(p)! + sizes.get(p)!.height / 2);
-        if (!neighC.length) continue;
-        const desiredCenter = median(neighC);
-        const desiredTop = desiredCenter - sz.height / 2;
-
-        // muévete suavemente hacia el objetivo
+    for (let col = 1; col < layers.length; col++) {
+      for (const id of layers[col]) {
+        const predsY = (preds.get(id) || []).filter((p) => y.has(p)).map((p) => y.get(p)!);
+        if (!predsY.length) continue;
+        const avgPredY = predsY.reduce((a, b) => a + b, 0) / predsY.length;
         const current = y.get(id)!;
-        const next = current * 0.6 + desiredTop * 0.4;
-        y.set(id, next);
-      }
-      // compacción sin solapes en este layer (hacia abajo)
-      let scanTop = 0;
-      for (const id of ids) {
-        const h = sizes.get(id)!.height;
-        const top = Math.max(y.get(id)!, scanTop);
-        y.set(id, top);
-        scanTop = top + h + marginY;
-      }
-    }
-
-    // bottom-up respecto a succ
-    for (let col = layers.length - 1; col >= 0; col--) {
-      const ids = layers[col];
-      for (let i = ids.length - 1; i >= 0; i--) {
-        const id = ids[i];
-        const sz = sizes.get(id)!;
-        const neighC = (succs.get(id) || []).filter((s) => y.has(s)).map((s) => y.get(s)! + sizes.get(s)!.height / 2);
-        if (!neighC.length) continue;
-        const desiredCenter = median(neighC);
-        const desiredTop = desiredCenter - sz.height / 2;
-
-        const current = y.get(id)!;
-        const next = current * 0.6 + desiredTop * 0.4;
-        y.set(id, next);
-      }
-      // compacción sin solapes en este layer (hacia arriba)
-      let scanBottom = Number.POSITIVE_INFINITY;
-      for (let i = ids.length - 1; i >= 0; i--) {
-        const id = ids[i];
-        const h = sizes.get(id)!.height;
-        const bottom = Math.min(y.get(id)! + h, scanBottom);
-        const top = bottom - h;
-        y.set(id, top);
-        scanBottom = top - marginY;
-      }
-      // normalizamos para evitar gaps exagerados: otra pasada hacia abajo
-      let scanTop = 0;
-      for (const id of ids) {
-        const h = sizes.get(id)!.height;
-        const top = Math.max(y.get(id)!, scanTop);
-        y.set(id, top);
-        scanTop = top + h + marginY;
+        y.set(id, current * 0.8 + avgPredY * 0.2);
       }
     }
   }
+
   return y;
 }
 
@@ -247,7 +198,7 @@ export const computeDirectedLayout = ({
   marginX = 120,
   marginY = 60,
 }: {
-  cards: { name: string; width?: number; height?: number }[];
+  cards: { name: string; width?: number; height?: number; graphOrder?: number }[];
   edges: { source: string; target: string; data?: any }[];
   hPixelRatio: number;
   vPixelRatio: number;
@@ -258,26 +209,29 @@ export const computeDirectedLayout = ({
   const nodeIds = nodes.map((c) => c.name);
   const nodeSet = new Set(nodeIds);
 
-  // Tamaños (mismo contrato que tu versión)
+  // prioridad por graphOrder
+  const priority = new Map<string, number>(nodes.map((n) => [n.name, n.graphOrder ?? 0]));
+
+  // Tamaños
   const sizeById = new Map<string, { width: number; height: number }>(
     nodes.map((c) => [
       c.name,
       {
-        width: (c as any).width ? (c as any).width * hPixelRatio : 2 * hPixelRatio,
-        height: (c as any).height ? (c as any).height * vPixelRatio : 7 * vPixelRatio,
+        width: (c.width ?? 2) * hPixelRatio,
+        height: (c.height ?? 7) * vPixelRatio,
       },
     ])
   );
 
-  // Prepara preds/succ solo con edges internos y no 'code'
+  // Edges válidos (incluye 'code')
   const validEdges = (edges || []).filter(
-    (e) => nodeSet.has(e.source) && nodeSet.has(e.target) && e?.data?.linkType !== 'code'
+    (e) => nodeSet.has(e.source) && nodeSet.has(e.target)
   );
 
-  // 1) Elimina ciclos (heurístico) y separa edges forward/back
-  const { order, forward } = greedyCycleRemoval(nodeIds, validEdges, nodeSet);
+  // 1) Rompe ciclos con prioridad por graphOrder
+  const { order, forward } = greedyCycleRemoval(nodeIds, validEdges, nodeSet, priority);
 
-  // 2) Asigna niveles (capas/columnas) con longest-path sobre los forward edges
+  // 2) Asigna niveles (longest-path)
   const preds = new Map<string, string[]>(nodeIds.map((id) => [id, []]));
   const succs = new Map<string, string[]>(nodeIds.map((id) => [id, []]));
   for (const e of forward) {
@@ -288,62 +242,58 @@ export const computeDirectedLayout = ({
   const level = new Map<string, number>(nodeIds.map((id) => [id, 0]));
   for (const id of order) {
     const p = preds.get(id)!;
-    if (!p.length) {
-      level.set(id, 0);
-    } else {
-      let best = 0;
-      for (const u of p) best = Math.max(best, (level.get(u) || 0) + 1);
-      level.set(id, best);
-    }
+    if (!p.length) level.set(id, 0);
+    else level.set(id, Math.max(...p.map((u) => (level.get(u) ?? 0) + 1)));
   }
 
-  // 3) Capas (columnas) horizontales
+  // 3) Capas horizontales
   const maxLevel = Math.max(0, ...level.values());
   const layers: string[][] = Array.from({ length: maxLevel + 1 }, () => []);
   for (const id of nodeIds) layers[level.get(id)!].push(id);
 
-  // 3b) Coloca nodos AISLADOS horizontalmente (cada uno en su propia columna)
-  // Aislado = sin ninguna arista válida (ni in ni out) en el grafo original (no solo en 'forward')
+  // 3b) Nodos aislados → columnas horizontales
   const degree = new Map<string, number>(nodeIds.map((id) => [id, 0]));
   for (const e of validEdges) {
     degree.set(e.source, (degree.get(e.source) || 0) + 1);
     degree.set(e.target, (degree.get(e.target) || 0) + 1);
   }
   const isolated = nodeIds.filter((id) => (degree.get(id) || 0) === 0);
-
   if (isolated.length) {
-    // Quita los aislados de sus capas actuales (suelen estar en layer 0)
     for (const id of isolated) {
       const lv = level.get(id)!;
       const col = layers[lv];
       const k = col.indexOf(id);
       if (k >= 0) col.splice(k, 1);
     }
-    // Elimina columnas vacías que hayan quedado
     for (let i = layers.length - 1; i >= 0; i--) {
-      if (layers[i].length === 0) layers.splice(i, 1);
+      if (!layers[i].length) layers.splice(i, 1);
     }
-    // Crea una columna por aislado (derecha del layout) manteniendo orden estable
     for (const id of isolated) {
-      layers.push([id]);                 // => horizontal, a la derecha
-      level.set(id, layers.length - 1);  // ajuste informativo (no imprescindible)
+      layers.push([id]);
+      level.set(id, layers.length - 1);
     }
   }
 
-  // 4) Cruces mínimos: sweeps de baricentros arriba/abajo
-  const baseOrder = new Map<string, number>(nodeIds.map((id, i) => [id, i]));
+  // 4) Minimiza cruces (prioridad como baseOrder)
+  const baseOrder = new Map<string, number>(
+    [...nodeIds]
+      .sort((a, b) => (priority.get(b) ?? 0) - (priority.get(a) ?? 0))
+      .map((id, i) => [id, i])
+  );
   minimizeCrossings(layers, preds, succs, baseOrder, 8);
 
-  // 5) Asignación Y con compacción y relajación orgánica
+  // 4b) Reordena cada capa: mayor graphOrder primero
+  for (const layer of layers) {
+    layer.sort((a, b) => (priority.get(b) ?? 0) - (priority.get(a) ?? 0));
+  }
+
+  // 5) Posiciones Y (alineadas por arriba)
   const yMap = assignYPositions(layers, preds, succs, sizeById, marginY);
 
-  // 6) Asignación X por columnas (apilado horizontal), columna = max width acumulado
+  // 6) Posiciones X por columna
   const nodeX = new Map<string, number>();
-  const nodeY = yMap;
-
   let xOffset = 0;
-  for (let col = 0; col < layers.length; col++) {
-    const ids = layers[col];
+  for (const ids of layers) {
     let maxW = 0;
     for (const id of ids) {
       nodeX.set(id, xOffset);
@@ -352,10 +302,10 @@ export const computeDirectedLayout = ({
     xOffset += maxW + marginX;
   }
 
-  // 7) Salida compatible
+  // 7) Salida
   const positions: Record<string, { x: number; y: number }> = {};
-  for (const id of nodeIds) {
-    positions[id] = { x: nodeX.get(id) || 0, y: nodeY.get(id) || 0 };
-  }
+  for (const id of nodeIds)
+    positions[id] = { x: nodeX.get(id) || 0, y: yMap.get(id) || 0 };
+
   return { positions, sizes: sizeById };
 };
