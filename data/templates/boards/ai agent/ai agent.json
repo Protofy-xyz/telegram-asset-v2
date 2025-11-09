@@ -194,14 +194,24 @@
                     "defaultValue": "[]",
                     "type": "array",
                     "cardSelector": true,
-                    "cardSelectorType": "action"
+                    "cardSelectorType": "action",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
                 },
                 "values": {
                     "visible": true,
                     "defaultValue": "[]",
                     "type": "array",
                     "cardSelector": true,
-                    "cardSelectorType": "value"
+                    "cardSelectorType": "value",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
                 },
                 "allow_execution": {
                     "visible": true,
