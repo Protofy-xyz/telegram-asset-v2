@@ -676,12 +676,19 @@ export default async (app, context) => {
 
     app.post('/api/core/v1/import/board', requireAdmin(), async (req, res) => {
         const token = getServiceToken()
-        const { name, template } = req.body;
+        const { name, template, data } = req.body; //data contains a key-value object with extra data for the template
         console.log("Creating board:", name);
         console.log("Template: ", template);
 
         const boardTemplate = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + template.id + '/' + template.id + '.json', 'utf-8');
-        const boardContent = JSON.parse(boardTemplate.replace(/{{{name}}}/g, name));
+        let boardContent = boardTemplate.replace(/{{{name}}}/g, name);
+        //iterate over the keys in data and replace {{{key}}} with the value in data[key]
+        for (const key in data) {
+            boardContent = boardContent.replace(new RegExp(`{{{${key}}}}`, 'g'), data[key]);
+        }
+        
+        boardContent = JSON.parse(boardContent);
+
         delete boardContent.version;
         delete boardContent.priority;
 
