@@ -7,6 +7,7 @@
             "height": 18,
             "icon": "globe",
             "name": "agent_input",
+            "graphOrder": 1000,
             "description": "A job queue with a list of pending jobs and a current job",
             "type": "action",
             "editorOptions": {},
