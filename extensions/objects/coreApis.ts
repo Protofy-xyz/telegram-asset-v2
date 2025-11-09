@@ -16,7 +16,7 @@ const getSchemas = async (req, displayAll?) => {
   let schemas = []
   const tsFiles = syncFs.readdirSync(fspath.join(getRoot(req), 'data/objects')).filter(file => file.endsWith('.ts')).map(file => fspath.join(getRoot(req), 'data/objects', file))
 
-  if(displayAll || (req.query && req.query.display && req.query.display === 'all')) {
+  if (displayAll || (req.query && req.query.display && req.query.display === 'all')) {
     //iterate through all directories in ../../extensions and for each directory, check if there is a file named with the same name as the directory but ending in Schema.ts
     //for example, if there is a directory named "patatas", check if there is a file named "patatasSchema.ts" in that directory
     //if so, add the file to the list of tsFiles
@@ -99,7 +99,7 @@ const getSchemaTS = async (filePath, idSchema, schemaName) => {
     }
   }
   const normalizedPath = fspath.normalize(filePath).replace(/^(\.\.[\\/])+/, '').replace(/\\/g, '/');
-  return { name: schemaName, features, id: idSchema, keys, apiOptions: options, filePath: normalizedPath}
+  return { name: schemaName, features, id: idSchema, keys, apiOptions: options, filePath: normalizedPath }
 }
 
 
@@ -142,11 +142,11 @@ const getDB = (path, req, session) => {
       value = JSON.parse(value)
       if (syncFs.existsSync(fspath.join(getRoot(req), 'data/objects', value.name + '.ts'))) {
         syncFs.unlinkSync(fspath.join(getRoot(req), 'data/objects', value.name + '.ts'))
-      } 
+      }
 
       if (syncFs.existsSync(fspath.join(getRoot(req), 'data/automations', value.name + '.ts'))) {
         syncFs.unlinkSync(fspath.join(getRoot(req), 'data/automations', value.name + '.ts'))
-      } 
+      }
     },
 
     async put(key, value) {
@@ -192,19 +192,19 @@ const getDB = (path, req, session) => {
         if (result.isError) {
           throw result.error
         }
-        
+
       }
-      
+
       const result = ObjectModel.load(value).getSourceCode()
-  
+
       await setSchema(filePath, result, value, req)
       let ObjectSourceFile = getSourceFile(filePath)
       if (value.features.AutoAPI) await addFeature(ObjectSourceFile, '"AutoAPI"', `"${value.features.AutoAPI}"`)
       if (value.features.adminPage) await addFeature(ObjectSourceFile, '"adminPage"', `"${value.features.adminPage}"`)
-      
+
       await API.get('/api/v1/objects/reload?token=' + getServiceToken())
-      
- 
+
+
       //if api is selected, create an autoapi for the object
       const templateName = value.databaseType === "Google Sheets" ? "automatic-crud-google-sheet" : (value.databaseType === "Default Provider") ? "automatic-crud" : "automatic-crud-storage"
       if (session) {
@@ -217,7 +217,35 @@ const getDB = (path, req, session) => {
         })
         await API.post("/api/core/v1/apis?token=" + session.token, objectApi.create().getData())
       }
+      const createStorageBoard = false
+      if (createStorageBoard) {
+      try {
+        // Solo para storages (usa el template automatic-crud)
+        if (templateName === "automatic-crud") {
+          const shouldCreateBoard = value.createAgentBoard !== false;
+          if (shouldCreateBoard) {
+            const token = session?.token ?? getServiceToken();
 
+            const toBoardName = (s: string) =>
+              s.trim()
+                .replace(/\s+/g, "_")
+                .replace(/[^a-z_]/gi, "_")
+                .toLowerCase();
+
+            const boardName = value.agentBoardName
+              ? toBoardName(value.agentBoardName)
+              : toBoardName(value.name);
+
+            await API.post(`/api/core/v1/import/board?token=${token}`, {
+              name: boardName,
+              template: { id: "ai agent" }
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Auto-create AI Agent board failed:", e);
+      }
+    }
     },
 
     async get(key) {
