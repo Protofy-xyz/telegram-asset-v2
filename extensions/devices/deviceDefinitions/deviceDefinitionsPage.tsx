@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { CircuitBoard, Tag, BookOpen, Router, Cog, Upload} from '@tamagui/lucide-icons'
+import { CircuitBoard, Tag, BookOpen, Router, Cog, Upload } from '@tamagui/lucide-icons'
 import { DeviceDefinitionModel } from './deviceDefinitionsSchemas'
 import { API, z, getPendingResult } from 'protobase'
 import { DeviceCoreModel } from '../devicecores'
@@ -17,7 +17,7 @@ import { Tinted } from "protolib/components/Tinted"
 import { usePageParams } from "protolib/next"
 import { InteractiveIcon } from "protolib/components/InteractiveIcon"
 import { AlertDialog } from 'protolib/components/AlertDialog'
-
+import { useRouter } from "next/router"
 
 const DeviceDefitionIcons = {
   name: Tag,
@@ -33,6 +33,7 @@ export default {
     const [coresList, setCoresList] = useState(extraData?.cores ?? getPendingResult('pending'))
     const [selectedDefinition, setSelectedDefinition] = useState(null)
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+    const router = useRouter();
 
     usePendingEffect((s) => { API.get({ url: coresSourceUrl }, s) }, setCoresList, extraData?.cores)
     const cores = coresList.isLoaded ? coresList.data.items.map(i => DeviceCoreModel.load(i).getData()) : []
@@ -106,7 +107,7 @@ export default {
           toolBarContent={
             <XStack f={1} mr="$2" jc="flex-end">
               <Tinted>
-                <Button icon={Router} mah="30px" onPress={() => document.location.href = '/workspace/devices'} >
+                <Button icon={Router} mah="30px" onPress={() => router.push('/devices')} >
                   Devices
                 </Button>
               </Tinted>
@@ -124,20 +125,19 @@ export default {
         />
       }
       <AlertDialog
-                    p={"$2"}
-                    pt="$5"
-                    pl="$5"
-                    setOpen={setUploadDialogOpen}
-                    open={uploadDialogOpen}
-                    hideAccept={true}
-                    description={""}
-                >
-                    <YStack f={1} jc="center" ai="center">
-                        <XStack mr="$5">
-                          <Text fontWeight={"600"} fontSize={34} color="$color9">Upload your device definition file</Text>
-
-                        </XStack>
-                    </YStack>
+        p={"$2"}
+        pt="$5"
+        pl="$5"
+        setOpen={setUploadDialogOpen}
+        open={uploadDialogOpen}
+        hideAccept={true}
+        description={""}
+      >
+        <YStack f={1} jc="center" ai="center">
+          <XStack mr="$5">
+            <Text fontWeight={"600"} fontSize={34} color="$color9">Upload your device definition file</Text>
+          </XStack>
+        </YStack>
       </AlertDialog>
     </AdminPage>
     )
