@@ -65,8 +65,8 @@ export const BubbleChat = () => {
       <Tinted>
         <Button
           position="absolute"
-          bottom={50}
-          right={50}
+          bottom={30}
+          right={30}
           size="$5"
           circular
           icon={isChatVisible ? <X size="30px" color="white" /> : <Sparkles size="30px" color="white" />}
@@ -81,8 +81,8 @@ export const BubbleChat = () => {
       {isChatVisible && (
         <Button
           position="absolute"
-          bottom={50}
-          right={110}
+          bottom={30}
+          right={90}
           size="$4"
           circular
           icon={isExpanded ? <Minimize color="white" size="$2" /> : <Maximize color="white" size="$2" />}
@@ -99,8 +99,8 @@ export const BubbleChat = () => {
         height={isExpanded ? "calc(100vh - 0px)" : "calc(100vh - 200px)"}
         maxHeight={isExpanded ? "100vh" : 800}
         position="absolute"
-        bottom={isExpanded ? 0 : 130}
-        right={isExpanded ? 0 : 50}
+        bottom={isExpanded ? 0 : 110}
+        right={isExpanded ? 0 : 30}
         backgroundColor="$bgContent"
         borderRadius={isExpanded ? 0 : "$4"}
         elevation="$6"

@@ -2,6 +2,8 @@ import { MessageSquare, Trash2, Pencil, Check, X } from "lucide-react";
 import useChat, { isChatSelected } from "../../store/store";
 import classNames from "classnames";
 import { useEffect, useState } from "react";
+import { InteractiveIcon } from "../../../InteractiveIcon";
+import { Input, XStack } from "tamagui";
 
 export default function ChatRef({
   chat,
@@ -34,18 +36,19 @@ export default function ChatRef({
   return (
     <div
       className={classNames(
-        "btn-wrap flex items-center w-full p-1 rounded-md text-xl font-bold  hover:bg-[#2f2f2f]",
-        { "bg-[#2f2f2f]": isSelected }
+        "btn-wrap flex items-center w-full p-1 rounded-md text-xl font-bold  hover:bg-[var(--bgContent)] gap-2 mb-2",
+        { "bg-[var(--bgContent)]": isSelected }
       )}
     >
       {!isTitleEditeble && (
+
         <button
           className="py-2 w-3/4 flex items-center flex-grow transition p-2"
           onClick={() => viewSelectedChat(chat.id)}
           title={chat.title}
         >
           <span className="mr-2 flex">
-            <MessageSquare />
+            <MessageSquare size={20} />
           </span>
 
           <span className="text-sm truncate capitalize">
@@ -54,45 +57,35 @@ export default function ChatRef({
         </button>
       )}
       {isTitleEditeble && (
-        <input
-          type="text"
+        < Input
+          bc="transparent"
+          bw={0}
+          width="100%"
+          mr="2px"
           value={editTitle}
-          className="bg-inherit border border-blue-400 w-4/5 ml-2 p-1 outline-none"
+          onChangeText={setEditTitle}
           autoFocus
-          onChange={(e) => setEditTitle(e.target.value)}
+          focusStyle={{ borderWidth: 0 }}
         />
+        // <input
+        //   type="text"
+        //   value={editTitle}
+        //   className="bg-inherit border border-blue-400 w-4/5 ml-2 p-1 outline-none"
+        //   autoFocus
+        //   onChange={(e) => setEditTitle(e.target.value)}
+        // />
       )}
       {isSelected && !isEditingTitle && (
-        <div className="inline-flex w-1/4 mx-2 items-center justify-between">
-          <button
-            className={classNames("mr-2 flex hover:text-blue-300")}
-            onClick={() => setIsEditingTitle(true)}
-          >
-            <Pencil />
-          </button>
-          <button
-            className={classNames("flex hover:text-red-300")}
-            onClick={() => deleteChat(chat.id)}
-          >
-            <Trash2 />
-          </button>
-        </div>
+        <XStack>
+          <InteractiveIcon Icon={Pencil} onPress={() => setIsEditingTitle(true)} />
+          <InteractiveIcon Icon={Trash2} onPress={() => deleteChat(chat.id)} />
+        </XStack>
       )}
       {isSelected && isEditingTitle && (
-        <div className="inline-flex w-1/5 mx-2 items-center justify-between">
-          <button
-            className={classNames("mr-2 flex hover:text-blue-300")}
-            onClick={() => handleEditTitle(chat.id, editTitle)}
-          >
-            <Check />
-          </button>
-          <button
-            className={classNames("flex hover:text-red-300")}
-            onClick={() => setIsEditingTitle(false)}
-          >
-            <X />
-          </button>
-        </div>
+        <XStack>
+          <InteractiveIcon IconColor="var(--green9)" Icon={Check} onPress={() => handleEditTitle(chat.id, editTitle)} />
+          <InteractiveIcon IconColor="var(--red9)" Icon={X} onPress={() => setIsEditingTitle(false)} />
+        </XStack>
       )}
     </div>
   );
