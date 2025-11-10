@@ -44,6 +44,8 @@ type MarkdownProps = {
   readOnly?: boolean;
   copyToClipboardEnabled?: boolean;
   setData?: (val: string) => void;
+  autoSaveTrigger?: any;
+  autoSaveOnBlur?: boolean;
 } & StackProps
 
 export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true, setData = undefined, ...props }: MarkdownProps) {
@@ -59,6 +61,7 @@ export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true
   const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const disableCopy = copyToClipboardEnabled ? isHttp && !isLocalhost : true;
   const normalizedText = text;
+  const containerRef = useRef(null);
 
   const save = () => {
     if (setData) setData(escapeMarkdownForTemplate(code.current));
@@ -93,7 +96,31 @@ export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true
     }
   }, [data, editing]);
 
-  return <YStack className="no-drag markdown-body" f={1} w="100%" p="$3" bc="var(--bg-color)" onHoverIn={() => setIsHovered(true)} onHoverOut={() => setIsHovered(false)} {...props}>
+  // autosave cuando cambia el trigger externo
+  useEffect(() => {
+    if (editing) save();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.autoSaveTrigger]);
+
+  // autosave al hacer click fuera del componente
+  useEffect(() => {
+    if (!props.autoSaveOnBlur) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      // si el click no está dentro del markdown, guardar
+      const target = event.target as Node;
+      const container = containerRef.current;
+      if (editing && container && !container.contains(target)) {
+        save();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing, props.autoSaveOnBlur]);
+
+  return <YStack ref={containerRef} className="no-drag markdown-body" f={1} w="100%" p="$3" bc="var(--bg-color)" onHoverIn={() => setIsHovered(true)} onHoverOut={() => setIsHovered(false)} {...props}>
     {/* Toolbar */}
     <XStack jc="flex-end" gap="$0.5"  >
       {
