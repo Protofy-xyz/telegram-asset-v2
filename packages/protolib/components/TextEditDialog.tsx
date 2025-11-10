@@ -124,6 +124,7 @@ const Editor = ({ value, readValue, onChange, placeholder = "", textAreaProps, t
                                     <Markdown data={tempValue} setData={setTempValue} />
                                 </YStack>
                                 : <TextArea
+                                    spellCheck={false}
                                     value={tempValue}
                                     onChangeText={setTempValue}
                                     size="$5"
