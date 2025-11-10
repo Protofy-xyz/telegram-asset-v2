@@ -46,6 +46,7 @@ type MarkdownProps = {
   setData?: (val: string) => void;
   autoSaveTrigger?: any;
   autoSaveOnBlur?: boolean;
+  editOnDoubleClick?: boolean;
 } & StackProps
 
 export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true, setData = undefined, ...props }: MarkdownProps) {
@@ -120,7 +121,14 @@ export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing, props.autoSaveOnBlur]);
 
-  return <YStack ref={containerRef} className="no-drag markdown-body" f={1} w="100%" p="$3" bc="var(--bg-color)" onHoverIn={() => setIsHovered(true)} onHoverOut={() => setIsHovered(false)} {...props}>
+  return <YStack ref={containerRef} className="no-drag markdown-body" f={1} w="100%" p="$3" bc="var(--bg-color)" onHoverIn={() => setIsHovered(true)} onHoverOut={() => setIsHovered(false)} {...props} onDoubleClick={() => {
+      if (props.editOnDoubleClick && !editing && !readOnly) {
+        originalBeforeEdit.current = code.current; // snapshot por si cancela
+        setEditing(true);
+      }
+    }} style={{
+  cursor: props.editOnDoubleClick && !readOnly && !editing ? "pointer" : "default",
+}}>
     {/* Toolbar */}
     <XStack jc="flex-end" gap="$0.5"  >
       {
