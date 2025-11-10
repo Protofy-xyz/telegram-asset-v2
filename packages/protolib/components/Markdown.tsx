@@ -162,12 +162,12 @@ export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true
             onPress={cancel}
             title="Cancel"
           />
-          <InteractiveIcon
+          {!props.autoSaveOnBlur && <InteractiveIcon
             Icon={Save}
             hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
             onPress={save}
             title="Save"
-          />
+          />}
         </>
       )}
     </XStack>
