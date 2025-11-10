@@ -60,6 +60,7 @@
     "app-package-win": "electron-builder -c electron-builder.yml --win --x64",
     "app-package-mac": "electron-builder -c electron-builder.yml --mac --arm64",
     "app-package-linux": "electron-builder -c electron-builder.yml --linux --x64",
+    "app-package-rpi": "electron-builder -c electron-builder.yml --linux --arm64",
     "app-package-all": "electron-builder -c electron-builder.yml --win --mac --linux",
     "download-binaries": "node scripts/download-bins.js",
     "clean-deps": "shx rm -rf node_modules",
