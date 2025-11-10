@@ -81,6 +81,8 @@ export const ActionCardSettings = ({ board, actions, states, card, icons, onEdit
             <YStack
               flex={1} height="100%" backgroundColor="$bgPanel" borderRadius="$3" p="$3" >
               <Markdown
+                autoSaveOnBlur={true}
+                editOnDoubleClick={true}
                 data={cardData.description}
                 setData={(newCode) => {
                   setCardData({

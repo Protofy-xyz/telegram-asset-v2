@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { CircuitBoard, Tag, BookOpen, Router, Cog, Upload} from '@tamagui/lucide-icons'
+import { CircuitBoard, Tag, BookOpen, Router, Cog, Upload } from '@tamagui/lucide-icons'
 import { DeviceDefinitionModel } from './deviceDefinitionsSchemas'
 import { API, z, getPendingResult } from 'protobase'
 import { DeviceCoreModel } from '../devicecores'
@@ -12,12 +12,12 @@ import { AdminPage } from "protolib/components/AdminPage"
 import { PaginatedData } from "protolib/lib/SSR"
 import { ConfigComponent } from "./ConfigComponent" //TODO: Delete this file when WLED case integrated on ConfigEditor
 import { ConfigEditor } from "./ConfigEditor"
-import { Button, Input, XStack, YStack, Text } from '@my/ui'
+import { Button, Input, XStack, YStack, Text, Paragraph } from '@my/ui'
 import { Tinted } from "protolib/components/Tinted"
 import { usePageParams } from "protolib/next"
 import { InteractiveIcon } from "protolib/components/InteractiveIcon"
 import { AlertDialog } from 'protolib/components/AlertDialog'
-
+import { useRouter } from "next/router"
 
 const DeviceDefitionIcons = {
   name: Tag,
@@ -33,6 +33,7 @@ export default {
     const [coresList, setCoresList] = useState(extraData?.cores ?? getPendingResult('pending'))
     const [selectedDefinition, setSelectedDefinition] = useState(null)
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+    const router = useRouter();
 
     usePendingEffect((s) => { API.get({ url: coresSourceUrl }, s) }, setCoresList, extraData?.cores)
     const cores = coresList.isLoaded ? coresList.data.items.map(i => DeviceCoreModel.load(i).getData()) : []
@@ -103,13 +104,23 @@ export default {
           model={DeviceDefinitionModel}
           pageState={pageState}
           icons={DeviceDefitionIcons}
+          title=""
           toolBarContent={
-            <XStack f={1} mr="$2" jc="flex-end">
-              <Tinted>
-                <Button icon={Router} mah="30px" onPress={() => document.location.href = '/workspace/devices'} >
-                  Devices
-                </Button>
-              </Tinted>
+            <XStack gap="$6">
+              <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/devices')}>
+                <Paragraph>
+                  <Text fontSize="$9" fontWeight="600" color="$color8">
+                    Devices
+                  </Text>
+                </Paragraph>
+              </XStack>
+              <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/deviceDefinitions')}>
+                <Paragraph>
+                  <Text fontSize="$9" fontWeight="600" color="$color11">
+                    Definitions
+                  </Text>
+                </Paragraph>
+              </XStack>
             </XStack>
           }
           dataTableGridProps={{ itemMinWidth: 300, spacing: 20 }}
@@ -124,20 +135,19 @@ export default {
         />
       }
       <AlertDialog
-                    p={"$2"}
-                    pt="$5"
-                    pl="$5"
-                    setOpen={setUploadDialogOpen}
-                    open={uploadDialogOpen}
-                    hideAccept={true}
-                    description={""}
-                >
-                    <YStack f={1} jc="center" ai="center">
-                        <XStack mr="$5">
-                          <Text fontWeight={"600"} fontSize={34} color="$color9">Upload your device definition file</Text>
-
-                        </XStack>
-                    </YStack>
+        p={"$2"}
+        pt="$5"
+        pl="$5"
+        setOpen={setUploadDialogOpen}
+        open={uploadDialogOpen}
+        hideAccept={true}
+        description={""}
+      >
+        <YStack f={1} jc="center" ai="center">
+          <XStack mr="$5">
+            <Text fontWeight={"600"} fontSize={34} color="$color9">Upload your device definition file</Text>
+          </XStack>
+        </YStack>
       </AlertDialog>
     </AdminPage>
     )

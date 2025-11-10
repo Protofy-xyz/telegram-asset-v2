@@ -160,7 +160,7 @@ export default {
     const [logSourceChooserOpen, setLogSourceChooserOpen] = useState(false);
     const [logSource, setLogSource] = useState<null | 'mqtt' | 'usb'>(null);
     const [currentDeviceHasMqtt, setCurrentDeviceHasMqtt] = useState(false);
-    
+
     const hasMqttSubsystem = (subs: any): boolean => {
       if (!subs) return false;
       if (Array.isArray(subs)) {
@@ -214,7 +214,7 @@ export default {
         setSerialChooser(null);
       }
     };
-    
+
     const handleCancelChooser = () => {
       try {
         (window as any)?.serial?.cancel(serialChooser?.reqId);
@@ -433,7 +433,7 @@ export default {
       if (stage !== 'console') return;
       return () => { stopConsole(); }; // cleanup when stage changes away from console
     }, [stage]);
-    
+
     useEffect(() => {
       const processStage = async () => {
 
@@ -664,14 +664,24 @@ export default {
       </Connector>
       <DataView
         entityName="devices"
-        defaultView={"grid"}
+        title=""
+        // defaultView={"grid"}
         toolBarContent={
-          <XStack mr={"$2"} f={1} jc='flex-end'>
-            <Tinted>
-              <Button icon={BookOpen} mah="30px" onPress={() => router.push('/deviceDefinitions')}>
-                Definitions
-              </Button>
-            </Tinted>
+          <XStack gap="$6">
+            <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/devices')}>
+              <Paragraph>
+                <Text fontSize="$9" fontWeight="600" color="$color11">
+                  Devices
+                </Text>
+              </Paragraph>
+            </XStack>
+            <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/deviceDefinitions')}>
+              <Paragraph>
+                <Text fontSize="$9" fontWeight="600" color="$color8">
+                  Definitions
+                </Text>
+              </Paragraph>
+            </XStack>
           </XStack>
         }
         itemData={itemData}
