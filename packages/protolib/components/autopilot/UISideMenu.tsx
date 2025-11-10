@@ -29,8 +29,8 @@ export const UISideMenu = ({ leftIcons = <></>, icons = <></>, uiCode, boardRef,
         return <CodeView
             onApplyRules={async (rules) => {
                 try {
-                    boardRef.current.rules = rules
                     const rulesCode = await API.post(`/api/core/v1/autopilot/getBoardCode`, { rules: rules, states: boardStates, actions: actions.boards ? actions.boards[board.name] : {} })
+                    boardRef.current.rules = rules
                     if (rulesCode.error || !rulesCode.data?.jsCode) {
                         toast.show(`Error generating board code: ${rulesCode.error}`)
                         return
