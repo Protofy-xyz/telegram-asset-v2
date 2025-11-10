@@ -9,6 +9,8 @@ import Markdown from "react-markdown";
 import CodeHighlight from "../CodeHighlight/CodeHighlight";
 import { PromptAtom } from '../../../../context/PromptAtom';
 import { useAtom } from "jotai";
+import { InteractiveIcon } from "../../../InteractiveIcon";
+import { XStack } from "tamagui";
 
 type Props = {
   index: number;
@@ -75,21 +77,19 @@ export default function TextMessage({ index, chat }: Props) {
                 ref={cursorRef}
               ></span>
             )}
-
-            <div className="mt-2 md:mt-5 text-left self-start">
+            <XStack>
               {!copied ? (
-                <button
-                  className="edit text-gray-500 dark:text-gray-200 text-xl"
-                  onClick={() => copy(result)}
-                >
-                  <Clipboard />
-                </button>
+                <InteractiveIcon
+                  Icon={Clipboard}
+                  onPress={() => copy(result)}
+                />
               ) : (
-                <span className="dark:text-gray-200 text-gray-500 text-xl">
-                  <Check />
-                </span>
+                <InteractiveIcon
+                  Icon={Check}
+                  onPress={() => copy(result)}
+                />
               )}
-            </div>
+            </XStack>
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import BotMessage from "./BotMessage";
 import UserMessage from "./UserMessage";
 import { useEventEffect } from "@extensions/events/hooks";
 import { createMessage } from "../../utils/createMessage";
+import { YStack } from "tamagui";
 
 export default function Chats() {
   const chats = useChat((state) => state.chats);
@@ -31,7 +32,7 @@ export default function Chats() {
   }, [chats]);
 
   return (
-    <div className="flex-1 overflow-y-auto mx">
+    <YStack f={1} overflow="hidden">
       {chats.map((chat, index) =>
         chat.role === "assistant" ? (
           <BotMessage index={index} key={chat.id} chat={chat} />
@@ -40,6 +41,6 @@ export default function Chats() {
         )
       )}
       <div ref={messagesEndRef} />
-    </div>
+   </YStack>
   );
 }
