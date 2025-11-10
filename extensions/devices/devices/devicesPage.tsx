@@ -664,7 +664,7 @@ export default {
       </Connector>
       <DataView
         entityName="devices"
-        defaultView={"grid"}
+        // defaultView={"grid"}
         toolBarContent={
           <XStack mr={"$2"} f={1} jc='flex-end'>
             <Tinted>
