@@ -18,7 +18,7 @@ export default ({ boards, objects }) => {
         { name: 'Assets', icon: Blocks, href: '/workspace/assets' },
         { name: 'Tasks', icon: Zap, href: '/workspace/tasks' },
         { name: 'Devices', icon: Router, href: '/workspace/devices' },
-        { name: 'Storage', icon: Boxes, href: '/workspace/objects' },
+        { name: 'Storages', icon: Boxes, href: '/workspace/objects' },
         // { name: 'Events', icon: 'activity', href: '/workspace/events' },
         { name: 'Files', icon: 'folder', href: '/workspace/files?path=/', path: '' },
         { name: 'Config', icon: Cog, href: '/workspace/config' },
