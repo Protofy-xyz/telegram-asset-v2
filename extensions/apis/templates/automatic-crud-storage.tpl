@@ -40,6 +40,7 @@ const {name, prefix} = {{modelName}}.getApiOptions()
 export default Protofy("code", async (app: Application, context: typeof APIContext) => {
 
     const jsonPath = fsPath.join(root, 'data', '{{object}}.json')
+    const idField = {{modelName}}.getIdField()
     
     const getElements = () => {
         if (!fs.existsSync(jsonPath)) {
@@ -65,21 +66,33 @@ export default Protofy("code", async (app: Application, context: typeof APIConte
                 async *iterator() {
                     let elements = getElements()
                     for (const element of elements) {
-                        yield [element.id, JSON.stringify(element)];
+                        yield [element[idField], JSON.stringify(element)];
                     }
                 },
 
                 async put(key, value) {
                     let elements = getElements()
                     value = JSON.parse(value)
-                    elements.push(value)
+                    const index = elements.findIndex(element => element[idField] == key)
+                    if (index !== -1) {
+                        elements[index] = value
+                    } else {
+                        elements.push(value)
+                    }
                     fs.writeFileSync(jsonPath, JSON.stringify(elements, null, 4))
                 },
 
                 async get(key) {
                     let elements = getElements()
-                    return JSON.stringify(elements.find(element => element.id == key));
+                    const element = JSON.stringify(elements.find(element => element[idField] == key));
+                    if (!element) throw new Error("Not found")
+                    return element
                 },
+                async del(key) {
+                    let elements = getElements()
+                    elements = elements.filter(element => element[idField] != key)
+                    fs.writeFileSync(jsonPath, JSON.stringify(elements, null, 4))
+                }
             };
 
             return db;
