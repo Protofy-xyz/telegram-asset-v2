@@ -21,6 +21,8 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
         ...ele._def?.innerType?._def
     }
 
+    const isStatic = elementDef.static || elementDef.id
+
     const setFormData = (key, value) => {
         const formData = data;
         let target = formData;
@@ -169,7 +171,7 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
                 {mode != 'preview' && <Stack f={1} t={"$-2"}>
                     <SearchAndSelect
                         bc="$backgroundTransparent"
-                        disabled={(mode == 'view' || mode == 'preview' || (mode == 'edit' && ele._def.static))}
+                        disabled={(mode == 'view' || mode == 'preview' || (mode == 'edit' && isStatic))}
                         // options={["John", "Doe", "Jane", "Smith"]}
                         getDisplayField={elementDef.getDisplayField}
                         options={(search) => elementDef.linkTo(search, URLTransform)}
@@ -313,7 +315,7 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
                     height={elementDef.textAreaHeight}
                     {...(mode != 'edit' && mode != 'add' ? { bw: 0, forceStyle: "hover" } : {})}
                     focusStyle={{ outlineWidth: 1 }}
-                    disabled={(mode == 'view' || mode == 'preview' || (mode == 'edit' && ele._def.static) || (ele._def.dependsOn && !data[ele._def.dependsOn]))}
+                    disabled={(mode == 'view' || mode == 'preview' || (mode == 'edit' && isStatic) || (ele._def.dependsOn && !data[ele._def.dependsOn]))}
                     secureTextEntry={ele._def.secret}
                     value={generatedOptions && !getFormData(ele.name) ? generatedOptions : getFormData(ele.name)}
                     onChangeText={(t) => setFormData(ele.name, t)}
@@ -332,7 +334,7 @@ export const getElement = ({ ele, icon, i, x, data, setData, mode, customFields 
                 id={"editable-object-input-" + ele?.name}
                 {...(mode != 'edit' && mode != 'add' ? { bw: 0, forceStyle: "hover" } : {})}
                 focusStyle={{ outlineWidth: 1 }}
-                disabled={(mode == 'view' || mode == 'preview' || (mode == 'edit' && ele._def.static) || (ele._def.dependsOn && !data[ele._def.dependsOn]))}
+                disabled={(mode == 'view' || mode == 'preview' || (mode == 'edit' && isStatic) || (ele._def.dependsOn && !data[ele._def.dependsOn]))}
                 secureTextEntry={ele._def.secret}
                 value={generatedOptions && !getFormData(ele.name) ? generatedOptions : getFormData(ele.name)}
                 onChangeText={(t) => setFormData(ele.name, elementDef.typeName == 'ZodNumber' ? t.replace(/[^0-9.-]/g, '') : t)}
