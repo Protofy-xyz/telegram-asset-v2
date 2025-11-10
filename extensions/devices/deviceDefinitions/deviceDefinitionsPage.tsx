@@ -12,7 +12,7 @@ import { AdminPage } from "protolib/components/AdminPage"
 import { PaginatedData } from "protolib/lib/SSR"
 import { ConfigComponent } from "./ConfigComponent" //TODO: Delete this file when WLED case integrated on ConfigEditor
 import { ConfigEditor } from "./ConfigEditor"
-import { Button, Input, XStack, YStack, Text } from '@my/ui'
+import { Button, Input, XStack, YStack, Text, Paragraph } from '@my/ui'
 import { Tinted } from "protolib/components/Tinted"
 import { usePageParams } from "protolib/next"
 import { InteractiveIcon } from "protolib/components/InteractiveIcon"
@@ -104,13 +104,23 @@ export default {
           model={DeviceDefinitionModel}
           pageState={pageState}
           icons={DeviceDefitionIcons}
+          title=""
           toolBarContent={
-            <XStack f={1} mr="$2" jc="flex-end">
-              <Tinted>
-                <Button icon={Router} mah="30px" onPress={() => router.push('/devices')} >
-                  Devices
-                </Button>
-              </Tinted>
+            <XStack gap="$6">
+              <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/devices')}>
+                <Paragraph>
+                  <Text fontSize="$9" fontWeight="600" color="$color8">
+                    Devices
+                  </Text>
+                </Paragraph>
+              </XStack>
+              <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/deviceDefinitions')}>
+                <Paragraph>
+                  <Text fontSize="$9" fontWeight="600" color="$color11">
+                    Definitions
+                  </Text>
+                </Paragraph>
+              </XStack>
             </XStack>
           }
           dataTableGridProps={{ itemMinWidth: 300, spacing: 20 }}
