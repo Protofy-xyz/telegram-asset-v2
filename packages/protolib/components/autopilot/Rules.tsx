@@ -3,6 +3,7 @@ import { Text, TooltipSimple } from '@my/ui'
 import { XStack, YStack, Button, Spinner } from '@my/ui'
 import { Trash, Plus, ArrowUp, X, Sparkles } from '@tamagui/lucide-icons'
 import dynamic from 'next/dynamic';
+import { isElectron } from 'protolib/lib/isElectron';
 
 const BoardTextArea = dynamic(() =>
   import('@extensions/boards/components/BoardTextArea').then(mod => mod.BoardTextArea),
@@ -177,7 +178,7 @@ export const Rules = ({
             availableParams={availableParams}
             allowParams={allowParams}
             footer={
-              <XStack justifyContent='space-between' w="100%" ai="flex-end">
+              <XStack justifyContent='space-between' f={1} ai="flex-end">
                 <XStack mt="$1" mb="$2" flex={1}>
                   {(errorMsg || differentRulesCode) && !isLoadingOrGenerating && (
                     <TooltipSimple label={feedbackMessageText} restMs={0} delay={{ open: 500, close: 0 }}>
@@ -233,7 +234,7 @@ export const Rules = ({
                       disabled={isLoadingOrGenerating || !ruleHasChanged}
                       onMouseDown={(e) => e.stopPropagation()}
                       bg={ruleHasChanged ? '$color' : 'transparent'}
-                      color={ruleHasChanged ? "$gray3" : '$color'}
+                      color={ruleHasChanged ? "$gray3" : !isElectron() ? '$gray7' : '$gray3'}
                       hoverStyle={{ backgroundColor: '$gray11' }}
                       pressStyle={{ backgroundColor: '$gray10' }}
                       circular

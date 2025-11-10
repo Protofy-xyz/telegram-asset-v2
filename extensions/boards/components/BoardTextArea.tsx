@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useRef, useState, useEffect, useMemo } from 'react';
-import { XStack } from '@my/ui'
+import { Button, TooltipSimple, XStack } from '@my/ui'
 import { Mic } from '@tamagui/lucide-icons'
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useBoardActions, useBoardStates } from '@extensions/boards/store/boardStore'
@@ -30,7 +30,7 @@ export const BoardTextArea = ({
   const actions = useBoardActions()
   const dropDownActions = Object.keys(actions)
   const dropDownStates = Object.keys(states)
- 
+
   const mentionTabs = useMemo(() => {
     const getSymbols = (
       text: string,
@@ -132,34 +132,38 @@ export const BoardTextArea = ({
         style={style}
         {...rest}
       />
-      {footer}
-      {!isElectron() && !footer && speechRecognition && browserSupportsSpeechRecognition && (
-        <XStack
-          cursor="pointer"
-          onPress={() => {
-            if (speechRecognitionEnabled) {
-              setSpeechRecognitionEnabled(false)
-              SpeechRecognition.stopListening()
-            } else {
-              resetTranscript()
-              setSpeechRecognitionEnabled(true)
-              SpeechRecognition.startListening({ continuous: true })
-            }
-          }}
-          gap="$2"
-          h="fit-content"
-          w="fit-content"
-          backgroundColor={speechRecognitionEnabled ? '$red6' : '$gray4'}
-          p="$3"
-          jc="center"
-          ai="center"
-          hoverStyle={{ opacity: 0.9 }}
-          pressStyle={{ opacity: 1.0 }}
-          br="$3"
-        >
-          <Mic size={"$1"} />
-        </XStack>
-      )}
+      <XStack>
+        {footer}
+        {!isElectron() && speechRecognition && browserSupportsSpeechRecognition && (
+          <TooltipSimple
+            label={"" + (speechRecognitionEnabled ? "Disable" : "Enable") + " Speech Recognition"}
+            delay={{ open: 500, close: 0 }}
+            restMs={0}
+          >
+            <Button
+              ml="$2"
+              size="$3"
+              p="$0"
+              onPress={() => {
+                if (speechRecognitionEnabled) {
+                  setSpeechRecognitionEnabled(false)
+                  SpeechRecognition.stopListening()
+                } else {
+                  resetTranscript()
+                  setSpeechRecognitionEnabled(true)
+                  SpeechRecognition.startListening({ continuous: true })
+                }
+              }}
+              circular
+              backgroundColor={speechRecognitionEnabled ? '$red6' : 'transparent'}
+              hoverStyle={{ backgroundColor: '$gray11' }}
+              pressStyle={{ backgroundColor: '$gray10' }}
+              scaleIcon={1.4}
+              icon={Mic}
+            />
+          </TooltipSimple>
+        )}
+      </XStack>
     </XStack>
   )
 }
