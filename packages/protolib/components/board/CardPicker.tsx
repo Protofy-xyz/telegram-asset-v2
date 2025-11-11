@@ -22,7 +22,9 @@ export const CardPicker = ({ type, value, onChange, onApply }: CardPickerProps) 
   useEffect(() => {
     const b = (window as any)?.board;
     if (!b?.cards) return;
-    const filtered = type ? b.cards.filter((c: any) => c.type === type) : b.cards;
+    
+    const filtered = type === "action" ? b.cards.filter((c: any) => c.type === "action") : b.cards;
+
     setAllCards(
       filtered.map((c: any) => ({
         name: String(c.name ?? ""),
@@ -37,14 +39,14 @@ export const CardPicker = ({ type, value, onChange, onApply }: CardPickerProps) 
     return allCards.filter((c) => c.name.toLowerCase().includes(q));
   }, [allCards, search]);
 
-const toggleDirect = (name: string) => {
-  const newArr = selected.includes(name)
-    ? selected.filter((n) => n !== name)
-    : [...selected, name];
+  const toggleDirect = (name: string) => {
+    const newArr = selected.includes(name)
+      ? selected.filter((n) => n !== name)
+      : [...selected, name];
 
-  onChange(newArr);
-  onApply?.(newArr);              // ← ✅ aplica siempre con la lista actual
-};
+    onChange(newArr);
+    onApply?.(newArr);              // ← ✅ aplica siempre con la lista actual
+  };
 
   const toggleModalSelect = (arr: string[], name: string) =>
     arr.includes(name) ? arr.filter((n) => n !== name) : [...arr, name];
@@ -72,7 +74,7 @@ const toggleDirect = (name: string) => {
     const checked = modalSelection.includes(card.name);
     const IconComp =
       card.type === "action" ? Rocket :
-      card.type === "value" ? Eye : null;
+        card.type === "value" ? Eye : null;
 
     return (
       <XStack key={card.name} ai="center" jc="space-between" py="$2" px="$2.5" hoverStyle={{ backgroundColor: "$gray2" }}>
