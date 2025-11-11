@@ -16,6 +16,7 @@ import { registerCards } from "./system/cards";
 import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles } from "./system/boards";
 
 import { getActions, handleBoardAction } from "./system/actions";
+import { get } from "http";
 
 
 const TemplatesDir = (root) => fspath.join(root, "/data/templates/boards/")
@@ -531,8 +532,17 @@ function Widget({board, state}) {
 
 
         async get(key) {
-            //NOT USED, replaced by a custom api
-
+            //ONLY USED TO CHECK FOR EXISTENCE WHEN SAVING; BUT NOT TO READ CONTENT. READ IS HANDLED IN A CUSTOM WAY LATER IN THIS FILE.
+            const filePath = BoardsDir(getRoot(req)) + key + ".json"
+            await acquireLock(filePath);
+            try {
+                const fileContent = await fs.readFile(filePath, 'utf8')
+                return fileContent
+            } catch (error) {
+                throw new Error("File not found")
+            } finally {
+                releaseLock(filePath);
+            }
         }
     };
 
@@ -700,7 +710,7 @@ export default async (app, context) => {
         res.send({ success: true });
     });
 
-    app.get('/api/core/v2/templates/boards', requireAdmin(), async (req, res) => {
+    const getAgentTemplates = () => {
         const templates = fsSync.readdirSync(TemplatesDir(getRoot())).filter(file => fsSync.statSync(TemplatesDir(getRoot()) + '/' + file).isDirectory()).map(dir => {
             const description = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/README.md', 'utf-8') || ''
             const json = JSON.parse(fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/' + dir + '.json', 'utf-8'));
@@ -708,7 +718,11 @@ export default async (app, context) => {
         }).filter(tplJson => !tplJson.disabled);
         //the templates should appear ordered by priority
         templates.sort((a, b) => b.priority - a.priority);
-        res.send(templates);
+        return templates;
+    }
+
+    app.get('/api/core/v2/templates/boards', requireAdmin(), async (req, res) => {
+        res.send(getAgentTemplates());
     });
 
     app.post('/api/core/v2/templates/boards', requireAdmin(), async (req, res) => {
@@ -747,6 +761,7 @@ export default async (app, context) => {
         }
         fsSync.writeFileSync(TemplatesDir(getRoot()) + '/' + name + '/README.md', description);
         res.send({ board });
+        registerAgentTemplates();
     });
 
     app.post('/api/core/v1/autopilot/getValueCode', requireAdmin(), async (req, res) => {
@@ -1361,6 +1376,13 @@ export default async (app, context) => {
         }
     })
 
+    const registerAgentTemplates = async () => {
+        const templates = getAgentTemplates()
+        for (const template of templates) {
+            context.state.set({ group: 'templates', tag: 'agent', name: template.id, value: template, emitEvent: true })
+        }
+    }
+
     const registerActions = async () => {
         //register actions for each board
         const boards = await getBoards()
@@ -1373,4 +1395,5 @@ export default async (app, context) => {
     }
     await registerCards()
     registerActions()
+    registerAgentTemplates()
 }
