@@ -23,12 +23,19 @@ export const BubbleChat = () => {
   useEffect(() => {
     const fetchBots = async () => {
       try {
-        const response = await API.get("/api/agents/v1/");
+        const response = await API.get("/api/core/v1/boards/");
         if (response.isLoaded) {
-          const parsed = Object.values(response.data).map((entry: any) => ({
-            name: entry.llm_agent?.name ?? entry.name,
-            target: entry.llm_agent?.target ?? entry.target,
-          }));
+          const items = Array.isArray(response.data?.items) ? response.data.items : [];
+
+          const parsed = items
+            .map((b: any) => {
+              const name = b?.name ?? "";
+              const target = b?.inputs?.default ?? null;
+
+              return (name && target) ? { name, target } : null;
+            })
+            .filter(Boolean);
+
           setBots(parsed);
           setSelectedBot(parsed[0] || null);
         } else if (response.isError) {

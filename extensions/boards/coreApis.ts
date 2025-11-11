@@ -253,7 +253,10 @@ const getDB = (path, req, session, context?) => {
                     const filePath = `${BoardsDir(getRoot(req))}${boardId}.json`;
                     const fileContent = await fs.readFile(filePath, 'utf8');
                     const decodedContent = JSON.parse(fileContent);
-
+                    decodedContent.inputs = {
+                        ...(decodedContent.inputs || {}),
+                        default: `/api/agents/v1/${boardId}/agent_input`
+                    };
                     const userType = session?.user?.type;
                     const isAllVisible = req.query.all === 'true';
                     const isSystem = !!decodedContent?.tags?.includes('system');
@@ -271,7 +274,8 @@ const getDB = (path, req, session, context?) => {
 
                     if (!allowed) continue;
 
-                    yield [boardId, fileContent];
+                    const enriched = JSON.stringify(decodedContent, null, 4);
+                    yield [boardId, enriched];
                 } catch (_e) {
                     // ignore malformed/unreadable boards to keep behavior consistent
                 } finally {
@@ -528,21 +532,8 @@ function Widget({board, state}) {
 
 
         async get(key) {
-            // try to get the board file from the boards folder
-            // console.log("Get function: ",key)
-            const filePath = BoardsDir(getRoot(req)) + key + ".json"
-            await acquireLock(filePath);
-            try {
-                const fileContent = await fs.readFile(filePath, 'utf8')
-                // console.log("fileContent: ", fileContent)
-                // console.log("filePath: ", filePath)
-                return fileContent
-            } catch (error) {
-                // console.log("Error reading file: " + filePath)
-                throw new Error("File not found")
-            } finally {
-                releaseLock(filePath);
-            }
+            //NOT USED, replaced by a custom api
+
         }
     };
 
@@ -687,7 +678,7 @@ export default async (app, context) => {
         for (const key in data) {
             boardContent = boardContent.replace(new RegExp(`{{{${key}}}}`, 'g'), data[key]);
         }
-        
+
         boardContent = JSON.parse(boardContent);
 
         delete boardContent.version;
@@ -1162,6 +1153,10 @@ export default async (app, context) => {
         try {
             const values = ProtoMemDB('states').getByTag('boards', req.params.boardId);
             const board = await getBoard(req.params.boardId);
+            board.inputs = {
+                ...(board.inputs || {}),
+                default: `/api/agents/v1/${board}/agent_input`
+            };
             if (!board.cards || !Array.isArray(board.cards)) {
                 res.send(board);
                 return;
