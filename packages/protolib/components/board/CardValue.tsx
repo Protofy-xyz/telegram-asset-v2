@@ -10,18 +10,55 @@ type CardValueProps = {
     id?: string,
     mode?: 'markdown' | 'html' | undefined,
     readOnly?: boolean,
+    JSONViewProps: any,
+    maxVisiblePropsInJSONView?: number,
     executeActionOnEdit?: (val: string) => void
 }
 
-export const CardValue = ({ value, style = {}, id = undefined, mode = undefined, readOnly = true, executeActionOnEdit = (val) => { } }: CardValueProps) => {
+function countLeaves(obj, { debug = false } = {}, seen = new WeakSet(), _path = '', leaves = []) {
+  if (obj === null || typeof obj !== 'object') {
+    leaves.push(_path || '(root)');
+    return leaves.length;
+  }
+  if (seen.has(obj)) return leaves.length;
+  seen.add(obj);
+
+  for (const k in obj) {
+    const val = obj[k];
+    const newPath = _path ? _path + '.' + k : k;
+    if (val && typeof val === 'object') {
+      countLeaves(val, { debug }, seen, newPath, leaves);
+    } else {
+      leaves.push(newPath);
+    }
+  }
+
+  if(debug) {
+    console.log('Leaves:', leaves);
+  }
+
+  return leaves.length;
+}
+
+
+export const CardValue = ({ value, JSONViewProps = {}, maxVisiblePropsInJSONView = 50, style = {}, id = undefined, mode = undefined, readOnly = true, executeActionOnEdit = (val) => { } }: CardValueProps) => {
     let fullHeight = false;
     const [data, setData] = useState(typeof value === 'string' ? value : String(value));
+    const [weight, setWeight] = useState(typeof value === 'object' ? countLeaves(value) : 0); //to measure object size and decide if json view is collapsed or not
 
     useEffect(() => {
         if (["markdown", "html"].includes(mode)) {
             setData(value);
         }
     }, [value, mode]);
+
+    useEffect(() => {
+        if(value && typeof value === 'object') {
+            const leaves = countLeaves(value);
+            console.log('Leaves count for value in CardValue:', leaves);
+            setWeight(leaves);
+        }
+    }, [value]);
 
     if (mode === 'markdown') {
         return <Markdown mih="160px" width={"100%"} readOnly={readOnly} data={data} setData={(val) => { setData(val); if (executeActionOnEdit) { executeActionOnEdit(val) } }} />
@@ -39,7 +76,7 @@ export const CardValue = ({ value, style = {}, id = undefined, mode = undefined,
     //check if value is string, number or boolean
     if (!['string', 'number', 'boolean'].includes(typeof value)) {
         return <ScrollView className="no-drag" mt="20px" mb={"10px"} width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
-            <JSONView src={value} />
+            <JSONView src={value} collapsed={weight > maxVisiblePropsInJSONView} {...JSONViewProps} />
         </ScrollView>
     }
     value = typeof value === 'string' ? value : String(value)
