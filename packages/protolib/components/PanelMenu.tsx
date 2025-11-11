@@ -16,11 +16,9 @@ import { PanelMenuItem } from './PanelMenuItem';
 import { SelectList } from './SelectList';
 import { useQueryState } from '../next'
 import { useThemeSetting } from '@tamagui/next-theme'
+import { getIcon } from './InternalIcon';
 
-const opacity = 0.8
-const strokeWidth = 2
-const color = 'var(--gray9)'
-const size = 20
+
 
 const appId = process.env.NEXT_PUBLIC_APP_ID;
 
@@ -45,7 +43,7 @@ const isTabSelected = (subtabs, shortedMatch) => subtabs.some((subtab) => {
 
 const getShortestMatch = (tabs: string[], pathname: string, searchParams): string | null => {
     const queryStr = searchParams.toString()
-    
+
     let filteredTabs = tabs.filter(href => isSubtabMatch(href, pathname)).sort((a, b) => a.length - b.length);;
     if (filteredTabs.length == 1) return filteredTabs[0];
     else if (filteredTabs.length > 1) {
@@ -53,25 +51,6 @@ const getShortestMatch = (tabs: string[], pathname: string, searchParams): strin
         return filteredQueryTabs ? filteredQueryTabs[0] : filteredTabs[0];
     }
     return null
-}
-
-const InternalIcon = ({ name, color, size, opacity }) => <div
-    style={{
-        opacity: opacity,
-        width: size,
-        height: size,
-        backgroundColor: color,
-        WebkitMask: `url('/public/icons/${name}.svg') center / contain no-repeat`,
-        mask: `url('/public/icons/${name}.svg') center / contain no-repeat`,
-    }}
-></div>
-
-const getIcon = (Icon) => {
-    if (typeof Icon === "string") {
-        return <InternalIcon name={Icon} color={color} size={size} opacity={opacity} />
-    } else {
-        return <Icon color={color} size={size} opacity={opacity} strokeWidth={strokeWidth} />
-    }
 }
 
 const CreateDialog = ({ subtab }) => {
@@ -162,7 +141,7 @@ const Tabs = ({ tabs, environ, collapsed }: any) => {
         }
         return acc;
     }, []);
-    
+
     const hrefList = spreadSubtabs.map(subtab => getSubtabHref(subtab))
     const shortedMatch = getShortestMatch(hrefList, usePathname(), searchParams);
 
@@ -199,7 +178,7 @@ const Tabs = ({ tabs, environ, collapsed }: any) => {
                                 )}
                             </Accordion.Trigger>
                             <Accordion.Content position="relative" backgroundColor={"$backgroundTransparent"} pt={'$0'} pb={"$2"} >
-                                <Subtabs collapsed={collapsed} tabs={tabs} subtabs={tabContent} shortedMatch={shortedMatch}/>
+                                <Subtabs collapsed={collapsed} tabs={tabs} subtabs={tabContent} shortedMatch={shortedMatch} />
                             </Accordion.Content>
                         </Accordion.Item>
                     </Accordion>
