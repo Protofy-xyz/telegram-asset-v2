@@ -76,7 +76,7 @@ export const CardValue = ({ value, JSONViewProps = {}, maxVisiblePropsInJSONView
     //check if value is string, number or boolean
     if (!['string', 'number', 'boolean'].includes(typeof value)) {
         return <ScrollView className="no-drag" mt="20px" mb={"10px"} width="calc(100% - 20px)" f={1} bg="$bgContent" borderRadius="$3">
-            <JSONView src={value} collapsed={weight > maxVisiblePropsInJSONView} {...JSONViewProps} />
+            <JSONView src={value} collapsed={weight > maxVisiblePropsInJSONView ? 1 : undefined} {...JSONViewProps} />
         </ScrollView>
     }
     value = typeof value === 'string' ? value : String(value)
