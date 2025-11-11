@@ -1,15 +1,19 @@
-import { useState, useEffect } from "react";
-import { Sparkles, X, Maximize, Minimize, MessageSquare, Bot } from "@tamagui/lucide-icons";
+import { useState, useEffect, ComponentType } from "react";
+import { Sparkles, X, Maximize, Minimize, Bot, ChevronDown } from "@tamagui/lucide-icons";
 import { Tinted } from "./Tinted";
 import { Chat } from "./Chat";
-import { YStack, Button, XStack, Paragraph, Spinner } from "@my/ui";
-import { API } from 'protobase'
-
+import { YStack, Button, XStack, Paragraph, Spinner, Accordion, SizableText, Square } from "@my/ui";
+import { API } from "protobase";
+import { getIcon } from "./InternalIcon";
 
 type Agent = {
   name: string;
   target: string;
+  icon?: string | null;
+  tags?: string[];
 };
+
+const UNTITLED_GROUP = "Agents";
 
 export const BubbleChat = () => {
   const [isChatVisible, setIsChatVisible] = useState(false);
@@ -19,23 +23,21 @@ export const BubbleChat = () => {
   const [bots, setBots] = useState<Agent[]>([]);
   const [loadingBots, setLoadingBots] = useState(true);
 
-
   useEffect(() => {
     const fetchBots = async () => {
       try {
         const response = await API.get("/api/core/v1/boards/");
         if (response.isLoaded) {
           const items = Array.isArray(response.data?.items) ? response.data.items : [];
-
           const parsed = items
             .map((b: any) => {
               const name = b?.name ?? "";
               const target = b?.inputs?.default ?? null;
-
-              return (name && target) ? { name, target } : null;
+              const icon = b?.icon ?? null;
+              const tags = Array.isArray(b?.tags) ? b.tags : [];
+              return name && target ? ({ name, target, icon, tags } as Agent) : null;
             })
-            .filter(Boolean);
-
+            .filter(Boolean) as Agent[];
           setBots(parsed);
           setSelectedBot(parsed[0] || null);
         } else if (response.isError) {
@@ -64,11 +66,20 @@ export const BubbleChat = () => {
 
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
-  const showMenu = true
-  console.log({ isChatLoaded, selectedBot })
+  // Agrupar por tags
+  const groups = bots.reduce((acc, bot) => {
+    const ts = bot.tags && bot.tags.length ? bot.tags : [UNTITLED_GROUP];
+    for (const t of ts) {
+      if (!acc[t]) acc[t] = [];
+      acc[t].push(bot);
+    }
+    return acc;
+  }, {} as Record<string, Agent[]>);
+  const orderedGroupNames = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+
   return (
     <>
-      {/* FAB principal */}
+      {/* FAB */}
       <Tinted>
         <Button
           position="absolute"
@@ -115,73 +126,110 @@ export const BubbleChat = () => {
         overflow="hidden"
         display={isChatVisible ? "flex" : "none"}
       >
+        {/* Sidebar */}
+        <YStack
+          width={240}
+          backgroundColor="var(--bgPanel)"
+          borderRightWidth={1}
+          borderRightColor="$gray6"
+          overflow="auto"
+          p="$3"
+          gap="$2"
+        >
+          <Paragraph mb="$3" color="$color11" fontWeight="700">
+            Chatbots
+          </Paragraph>
 
-        {showMenu && (
-          <YStack
-            width={220}
-            backgroundColor="var(--bgPanel)"
-            borderRightWidth={1}
-            borderRightColor="$gray6"
-            gap="$2"
-            overflow="auto"
-            p="$3"
-          >
-            <Paragraph mb="$4" color="$color11" fontWeight="700">
-              Chatbots
+          {loadingBots ? (
+            <YStack f={1} ai="center" jc="center" mt="$5">
+              <Spinner size="large" color="$color8" />
+            </YStack>
+          ) : bots.length === 0 ? (
+            <Paragraph textAlign="center" size="$4" color="$color11">
+              No chatbots available
             </Paragraph>
-            {loadingBots ? (
-              <YStack f={1} ai="center" jc="center" mt="$5">
-                <Spinner size="large" color="$color8" />
-              </YStack>
-            ) : (
-              bots && bots.length > 0
-                ? <>
-                  {bots.map((bot, index) => {
-                    const isActive = selectedBot?.name === bot.name;
-                    return (
-                      <Tinted key={bot.name}>
-                        <Button
-                          f={1}
-                          mih="$4"
-                          mah="$4"
-                          overflow="hidden"
-                          icon={<Bot size={"$1"} color={isActive && "$color10"} />}
-                          jc="flex-start"
-                          bc={!isActive ? "transparent" : "$color2"}
-                          onPress={() => setSelectedBot(bot)}
-                        >{bot.name}</Button>
-                      </Tinted>
-                    );
-                  })
-                  }
-                </>
-                : <Paragraph textAlign="center" size="$4" color="$color11">No chatbots available</Paragraph>
-            )}
-          </YStack>
-        )}
+          ) : (
+            <Accordion type="multiple"
+              defaultValue={orderedGroupNames.map((_, i) => `g${i}`)}
+              collapsible
+            >
+              {orderedGroupNames.map((groupName, idx) => {
+                const list = groups[groupName]!;
+                return (
+                  <Accordion.Item key={groupName} value={`g${idx}`}>
+                    <Accordion.Trigger
+                      p="$2"
+                      br="$4"
+                      bw={0}
+                      backgroundColor="$backgroundTransparent"
+                      focusStyle={{ backgroundColor: "$backgroundTransparent" }}
+                      hoverStyle={{ backgroundColor: "$backgroundTransparent" }}
+                      flexDirection="row"
+                      justifyContent="space-between"
+                    >
+                      {({ open }) => (
+                        <XStack f={1} h="36px" ai="center" px="$2" br="$4">
+                          <SizableText f={1} fontWeight="700" size="$4" color="$color11">
+                            {groupName}
+                          </SizableText>
+                          <Square animation="bouncy" rotate={open ? "180deg" : "0deg"}>
+                            <ChevronDown size={18} color="var(--gray9)" />
+                          </Square>
+                        </XStack>
+                      )}
+                    </Accordion.Trigger>
+
+                    <Accordion.Content pt="$1" pb="$2" p="$0" backgroundColor="transparent"
+                    >
+                      <YStack gap="$1">
+                        {list.map((bot) => {
+                          const isActive = selectedBot?.name === bot.name;
+                          return (
+                            <Tinted key={`${groupName}-${bot.name}`}>
+                              <Button
+                                f={1}
+                                mih="$4"
+                                mah="$4"
+                                overflow="hidden"
+                                icon={getIcon(bot.icon, {
+                                  color: isActive ? "var(--color10)" : "var(--color11)",
+                                  size: 18,
+                                })}
+                                jc="flex-start"
+                                bc={isActive ? "$color2" : "transparent"}
+                                hoverStyle={{ bc: "$color2" }}
+                                onPress={() => setSelectedBot(bot)}
+                              >
+                                {bot.name}
+                              </Button>
+                            </Tinted>
+                          );
+                        })}
+                      </YStack>
+                    </Accordion.Content>
+                  </Accordion.Item>
+                );
+              })}
+            </Accordion>
+          )}
+        </YStack>
 
         {/* Área del chat */}
         <YStack flex={1} position="relative">
-          {
-            isChatLoaded && selectedBot
-            && <Chat agent={selectedBot.name} />
-          }
-          {
-            !selectedBot
-            && <YStack flex={1} ai="center" jc="center" gap="$4">
+          {isChatLoaded && selectedBot && <Chat agent={selectedBot.name} />}
+          {!selectedBot && (
+            <YStack flex={1} ai="center" jc="center" gap="$4">
               <Bot size="$6" color="$color11" />
               <Paragraph maw="300px" textAlign="center" size="$4" color="$color11" ml="$2">
-                {
-                  !loadingBots && (!bots || bots.length <= 0)
-                    ? "To get started, create an AI agent board using one of the available templates"
-                    : "Select a chatbot to get started."
-                }
+                {!loadingBots && bots.length <= 0
+                  ? "To get started, create an AI agent board using one of the available templates"
+                  : "Select a chatbot to get started."}
               </Paragraph>
             </YStack>
-          }
+          )}
         </YStack>
-      </XStack >
-    </ >
+      </XStack>
+    </>
   );
 };
 
