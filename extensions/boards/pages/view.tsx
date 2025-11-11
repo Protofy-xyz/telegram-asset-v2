@@ -40,6 +40,7 @@ import { ActionCard } from '../components/ActionCard'
 import { VersionTimeline } from '../VersionTimeline'
 import { useBoardVersions, latestVersion } from '../utils/versions'
 import { GraphView } from './graphView'
+import { useEventEffect } from '@extensions/events/hooks'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -291,7 +292,17 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
   const breakpointCancelRef = useRef(null) as any
   const dedupRef = useRef() as any
   const initialized = useRef(false)
+
   const [items, setItems] = useState(board.cards && board.cards.length ? board.cards : []);
+  const [boardCode, setBoardCode] = useState(JSON.stringify(board))
+
+  useEffect(() => {
+    console.log('board changed, updating items', board)
+    setItems(board.cards && board.cards.length ? board.cards : []);
+    setBoardCode(JSON.stringify(board));
+    window['board'] = board;
+  }, [board])
+
   const [, setLayers] = useLayers();
 
   useEffect(() => {
@@ -321,7 +332,7 @@ export const Board = ({ board, icons, forceViewMode = undefined }: { board: any,
   const [currentCard, setCurrentCard] = useState(null)
   const [editedCard, setEditedCard] = useState(null)
   const [editCode, setEditCode] = useState('')
-  const [boardCode, setBoardCode] = useState(JSON.stringify(board))
+
   const [hasChanges, setHasChanges] = useState(false);
 
   const [errors, setErrors] = useState<string[]>([])
@@ -1150,6 +1161,15 @@ export const BoardView = ({ workspace, pageState, initialItems, itemData, pageSe
   const [iconsData, setIconsData] = useState(icons ?? getPendingResult('pending'))
   usePendingEffect((s) => { API.get({ url: `/api/core/v1/icons` }, s) }, setIconsData, icons)
   useIsAdmin(() => '/workspace/auth/login?return=' + document?.location?.pathname + (document?.location?.search ?? ''))
+
+  useEventEffect((payload, msg) => {
+    const boardInfo = msg?.parsed?.payload?.data
+    console.log('Received board update event for board: ', boardInfo.name)
+    setBoardData({
+      status: 'loaded',
+      data: boardInfo
+    })
+  }, { path: 'boards/update/'+params.board })
 
   return (
     <BoardViewLoader
