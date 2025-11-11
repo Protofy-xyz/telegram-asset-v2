@@ -253,22 +253,20 @@ const getDB = (path, req, session, context?) => {
                     const filePath = `${BoardsDir(getRoot(req))}${boardId}.json`;
                     const fileContent = await fs.readFile(filePath, 'utf8');
                     const decodedContent = JSON.parse(fileContent);
+
                     decodedContent.inputs = {
                         ...(decodedContent.inputs || {}),
                         default: `/api/agents/v1/${boardId}/agent_input`
                     };
+
                     const userType = session?.user?.type;
                     const isAllVisible = req.query.all === 'true';
-                    const isSystem = !!decodedContent?.tags?.includes('system');
                     const usersList = Array.isArray(decodedContent?.users) ? decodedContent.users : null;
 
                     let allowed: boolean;
-
-                    if (isSystem && !isAllVisible) {
-                        // System boards: show ONLY if a whitelist exists and includes this user type
-                        allowed = !!(usersList && userType && usersList.includes(userType));
+                    if (isAllVisible) {
+                        allowed = true;
                     } else {
-                        // Non-system boards: if whitelist exists, enforce it; if not, allow
                         allowed = usersList ? !!(userType && usersList.includes(userType)) : true;
                     }
 
@@ -276,8 +274,9 @@ const getDB = (path, req, session, context?) => {
 
                     const enriched = JSON.stringify(decodedContent, null, 4);
                     yield [boardId, enriched];
+
                 } catch (_e) {
-                    // ignore malformed/unreadable boards to keep behavior consistent
+
                 } finally {
                     releaseLock(lockKey);
                 }

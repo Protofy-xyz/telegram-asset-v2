@@ -34,8 +34,16 @@ export const BubbleChat = () => {
               const name = b?.name ?? "";
               const target = b?.inputs?.default ?? null;
               const icon = b?.icon ?? null;
-              const tags = Array.isArray(b?.tags) ? b.tags : [];
-              return name && target ? ({ name, target, icon, tags } as Agent) : null;
+              const originalTags = Array.isArray(b?.tags) ? b.tags.filter(Boolean) : [];
+              
+              const tagsNoSystem = originalTags.filter((t: string) => t !== "system"); // Quita 'system' del set de tags
+
+              const hasOnlySystem = originalTags.length > 0 && tagsNoSystem.length === 0; // Si el único tag era 'system', no lo mostramos en el menú
+              if (hasOnlySystem) return null;
+
+              return name && target
+                ? ({ name, target, icon, tags: tagsNoSystem } as Agent)
+                : null;
             })
             .filter(Boolean) as Agent[];
           setBots(parsed);

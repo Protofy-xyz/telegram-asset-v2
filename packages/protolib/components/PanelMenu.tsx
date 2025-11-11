@@ -147,43 +147,45 @@ const Tabs = ({ tabs, environ, collapsed }: any) => {
 
     return (tabs ?
         <YStack f={1}>
-            {Object.keys(tabs).map((tab, index) => {
-                if (tabs[tab].length === undefined) {
-                    return <Subtabs tabs={tabs} subtabs={[tabs[tab]]} />
-                }
-                const tabContent = tabs[tab].filter(t => !t.visibility || t.visibility.includes(environ))
-                if (!tabContent.length) return <></>
-                return (
-                    <Accordion value={collapsed ? ("a" + index) : undefined} collapsible={!collapsed} defaultValue={"a" + index} br={"$6"} overflow="hidden" type="single" key={index}>
-                        <Accordion.Item value={"a" + index}>
-                            <Accordion.Trigger
-                                p={"$2"}
-                                backgroundColor={"$backgroundTransparent"}
-                                focusStyle={{ backgroundColor: "$backgroundTransparent" }}
-                                hoverStyle={{ backgroundColor: '$backgroundTransparent' }}
-                                bw={0} flexDirection="row" justifyContent="space-between">
-                                {({ open }) => (
-                                    //@ts-ignore
-                                    <XStack f={1} h="40px" jc="center" p={"$2"} animateOnly={['backgroundColor']} animation="bouncy" br="$4" backgroundColor={isTabSelected(tabContent, shortedMatch) && !open ? (resolvedTheme == "dark" ? '$color2' : '$color4') : '$backgroundTransparent'}>
-                                        {!collapsed && <SizableText f={1} ml={"$2.5"} fontWeight="bold" size={"$5"}>{tab}</SizableText>}
-                                        {/* @ts-ignore */}
-                                        <Square animation="bouncy" rotate={open ? '180deg' : '0deg'}>
-                                            {
-                                                collapsed
-                                                    ? <Minus color="$gray6" size={20} />
-                                                    : <ChevronDown color={isTabSelected(tabContent, shortedMatch) && !open ? '$color8' : '$gray9'} size={20} />
-                                            }
-                                        </Square>
-                                    </XStack>
-                                )}
-                            </Accordion.Trigger>
-                            <Accordion.Content position="relative" backgroundColor={"$backgroundTransparent"} pt={'$0'} pb={"$2"} >
-                                <Subtabs collapsed={collapsed} tabs={tabs} subtabs={tabContent} shortedMatch={shortedMatch} />
-                            </Accordion.Content>
-                        </Accordion.Item>
-                    </Accordion>
-                )
-            })}
+            {Object.keys(tabs)
+                .filter((k) => String(k).trim().toLowerCase() !== 'system')
+                .map((tab, index) => {
+                    if (tabs[tab].length === undefined) {
+                        return <Subtabs tabs={tabs} subtabs={[tabs[tab]]} />
+                    }
+                    const tabContent = tabs[tab].filter(t => !t.visibility || t.visibility.includes(environ))
+                    if (!tabContent.length) return <></>
+                    return (
+                        <Accordion value={collapsed ? ("a" + index) : undefined} collapsible={!collapsed} defaultValue={"a" + index} br={"$6"} overflow="hidden" type="single" key={index}>
+                            <Accordion.Item value={"a" + index}>
+                                <Accordion.Trigger
+                                    p={"$2"}
+                                    backgroundColor={"$backgroundTransparent"}
+                                    focusStyle={{ backgroundColor: "$backgroundTransparent" }}
+                                    hoverStyle={{ backgroundColor: '$backgroundTransparent' }}
+                                    bw={0} flexDirection="row" justifyContent="space-between">
+                                    {({ open }) => (
+                                        //@ts-ignore
+                                        <XStack f={1} h="40px" jc="center" p={"$2"} animateOnly={['backgroundColor']} animation="bouncy" br="$4" backgroundColor={isTabSelected(tabContent, shortedMatch) && !open ? (resolvedTheme == "dark" ? '$color2' : '$color4') : '$backgroundTransparent'}>
+                                            {!collapsed && <SizableText f={1} ml={"$2.5"} fontWeight="bold" size={"$5"}>{tab}</SizableText>}
+                                            {/* @ts-ignore */}
+                                            <Square animation="bouncy" rotate={open ? '180deg' : '0deg'}>
+                                                {
+                                                    collapsed
+                                                        ? <Minus color="$gray6" size={20} />
+                                                        : <ChevronDown color={isTabSelected(tabContent, shortedMatch) && !open ? '$color8' : '$gray9'} size={20} />
+                                                }
+                                            </Square>
+                                        </XStack>
+                                    )}
+                                </Accordion.Trigger>
+                                <Accordion.Content position="relative" backgroundColor={"$backgroundTransparent"} pt={'$0'} pb={"$2"} >
+                                    <Subtabs collapsed={collapsed} tabs={tabs} subtabs={tabContent} shortedMatch={shortedMatch} />
+                                </Accordion.Content>
+                            </Accordion.Item>
+                        </Accordion>
+                    )
+                })}
         </YStack> : <></>
     );
 };
