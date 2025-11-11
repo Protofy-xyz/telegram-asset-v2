@@ -532,8 +532,17 @@ function Widget({board, state}) {
 
 
         async get(key) {
-            //NOT USED, replaced by a custom api
-
+            //ONLY USED TO CHECK FOR EXISTENCE WHEN SAVING; BUT NOT TO READ CONTENT. READ IS HANDLED IN A CUSTOM WAY LATER IN THIS FILE.
+            const filePath = BoardsDir(getRoot(req)) + key + ".json"
+            await acquireLock(filePath);
+            try {
+                const fileContent = await fs.readFile(filePath, 'utf8')
+                return fileContent
+            } catch (error) {
+                throw new Error("File not found")
+            } finally {
+                releaseLock(filePath);
+            }
         }
     };
 
