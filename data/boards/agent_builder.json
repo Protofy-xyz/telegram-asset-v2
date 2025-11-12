@@ -155,7 +155,13 @@
             "displayIcon": false,
             "autoResponsive": false,
             "displayTitle": false,
-            "layer": "agent"
+            "layer": "agent",
+            "links": [
+                {
+                    "name": "agent_prepare",
+                    "type": "post"
+                }
+            ]
         },
         {
             "key": "action_1761187544907",
@@ -181,7 +187,7 @@
             "layer": "agent",
             "links": [
                 {
-                    "name": "agent_prepare",
+                    "name": "reset",
                     "type": "post"
                 }
             ]
@@ -202,7 +208,8 @@
                 "actions": "actions visible for the AI to run",
                 "values": "values for the AI to see",
                 "allow_execution": "Allow this AI action to execute other actions",
-                "debug": "returns back the prompt for debugging purposes"
+                "debug": "returns back the prompt for debugging purposes",
+                "preprompt": "preprompt passed to the llm"
             },
             "configParams": {
                 "prompt": {
@@ -212,7 +219,8 @@
                 },
                 "full_board_view": {
                     "defaultValue": "true",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "visible": true
                 },
                 "actions": {
                     "visible": true,
@@ -244,9 +252,14 @@
                     "type": "boolean"
                 },
                 "debug": {
-                    "visible": false,
+                    "visible": true,
                     "defaultValue": "false",
                     "type": "boolean"
+                },
+                "preprompt": {
+                    "visible": true,
+                    "defaultValue": "If the user asks to create a card in a board, you need to get a json body of a card, from the available_system_cards palette and use it to create the card using add_card_to_agent_board.\n\nSo for example, if the user asks to add a webcam card, you look into available_system_cards for a card named 'webcam', get the json body, and use it to create the bard using add_card_to_agent_board.\n\nits very important to get the entire card json to create the card. You can adjust things, but you need to include the entire json, with html, rules name, width and everything else.",
+                    "type": "string"
                 }
             },
             "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
@@ -262,8 +275,8 @@
                 }
             ],
             "color": "var(--color7)",
-            "theme": "dark",
-            "domId": "e9d0d1e8-c328-484e-888d-49f092a7acf2",
+            "theme": "light",
+            "domId": "d134a8d3-6231-44c2-9df8-9e33380de823",
             "cardState": {}
         },
         {
@@ -309,7 +322,7 @@
                 },
                 "values": {
                     "visible": true,
-                    "defaultValue": "[]",
+                    "defaultValue": "[\"add_card_to_agent_board\",\"read_agent_board\",\"create agent\",\"user_request\"]",
                     "type": "array",
                     "cardSelector": true,
                     "cardSelectorType": "value",
@@ -344,7 +357,7 @@
             ],
             "color": "var(--color7)",
             "theme": "light",
-            "domId": "52af1a10-5ab4-4087-8609-3f0b8bdb6fbd",
+            "domId": "af83212a-0758-4ec8-8307-cf311a6c865f",
             "cardState": {}
         },
         {
@@ -406,7 +419,7 @@
             "height": 7,
             "icon": "scan-eye",
             "type": "value",
-            "name": "cards",
+            "name": "available_system_cards",
             "description": "A reusable card that observes value changes on the board.\n\n  #### Key Features\n  - Real time updates.\n  - Customize parameters.\n  - Rule execution on each value change.\n  - Customize the card view (UI/render).",
             "params": {
                 "input": "input to observe"
@@ -462,21 +475,21 @@
             "configParams": {
                 "agent_name": {
                     "visible": true,
-                    "defaultValue": "wefe",
+                    "defaultValue": "",
                     "type": "any"
                 },
                 "card_data": {
                     "visible": true,
-                    "defaultValue": "{\n  \"width\": 2,\n  \"height\": 10,\n  \"icon\": \"bot-message-square\",\n  \"type\": \"action\",\n  \"name\": \"agent_call\",\n  \"displayResponse\": true,\n  \"displayIcon\": true,\n  \"params\": {\n    \"board\": \"board name where the target agent is located\",\n    \"name\": \"name of the agent\"\n  },\n  \"configParams\": {\n    \"board\": {\n      \"visible\": true,\n      \"defaultValue\": \"\",\n      \"type\": \"string\"\n    },\n    \"name\": {\n      \"visible\": false,\n      \"defaultValue\": \"agent_input\",\n      \"type\": \"string\"\n    }\n  },\n  \"description\": \"Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\\n\\n  #### Key Features\\n  - Run actions from rules.\\n  - Chain/trigger other action cards.\\n  - Parameterized execution.\\n  - Customize parameters.\\n  - Customize the card view (UI/render).\",\n  \"rulesCode\": \"const { board: reqBoardName, name: reqName, ...reqParams } = params;\\r\\n\\r\\nconst queryString = new URLSearchParams({\\r\\n  ...reqParams,\\r\\n  token\\r\\n}).toString();\\r\\n\\r\\nreturn await context.apis.fetch(\\r\\n  'get',\\r\\n  `/api/agents/v1/${reqBoardName}/${reqName}?${queryString}`\\r\\n);\",\n  \"html\": \"//@card/react\\n\\nfunction Widget(card) {\\n  const value = card.value;\\n\\n  const content = <YStack f={1}  mt={\\\"20px\\\"} ai=\\\"center\\\" jc=\\\"center\\\" width=\\\"100%\\\">\\n      {card.icon && card.displayIcon !== false && (\\n          <Icon name={card.icon} size={48} color={card.color}/>\\n      )}\\n      {card.displayResponse !== false && (\\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \\\"N/A\\\"} />\\n      )}\\n  </YStack>\\n\\n  return (\\n      <Tinted>\\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\\n          <ActionCard data={card}>\\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\\n          </ActionCard>\\n        </ProtoThemeProvider>\\n      </Tinted>\\n  );\\n}\\n\"\n}",
+                    "defaultValue": "",
                     "type": "json"
                 },
                 "layer": {
-                    "visible": true,
+                    "visible": false,
                     "defaultValue": "base",
                     "type": "string"
                 }
             },
-            "description": "YouAdds a card to an agent board.\n\nCards go by default to the base layer.\n\nYou can add custom made cards from scratch, or use cards from the system palette.\nIf you don't know how to create your card, look at how the shape of the cards in the system palette\n\n",
+            "description": "Adds a card to an agent board.\n\nUse this to add cards to boards (or agent boards, or agents, its all the same thing). You can use this to add cards to boards/agents.\n\nYou can add custom made cards from scratch, or use cards from the system palette.\nIf you don't know how to create your card, look at how the shape of the cards in the system palette\n\n",
             "customName": "add_card_to_board",
             "layer": "base",
             "editRulesInLowCode": false,
@@ -1029,8 +1042,8 @@
     },
     "icon": "bot-message-square",
     "autopilot": true,
-    "version": 109,
-    "savedAt": 1762904953797,
+    "version": 132,
+    "savedAt": 1762907206492,
     "tags": [
         "system",
         "vento"

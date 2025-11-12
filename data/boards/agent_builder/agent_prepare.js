@@ -171,6 +171,10 @@ if the user asks what do you see, you can tell the user what board_states do you
 each <board_states> entry is a key -> value entry, so: <x>y</x> inside <board_states> means "the state named x has the value y"
 </instructions>
 
+<special_instructions>
+${params.preprompt}
+</special_instructions>
+
 ${boardStatesXml}
 
 ${promptXml}
@@ -178,6 +182,7 @@ ${promptXml}
 
 if(params.debug) return message_prompt
 const response = await context.chatgpt.prompt({
+  model: 'gpt-4.1',
   message: message_prompt,
   conversation: await context.chatgpt.getSystemPrompt({
     prompt: `You can analyze images provided in the same user turn. 

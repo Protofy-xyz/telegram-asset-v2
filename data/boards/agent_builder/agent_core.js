@@ -178,6 +178,7 @@ ${promptXml}
 
 if(params.debug) return message_prompt
 const response = await context.chatgpt.prompt({
+  model: 'gpt-4.1-mini',
   message: message_prompt,
   conversation: await context.chatgpt.getSystemPrompt({
     prompt: `You can analyze images provided in the same user turn. 
