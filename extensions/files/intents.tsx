@@ -32,6 +32,7 @@ import { Rules } from 'protolib/components/autopilot/Rules'
 import { Panel, PanelGroup } from "react-resizable-panels";
 import CustomPanelResizeHandle from 'protolib/components/MainPanel/CustomPanelResizeHandle'
 import { useSettingValue } from '@extensions/settings/hooks';
+import {loadEsphomeHelpers} from '@extensions/esphome/utils'
 
 const GLTFViewer = dynamic(() => import('protolib/adminpanel/features/components/ModelViewer'), {
   loading: () => <Center>
@@ -435,7 +436,7 @@ export const CodeView = ({
   </AsyncView> : content
 }
 
-const MonacoViewer = ({ path, extraIcons }) => {
+const MonacoViewer = ({ path, extraIcons, ...props }) => {
   const [fileContent] = useFileFromAPI(path);
   const sourceCode = useRef('');
   const { resolvedTheme } = useThemeSetting();
@@ -468,6 +469,7 @@ const MonacoViewer = ({ path, extraIcons }) => {
           darkMode={resolvedTheme === 'dark'}
           sourceCode={fileContent.data}
           onChange={handleChange}
+          {...props}
         />
       </XStack>
     </AsyncView>
@@ -526,6 +528,12 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
     return { component: <JSONViewer {...data} />, supportIcons: true }
   } else if (mime == 'application/javascript' || mime == 'video/mp2t') {
     return { component: <FlowsViewer {...data} />, supportIcons: true }
+  } else if((mime && mime.includes("yaml") || data.path.endsWith("yaml") || data.path.endsWith("yml")) && data.path.startsWith("data/devices")){
+    return {
+      component: <MonacoViewer {...data} onLoad={loadEsphomeHelpers} defaultLanguage="esphome"/>,
+      widget: 'text',
+      supportIcons: true
+    }
   } else if ((data.path).endsWith(".tsx")) {
     return {
       component: <MonacoViewer {...data} />,
