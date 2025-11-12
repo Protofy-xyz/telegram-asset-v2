@@ -1,4 +1,4 @@
-import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button, TooltipSimple, Checkbox } from '@my/ui';
+import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button, TooltipSimple, Checkbox, } from '@my/ui';
 import { Tinted } from '../Tinted';
 import { Sparkles, Cog, Type, LayoutTemplate, AlertTriangle, Check } from "@tamagui/lucide-icons";
 import { BoardModel } from '@extensions/boards/boardsSchemas';
@@ -8,6 +8,9 @@ import { ItemMenu } from '../ItemMenu';
 import { useState } from 'react';
 import { API, set, setErrorMap } from 'protobase';
 import { Toggle } from '../Toggle';
+import { Workflow, LayoutDashboard, Presentation } from "@tamagui/lucide-icons";
+import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
+
 
 
 
@@ -33,21 +36,35 @@ export default ({ element, width, onDelete, ...props }: any) => {
 
     const router = useRouter();
 
+    const navIcons = [
+        { key: 'graph' as const, label: 'Graph', Icon: Workflow },
+        { key: 'board' as const, label: 'Dashboard', Icon: LayoutDashboard },
+        { key: 'ui' as const, label: 'Presentation', Icon: Presentation },
+    ];
+    const goToView = (key: 'graph' | 'board' | 'ui', e: any) => {
+        e.stopPropagation?.();
+        e.preventDefault?.();
+
+        const boardName = board.get('name');
+        router.push(`/boards/view?board=${boardName}#${key}`);
+    };
+
+
 
     return (
-        <YStack 
-        cursor="pointer" 
-        bg="$bgPanel" 
-        elevation={4} 
-        br="$4" 
-        width={'100%'} 
-        f={1} 
-        display="flex" 
-        maxWidth={width ?? 474} 
-        p="$4" 
-        gap="$4" 
-        pointerEvents={editSettingsDialog || createTemplateDialog ? 'none' : 'auto'}
-        {...props} >
+        <YStack
+            cursor="pointer"
+            bg="$bgPanel"
+            elevation={4}
+            br="$4"
+            width={'100%'}
+            f={1}
+            display="flex"
+            maxWidth={width ?? 474}
+            p="$4"
+            gap="$4"
+            pointerEvents={editSettingsDialog || createTemplateDialog ? 'none' : 'auto'}
+            {...props} >
             {Array.isArray(board?.get('tags')) && board.get('tags').includes('system') && <Tinted>
                 <TooltipSimple label="This is a system agent if you edit or delete it, it may affect core functionality." delay={{ open: 500, close: 0 }} restMs={0}>
                     <XStack pos='absolute' gap="$2" right="14px" top="-10px" jc="center" ai="center" br="$2" bg="$yellow9" px="$2" py="$1">
@@ -103,6 +120,29 @@ export default ({ element, width, onDelete, ...props }: any) => {
                         ]}
                     />
                 </XStack>
+            </XStack>
+            <XStack
+                gap="$3"
+                ai="center"
+                jc="flex-start"
+                onClick={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                mb="$2"
+            >
+                <Tinted>
+                {navIcons.map(({ key, Icon, label }) => (
+                    <InteractiveIcon
+                        key={key}
+                        Icon={Icon}
+                        IconColor="var(--color10)"
+                        hoverStyle={{ bc: "var(--color5)" }}
+                        pressStyle={{ o: 0.8 }}
+                        size={30}
+                        tooltip={label}
+                        onClick={(e) => goToView(key, e)}
+                    />
+                ))}
+                </Tinted>
             </XStack>
             <YStack gap="$2">
                 <Text fow="600">Values</Text>
@@ -242,7 +282,7 @@ export default ({ element, width, onDelete, ...props }: any) => {
                                 }
                                 }
                             />
-                            <XStack ai="center" gap="$2" mt="$4" 
+                            <XStack ai="center" gap="$2" mt="$4"
                                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
                                 onMouseDown={(e) => { e.stopPropagation(); }}
                                 onPointerDown={(e) => { e.stopPropagation(); }}>

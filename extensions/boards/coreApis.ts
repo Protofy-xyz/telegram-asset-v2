@@ -13,7 +13,7 @@ import { Manager } from "./manager";
 import { dbProvider, getDBOptions } from 'protonode';
 import { acquireLock, releaseLock } from "./system/lock";
 import { registerCards } from "./system/cards";
-import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles } from "./system/boards";
+import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles, getBoardFilePath } from "./system/boards";
 
 import { getActions, handleBoardAction } from "./system/actions";
 import { get } from "http";
@@ -247,28 +247,27 @@ const getDB = (path, req, session, context?) => {
 
             const boards = await getBoards()
             for (const boardId of boards) {
-                const lockKey = BoardsDir(getRoot(req)) + boardId;
+                const lockKey = BoardsDir(getRoot(req)) + boardId + '.json';
                 await acquireLock(lockKey);
+   
                 try {
                     const filePath = `${BoardsDir(getRoot(req))}${boardId}.json`;
                     const fileContent = await fs.readFile(filePath, 'utf8');
                     const decodedContent = JSON.parse(fileContent);
+
                     decodedContent.inputs = {
                         ...(decodedContent.inputs || {}),
                         default: `/api/agents/v1/${boardId}/agent_input`
                     };
+
                     const userType = session?.user?.type;
                     const isAllVisible = req.query.all === 'true';
-                    const isSystem = !!decodedContent?.tags?.includes('system');
                     const usersList = Array.isArray(decodedContent?.users) ? decodedContent.users : null;
 
                     let allowed: boolean;
-
-                    if (isSystem && !isAllVisible) {
-                        // System boards: show ONLY if a whitelist exists and includes this user type
-                        allowed = !!(usersList && userType && usersList.includes(userType));
+                    if (isAllVisible) {
+                        allowed = true;
                     } else {
-                        // Non-system boards: if whitelist exists, enforce it; if not, allow
                         allowed = usersList ? !!(userType && usersList.includes(userType)) : true;
                     }
 
@@ -276,8 +275,9 @@ const getDB = (path, req, session, context?) => {
 
                     const enriched = JSON.stringify(decodedContent, null, 4);
                     yield [boardId, enriched];
+
                 } catch (_e) {
-                    // ignore malformed/unreadable boards to keep behavior consistent
+
                 } finally {
                     releaseLock(lockKey);
                 }
@@ -1253,6 +1253,25 @@ export default async (app, context) => {
             res.send({ result: 'already_stopped', message: "Board already stopped or not running", board: req.params.boardId });
         }
 
+    })
+
+    app.post('/api/core/v1/boards/:boardId/management/add/card', requireAdmin(), async (req, res) => {
+        const boardId = req.params.boardId;
+        const cardData = req.body.card;
+        //read board file using locks
+        
+        const boardData = await API.get('/api/core/v1/boards/' + boardId + '?token=' + getServiceToken());
+        if(boardData.status == 'loaded'){
+            const board = boardData.data;
+            if (!board.cards || !Array.isArray(board.cards)) {
+                board.cards = [];
+            }
+            board.cards.push(cardData);
+            await API.post('/api/core/v1/boards/' + boardId + '?token=' + getServiceToken(), board);
+            res.send({ status: 'done', data: cardData });
+        } else {
+            res.status(500).send({ error: "Error adding card" });
+        }
     })
 
     app.get('/api/core/v1/board/cardresetgroup', requireAdmin(), async (req, res) => {
