@@ -472,7 +472,9 @@ const getDB = (path, req, session) => {
             await promisesFs.mkdir(dataDir(getRoot(req)) + key, { recursive: true })
             try{
                 await promisesFs.writeFile(filePath, value)
-                await promisesFs.writeFile(ymlPath, "# Auto-generated config file")
+                if (!fs.existsSync(ymlPath)) {
+                    await promisesFs.writeFile(ymlPath, "# Auto-generated config file")
+                }
             }catch(error){
                 console.error("Error creating file: " + filePath, error)
             }
