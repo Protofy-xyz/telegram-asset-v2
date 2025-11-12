@@ -509,7 +509,8 @@ export default {
         text: "Edit config file",
         icon: Pencil,
         action: (element) => { replace('editFile', element.getConfigFile()) },
-        isVisible: (element) => element.isInitialized() && element.getConfigFile()
+        // isVisible: (element) => element.isInitialized() && element.getConfigFile()
+        isVisible: (element) => true
       },
       {
         text: "Upload config file",
