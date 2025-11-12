@@ -88,12 +88,8 @@ const SecondSlide = ({ selected, setName, errorMessage = '' }) => {
   </YStack>
 }
 
-const isSystemOnly = (item: any) => {
-  const tags = Array.isArray(item?.tags) ? item.tags : [];
-  const tagsNorm = tags.map((t) => String(t).trim().toLowerCase()).filter(Boolean);
-  const tagsNoSystem = tagsNorm.filter((t) => t !== "system");
-  return tagsNorm.length > 0 && tagsNoSystem.length === 0;
-};
+const hasSystemTag = (item: any) =>
+  Array.isArray(item?.tags) && item.tags.includes("system");
 
 export default {
   boards: {
@@ -181,8 +177,7 @@ export default {
           pageState={pageState}
           dataTableGridProps={{
             getCard: (element, width) => {
-              // hide system-only when all !== 'true'
-              if (query.all !== 'true' && isSystemOnly(element)) return null;
+              if (query.all !== 'true' && hasSystemTag(element)) return null;
 
               return (
                 <BoardPreview
