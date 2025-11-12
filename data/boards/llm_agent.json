@@ -130,7 +130,7 @@
                 },
                 "model": {
                     "visible": true,
-                    "defaultValue": "gpt-4o",
+                    "defaultValue": "gpt-4.1",
                     "type": "string"
                 },
                 "requestId": {
