@@ -360,6 +360,8 @@ function Widget(card) {
             layouts: emptyLayouts,
             cards,
             rules: [],
+            network: "core",
+            tags: ["system", "network"],
             autopilot: false,
             icon: 'router',
             savedAt: Date.now()
@@ -716,10 +718,7 @@ const registerActions = async () => {
                 })
             }
         }
-        if(deviceInfo.data.generateAssociatedBoard !== false){
-            console.log("Generating associated board for device: ", deviceInfo.data.name)
-            await generateDeviceBoard(`${deviceInfo.data.name}_device`, deviceInfo.data.name);
-        }
+        await generateDeviceBoard(`${deviceInfo.data.name}_device`, deviceInfo.data.name);
     }
 }
 
