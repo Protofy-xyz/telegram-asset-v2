@@ -60,7 +60,7 @@ export const addCard = async (options: {
         return await API.post(`/api/core/v1/cards/${group}/${tag}?token=`+options.token, {templateName, ...content}) 
     } else {
         ProtoMemDB('cards').set(group, tag, name, content)
-        setContext({ group: 'cards', tag: group, name: tag+'_'+name, value: content, emitEvent: true })
+        setContext({ group: 'cards', tag: group, name: tag+'_'+name, value: content?.defaults, emitEvent: true })
         // console.log('setting locally', value, 'for', group, tag, name)
         if(options.emitEvent) {
             // console.log('emitting event in: '+`${chunk}/${group}/${tag}/${name}/update`)
