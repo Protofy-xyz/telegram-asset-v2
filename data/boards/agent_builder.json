@@ -1,0 +1,1041 @@
+{
+    "name": "agent_builder",
+    "cards": [
+        {
+            "key": "action_1760800582118",
+            "width": 4,
+            "height": 20,
+            "icon": "globe",
+            "name": "agent_input",
+            "graphOrder": 1000,
+            "description": "A job queue with a list of pending jobs and a current job",
+            "type": "action",
+            "editorOptions": {},
+            "displayResponse": true,
+            "params": {
+                "item": "",
+                "action": "action to perform in the queue: push, pop, clear",
+                "response": ""
+            },
+            "configParams": {
+                "item": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "action": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "response": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "presets": {
+                "reply": {
+                    "description": "Sends a reply to the current job and makes the next item (if any) the current job. The reply should be specified in the response param",
+                    "configParams": {
+                        "action": {
+                            "visible": false,
+                            "defaultValue": "reply"
+                        },
+                        "item": {
+                            "visible": false
+                        },
+                        "response": {
+                            "visible": true
+                        }
+                    }
+                },
+                "skip": {
+                    "description": "Skips the current job. Do not use unless you know what you are doing.",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "skip"
+                        }
+                    }
+                },
+                "reset": {
+                    "description": "resets the queue state to empty and skip curret job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "clear"
+                        }
+                    }
+                },
+                "remove": {
+                    "description": "remove the element with the given index from the job queue",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "remove"
+                        },
+                        "item": {
+                            "visible": true,
+                            "defaultValue": 0,
+                            "type": "number"
+                        }
+                    }
+                },
+                "push": {
+                    "params": {
+                        "item": "item to push"
+                    },
+                    "description": "Adds a new job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "push"
+                        },
+                        "item": {
+                            "visible": true,
+                            "defaultValue": "",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "enableAgentInputMode": true,
+            "tokens": {},
+            "displayButton": false,
+            "manualAPIResponse": true,
+            "layer": "agent"
+        },
+        {
+            "key": "action_176081905123123",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "reply",
+            "displayResponse": false,
+            "displayIcon": false,
+            "params": {
+                "response": "response to send"
+            },
+            "configParams": {
+                "response": {
+                    "visible": false,
+                    "defaultValue": "board.agent_core",
+                    "type": "any"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "autoResponsive": false,
+            "displayTitle": true,
+            "layer": "agent"
+        },
+        {
+            "key": "action_1761067229271",
+            "width": 2,
+            "height": 6,
+            "icon": "message-square-text",
+            "type": "action",
+            "name": "reset",
+            "description": "Reset the values of a group of cards in the board",
+            "params": {
+                "included": "array of cards to include, or * for all",
+                "excluded": "array of cards to exclude"
+            },
+            "configParams": {
+                "included": {
+                    "visible": false,
+                    "defaultValue": "[\"*\"]",
+                    "type": "array"
+                },
+                "excluded": {
+                    "visible": false,
+                    "defaultValue": "[\"agent_input\", \"agent_core\", \"user_request\", \"agent_call\"]",
+                    "type": "array"
+                }
+            },
+            "displayResponse": false,
+            "buttonLabel": "reset",
+            "displayIcon": false,
+            "autoResponsive": false,
+            "displayTitle": false,
+            "layer": "agent"
+        },
+        {
+            "key": "action_1761187544907",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "user_request",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "input": "action input"
+            },
+            "configParams": {
+                "input": {
+                    "visible": false,
+                    "defaultValue": "board.agent_input.current.params",
+                    "type": "any"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "customName": "user_request",
+            "layer": "agent",
+            "links": [
+                {
+                    "name": "agent_prepare",
+                    "type": "post"
+                }
+            ]
+        },
+        {
+            "key": "action_1762564203492",
+            "width": 3,
+            "height": 18,
+            "icon": "sparkles",
+            "type": "action",
+            "name": "agent_prepare",
+            "displayResponse": true,
+            "editRulesInLowCode": false,
+            "editRulesInNaturalLanguage": false,
+            "params": {
+                "prompt": "",
+                "full_board_view": "if enabled, the AI will view all actions and values in the board, not only the ones specified in the actions and values parameters",
+                "actions": "actions visible for the AI to run",
+                "values": "values for the AI to see",
+                "allow_execution": "Allow this AI action to execute other actions",
+                "debug": "returns back the prompt for debugging purposes"
+            },
+            "configParams": {
+                "prompt": {
+                    "visible": true,
+                    "defaultValue": "board.user_request",
+                    "type": "any"
+                },
+                "full_board_view": {
+                    "defaultValue": "true",
+                    "type": "boolean"
+                },
+                "actions": {
+                    "visible": true,
+                    "defaultValue": "[]",
+                    "type": "array",
+                    "cardSelector": true,
+                    "cardSelectorType": "action",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
+                },
+                "values": {
+                    "visible": true,
+                    "defaultValue": "[]",
+                    "type": "array",
+                    "cardSelector": true,
+                    "cardSelectorType": "value",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
+                },
+                "allow_execution": {
+                    "visible": true,
+                    "defaultValue": "true",
+                    "type": "boolean"
+                },
+                "debug": {
+                    "visible": false,
+                    "defaultValue": "false",
+                    "type": "boolean"
+                }
+            },
+            "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayIcon": false,
+            "displayButton": true,
+            "displayButtonIcon": true,
+            "customName": "agent_prepare",
+            "layer": "agent",
+            "links": [
+                {
+                    "name": "agent_core",
+                    "type": "post"
+                }
+            ],
+            "color": "var(--color7)",
+            "theme": "dark",
+            "domId": "e9d0d1e8-c328-484e-888d-49f092a7acf2",
+            "cardState": {}
+        },
+        {
+            "key": "action_1762564220800",
+            "width": 3,
+            "height": 18,
+            "icon": "sparkles",
+            "type": "action",
+            "name": "agent_core",
+            "displayResponse": true,
+            "editRulesInLowCode": false,
+            "editRulesInNaturalLanguage": false,
+            "params": {
+                "prompt": "",
+                "full_board_view": "if enabled, the AI will view all actions and values in the board, not only the ones specified in the actions and values parameters",
+                "actions": "actions visible for the AI to run",
+                "values": "values for the AI to see",
+                "allow_execution": "Allow this AI action to execute other actions",
+                "debug": "returns back the prompt for debugging purposes"
+            },
+            "configParams": {
+                "prompt": {
+                    "visible": true,
+                    "defaultValue": "board.user_request",
+                    "type": "any"
+                },
+                "full_board_view": {
+                    "defaultValue": "true",
+                    "type": "boolean",
+                    "visible": true
+                },
+                "actions": {
+                    "visible": true,
+                    "defaultValue": "[]",
+                    "type": "array",
+                    "cardSelector": true,
+                    "cardSelectorType": "action",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
+                },
+                "values": {
+                    "visible": true,
+                    "defaultValue": "[]",
+                    "type": "array",
+                    "cardSelector": true,
+                    "cardSelectorType": "value",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
+                },
+                "allow_execution": {
+                    "visible": true,
+                    "defaultValue": "false",
+                    "type": "boolean"
+                },
+                "debug": {
+                    "visible": false,
+                    "defaultValue": "false",
+                    "type": "boolean"
+                }
+            },
+            "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayIcon": false,
+            "displayButton": true,
+            "displayButtonIcon": true,
+            "customName": "agent_core",
+            "layer": "agent",
+            "links": [
+                {
+                    "name": "reply",
+                    "type": "post"
+                }
+            ],
+            "color": "var(--color7)",
+            "theme": "light",
+            "domId": "52af1a10-5ab4-4087-8609-3f0b8bdb6fbd",
+            "cardState": {}
+        },
+        {
+            "key": "action_1762705103394",
+            "width": 2,
+            "height": 8,
+            "icon": "bot",
+            "type": "action",
+            "name": "create agent",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "url": "http endpoint to call",
+                "method": "method for the call: get or post",
+                "name": "name of the agent to create",
+                "template": "template to use"
+            },
+            "configParams": {
+                "url": {
+                    "visible": false,
+                    "defaultValue": "/api/core/v1/import/board",
+                    "type": "any"
+                },
+                "method": {
+                    "visible": false,
+                    "defaultValue": "post",
+                    "type": "string"
+                },
+                "name": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "template": {
+                    "visible": true,
+                    "defaultValue": "smart ai agent",
+                    "type": "string"
+                }
+            },
+            "description": "Create a new agent given the agent name and the template",
+            "layer": "base"
+        },
+        {
+            "key": "value_1762872883612",
+            "width": 2,
+            "height": 7,
+            "icon": "scan-eye",
+            "type": "value",
+            "name": "available_templates",
+            "description": "The list of available agent templates.\r\n\r\nThe key is the template name, the value the description of the template.",
+            "params": {},
+            "configParams": {},
+            "customName": "available_templates",
+            "layer": "infra"
+        },
+        {
+            "key": "value_1762877127523",
+            "width": 2,
+            "height": 7,
+            "icon": "scan-eye",
+            "type": "value",
+            "name": "cards",
+            "description": "A reusable card that observes value changes on the board.\n\n  #### Key Features\n  - Real time updates.\n  - Customize parameters.\n  - Rule execution on each value change.\n  - Customize the card view (UI/render).",
+            "params": {
+                "input": "input to observe"
+            },
+            "configParams": {
+                "input": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                }
+            },
+            "customName": "cards",
+            "layer": "infra",
+            "displayIcon": false
+        },
+        {
+            "key": "action_1762882483482",
+            "width": 3,
+            "height": 8,
+            "icon": "rocket",
+            "type": "action",
+            "name": "read_agent_board",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "name": "name of the board to read"
+            },
+            "configParams": {
+                "name": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "any"
+                }
+            },
+            "description": "Reads an agent board given a name. It returns the agent board content (the cards, rules, etc) and the current agent state (the values for the variables right now)",
+            "customName": "read_board",
+            "layer": "base"
+        },
+        {
+            "key": "action_1762883691050",
+            "width": 4,
+            "height": 16,
+            "icon": "rocket",
+            "type": "action",
+            "name": "add_card_to_agent_board",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "agent_name": "name of the agent board to add the card to",
+                "card_data": "data of the card to add in json format",
+                "layer": "layer to add the card to"
+            },
+            "configParams": {
+                "agent_name": {
+                    "visible": true,
+                    "defaultValue": "wefe",
+                    "type": "any"
+                },
+                "card_data": {
+                    "visible": true,
+                    "defaultValue": "{\n  \"width\": 2,\n  \"height\": 10,\n  \"icon\": \"bot-message-square\",\n  \"type\": \"action\",\n  \"name\": \"agent_call\",\n  \"displayResponse\": true,\n  \"displayIcon\": true,\n  \"params\": {\n    \"board\": \"board name where the target agent is located\",\n    \"name\": \"name of the agent\"\n  },\n  \"configParams\": {\n    \"board\": {\n      \"visible\": true,\n      \"defaultValue\": \"\",\n      \"type\": \"string\"\n    },\n    \"name\": {\n      \"visible\": false,\n      \"defaultValue\": \"agent_input\",\n      \"type\": \"string\"\n    }\n  },\n  \"description\": \"Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\\n\\n  #### Key Features\\n  - Run actions from rules.\\n  - Chain/trigger other action cards.\\n  - Parameterized execution.\\n  - Customize parameters.\\n  - Customize the card view (UI/render).\",\n  \"rulesCode\": \"const { board: reqBoardName, name: reqName, ...reqParams } = params;\\r\\n\\r\\nconst queryString = new URLSearchParams({\\r\\n  ...reqParams,\\r\\n  token\\r\\n}).toString();\\r\\n\\r\\nreturn await context.apis.fetch(\\r\\n  'get',\\r\\n  `/api/agents/v1/${reqBoardName}/${reqName}?${queryString}`\\r\\n);\",\n  \"html\": \"//@card/react\\n\\nfunction Widget(card) {\\n  const value = card.value;\\n\\n  const content = <YStack f={1}  mt={\\\"20px\\\"} ai=\\\"center\\\" jc=\\\"center\\\" width=\\\"100%\\\">\\n      {card.icon && card.displayIcon !== false && (\\n          <Icon name={card.icon} size={48} color={card.color}/>\\n      )}\\n      {card.displayResponse !== false && (\\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \\\"N/A\\\"} />\\n      )}\\n  </YStack>\\n\\n  return (\\n      <Tinted>\\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\\n          <ActionCard data={card}>\\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\\n          </ActionCard>\\n        </ProtoThemeProvider>\\n      </Tinted>\\n  );\\n}\\n\"\n}",
+                    "type": "json"
+                },
+                "layer": {
+                    "visible": true,
+                    "defaultValue": "base",
+                    "type": "string"
+                }
+            },
+            "description": "YouAdds a card to an agent board.\n\nCards go by default to the base layer.\n\nYou can add custom made cards from scratch, or use cards from the system palette.\nIf you don't know how to create your card, look at how the shape of the cards in the system palette\n\n",
+            "customName": "add_card_to_board",
+            "layer": "base",
+            "editRulesInLowCode": false,
+            "editRulesInNaturalLanguage": false
+        }
+    ],
+    "layouts": {
+        "lg": [
+            {
+                "w": 18,
+                "h": 22,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 18,
+                "h": 5,
+                "x": 0,
+                "y": 22,
+                "i": "action_176081905123123",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 22,
+                "h": 3,
+                "x": 38,
+                "y": 0,
+                "i": "action_1761067229271",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 20,
+                "h": 7,
+                "x": 18,
+                "y": 0,
+                "i": "action_1761187544907",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 20,
+                "h": 20,
+                "x": 18,
+                "y": 7,
+                "i": "action_1762564203492",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 22,
+                "h": 24,
+                "x": 38,
+                "y": 3,
+                "i": "action_1762564220800",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 16,
+                "h": 11,
+                "x": 0,
+                "y": 0,
+                "i": "action_1762705103394",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "i": "value_1762872883612",
+                "x": 56,
+                "y": 43,
+                "w": 15,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762877127523",
+                "x": 0,
+                "y": 58,
+                "w": 15,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "w": 14,
+                "h": 11,
+                "x": 16,
+                "y": 0,
+                "i": "action_1762882483482",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 21,
+                "h": 20,
+                "x": 30,
+                "y": 0,
+                "i": "action_1762883691050",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            }
+        ],
+        "md": [
+            {
+                "w": 18,
+                "h": 15,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 18,
+                "h": 7,
+                "x": 0,
+                "y": 15,
+                "i": "action_176081905123123",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761067229271",
+                "x": 18,
+                "y": 21,
+                "w": 15,
+                "h": 7,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761187544907",
+                "x": 33,
+                "y": 27,
+                "w": 15,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762564203492",
+                "x": 0,
+                "y": 35,
+                "w": 23,
+                "h": 20,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762564220800",
+                "x": 23,
+                "y": 54,
+                "w": 23,
+                "h": 20,
+                "isResizable": true
+            },
+            {
+                "w": 28,
+                "h": 15,
+                "x": 0,
+                "y": 0,
+                "i": "action_1762705103394",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 15,
+                "h": 8,
+                "x": 23,
+                "y": 0,
+                "i": "value_1762872883612",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 15,
+                "h": 8,
+                "x": 0,
+                "y": 11,
+                "i": "value_1762877127523",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 28,
+                "h": 13,
+                "x": 0,
+                "y": 15,
+                "i": "action_1762882483482",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 32,
+                "h": 15,
+                "x": 28,
+                "y": 0,
+                "i": "action_1762883691050",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            }
+        ],
+        "sm": [
+            {
+                "w": 2,
+                "h": 22,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "w": 2,
+                "h": 3,
+                "x": 0,
+                "y": 22,
+                "i": "action_176081905123123",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761067229271",
+                "x": 0,
+                "y": 69,
+                "w": 1,
+                "h": 7,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761187544907",
+                "x": 1,
+                "y": 75,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762564203492",
+                "x": 0,
+                "y": 83,
+                "w": 2,
+                "h": 20,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762564220800",
+                "x": 0,
+                "y": 103,
+                "w": 2,
+                "h": 20,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762705103394",
+                "x": 0,
+                "y": 131,
+                "w": 2,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762872883612",
+                "x": 0,
+                "y": 142,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762877127523",
+                "x": 0,
+                "y": 157,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762882483482",
+                "x": 1,
+                "y": 164,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762883691050",
+                "x": 0,
+                "y": 172,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            }
+        ],
+        "xs": [
+            {
+                "i": "action_1760800582118",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 22,
+                "isResizable": true
+            },
+            {
+                "i": "action_176081905123123",
+                "x": 0,
+                "y": 63,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761067229271",
+                "x": 0,
+                "y": 93,
+                "w": 1,
+                "h": 7,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761187544907",
+                "x": 0,
+                "y": 100,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762564203492",
+                "x": 0,
+                "y": 108,
+                "w": 1,
+                "h": 20,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762564220800",
+                "x": 0,
+                "y": 128,
+                "w": 1,
+                "h": 20,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762705103394",
+                "x": 0,
+                "y": 156,
+                "w": 1,
+                "h": 11,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762872883612",
+                "x": 0,
+                "y": 167,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762877127523",
+                "x": 0,
+                "y": 183,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762882483482",
+                "x": 0,
+                "y": 191,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762883691050",
+                "x": 0,
+                "y": 199,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            }
+        ]
+    },
+    "rules": [
+        ""
+    ],
+    "settings": {
+        "autoplay": true
+    },
+    "icon": "bot-message-square",
+    "autopilot": true,
+    "version": 109,
+    "savedAt": 1762904953797,
+    "tags": [
+        "system",
+        "vento"
+    ],
+    "inputs": {
+        "default": "/api/agents/v1/[object Object]/agent_input"
+    }
+}
