@@ -524,11 +524,12 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
   const { mime } = data
   const type = mime ? mime.split('/')[0] : 'text'
   const url = ('/api/core/v1/files/' + data.path).replace(/\/+/g, '/')
+  const isESPHomeFile = (mime && mime.includes("yaml") || data.path.endsWith("yaml") || data.path.endsWith("yml")) && data.path.startsWith("data/devices")
   if (mime == 'application/json') {
     return { component: <JSONViewer {...data} />, supportIcons: true }
   } else if (mime == 'application/javascript' || mime == 'video/mp2t') {
     return { component: <FlowsViewer {...data} />, supportIcons: true }
-  } else if((mime && mime.includes("yaml") || data.path.endsWith("yaml") || data.path.endsWith("yml")) && data.path.startsWith("data/devices")){
+  } else if(isESPHomeFile){
     return {
       component: <MonacoViewer {...data} onLoad={loadEsphomeHelpers} defaultLanguage="esphome"/>,
       widget: 'text',
