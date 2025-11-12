@@ -61,6 +61,7 @@ type Props = {
     onSave?: any,
     onBlur?: any,
     onEscape?: any,
+    onLoad?: any,
     path?: string,
     bgColorDark?: string,
     bgColorLight?: string,
@@ -113,6 +114,7 @@ export const Monaco = ({
     onSave = () => { },
     onEscape = () => { },
     onBlur = () => { },
+    onLoad = (monaco) => { },
     colors = {},
     autofocus = false,
     ...props
@@ -163,6 +165,8 @@ export const Monaco = ({
                 }
             });
         }
+        
+        onLoad(monaco);
     }, [monaco, resolvedTheme, tokenColor, lightTokenColor]);
 
     const handleEditorDidMount = (editor, monaco) => {
