@@ -1,4 +1,4 @@
-<description>
+const prompt = `<description>
 You are integrated into another system and your mission is to generate javascript code. 
 The code is associated with a board, and is intended to automate the activation of board actions when certain board states are meet.
 The user has described what the code should do, in natural language, and you need to provide the implementation. 
@@ -20,29 +20,29 @@ example of board.execute_action({
 </description>
 
 <code_structure>
-    //states: the object with all the states of the board
-    //onChange: the function to configure callbacks to be fired when a state value has changed.
-    //call actions with: board.execute_action({name: 'action_name', params: {...}})
-    //execute_action is an async function and some actions return values. If you are interested in the return value of an action, just await for it.
-    //actionParams is a key->value object, where the key is the name of the parameter and the value is the value for the parameter
+//states: the object with all the states of the board     
+//onChange: the function to configure callbacks to be fired when a state value has changed.     
+//call actions with: board.execute_action({name: 'action_name', params: {...}})     
+//execute_action is an async function and some actions return values. If you are interested in the return value of an action, just await for it.     
+//actionParams is a key->value object, where the key is the name of the parameter and the value is the value for the parameter
 </code_structure>
 
 The "states" state object has the following shape:
 <states_object>
-{{{states}}}
+${params.states}
 </states_object>
 
 {{#if previousRules}}
 The system has this previous rules array:
 <previus_rules>
-    {{{previousRules}}}
+    ${params.previousRules}
 </previus_rules>
 these rules must be replaced by the following new rules
 {{/if}}
 
 The rules array is:
 <rules>
-    {{{rules}}}
+    ${params.rules}
     if no other rule apply or dont know what to do, just return and do nothing
 </rules>
 
@@ -50,10 +50,10 @@ Remember: the rules are not avilable at runtime, while executing the code, are j
 The available action list to execute is:
 
 <actions>
-{{{actions}}}
+${params.actions}
 </actions>
 
-Do not use markup like ```javascript or other markers, just plain javascript, nothing else.
+Do not use markup like \`\`\`javascript or other markers, just plain javascript, nothing else.
 IMPORTANT: anser only with javascript and nothing else.
 Try to keep it simple, write simple code as described by the rules. Most rules will just require simple calls to execute_action.
 Always use literal actions urls to execute the actions with execute_action.
@@ -83,3 +83,7 @@ keep it in mind when deciding the order of the instructions.
 </onChange>
 
 Please, generate the code.
+`
+
+await executeAction({ name: "llm_agent_call", params: { prompt: prompt, requestId: params.requestId } })
+return prompt

@@ -910,17 +910,33 @@ export default async (app, context) => {
             }
         })
 
-        const prompt = await context.autopilot.getPromptFromTemplate({
-            templateName: "boardRules",
-            states: JSON.stringify(req.body.states, null, 4),
-            rules: JSON.stringify(req.body.rules, null, 4),
-            previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
-            actions: JSON.stringify(req.body.actions, null, 4)
-        });
-        if (req.query.debug) {
-            console.log("Prompt: ", prompt)
+        try {
+            const { data, error, isError } = await API.post(`/api/agents/v1/board_rules_code_agent/agent_input?token=${getServiceToken()}`, {
+                states: JSON.stringify(req.body.states, null, 4),
+                rules: JSON.stringify(req.body.rules, null, 4),
+                previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
+                actions: JSON.stringify(req.body.actions, null, 4),
+                board: req.body.boardName
+            });
+
+            if (isError && error) {
+                logger.ui.error({ error }, "Error from AI model");
+                return res.status(500).send({ error: 'Error from AI model', message: error });
+            }
+
+            const jsCode = data?.choices?.[0]?.message?.content;
+            if (!jsCode) {
+                logger.ui.error({ data }, 'No response from AI model or empty content');
+                return res.status(500).send({ error: 'No response from AI model' });
+            }
+
+            console.log("JS CODE: ", jsCode);
+            res.send({ jsCode: cleanCode(jsCode) });
+        } catch (e) {
+            console.error('Error getting board code: ', e);
+            logger.ui.error('Error getting board code', e);
+            res.status(500).send({ error: 'Internal Server Error', message: e.message });
         }
-        await handleCallModel(res, prompt)
     })
 
     app.post('/api/core/v1/autopilot/getComponent', async (req, res) => {
