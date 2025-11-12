@@ -155,13 +155,13 @@ export function Markdown({ data, readOnly = false, copyToClipboardEnabled = true
         />
       ) : (
         <>
-          <InteractiveIcon
+          {!props.autoSaveOnBlur &&<InteractiveIcon
             Icon={X}
             IconColor="var(--red10)"
             hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
             onPress={cancel}
             title="Cancel"
-          />
+          />}
           {!props.autoSaveOnBlur && <InteractiveIcon
             Icon={Save}
             hoverStyle={{ bg: 'transparent', filter: 'brightness(1.2)' }}
