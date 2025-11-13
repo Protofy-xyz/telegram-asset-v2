@@ -24,6 +24,7 @@ function App({ apiUrl }: AppProps) {
   const [active, setActive] = useState(false)
   const isChatsVisible = useChat(chatsLength)
   const currentChatId = useChat((state) => state.chats[0]?.id)
+  const [currentTitle, setCurrentTitle] = useState("Chat")
   const addNewChat = useChat((state) => state.addNewChat)
   const { resolvedTheme } = useThemeSetting()
   const menu = true //toggle to show/hide the menu
@@ -39,6 +40,24 @@ function App({ apiUrl }: AppProps) {
       setApiUrl(apiUrl)
     }
   }, [apiUrl])
+
+  useEffect(() => {
+    try {
+      if (!currentChatId) {
+        setCurrentTitle("Chat")
+        return
+      }
+      const stored = localStorage.getItem(currentChatId)
+      if (!stored) {
+        setCurrentTitle("Chat")
+        return
+      }
+      const { title } = JSON.parse(stored)
+      setCurrentTitle(title || "Chat")
+    } catch (e) {
+      setCurrentTitle("Chat")
+    }
+  }, [currentChatId])
 
   return (
     <Stack backgroundColor={resolvedTheme === "light" ? "" : "#212121"} f={1} className="h-screen flex flex-col">
@@ -56,7 +75,7 @@ function App({ apiUrl }: AppProps) {
               <Button circular icon={Folder} scaleIcon={1.3} chromeless onPress={() => setActive(true)} />
             </TooltipSimple>
           }
-          <Text col="$color">{currentChatId || "Chat"}</Text>
+          <Text col="$color">{currentTitle}</Text>
           <TooltipSimple label="Start New Chat">
             <Button circular icon={RefreshCcw} scaleIcon={1.3} chromeless onPress={addNewChat} />
           </TooltipSimple>
