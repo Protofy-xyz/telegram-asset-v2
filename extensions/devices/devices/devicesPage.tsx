@@ -12,7 +12,6 @@ import { CardBody } from 'protolib/components/CardBody';
 import { ItemMenu } from 'protolib/components/ItemMenu';
 import { Tinted } from 'protolib/components/Tinted';
 import { useSubscription, Connector } from 'protolib/lib/mqtt';
-import { flash, connectSerialPort } from "../devicesUtils";
 import DeviceModal from 'protodevice/src/DeviceModal'
 import * as deviceFunctions from 'protodevice/src/device'
 import { Subsystems } from 'protodevice/src/Subsystem'
@@ -20,7 +19,7 @@ import { Paragraph, TextArea, XStack, YStack, Text, Button } from '@my/ui';
 import { getPendingResult } from "protobase";
 import { Pencil, UploadCloud, Navigation, Bug } from '@tamagui/lucide-icons';
 import { usePageParams } from 'protolib/next';
-import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint } from "../devicesUtils";
+import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint, flash, connectSerialPort  } from "@extensions/esphome/utils";
 import { SSR } from 'protolib/lib/SSR'
 import { withSession } from 'protolib/lib/Session'
 import { SelectList } from 'protolib/components/SelectList';
