@@ -8,7 +8,8 @@ import { useRouter } from 'next/router'
 export default function Page(props: any) {
     const { query } = useRouter()
     const agent = query.agent as string
-    const apiUrl ='/api/v1/chatbots/board?agent=' + encodeURIComponent(agent || '')
+    const boardName = typeof window !== 'undefined'&& (window as any).parent?.board?.name
+    const apiUrl ='/api/v1/chatbots/board?agent=' + encodeURIComponent(agent || '') + "&board=" + encodeURIComponent(boardName || '')
     const Chatbot = dynamic(() => import('protolib/components/chatbot'), { ssr: false })
     const projectName = SiteConfig.projectName
 

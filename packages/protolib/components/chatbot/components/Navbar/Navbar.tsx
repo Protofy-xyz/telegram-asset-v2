@@ -40,7 +40,8 @@ export default function Navbar({ active, setActive, }: { active: boolean; setAct
       <YStack
         bc="$bgPanel"
         p="$3"
-        w="80%"
+        w="400px"
+        maw="80vw"
         h="100%"
         overflow="hidden"
         elevation="$2"
@@ -59,9 +60,8 @@ export default function Navbar({ active, setActive, }: { active: boolean; setAct
           >
             New Chat
           </Button>
-
           <Button
-            theme="red"
+            hoverStyle={{ bg: "$color8" }}
             circular
             chromeless
             scaleIcon={1.3}
@@ -70,7 +70,7 @@ export default function Navbar({ active, setActive, }: { active: boolean; setAct
           />
         </XStack>
         <ScrollView>
-          <ChatHistory />
+          <ChatHistory onPressChat={() => setActive(false)} />
         </ScrollView>
         <Select
           value={selectedModal}

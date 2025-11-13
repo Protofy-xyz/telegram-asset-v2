@@ -1,6 +1,7 @@
 import { getBoard } from "./boards";
 import { getServiceToken, requireAdmin, resolveBoardParam } from "protonode";
-import { API, generateEvent } from "protobase";
+import { API, generateEvent, ProtoMemDB } from "protobase";
+import { v4 as uuidv4 } from 'uuid';
 import { dbProvider, getDBOptions } from 'protonode';
 import { getExecuteAction } from "./getExecuteAction";
 import fetch from 'node-fetch';
@@ -50,6 +51,31 @@ const getBoardCardActions = async (boardId) => {
 const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
 const token = getServiceToken()
 
+const executeLinks = async (boardId: string, action: any, type: 'pre' | 'post') => {
+    if (!action?.links || !Array.isArray(action.links)) return;
+    const links = action.links.filter((t: any) => t.type === type && t.name);
+    for (const link of links) {
+        try {
+            await API.get(`/api/core/v1/boards/${boardId}/actions/${link.name}?token=${getServiceToken()}`);
+        } catch (error) {
+            getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, `Error calling ${type} link action: ${link.name}`);
+        }
+    }
+}
+
+export const normalizeRulesCode = (code: string): string => {
+    const trimmed = (code || '').trim();
+    if (!trimmed) return '';
+    return trimmed.startsWith('<')
+        ? 'return `' + trimmed.replace(/`/g, '\\`') + '`'
+        : trimmed;
+}
+
+export const buildActionWrapper = (actions: any, boardId: string, states: any, rulesCode: string) => new AsyncFunction(
+    'req', 'res', 'boardName', 'name', 'states', 'boardActions', 'board', 'userParams', 'params', 'token', 'context', 'API', 'fetch', 'logger', 'stackTrace',
+    `${getExecuteAction(actions, boardId, states)}\n${rulesCode}`
+);
+
 //TODO: refactor to use only protomemdb (state.set) for card state persistance and updates on frontend  (now using .set for persist and state event for updates)
 const updateActionStatus = async (context, boardId, actionId, status, payload = {}) => {
     const action = await context.state.get({ chunk: 'actions', group: 'boards', tag: boardId, name: actionId });
@@ -72,7 +98,7 @@ export const getActions = async (context) => {
     return flatActions
 }
 
-const setActionValue = async (Manager, context, boardId, action, value) => {
+export const setActionValue = async (Manager, context, boardId, action, value) => {
     const prevValue = await context.state.get({ group: 'boards', tag: boardId, name: action.name });
     if (action?.alwaysReportValue || JSON.stringify(value) !== JSON.stringify(prevValue)) {
         await context.state.set({ group: 'boards', tag: boardId, name: action.name, value: value, emitEvent: true });
@@ -150,6 +176,64 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
         }
     }
 
+    try {
+        const requestApproval = action?.requestApproval === true 
+        const isConfirmedLegacy = params?.confirmed === true || (req.query && (req.confirmed === 'true'));
+
+        if (requestApproval && !isConfirmedLegacy) {
+            const approvalId = uuidv4();
+            const fullStates = await context.state.getStateTree();
+            const boardOnlyStates = {
+                ...(fullStates || {}),
+                boards: { [boardId]: (fullStates?.boards?.[boardId] ?? {}) }
+            };
+
+            const snapshot = {
+                statesSnapshot: boardOnlyStates,
+                cardSnapshot: action,
+                paramsSnapshot: params,
+                meta: {
+                    boardId,
+                    actionName: action.name,
+                    createdAt: new Date().toISOString(),
+                    requestedBy: (req as any)?.session?.user?.email || (req as any)?.session?.user?.name || 'system',
+                    status: 'offered'
+                }
+            };
+
+            // store snapshot under approvals/{boardId}/{approvalId}
+            ProtoMemDB('approvals').set('approvals', boardId, approvalId, snapshot);
+
+            // notify via MQTT event
+            await generateEvent({
+                path: `actions/approval/${boardId}/${action.name}/${approvalId}`,
+                from: 'system',
+                user: 'system',
+                ephemeral: true,
+                payload: {
+                    status: 'offered',
+                    action: action.name,
+                    boardId,
+                    approvalId,
+                    params,
+                    message: action.approvalMessage || undefined
+                },
+            }, getServiceToken());
+
+            // execute pre and post-links immediately (no rules executed here)
+            await executeLinks(boardId, action, 'pre');
+            await executeLinks(boardId, action, 'post');
+
+            // update action state and respond
+            // await setActionValue(Manager, context, boardId, action, { approvalId, message: 'Notified user' });
+            await updateActionStatus(context, boardId, action.name, 'offered');
+            res.status(202).send({ offered: true, approvalId });
+            return;
+        }
+    } catch (e) {
+        console.error("Error handling approval offer: ", e);
+    }
+
     await generateEvent({
         path: `actions/boards/${boardId}/${action.name}/run`,
         from: 'system',
@@ -166,30 +250,11 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
     await updateActionStatus(context, boardId, action.name, 'running');
 
     const states = await context.state.getStateTree();
-    let rulesCode = action.rulesCode.trim();
-
-    if (rulesCode.startsWith('<')) {
-        rulesCode = 'return `' + rulesCode.replace(/`/g, '\\`') + '`';
-    }
-
-    const wrapper = new AsyncFunction('req', 'res', 'boardName', 'name', 'states', 'boardActions', 'board', 'userParams', 'params', 'token', 'context', 'API', 'fetch', 'logger', 'stackTrace', `
-        ${getExecuteAction(await getActions(context), boardId, states)}
-        ${rulesCode}
-    `);
+    let rulesCode = normalizeRulesCode(action.rulesCode);
+    const wrapper = buildActionWrapper(await getActions(context), boardId, states, rulesCode);
 
     try {
-        if (action.links && Array.isArray(action.links)) {
-            const preLinks = action.links.filter(t => t.type === 'pre' && t.name);
-            for (const link of preLinks) {
-                //to call an action: /api/core/v1/boards/:boardId/actions/:action' using service token
-                try {
-                    await API.get(`/api/core/v1/boards/${boardId}/actions/${link.name}?token=${getServiceToken()}`);
-                } catch (error) {
-                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling pre link action: " + link.name);
-                }
-
-            }
-        }
+        await executeLinks(boardId, action, 'pre');
         let response = null;
         let failed = false;
         try {
@@ -267,17 +332,7 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
             }
         }
 
-        if (action.links && Array.isArray(action.links)) {
-            const postLinks = action.links.filter(t => t.type === 'post' && t.name);
-            for (const link of postLinks) {
-                //to call an action: /api/core/v1/boards/:boardId/actions/:action' using service token
-                try {
-                    await API.get(`/api/core/v1/boards/${boardId}/actions/${link.name}?token=${getServiceToken()}`);
-                } catch (error) {
-                    getLogger({ module: 'boards', board: boardId, card: action.name }).error({ err: error }, "Error calling post link action: " + link.name);
-                }
-            }
-        }
+        await executeLinks(boardId, action, 'post');
 
 
     } catch (err) {

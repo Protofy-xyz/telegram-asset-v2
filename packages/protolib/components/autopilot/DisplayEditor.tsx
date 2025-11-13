@@ -182,7 +182,9 @@ export const DisplayEditor = ({
                     get: (cd) => cd.customRunPath ?? `/workspace/cards/${cd.name}/run`,
                 },
 
-                { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', placeholder: "Path to card run (Ex: /card/run)", section: 'Paths and Permissions' }
+                { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', placeholder: "Path to card run (Ex: /card/run)", section: 'Paths and Permissions' },
+                { label: 'Request approval', description: 'Require user approval before executing this action', key: 'requestApproval', type: 'toggle', section: 'Paths and Permissions', visible: ({ card }) => card.type === 'action' },
+                { label: 'Approval message', description: 'Custom message shown when requesting approval', key: 'approvalMessage', type: 'text', section: 'Paths and Permissions', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!(cardData?.requestApproval === true), placeholder: 'Explain what this action will do' },
             ]
             : []
         ),
@@ -348,8 +350,8 @@ export const DisplayEditor = ({
                             }
                             setCardData({ ...cardData })
                         }}
-                        inputProps={{ 
-                            backgroundColor: '$bgPanel', 
+                        inputProps={{
+                            backgroundColor: '$bgPanel',
                             borderColor: error ? '$red9' : '$gray6',
                             onChange: e => {
                                 setCardData({ ...cardData, color: e.target.value })
@@ -374,8 +376,8 @@ export const DisplayEditor = ({
                             }
                             setCardData({ ...cardData })
                         }}
-                        inputProps={{ 
-                            backgroundColor: '$bgPanel', 
+                        inputProps={{
+                            backgroundColor: '$bgPanel',
                             borderColor: error ? '$red9' : '$gray6',
                             onChange: e => {
                                 setCardData({ ...cardData, bgColor: e.target.value })
