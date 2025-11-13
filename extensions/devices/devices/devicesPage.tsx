@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/router';
-import { BookOpen, Tag, Router } from '@tamagui/lucide-icons';
+import { BookOpen, Tag, Router, Wrench } from '@tamagui/lucide-icons';
 import { DevicesModel } from './devicesSchemas';
 import { API } from 'protobase';
 import { DataTable2 } from 'protolib/components/DataTable2';
@@ -19,7 +19,7 @@ import { Paragraph, TextArea, XStack, YStack, Text, Button } from '@my/ui';
 import { getPendingResult } from "protobase";
 import { Pencil, UploadCloud, Navigation, Bug } from '@tamagui/lucide-icons';
 import { usePageParams } from 'protolib/next';
-import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint, flash, connectSerialPort  } from "@extensions/esphome/utils";
+import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint, flash, connectSerialPort, downloadDeviceElfEndpoint  } from "@extensions/esphome/utils";
 import { SSR } from 'protolib/lib/SSR'
 import { withSession } from 'protolib/lib/Session'
 import { SelectList } from 'protolib/components/SelectList';
@@ -561,7 +561,56 @@ export default {
           }
         },
         isVisible: (element) => true
+      },
+      {
+        text: "Download firmware binary",
+        icon: Wrench,
+        action: async (element) => {
+          try {
+            const response = await fetch(downloadDeviceFirmwareEndpoint(element.data.name, compileSessionId));
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${element.data.name}.bin`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Error downloading firmware binary:', err);
+          }
+        },
+        isVisible: (element) => compileSessionId !== ''
+      },
+      {
+        text: "Download firmware ELF",
+        icon: Wrench,
+        action: async (element) => {
+          try {
+            const response = await fetch(downloadDeviceElfEndpoint(element.data.name, compileSessionId));
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${element.data.name}.elf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Error downloading firmware ELF:', err);
+          }
+        },
+        isVisible: (element) => compileSessionId !== ''
       }
+
 
 
     ]

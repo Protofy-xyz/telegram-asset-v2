@@ -247,6 +247,9 @@ const onlineCompiler = "compile.protofy.xyz";
 export const downloadDeviceFirmwareEndpoint = (targetDevice, compileSessionId) => {
     return (`https://${onlineCompiler}/api/v1/device/download/${targetDevice}?compileSessionId=${compileSessionId}`)
 };
+export const downloadDeviceElfEndpoint = (targetDevice, compileSessionId) => {
+    return (`https://${onlineCompiler}/api/v1/device/downloadElf/${targetDevice}?compileSessionId=${compileSessionId}`)
+};
 
 export const onlineCompilerSecureWebSocketUrl = () => {
     return (`wss://${onlineCompiler}/websocket`)
