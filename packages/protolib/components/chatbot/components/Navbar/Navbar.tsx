@@ -70,7 +70,7 @@ export default function Navbar({ active, setActive, }: { active: boolean; setAct
           />
         </XStack>
         <ScrollView>
-          <ChatHistory />
+          <ChatHistory onPressChat={() => setActive(false)} />
         </ScrollView>
         <Select
           value={selectedModal}
