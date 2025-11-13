@@ -173,9 +173,10 @@ const useChat = create<ChatType>((set, get) => ({
     localStorage.setItem(chatId, JSON.stringify(data));
 
     const currentChatHistory = get().chatHistory;
+    const ids = currentChatHistory[chatName] || [];
     const updatedChatHistory = {
       ...currentChatHistory,
-      [chatName]: [...(currentChatHistory[chatName] || []), chatId],
+      [chatName]: ids.includes(chatId) ? ids : [...ids, chatId],
     };
 
     localStorage.setItem("chatHistory", JSON.stringify(updatedChatHistory));
