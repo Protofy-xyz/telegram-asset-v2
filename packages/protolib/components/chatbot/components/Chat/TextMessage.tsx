@@ -21,6 +21,7 @@ export default function TextMessage({ index, chat }: Props) {
   const [promptChain] = useAtom(PromptAtom);
   const { copy, copied } = useClipboard();
   const [applied, setApplied] = useState(false);
+  const [rejected, setRejected] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const prompt: any = promptChain.reduce((total, current) => {
@@ -48,6 +49,7 @@ export default function TextMessage({ index, chat }: Props) {
             const status = resp?.data?.status;
             if (status && status !== 'offered') {
               setApplied(true);
+              setRejected(status === 'rejected');
             }
           } catch (e) {
             console.error('Approval status fetch error', e);
@@ -74,6 +76,7 @@ export default function TextMessage({ index, chat }: Props) {
         if (!boardId || !action || !id) return;
         await API.post(`/api/core/v1/boards/${encodeURIComponent(boardId)}/actions/${encodeURIComponent(action)}/approvals/${encodeURIComponent(id)}/accept`, {});
         setApplied(true);
+        setRejected(false);
       } catch (err) {
         console.error('Approval accept error', err);
       } finally {
@@ -89,6 +92,7 @@ export default function TextMessage({ index, chat }: Props) {
         if (!boardId || !action || !id) return;
         await API.post(`/api/core/v1/boards/${encodeURIComponent(boardId)}/actions/${encodeURIComponent(action)}/approvals/${encodeURIComponent(id)}/reject`, {});
         setApplied(true);
+        setRejected(true);
       } catch (err) {
         console.error('Approval cancel error', err);
       } finally {
@@ -97,7 +101,7 @@ export default function TextMessage({ index, chat }: Props) {
     };
 
     return <YStack gap="$3" py="$3">
-      <Text>{applied ? 'Request applied' : parsedData.message}</Text>
+      <Text o={0.6} fow={"600"}>{applied ? (rejected ? '✗ Request rejected' : '✓ Request applied') : parsedData.message}</Text>
       {!applied && (
         <XStack gap={"$2"}>
           <Button themeInverse bc="$bgPanel" size="$3" onPress={onAccept} disabled={busy}>Accept</Button>
