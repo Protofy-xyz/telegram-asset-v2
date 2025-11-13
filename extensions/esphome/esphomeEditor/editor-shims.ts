@@ -1,5 +1,6 @@
 import type * as Monaco from "monaco-editor";
 import { ESPHomeSchema } from "./esphome-schema";
+import { c } from "tar";
 
 type MonacoAPI = typeof import("monaco-editor");
 
@@ -59,7 +60,29 @@ const createProxy = <T extends Record<string, unknown>>(
     },
   }) as T;
 
+// Default schema version, minimum is 2025.5.0 as its the oldest that esphome gihub repo still has schema files for.
 let schema_version = "2025.5.0";
+const fetchSchemaVersion = async () => {
+  try {
+    const response = await fetch(
+      "https://compile.protofy.xyz/api/v1/esphome/version",
+    );
+    if (response.ok) {
+      const data = await response.json();
+      const fetchedVersion = data.version;
+      // Simple version comparison
+      if (fetchedVersion > schema_version) {
+        schema_version = fetchedVersion;
+      }
+    }
+  } catch (error) {
+    console.warn(
+      "Failed to fetch latest ESPHome schema version, using default.",
+    );
+  }
+};
+fetchSchemaVersion();
+
 const schema_uri = (name: string, version?: string) =>
   `https://schema.esphome.io/${version || schema_version}/${name}.json`;
 

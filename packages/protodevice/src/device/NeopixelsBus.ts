@@ -100,11 +100,11 @@ class NeopixelsBus {
                       then: {
                         "light.addressable_set": {
                             id: this.name,
-                            range_from: "@!lambda \"return (int)(x[\\\"from\\\"]);\"@",
-                            range_to: "@!lambda \"int t=(int)(x[\\\"from\\\"]); if (x.containsKey(\\\"to\\\")) t=x[\\\"to\\\"]; return t;\"@",
-                            red: "@!lambda \"return (float)((int)x[\\\"red\\\"]) / 255.0;\"@",
-                            green: "@!lambda \"return (float)((int)x[\\\"green\\\"]) / 255.0;\"@",
-                            blue: "@!lambda \"return (float)((int)x[\\\"blue\\\"]) / 255.0;\"@"
+                            range_from: "@!lambda return (int)(x[\"from\"]);@",
+                            range_to: "@!lambda int t=(int)(x[\"from\"]); if (x.containsKey(\"to\")) t=x[\"to\"]; return t;@",
+                            red: "@!lambda return (float)((int)x[\"red\"]) / 255.0;@",
+                            green: "@!lambda return (float)((int)x[\"green\"]) / 255.0;@",
+                            blue: "@!lambda return (float)((int)x[\"blue\"]) / 255.0;@"
                         }
                       }
                     }

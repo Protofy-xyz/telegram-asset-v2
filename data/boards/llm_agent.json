@@ -248,7 +248,7 @@
             "customName": "reply"
         }
     ],
-    "autopilot": false,
+    "autopilot": true,
     "layouts": {
         "lg": [
             {
