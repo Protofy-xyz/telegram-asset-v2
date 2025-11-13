@@ -30,12 +30,19 @@ export default function UserQuery() {
       ai="center"
       jc="space-between"
       gap="$2"
+      bc="$bgPanel"
+      p="$2"
+      br="$10"
     >
       <YStack flex={1}>
         <Input
+          bc="transparent"
           ref={inputRef}
           value={query}
           placeholder="Send a message"
+          borderColor="transparent"
+          focusStyle={{ borderColor: "transparent", outlineColor: "$colorTransparent" }}
+          hoverStyle={{ borderColor: "transparent" }}
           autoFocus
           onChangeText={setQuery}
           onSubmitEditing={handleSubmit}

@@ -2,11 +2,11 @@ import { useEffect, useState } from "react"
 import Navbar from "./components/Navbar/Navbar"
 import DefaultIdeas from "./components/DefaultIdea/DefaultIdeas"
 import UserQuery from "./components/UserInput/UserQuery"
-import { Plus, Menu, PanelLeft } from "lucide-react"
+import { Plus, RefreshCcw, Folder } from "lucide-react"
 import useChat, { chatsLength, useSettings } from "./store/store"
 import Chats from "./components/Chat/Chats"
 import { useThemeSetting } from "@tamagui/next-theme"
-import { Stack } from "@my/ui"
+import { Button, ScrollView, Stack, Text, TooltipSimple, XStack, YStack } from "@my/ui"
 
 const applyTheme = (resolvedTheme) => {
   if (resolvedTheme === "light" && document.documentElement.classList.contains("dark")) {
@@ -41,69 +41,33 @@ function App({ apiUrl }: AppProps) {
 
   return (
     <Stack backgroundColor={resolvedTheme === "light" ? "" : "#212121"} f={1} className="h-screen flex flex-col">
-      <div className="App font-montserrat md:flex dark:bg-[#212121] h-full flex flex-col">
-        {
-          menu ? (
-            <>
-              <div>
-                <button
-                  type="button"
-                  className="fixed p-2 h-8 w-8 text-sm top-4 left-4 border-2 hidden md:inline-flex dark:text-white text-gray-700 dark:border border-gray-400 rounded-md items-center justify-center shadow"
-                  onClick={() => setActive(true)}
-                >
-                  <PanelLeft />
-                </button>
-              </div>
-              <Navbar active={active} setActive={setActive} />
-            </>) : <button
-              type="button"
-              className="fixed p-2 h-8 w-18 text-sm top-4 left-4 border-2 hidden md:inline-flex dark:text-white text-gray-700 dark:border border-gray-400 rounded-md items-center justify-center shadow"
-              onClick={addNewChat}
-            >
-            <span className="mr-2 text-xl">
-              <Plus />
-            </span>
-            <span>New chat</span>
-          </button>
-        }
+      {
+        menu ? <Navbar active={active} setActive={setActive} />
+          : <Button onPress={addNewChat} icon={Plus}>
+            New chat
+          </Button>
+      }
 
-        <div className="flex-1 flex flex-col overflow-hidden mt-12 md:mt-0" style={{ backgroundColor: "var(--bgContent)" }}>
-          <div
-            className={`p-3 z-10 flex items-center bg-[#f8f8f8] dark:bg-[#212121] border-b 
-    border-gray-300 dark:border-gray-700 top-0 text-gray-800 dark:text-gray-300 
-    md:hidden fixed w-full`}
-            style={{ backgroundColor: "var(--bgContent)" }}
-          >
-            {menu ? (
-              <button
-                onClick={() => setActive(true)}
-                className="text-2xl flex text-gray-800 dark:text-white"
-              >
-                <Menu />
-              </button>
-            ) : (
-              <div className="w-8" />
-            )}
-            <h2 className="text-gray-800 dark:text-white mx-auto">New chat</h2>
-            <button
-              className="text-2xl flex items-center text-gray-800 dark:text-white"
-              onClick={addNewChat}
-            >
-              <Plus />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 mt-0">
-            {isChatsVisible ? <Chats /> : <DefaultIdeas />}
-          </div>
-
-          <div className="p-2 shadow-md" style={{ backgroundColor: "var(--bgContent)" }}>
-            <div className="max-w-2xl md:max-w-[calc(100% - 260px)] mx-auto">
-              <UserQuery />
-            </div>
-          </div>
-        </div>
-      </div>
+      <YStack flex={1} bc="$bgContent"  >
+        <XStack w={"100%"} jc="space-between" ai="center" bbc="$color6" bbw={2} bc="$bgContent" p="$1">
+          {
+            menu && <TooltipSimple label="Chat History">
+              <Button circular icon={Folder} scaleIcon={1.3} chromeless onPress={() => setActive(true)} />
+            </TooltipSimple>
+          }
+          <Text col="$color">Chat</Text>
+          <TooltipSimple label="Start New Chat">
+            <Button circular icon={RefreshCcw} scaleIcon={1.3} chromeless onPress={addNewChat} />
+          </TooltipSimple>
+        </XStack>
+        <ScrollView p="$2" pb="$8">
+          {isChatsVisible ? <Chats /> : <DefaultIdeas />}
+        </ScrollView>
+        <YStack h="$5"></YStack>
+        <YStack pos={"absolute"} bottom="$2" w="100%" px="$2">
+          <UserQuery />
+        </YStack>
+      </YStack>
     </Stack>
   )
 }
