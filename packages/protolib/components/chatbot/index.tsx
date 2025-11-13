@@ -23,6 +23,7 @@ type AppProps = {
 function App({ apiUrl }: AppProps) {
   const [active, setActive] = useState(false)
   const isChatsVisible = useChat(chatsLength)
+  const currentChatId = useChat((state) => state.chats[0]?.id)
   const addNewChat = useChat((state) => state.addNewChat)
   const { resolvedTheme } = useThemeSetting()
   const menu = true //toggle to show/hide the menu
@@ -55,7 +56,7 @@ function App({ apiUrl }: AppProps) {
               <Button circular icon={Folder} scaleIcon={1.3} chromeless onPress={() => setActive(true)} />
             </TooltipSimple>
           }
-          <Text col="$color">Chat</Text>
+          <Text col="$color">{currentChatId || "Chat"}</Text>
           <TooltipSimple label="Start New Chat">
             <Button circular icon={RefreshCcw} scaleIcon={1.3} chromeless onPress={addNewChat} />
           </TooltipSimple>
