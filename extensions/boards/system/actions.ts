@@ -215,7 +215,8 @@ export const handleBoardAction = async (context, Manager, req, boardId, action_o
                     action: action.name,
                     boardId,
                     approvalId,
-                    params
+                    params,
+                    message: action.approvalMessage || undefined
                 },
             }, getServiceToken());
 
