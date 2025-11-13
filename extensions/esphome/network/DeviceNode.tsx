@@ -1,0 +1,275 @@
+import React, { memo } from 'react'
+import { Handle, Position } from 'reactflow'
+
+export const DeviceNode = memo(({ data }: { data: any }) => {
+    const { id, label, pins = {}, editableProps = {}, side } = data
+    const leftPins = pins.left || []
+    const rightPins = pins.right || []
+
+    // colores según tipo
+    const getPinColor = (pin: any) => {
+        const t = pin.type?.toLowerCase?.() || ''
+        if (t.includes('power')) return '#666'
+        if (t.includes('gpio')) return '#3b82f6'
+        if (t.includes('input')) return 'var(--color7)'
+        if (t.includes('output')) return 'var(--color8)'
+        if (t.includes('bus')) return '#00c896'
+        return 'var(--color7)'
+    }
+
+  const isCenter = data.center?? false
+  const isLeftSide = side === 'left'
+  const isRightSide = side === 'right'
+
+  return (
+    <div
+      style={{
+        width: isCenter ? 320 : 200,
+        height: isCenter ? 480 : 'auto',
+        border: '2px solid var(--gray6)',
+        borderRadius: 12,
+        background: 'var(--bgPanel)',
+        position: 'relative',
+        color: 'var(--color)',
+        fontSize: 11,
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: isCenter ? 0 : 8,
+      }}
+    >
+     
+      {/* === ESP32 (sin cambios visuales) === */}
+      {isCenter && (
+        <> {label || id}
+
+          {/* LEFT PINS */}
+          {leftPins.map((p: any, i: number) => {
+            const top = ((i + 1) * 100) / (leftPins.length + 1)
+            const color = getPinColor(p)
+            return (
+              <div
+                key={`L-${p.name}`}
+                style={{
+                  position: 'absolute',
+                  top: `${top}%`,
+                  left: 0,
+                  width: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  paddingLeft: 6,
+                  transform: 'translateY(-50%)',
+                }}
+              >
+                <Handle
+                  id={p.name}
+                  type="source"
+                  position={Position.Left}
+                  style={{
+                    background: color,
+                    width: 8,
+                    height: 8,
+                    marginRight: 6,
+                  }}
+                />
+                <span style={{ fontSize: 9, whiteSpace: 'nowrap' }}>{p.name}</span>
+              </div>
+            )
+          })}
+
+          {/* RIGHT PINS */}
+          {rightPins.map((p: any, i: number) => {
+            const top = ((i + 1) * 100) / (rightPins.length + 1)
+            const color = getPinColor(p)
+            return (
+              <div
+                key={`R-${p.name}`}
+                style={{
+                  position: 'absolute',
+                  top: `${top}%`,
+                  right: 0,
+                  width: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  paddingRight: 6,
+                  transform: 'translateY(-50%)',
+                }}
+              >
+                <span style={{ fontSize: 9, whiteSpace: 'nowrap', marginRight: 6 }}>{p.name}</span>
+                <Handle
+                  id={p.name}
+                  type="source"
+                  position={Position.Right}
+                  style={{
+                    background: color,
+                    width: 8,
+                    height: 8,
+                  }}
+                />
+              </div>
+            )
+          })}
+        </>
+      )}
+
+{/* === OTROS DISPOSITIVOS === */}
+{!isCenter && (
+  <>
+    {/* Editable props */}
+    <div
+      style={{
+        position: 'absolute',
+        top: 8,
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        fontSize: 11,
+        fontWeight: 600,
+      }}
+    >
+      {label || id}
+    </div>
+
+    <div style={{ minHeight: 50 }}>
+      {Object.entries(editableProps).map(([key, prop]: any) => (
+        <div
+          key={key}
+          style={{
+            fontSize: 10,
+            opacity: 0.8,
+            marginTop: 20,
+            textAlign: 'center',
+          }}
+        >
+          {prop.label || key}: {String(prop.default)}
+        </div>
+      ))}
+    </div>
+
+    {/* === INPUTS === */}
+    {leftPins.map((pin: any, i: number) => {
+      const top = ((i + 1) * 100) / (leftPins.length + 1)
+      const color = getPinColor(pin)
+
+      const isRight = isRightSide
+      const handlePos = isRight ? Position.Left : Position.Right
+      const handleType = 'target'
+      const justify = isRight ? 'flex-start' : 'flex-end'
+
+      return (
+        <div
+          key={`IN-${pin.name}`}
+          style={{
+            position: 'absolute',
+            top: `${top}%`,
+            left: isRight ? 0 : 'auto',
+            right: isRight ? 'auto' : 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: justify,
+            transform: 'translateY(-50%)',
+          }}
+        >
+          {isRight ? (
+            <>
+              <Handle
+                id={pin.name}
+                type={handleType}
+                position={handlePos}
+                style={{
+                  background: color,
+                  width: 8,
+                  height: 8,
+                  marginRight: 6,
+                }}
+              />
+              <span style={{ fontSize: 9 }}>{pin.name}</span>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 9, marginRight: 6 }}>{pin.name}</span>
+              <Handle
+                id={pin.name}
+                type={handleType}
+                position={handlePos}
+                style={{
+                  background: color,
+                  width: 8,
+                  height: 8,
+                }}
+              />
+            </>
+          )}
+        </div>
+      )
+    })}
+
+    {/* === OUTPUTS === */}
+    {rightPins.map((pin: any, i: number) => {
+      const top = ((i + 1) * 100) / (rightPins.length + 1)
+      const color = getPinColor(pin)
+
+      const isRight = isRightSide
+      const handlePos = isRight ? Position.Right : Position.Left
+      const handleType = 'source'
+      const justify = isRight ? 'flex-end' : 'flex-start'
+
+      return (
+        <div
+          key={`OUT-${pin.name}`}
+          style={{
+            position: 'absolute',
+            top: `${top}%`,
+            right: isRight ? 0 : 'auto',
+            left: isRight ? 'auto' : 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: justify,
+            transform: 'translateY(-50%)',
+          }}
+        >
+          {isRight ? (
+            <>
+              <span style={{ fontSize: 9, marginRight: 6 }}>{pin.name}</span>
+              <Handle
+                id={pin.name}
+                type={handleType}
+                position={handlePos}
+                style={{
+                  background: color,
+                  width: 8,
+                  height: 8,
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <Handle
+                id={pin.name}
+                type={handleType}
+                position={handlePos}
+                style={{
+                  background: color,
+                  width: 8,
+                  height: 8,
+                  marginRight: 6,
+                }}
+              />
+              <span style={{ fontSize: 9 }}>{pin.name}</span>
+            </>
+          )}
+        </div>
+      )
+    })}
+  </>
+)}
+
+    </div>
+  )
+})
+
+export default DeviceNode
