@@ -39,7 +39,11 @@ export default Protofy("code", async (app:Application, context: typeof APIContex
 
         let response = await context.apis.fetch(
           'get',
-          agentUrl+'?token='+encodeURIComponent(token)+'&message='+encodeURIComponent(userMessage)+'&history='+encodeURIComponent(JSON.stringify(prevMessages)),
+          agentUrl
+            + '?token=' + encodeURIComponent(token)
+            + '&message=' + encodeURIComponent(userMessage)
+            + '&history=' + encodeURIComponent(JSON.stringify(prevMessages))
+            + '&board=' + encodeURIComponent(String(req.query.board))
         );
 
         if(typeof response !== 'string') {

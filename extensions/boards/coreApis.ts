@@ -8,15 +8,14 @@ import { getServiceToken, requireAdmin } from "protonode";
 import { addAction } from '@extensions/actions/coreContext/addAction';
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
 import { VersionsDir } from '@extensions/versions/versions'
-import fileActions from "@extensions/files/fileActions";
 import { Manager } from "./manager";
 import { dbProvider, getDBOptions } from 'protonode';
 import { acquireLock, releaseLock } from "./system/lock";
 import { registerCards } from "./system/cards";
 import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles, getBoardFilePath } from "./system/boards";
-
-import { getActions, handleBoardAction } from "./system/actions";
-import { get } from "http";
+import { getActions, handleBoardAction, setActionValue, buildActionWrapper, normalizeRulesCode } from "./system/actions";
+import { TypeParser } from "./system/types";
+import fetch from 'node-fetch';
 
 
 const TemplatesDir = (root) => fspath.join(root, "/data/templates/boards/")
@@ -249,7 +248,7 @@ const getDB = (path, req, session, context?) => {
             for (const boardId of boards) {
                 const lockKey = BoardsDir(getRoot(req)) + boardId + '.json';
                 await acquireLock(lockKey);
-   
+
                 try {
                     const filePath = `${BoardsDir(getRoot(req))}${boardId}.json`;
                     const fileContent = await fs.readFile(filePath, 'utf8');
@@ -1032,6 +1031,202 @@ export default async (app, context) => {
     // Aceptar POST
     app.post('/api/core/v1/boards/:boardId/actions/:action', requireAdmin(), (req, res) => {
         handleBoardAction(context, Manager, req, req.params.boardId, req.params.action, res, req.body)
+    })
+
+    // Accept approval (non-blocking flow)
+    app.post('/api/core/v1/boards/:boardId/actions/:action/approvals/:id/accept', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const actionName = req.params.action
+            const approvalId = req.params.id
+
+            const snapshot = ProtoMemDB('approvals').get('approvals', boardId, approvalId)
+            if (!snapshot) {
+                return res.status(404).send({ error: 'Approval not found' })
+            }
+
+            const { statesSnapshot, cardSnapshot, paramsSnapshot } = snapshot
+            const states = statesSnapshot || {}
+            const board = (states as any)?.boards?.[boardId] ?? {}
+            const rulesCode = normalizeRulesCode(cardSnapshot?.rulesCode)
+            if (!rulesCode) return res.status(400).send({ error: 'Missing rulesCode in snapshot' })
+
+            const actions = await getActions(context)
+            const wrapper = buildActionWrapper(actions, boardId, states, rulesCode)
+
+            const params = paramsSnapshot || {}
+            let response: any = null
+            let failed = false
+            try {
+                response = await wrapper(req, res, boardId, actionName, states, actions, board, params, params, getServiceToken(), context, API, fetch as any, getLogger({ module: 'boards', board: boardId, card: actionName }), [])
+                response = cardSnapshot?.returnType && typeof (TypeParser as any)?.[cardSnapshot.returnType] === 'function'
+                    ? (TypeParser as any)[cardSnapshot.returnType](response, cardSnapshot.enableReturnCustomFallback, cardSnapshot.fallbackValue)
+                    : response
+            } catch (err) {
+                await generateEvent({
+                    path: `actions/boards/${boardId}/${actionName}/code/error`,
+                    from: 'system',
+                    user: 'system',
+                    ephemeral: true,
+                    payload: {
+                        status: 'code_error',
+                        action: actionName,
+                        boardId,
+                        params,
+                        stack: (err as any)?.stack,
+                        message: (err as any)?.message,
+                        name: (err as any)?.name,
+                        code: (err as any)?.code
+                    },
+                }, getServiceToken())
+                getLogger({ module: 'boards', board: boardId, card: actionName }).error({ err }, 'Error executing approval rules')
+                failed = true
+                return res.status(500).send({ _err: 'e_code', error: 'Error executing approval rules', message: (err as any)?.message })
+            }
+
+            if (!failed) {
+                if (cardSnapshot?.responseKey && response && typeof response === 'object' && cardSnapshot.responseKey in response) {
+                    response = response[cardSnapshot.responseKey]
+                }
+
+                await setActionValue(Manager, context, boardId, { name: actionName, alwaysReportValue: cardSnapshot?.alwaysReportValue, persistValue: cardSnapshot?.persistValue } as any, response)
+
+                await generateEvent({
+                    path: `actions/boards/${boardId}/${actionName}/done`,
+                    from: 'system',
+                    user: 'system',
+                    ephemeral: true,
+                    payload: {
+                        status: 'done',
+                        action: actionName,
+                        boardId,
+                        params,
+                        response
+                    },
+                }, getServiceToken())
+
+                // persist approval result and status
+                try {
+                    const approvals = ProtoMemDB('approvals')
+                    const snap = approvals.get('approvals', boardId, approvalId)
+                    if (snap) {
+                        snap.meta = {
+                            ...(snap.meta || {}),
+                            status: 'accepted',
+                            acceptedAt: new Date().toISOString(),
+                            acceptedBy: (req as any)?.session?.user?.email || (req as any)?.session?.user?.name || 'system'
+                        }
+                        snap.response = response
+                        approvals.set('approvals', boardId, approvalId, snap)
+                    }
+                } catch { /* ignore */ }
+
+                return res.status(200).send({ accepted: true, approvalId, response })
+            }
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error in approval accept endpoint')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
+    })
+
+    // Reject approval (non-blocking flow)
+    app.post('/api/core/v1/boards/:boardId/actions/:action/approvals/:id/reject', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const actionName = req.params.action
+            const approvalId = req.params.id
+
+            const snapshot = ProtoMemDB('approvals').get('approvals', boardId, approvalId)
+            if (!snapshot) {
+                return res.status(404).send({ error: 'Approval not found' })
+            }
+
+            // mark as rejected in approvals store
+            try {
+                const approvals = ProtoMemDB('approvals')
+                const snap = approvals.get('approvals', boardId, approvalId)
+                if (snap) {
+                    snap.meta = {
+                        ...(snap.meta || {}),
+                        status: 'rejected',
+                        rejectedAt: new Date().toISOString(),
+                        rejectedBy: (req as any)?.session?.user?.email || (req as any)?.session?.user?.name || 'system'
+                    }
+                    approvals.set('approvals', boardId, approvalId, snap)
+                }
+            } catch { /* ignore */ }
+
+            await generateEvent({
+                path: `actions/boards/${boardId}/${actionName}/rejected`,
+                from: 'system',
+                user: 'system',
+                ephemeral: true,
+                payload: {
+                    status: 'rejected',
+                    action: actionName,
+                    boardId,
+                },
+            }, getServiceToken())
+
+            return res.status(200).send({ rejected: true, approvalId })
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error in approval reject endpoint')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
+    })
+
+    // Approval status (offered/accepted/rejected)
+    app.get('/api/core/v1/boards/:boardId/actions/:action/approvals/:id/status', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const approvalId = req.params.id
+            const snapshot = ProtoMemDB('approvals').get('approvals', boardId, approvalId)
+            if (!snapshot) {
+                return res.status(200).send({ status: 'applied' })
+            }
+            const st = snapshot?.meta?.status || 'offered'
+            return res.status(200).send({ status: st })
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error in approval status endpoint')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
+    })
+
+    // List approvals for a board/action 
+    app.get('/api/core/v1/boards/:boardId/actions/:action/approvals', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const actionName = req.params.action
+            const statusFilter = (req.query.status as string | undefined)?.trim()
+
+            const byTag = ProtoMemDB('approvals').getByTag('approvals', boardId) || {}
+            const items = Object.entries(byTag)
+                .map(([id, snap]: any) => ({ id, snap }))
+                .filter(({ snap }) => (snap?.meta?.actionName === actionName))
+                .map(({ id, snap }) => {
+                    const meta = snap?.meta || {}
+                    return {
+                        id,
+                        action: meta.actionName,
+                        status: meta.status || 'offered',
+                        createdAt: meta.createdAt,
+                        requestedBy: meta.requestedBy,
+                        acceptedAt: meta.acceptedAt,
+                        acceptedBy: meta.acceptedBy,
+                        rejectedAt: meta.rejectedAt,
+                        rejectedBy: meta.rejectedBy,
+                        params: snap?.paramsSnapshot,
+                        response: snap?.response,
+                    }
+                })
+                .filter(item => !statusFilter || item.status === statusFilter)
+                .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+
+            return res.status(200).json({ items })
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error listing approvals')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
     })
 
     const hasAccessToken = async (tokenType, session, card, token) => {
