@@ -577,7 +577,8 @@ export default {
         icon: Wrench,
         action: async (element) => {
           try {
-            const response = await fetch(downloadDeviceFirmwareEndpoint(element.data.name, compileSessionId));
+            if (!element.data.data.lastCompile.success) return;
+            const response = await fetch(downloadDeviceFirmwareEndpoint(element.data.name, element.data.data.lastCompile.sessionId));
             if (!response.ok) {
               throw new Error('Network response was not ok');
             }
@@ -594,14 +595,15 @@ export default {
             console.error('Error downloading firmware binary:', err);
           }
         },
-        isVisible: (element) => compileSessionId !== ''
+        isVisible: (element) => element?.data?.data?.lastCompile?.success
       },
       {
         text: "Download firmware ELF",
         icon: Wrench,
         action: async (element) => {
           try {
-            const response = await fetch(downloadDeviceElfEndpoint(element.data.name, compileSessionId));
+            if (!element.data.data.lastCompile.success) return;
+            const response = await fetch(downloadDeviceElfEndpoint(element.data.name, element.data.data.lastCompile.sessionId));
             if (!response.ok) {
               throw new Error('Network response was not ok');
             }
@@ -618,7 +620,7 @@ export default {
             console.error('Error downloading firmware ELF:', err);
           }
         },
-        isVisible: (element) => compileSessionId !== ''
+        isVisible: (element) => element?.data?.data?.lastCompile?.success
       }
 
 
