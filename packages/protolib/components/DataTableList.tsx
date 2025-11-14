@@ -54,6 +54,7 @@ export const DataTableList = ({
     state = {} as DataTableListState,
     setSelected = (item) => { },
     onSelectItem = (item) => { },
+    onEditItem = (item)=> { }, 
     disableRowIcon = false,
     disableItemSelection = false
 }) => {
@@ -171,7 +172,7 @@ export const DataTableList = ({
                             onDelete={onDelete}
                             extraMenuActions={extraMenuActions} />
 
-                            {!disableRowIcon && <InteractiveIcon Icon={rowIcon} onPress={() => onSelectItem(model.load(row))}></InteractiveIcon>}
+                            {!disableRowIcon && <InteractiveIcon Icon={rowIcon} onPress={() => onEditItem(model.load(row))}></InteractiveIcon>}
 
                     </XStack>
                     </Theme>, true, '115px'),

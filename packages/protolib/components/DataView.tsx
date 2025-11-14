@@ -382,6 +382,7 @@ const DataViewInternal = forwardRef(({
                     onDelete({ sourceUrl: _sourceUrl, selected })
                 },
                 onSelectItem: onSelectItem ? onSelectItem : (item) => replaceState('item', item.getId()),
+                onEditItem: (item) => replaceState('item', item.getId()),
                 deleteable,
                 enableAddToInitialData,
                 extraMenuActions,
