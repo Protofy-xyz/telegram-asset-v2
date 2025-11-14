@@ -2,7 +2,7 @@ import { ProtoModel, SessionDataType, API, Schema, z } from 'protobase'
 
 export const DevicesSchema = Schema.object({
   name: z.string().hint("Device name").static().regex(/^[a-z0-9_]+$/, "Only lower case chars, numbers or _").id().search().label("Name"),
-  deviceDefinition: z.string().label("Definition"),
+  deviceDefinition: z.string().label("Definition").optional(),
   substitutions: z.record(z.string().optional(), z.any().optional()).optional().hidden(),
   subsystem: z.record(z.string(), z.any()).optional().hidden(),
   data: z.array(z.record(z.string(), z.any())).optional().hidden(),
@@ -11,8 +11,7 @@ export const DevicesSchema = Schema.object({
     lat: z.string(),
     long: z.string()
   }).optional().location("lat", "long").hidden().generate(()=>{return {lat: "41.3947846",long: "2.1939663"}},true), // PROTOFY HQ
-  credentials: z.record(z.record(z.string(), z.any())).optional().onCreate("generateDeviceCredentials").hidden(),
-  generateAssociatedBoard: z.boolean().optional().defaultValue(true),
+  credentials: z.record(z.record(z.string(), z.any())).optional().onCreate("generateDeviceCredentials").hidden()
 })
 export type DevicesType = z.infer<typeof DevicesSchema>;
 // export const DevicesModel = AutoModel.createDerived<DevicesType>("DevicesModel", DevicesSchema);

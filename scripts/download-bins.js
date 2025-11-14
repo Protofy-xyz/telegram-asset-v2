@@ -20,8 +20,23 @@ module.exports = async function downloadBins(AdmZip, tar) {
         renameSync(path.join(path.dirname(outputPath), 'node.exe'), outputPath);
       }
     },
-    linux: {
+    linuxX64: {
       url: `${baseUrl}/node-${version}-linux-x64.tar.gz`,
+      out: 'node',
+      extract: async (archivePath, outputPath) => {
+        await tar.x({
+          file: archivePath,
+          cwd: path.dirname(outputPath),
+          filter: p => p.endsWith('/bin/node'),
+          strip: 1,
+        });
+        const extracted = path.join(path.dirname(outputPath), 'bin', 'node');
+        renameSync(extracted, outputPath);
+        chmodSync(outputPath, 0o755);
+      }
+    },
+    linuxArm64: {
+      url: `${baseUrl}/node-${version}-linux-arm64.tar.gz`,
       out: 'node',
       extract: async (archivePath, outputPath) => {
         await tar.x({
@@ -93,11 +108,20 @@ module.exports = async function downloadBins(AdmZip, tar) {
 
   async function main() {
     if (!existsSync(path.join(__dirname, '..', 'bin'))) mkdirSync(path.join(__dirname, '..', 'bin'));
+    const arch = process.arch;  
     //check if running on Windows
     if (process.platform === 'win32') {
       setupPlatform('win', targets.win);
     } else if (process.platform === 'linux') {
-      setupPlatform('linux', targets.linux);
+       if (arch === 'arm64') {
+        await setupPlatform('linux-arm64 (RPi5)', targets.linuxArm64);
+      } else if (arch === 'x64') {
+        await setupPlatform('linux-x64', targets.linuxX64);
+      // } else if (arch === 'arm') {
+      //   await setupPlatform('linux-armv7l', targets.linuxArmv7l);
+      } else {
+        throw new Error(`Unsupported Linux arch: ${arch}`);
+      }
     } else if (process.platform === 'darwin') {
       setupPlatform('mac', targets.mac);
     }

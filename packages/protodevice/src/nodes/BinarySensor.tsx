@@ -2,6 +2,7 @@ import React from "react";
 import { Field, Node, NodeParams } from 'protoflow';
 import NodeBus, { cleanName, generateTopic } from "../NodeBus";
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 
 const BinarySensor = ({ node = {}, nodeData = {}, children, color }: any) => {
     const [name, setName] = React.useState(cleanName(nodeData['param-1']))
@@ -11,7 +12,7 @@ const BinarySensor = ({ node = {}, nodeData = {}, children, color }: any) => {
     const type = 'binary_sensor';
 
     return (
-        <Node node={node} isPreview={!node.id} title='Switch' color={color} id={node.id} skipCustom={true}>
+        <Node node={node} isPreview={!node.id} title='Switch' color={color} id={node.id} skipCustom={true} output={{label: 'Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
             <NodeBus componentName={name} type={type} />
         </Node>

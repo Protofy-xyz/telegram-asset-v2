@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { Node, Field, NodeParams, FlowStoreContext } from 'protoflow';
 import { getColor } from ".";
+import useTheme from "protoflow/src/diagram/Theme";
 
 const UARTBus = ({ node = {}, nodeData = {}, children, color }: any) => {
     const [name, setName] = React.useState(nodeData['param-1'])
@@ -22,7 +23,7 @@ const UARTBus = ({ node = {}, nodeData = {}, children, color }: any) => {
         }
     ] as Field[]
     return (
-        <Node node={node} isPreview={!node.id} title='UART Bus' color={color} id={node.id} skipCustom={true}>
+        <Node node={node} isPreview={!node.id} title='UART Bus' color={color} id={node.id} skipCustom={true} output={{label: 'TX Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
         </Node>
     )

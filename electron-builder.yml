@@ -28,7 +28,7 @@ linux:
   target:
     - AppImage
     - tar.gz
-  icon: apps/adminpanel/public/favicon.ico
+  icon: apps/adminpanel/public/logo-mac.png
 
 files:
   - electron/**

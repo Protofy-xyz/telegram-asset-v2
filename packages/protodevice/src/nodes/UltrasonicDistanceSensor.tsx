@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Node, Field, NodeParams, FlowStoreContext } from 'protoflow';
 import { getColor } from '.';
-
+import useTheme from "protoflow/src/diagram/Theme";
 
 const UltrasonicDistanceSensor = ({ node = {}, nodeData = {}, children, color }: any) => {
     const transitionErrorMsg = 'Add units s/ms'
@@ -24,7 +24,7 @@ const UltrasonicDistanceSensor = ({ node = {}, nodeData = {}, children, color }:
         }
     ] as Field[]
     return (
-        <Node node={node} isPreview={!node.id} title='Ultrasonic Distance Sensor' color="#EF9A9A" id={node.id} skipCustom={true} disableInput disableOutput>
+        <Node node={node} isPreview={!node.id} title='Ultrasonic Distance Sensor' id={node.id} skipCustom={true} disableInput disableOutput output={{label: 'TRIGGER Pin', field: 'value', type: 'output', labelColor: useTheme("titleColor")}}>
             <NodeParams id={node.id} params={nodeParams} />
         </Node>
     )

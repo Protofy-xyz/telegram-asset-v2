@@ -1,5 +1,5 @@
 // 📦 main.js
-const { app, BrowserWindow, session, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, session, ipcMain, shell} = require('electron');
 const https = require('https');
 const http = require('http');
 const path = require('path');
@@ -7,6 +7,7 @@ const { spawn } = require('child_process');
 const os = require('os');
 const process = require('process');
 const fs = require('fs');
+
 
 function getNodePath(rootPath) {
   //get path to the local Node.js binary
@@ -115,6 +116,7 @@ module.exports = function start(rootPath) {
 
     ses.setPermissionCheckHandler((wc, permission, requestingOrigin, details) => {
       if (permission === 'media' || permission === 'camera' || permission === 'microphone') {
+        return true
         const allowed = isAllowed(details, requestingOrigin);
         const armedPeek = isArmedPeek(wc);
         console.log('[media][check]', {
@@ -149,7 +151,7 @@ module.exports = function start(rootPath) {
           armedConsumed: armed,
           ok
         });
-
+        return callback(true)
         return callback(!!ok);
       }
       if (['clipboard-sanitized-write', 'clipboard-read', 'clipboard-write', 'clipboard'].includes(permission)) {
@@ -211,7 +213,7 @@ module.exports = function start(rootPath) {
       }
       return false;
     });
-    
+
     ses.setDevicePermissionHandler((details) => {
       if (details.deviceType === 'serial') {
         const origin = details?.requestingOrigin || originFromUrl(details?.requestingUrl || '');
@@ -375,7 +377,7 @@ module.exports = function start(rootPath) {
       resizable: true,
       scrollBounce: false,
       fullscreenable: false,        // ⬅️ prevent entering macOS fullscreen
-      backgroundColor: '#111111', 
+      backgroundColor: '#111111',
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
       }

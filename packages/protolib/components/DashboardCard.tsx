@@ -68,10 +68,10 @@ export const DashboardCard = forwardRef(({
                     key={id}
                     id={id}
                     borderRadius="var(--radius-6)"
-                    backgroundColor={hideFrame ? "transparent" : "var(--bgPanel)"}
                     flex={1}
                     position="relative"
                     {...containerProps}
+                    backgroundColor={hideFrame ? "transparent" : (containerProps["bgColor"] || containerProps["backgroundColor"] || "var(--bgPanel)")}
                     style={{
                         height: '100%',
                         overflow: 'hidden',

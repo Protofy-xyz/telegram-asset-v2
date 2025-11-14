@@ -31,6 +31,8 @@ import { getFlowMasks, getFlowsCustomComponents } from "app/bundles/masks"
 import { Rules } from 'protolib/components/autopilot/Rules'
 import { Panel, PanelGroup } from "react-resizable-panels";
 import CustomPanelResizeHandle from 'protolib/components/MainPanel/CustomPanelResizeHandle'
+import { useSettingValue } from '@extensions/settings/hooks';
+import ESPHomeViewer from '@extensions/esphome/viewers'
 
 const GLTFViewer = dynamic(() => import('protolib/adminpanel/features/components/ModelViewer'), {
   loading: () => <Center>
@@ -118,7 +120,7 @@ const SaveButton = ({ checkStatus = () => true, defaultState = 'available', path
   );
 };
 
-const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = undefined }) => {
+export const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = undefined , codeviewProps = {}, monacoProps = {}}) => {
   const [fileContent, setFileContent] = useFileFromAPI(path)
   const searchParams = useSearchParams();
   const query = Object.fromEntries(searchParams.entries());
@@ -148,7 +150,20 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
 
   return <AsyncView ready={loaded}>
     <Tinted>
-      <CodeView disableAIPanels={true} masksPath={masksPath} defaultMode={defaultMode.current} path={path} extraIcons={extraIcons} sourceCode={sourceCode} fileContent={fileContent} isModified={isModified} setIsModified={setIsModified}>
+      <CodeView 
+        disableAIPanels={true} 
+        masksPath={masksPath} 
+        defaultMode={defaultMode.current} 
+        path={path} 
+        extraIcons={extraIcons} 
+        sourceCode={sourceCode} 
+        fileContent={fileContent} 
+        isModified={isModified} 
+        setIsModified={setIsModified}
+        monacoProps={monacoProps}
+        query={query}
+        {...codeviewProps}
+        >
         <SaveButton
           onSave={() => originalSourceCode.current = sourceCode.current}
           checkStatus={() => sourceCode.current != originalSourceCode.current}
@@ -190,6 +205,7 @@ export const CodeView = ({
   masksPath = undefined,
   defaultMode = 'flow',
   rulesProps = {},
+  flowsProps = {},
   monacoOnMount = (editor, monaco) => { },
   monacoInstance = null,
   monacoProps = {},
@@ -216,6 +232,8 @@ export const CodeView = ({
   const { resolvedTheme } = useThemeSetting()
   const [mode, setMode] = useState(disableAIPanels ? 'code' : defaultMode)
   const [savedRules, setSavedRules] = useState(rules)
+  const codeVisibleSetting: any = useSettingValue('code.visible', true);
+  const isCodeVisible = codeVisibleSetting != "false"
 
   console.log('sourceCode: ', sourceCode)
   const monaco = useMemo(() => {
@@ -335,7 +353,9 @@ export const CodeView = ({
       sourceCode={sourceCode.current}
       path={flowsPath ?? path}
       themeMode={resolvedTheme}
-      primaryColor={resolvedTheme == 'dark' ? theme[tint + '10'].val : theme[tint + '7'].val} />
+      primaryColor={resolvedTheme == 'dark' ? theme[tint + '10'].val : theme[tint + '7'].val} 
+      {...flowsProps}
+      />
   }
 
   const getBody = () => {
@@ -370,11 +390,13 @@ export const CodeView = ({
               }}
               loadingIndex={-1}
               disabledConfig={rulesConfig}
+              availableParams={rulesProps["availableParams"] ?? []}
+              allowParams={!!rulesProps["allowParams"]}
             />
           </YStack>
         </Panel>
         <CustomPanelResizeHandle direction="horizontal" borderLess={false} borderColor="var(--gray4)" />
-        <Panel defaultSize={50} minSize={0}>
+        <Panel defaultSize={isCodeVisible ? 50 : 0} minSize={0}>
           <YStack flex={1} h="100%" paddingTop="$3">
             {monaco}
           </YStack>
@@ -430,7 +452,7 @@ export const CodeView = ({
   </AsyncView> : content
 }
 
-const MonacoViewer = ({ path, extraIcons }) => {
+export const MonacoViewer = ({ path, extraIcons, ...props }) => {
   const [fileContent] = useFileFromAPI(path);
   const sourceCode = useRef('');
   const { resolvedTheme } = useThemeSetting();
@@ -463,6 +485,7 @@ const MonacoViewer = ({ path, extraIcons }) => {
           darkMode={resolvedTheme === 'dark'}
           sourceCode={fileContent.data}
           onChange={handleChange}
+          {...props}
         />
       </XStack>
     </AsyncView>
@@ -517,10 +540,17 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
   const { mime } = data
   const type = mime ? mime.split('/')[0] : 'text'
   const url = ('/api/core/v1/files/' + data.path).replace(/\/+/g, '/')
+  const isESPHomeFile = (mime && mime.includes("yaml") || data.path.endsWith("yaml") || data.path.endsWith("yml")) && data.path.startsWith("data/devices")
   if (mime == 'application/json') {
     return { component: <JSONViewer {...data} />, supportIcons: true }
   } else if (mime == 'application/javascript' || mime == 'video/mp2t') {
     return { component: <FlowsViewer {...data} />, supportIcons: true }
+  } else if (isESPHomeFile) {
+    return {
+      component: <ESPHomeViewer {...data} />,
+      widget: 'text',
+      supportIcons: true
+    }
   } else if ((data.path).endsWith(".tsx")) {
     return {
       component: <MonacoViewer {...data} />,

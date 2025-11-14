@@ -13,6 +13,37 @@ type AutoActionsParams = {
     html?: Record<string, string>; // additional HTML content for cards
 }
 
+const getListRules = (modelName) => {
+    return `const action = userParams.action;
+delete userParams[\"action\"];
+
+if (action == \"create\") {
+    return execute_action(\"/api/v1/actions/${modelName}/create\", userParams);
+} else if (action == \"update\") {
+    return execute_action(\"/api/v1/actions/${modelName}/update\", userParams);
+} else if (action == \"read\") {
+    return execute_action(\"/api/v1/actions/${modelName}/read\", userParams);
+} else if (action == \"delete\") {
+  return execute_action(\"/api/v1/actions/${modelName}/delete\", userParams);
+} else if (action == \"exists\") {
+  return execute_action(\"/api/v1/actions/${modelName}/exists\", userParams);
+} else if (action == "select") {
+  if (!userParams.selectedItem) {
+    return
+  }
+
+  return {
+    selected: userParams.selectedItem.data, 
+    items: await execute_action("/api/v1/actions/${modelName}/list", {})
+  };
+} else {
+  return {
+    selected: null, 
+    items: await execute_action("/api/v1/actions/${modelName}/list", {})
+  };
+}`
+}
+
 export const AutoActions = ({
     modelName,
     modelType,
@@ -116,7 +147,7 @@ export const AutoActions = ({
             description: "Displays a table with the last " + plurName,
             type: 'value',
             html: getHTML("last_table", "\n//data contains: data.value, data.icon and data.color\nreturn card({\n    content: cardTable(data.value), padding: '3px'\n});\n"),
-            rulesCode: `return states.objects?.${modelName}.lastEntries`
+            rulesCode: `return states.storages?.${modelName}.lastEntries`
         },
 
         token: getServiceToken()
@@ -125,6 +156,7 @@ export const AutoActions = ({
     //read
     app.get(actionUrlPrefix + '/read', handler(async (req, res, session) => {
         const params = req.query;
+        delete params._stackTrace;
         const id = params.id;
         try {
             const result = await API.get(`${urlPrefix}/${id}?token=${session.token}`);
@@ -241,6 +273,7 @@ export const AutoActions = ({
 
     app.post(actionUrlPrefix + '/create', handler(async (req, res, session) => {
         const params = req.body;
+        delete params._stackTrace;
         // console.log("create params: ", JSON.stringify(params));
         fixParamsForModel(params, modelType);
         try {
@@ -259,7 +292,8 @@ export const AutoActions = ({
     }))
 
     const def = modelType.getObjectFieldsDefinition()
-    const params = Object.keys(def).map((key) => {
+    
+    const params = Object.keys(def).filter(key => def[key].autogenerate == false).map((key) => {
         return {
             [key]: def[key].description + " (" + def[key].type + ")" + (def[key].isId ? " (this will be used as the id of the element)" : "")
         }
@@ -363,6 +397,7 @@ export const AutoActions = ({
     //update
     app.get(actionUrlPrefix + '/update', handler(async (req, res, session) => {
         const params = req.query;
+        delete params._stackTrace;
         fixParamsForUpdate(params, modelType);
         const id = params.id;
         const field: any = params.field;
@@ -441,12 +476,14 @@ export const AutoActions = ({
         templateName: 'Last created ' + modelName,
         id: 'storage_' + modelName + '_lastCreated',
         defaults: {
+            width: 2,
+            height: 8,
             html: getHTML('lastCreated'),
             type: "value",
             icon: 'rss',
             name: `lastCreated ${modelName}`,
             description: `Last Created ${modelName}`,
-            rulesCode: `return states.objects?.${modelName}.lastCreated;`,
+            rulesCode: `return states.storages?.${modelName}.lastCreated;`,
         },
 
         token: getServiceToken()
@@ -475,7 +512,7 @@ export const AutoActions = ({
             icon: 'rss',
             name: `lastUpdated ${modelName}`,
             description: `Last updated ${modelName}`,
-            rulesCode: `return states.objects?.${modelName}.lastUpdated;`,
+            rulesCode: `return states.storages?.${modelName}.lastUpdated;`,
         },
 
         token: getServiceToken()
@@ -493,7 +530,7 @@ export const AutoActions = ({
             icon: 'boxes',
             name: `Total ${plurName}`,
             description: `Total ${plurName}`,
-            rulesCode: `return states.objects?.${modelName}.total;`,
+            rulesCode: `return states.storages?.${modelName}.total;`,
         },
 
         token: getServiceToken()
@@ -506,8 +543,9 @@ export const AutoActions = ({
         const search = params.search;
         const orderBy = params.orderBy;
         const orderDirection = params.orderDirection;
+        const mode = params.mode || 'normal';
 
-        const finalUrl = `${urlPrefix}?token=${session.token}&${itemsPerPage ? `itemsPerPage=${itemsPerPage}` : ''}${page ? `&page=${page}` : ''}${search ? `&search=${search}` : ''}${orderBy ? `&orderBy=${orderBy}` : ''}${orderDirection ? `&orderDirection=${orderDirection}` : ''}`;
+        const finalUrl = `${urlPrefix}?token=${session.token}&${itemsPerPage ? `itemsPerPage=${itemsPerPage}` : ''}${page ? `&page=${page}` : ''}${search ? `&search=${search}` : ''}${orderBy ? `&orderBy=${orderBy}` : ''}${orderDirection ? `&orderDirection=${orderDirection}` : ''}${mode ? `&mode=${mode}` : ''}`;
         try {
             const result = await API.get(finalUrl);
             if (result.isLoaded) {
@@ -550,8 +588,9 @@ export const AutoActions = ({
             height: 10,
             icon: 'search',
             displayResponse: true,
+            method: 'post',
             name: `${modelName} storage manager`,
-            html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\"" + (object ?? modelName) + "\" onItemsChange={() => execute_action(card.name, {})}/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
+            html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\"" + (object ?? modelName) + "\" onItemsChange={() => execute_action(card.name, {})} onSelectItem={(item) => execute_action(card.name, {action: \"select\", selectedItem: JSON.stringify(item)})}/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
             type: 'action',
             description: `Returns a list of ${modelName} objects. You can filter the results by passing itemsPerPage, page, search, orderBy and orderDirection parameters.`,
             params: {
@@ -561,9 +600,115 @@ export const AutoActions = ({
                 orderBy: 'field to order the results by (optional)',
                 orderDirection: 'direction to order the results by (asc or desc) (optional)',
                 action: "action to perform in the storage: list, read, create, update, delete, exists",
-                id: "id (required for actions: read, create, update, delete, exists)"
+                id: "id (required for actions: read, create, update, delete, exists)",
+                selectedItem: "selected item on user click"
             },
-            rulesCode: `const action = userParams.action;\n\ndelete userParams[\"action\"];\n\nif (action == \"create\") {\n  return execute_action(\"/api/v1/actions/${modelName}/create\", userParams);\n} else if (action == \"update\") {\n  return execute_action(\"/api/v1/actions/${modelName}/update\", userParams);\n} else if (action == \"read\") {\n  return execute_action(\"/api/v1/actions/${modelName}/read\", userParams);\n} else if (action == \"delete\") {\n  return execute_action(\"/api/v1/actions/${modelName}/delete\", userParams);\n} else if (action == \"exists\") {\n  return execute_action(\"/api/v1/actions/${modelName}/exists\", userParams);\n} else {\n  return execute_action(\"/api/v1/actions/${modelName}/list\", userParams);\n}\n`,
+            configParams: {
+                "selectedItem": {
+                    "defaultValue": "",
+                    "type": "json"
+                }
+            },
+            presets: {
+                "create": {
+                    "description": "creates/adds item to the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "create"
+                        }
+                    }
+                },
+                "update": {
+                    "description": "updates field of item of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "update"
+                        }
+                    }
+                },
+                "read": {
+                    "description": "reads item of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "read"
+                        }
+                    }
+                },
+                "delete": {
+                    "description": "deletes item of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "delete"
+                        }
+                    }
+                },
+                "list": {
+                    "description": "list items of the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "list"
+                        }
+                    }
+                },
+                "select": {
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "action",
+                        },
+                        "selectedItem": {
+                            "defaultValue": "",
+                            "type": "json"
+                        }
+                    },
+                },
+                "exists": {
+                    "description": "checks if exists item on the storage",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "exists"
+                        }
+                    }
+                }
+            },
+            rulesCode: getListRules(modelName),
+        },
+        token: getServiceToken(),
+        emitEvent: true
+    })
+
+    await context.cards.add({
+        group: 'storages',
+        tag: modelName,
+        name: 'search',
+        id: 'storage_' + modelName + '_search',
+        templateName: modelName + ' storage search',
+        defaults: {
+            width: 2,
+            height: 8,
+            icon: 'search',
+            displayResponse: true,
+            method: 'post',
+            name: `Search ${modelName} in storage`,
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
+            type: 'action',
+            description: `Search ${modelName} in the storage and returns a list of ${modelName} objects. You can use use querys in natural language for searching`,
+            params: {
+                search: "search term",
+                ai_mode: "enables natural language search mode"
+            },
+            configParams: {
+                search: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                },
+                ai_mode: {
+                    visible: true,
+                    defaultValue: "true",
+                    type: "boolean"
+                }
+            },
+            rulesCode: "return execute_action(\"/api/v1/actions/productos/list\", {\r\n    ...params,\r\n    mode: params.ai_mode ? 'ai' : 'normal'\r\n})",
         },
         token: getServiceToken(),
         emitEvent: true

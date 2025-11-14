@@ -1,77 +1,62 @@
-import classNames from "classnames";
-import { Send } from "lucide-react";
 import { useRef, useState } from "react";
+import { Send } from "lucide-react";
+import { Input, XStack, YStack, Button } from "tamagui";
 import useChat, { useSettings } from "../../store/store";
 import { createMessage } from "../../utils/createMessage";
-import { Tinted } from 'protolib/components/Tinted'
+import { Tinted } from "protolib/components/Tinted";
 
 export default function UserQuery() {
   const [query, setQuery] = useState("");
-  const formRef = useRef<null | HTMLFormElement>(null);
+  const inputRef = useRef<any>(null);
   const addChat = useChat((state) => state.addChat);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectedModal = useSettings((state) => state.settings.selectedModal);
 
-  function handleOnKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    const target = e.target as HTMLTextAreaElement;
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      if (formRef.current) {
-        formRef.current.requestSubmit();
-        target.style.height = "30px";
-      }
-    }
-  }
-
-  function handleOnInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const target = e.target as HTMLTextAreaElement;
-    setQuery(target.value);
-    target.style.height = "0px";
-    target.style.height = `${target.scrollHeight}px`;
-  }
-
-  async function handleOnSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (query) {
-      addChat(createMessage("user", query, "text"));
-      addChat(createMessage("assistant", "", selectedModal.startsWith("dall-e") ? "image_url" : "text"));
+  async function handleSubmit() {
+    if (query.trim()) {
+      addChat(createMessage("user", query.trim(), "text"));
+      addChat(
+        createMessage(
+          "assistant",
+          "",
+          selectedModal.startsWith("dall-e") ? "image_url" : "text"
+        )
+      );
       setQuery("");
-      if (textareaRef.current) textareaRef.current.style.height = "30px";
     }
   }
 
   return (
-    <form className="flex items-center shadow-md dark:bg-[#2f2f2f] bg-white dark:border-white border-gray-700 border-2 rounded-md" style={{ backgroundColor: "var(--background)" }} onSubmit={handleOnSubmit} ref={formRef}>
-      <div className="flex-grow p-2">
-        <textarea
-          name="query"
-          ref={textareaRef}
-          className="h-6 px-2 w-full outline-none resize-none dark:bg-transparent dark:text-white placeholder:font-bold"
-          placeholder="Send a message"
-          onKeyDown={handleOnKeyDown}
-          onChange={handleOnInputChange}
+    <XStack
+      ai="center"
+      jc="space-between"
+      gap="$2"
+      bc="$bgPanel"
+      p="$2"
+      br="$10"
+    >
+      <YStack flex={1}>
+        <Input
+          bc="transparent"
+          ref={inputRef}
           value={query}
+          placeholder="Send a message"
+          borderColor="transparent"
+          focusStyle={{ borderColor: "transparent", outlineColor: "$colorTransparent" }}
+          hoverStyle={{ borderColor: "transparent" }}
           autoFocus
-        ></textarea>
-      </div>
-      <div className="w-1/12 text-center mx-2">
-
-        <Tinted>
-          <button
-            type="submit"
-            className={classNames(
-              "transition inline-flex items-center justify-center py-1 px-1 rounded-md",
-            )}
-            style={{
-              backgroundColor: query ? "var(--color5)" : "transparent",
-              color: query ? "var(--color8)" : "var(--gray11)",
-              marginTop: "-1px",
-            }}
-          >
-            <Send />
-          </button>
-        </Tinted>
-      </div>
-    </form>
+          onChangeText={setQuery}
+          onSubmitEditing={handleSubmit}
+        />
+      </YStack>
+      <Tinted>
+        <Button
+          icon={Send}
+          circular
+          onPress={handleSubmit}
+          backgroundColor={query ? "var(--color5)" : "transparent"}
+          color={query ? "var(--color8)" : "var(--gray11)"}
+        />
+      </Tinted>
+    </XStack>
   );
 }

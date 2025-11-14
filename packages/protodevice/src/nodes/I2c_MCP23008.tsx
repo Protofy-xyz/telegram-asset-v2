@@ -11,8 +11,6 @@ const I2c_MCP23008 = ({node= {}, nodeData= {}, children, color}: any) => {
     const nameErrorMsg = 'Reserved name'
     const intervalErrorMsg = 'Add units h/m/s/ms'
     
-    console.log('pins', pins)
-
     const nodeParams: Field[] = [
         {
             label: 'Name', static: true, field: 'param-1', type: 'input', onBlur:()=>{setName(nodeData['param1'])},

@@ -1,0 +1,558 @@
+{
+    "name": "board_rules_code_agent",
+    "tags": [
+        "system"
+    ],
+    "cards": [
+        {
+            "key": "action_1760800582118",
+            "width": 4,
+            "height": 20,
+            "icon": "globe",
+            "name": "agent_input",
+            "description": "A job queue with a list of pending jobs and a current job",
+            "type": "action",
+            "editorOptions": {},
+            "method": "post",
+            "displayResponse": true,
+            "params": {
+                "item": "",
+                "action": "action to perform in the queue: push, pop, clear",
+                "response": "",
+                "requestId": ""
+            },
+            "configParams": {
+                "item": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "action": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "response": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                },
+                "requestId": {
+                    "visible": true,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "presets": {
+                "reply": {
+                    "description": "Sends a reply to the current job and makes the next item (if any) the current job. The reply should be specified in the response param",
+                    "configParams": {
+                        "action": {
+                            "visible": false,
+                            "defaultValue": "reply"
+                        },
+                        "item": {
+                            "visible": false
+                        },
+                        "response": {
+                            "visible": true
+                        }
+                    }
+                },
+                "skip": {
+                    "description": "Skips the current job. Do not use unless you know what you are doing.",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "skip"
+                        }
+                    }
+                },
+                "reset": {
+                    "description": "resets the queue state to empty and skip curret job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "clear"
+                        }
+                    }
+                },
+                "remove": {
+                    "description": "remove the element with the given index from the job queue",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "remove"
+                        },
+                        "item": {
+                            "visible": true,
+                            "defaultValue": 0,
+                            "type": "number"
+                        }
+                    }
+                },
+                "push": {
+                    "params": {
+                        "item": "item to push"
+                    },
+                    "description": "Adds a new job",
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "push"
+                        },
+                        "item": {
+                            "visible": true,
+                            "defaultValue": "",
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "enableAgentInputMode": true,
+            "displayButton": false,
+            "manualAPIResponse": true
+        },
+        {
+            "key": "action_176081905123123",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "response",
+            "method": "post",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "response": "response to send",
+                "requestId": "the id of the request to response"
+            },
+            "configParams": {
+                "response": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "any"
+                },
+                "requestId": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "autoResponsive": false
+        },
+        {
+            "key": "action_1761179722605",
+            "width": 3,
+            "method": "post",
+            "height": 12,
+            "icon": "sparkles",
+            "type": "action",
+            "name": "llm_agent_call",
+            "displayResponse": true,
+            "params": {
+                "prompt": "",
+                "requestId": "the id of the request to response"
+            },
+            "configParams": {
+                "prompt": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "text"
+                },
+                "requestId": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayIcon": false,
+            "displayButton": true,
+            "displayButtonIcon": true,
+            "links": [
+                {
+                    "name": "agent_input.skip",
+                    "type": "pre"
+                }
+            ],
+            "rules": [
+                "do something"
+            ]
+        },
+        {
+            "key": "action_1761187147203",
+            "width": 2,
+            "height": 7,
+            "method": "post",
+            "icon": "rocket",
+            "type": "action",
+            "name": "current_request",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "input": "input to read from"
+            },
+            "configParams": {
+                "input": {
+                    "visible": false,
+                    "defaultValue": "board.agent_input.current",
+                    "type": "any"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayButton": true,
+            "links": []
+        },
+        {
+            "key": "value_1762443655623_vento_copy_cx611d0z03frocq2rh0tfj",
+            "width": 1,
+            "height": 4,
+            "icon": "scan-eye",
+            "type": "value",
+            "name": "prompt parameters",
+            "description": "A reusable card that observes value changes on the board.\n\n  #### Key Features\n  - Real time updates.\n  - Customize parameters.\n  - Rule execution on each value change.\n  - Customize the card view (UI/render).",
+            "params": {},
+            "configParams": {},
+            "markdownDisplay": false,
+            "displayIcon": false,
+            "rules": [
+                "Genera una función en JavaScript que reciba los params de la card cuyas claves son strings y cuyos valores son strings que contienen JSON.\nLa función debe devolver un nuevo objeto con los mismos keys pero con los valores ya parseados a su tipo original usando JSON.parse.\nSi algún valor no es un JSON válido, debe dejarlo tal cual sin lanzar error.\nEl resultado debe ser un objeto plano, no un array."
+            ]
+        },
+        {
+            "key": "action_1762518200679",
+            "width": 2,
+            "height": 7,
+            "icon": "rocket",
+            "type": "action",
+            "name": "prompt",
+            "method": "post",
+            "displayResponse": true,
+            "displayIcon": false,
+            "params": {
+                "states": "All the board available states",
+                "actions": "All the board available actions",
+                "rules": "The current rules of the board",
+                "previousRules": "The previous rules of the board",
+                "requestId": "the id of the request"
+            },
+            "configParams": {
+                "states": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "any"
+                },
+                "actions": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "any"
+                },
+                "rules": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "any"
+                },
+                "previousRules": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "any"
+                },
+                "requestId": {
+                    "visible": false,
+                    "defaultValue": "",
+                    "type": "string"
+                }
+            },
+            "description": "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "customName": "prompt2",
+            "links": []
+        }
+    ],
+    "layouts": {
+        "lg": [
+            {
+                "w": 18,
+                "h": 21,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 18,
+                "h": 8,
+                "x": 0,
+                "y": 21,
+                "i": "action_176081905123123",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 20,
+                "h": 21,
+                "x": 18,
+                "y": 8,
+                "i": "action_1761179722605",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 20,
+                "h": 8,
+                "x": 18,
+                "y": 0,
+                "i": "action_1761187147203",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 26,
+                "h": 29,
+                "x": 64,
+                "y": 0,
+                "i": "value_1762443655623_vento_copy_cx611d0z03frocq2rh0tfj",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 26,
+                "h": 29,
+                "x": 38,
+                "y": 0,
+                "i": "action_1762518200679",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            }
+        ],
+        "md": [
+            {
+                "w": 30,
+                "h": 22,
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true
+            },
+            {
+                "i": "action_176081905123123",
+                "x": 0,
+                "y": 33,
+                "w": 15,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761179722605",
+                "x": 23,
+                "y": 44,
+                "w": 23,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761187147203",
+                "x": 46,
+                "y": 57,
+                "w": 15,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762443655623_vento_copy_cx611d0z03frocq2rh0tfj",
+                "x": 0,
+                "y": 65,
+                "w": 8,
+                "h": 5,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762518200679",
+                "x": 24,
+                "y": 77,
+                "w": 15,
+                "h": 8,
+                "isResizable": true
+            }
+        ],
+        "sm": [
+            {
+                "i": "action_1760800582118",
+                "x": 0,
+                "y": 0,
+                "w": 2,
+                "h": 22,
+                "isResizable": true
+            },
+            {
+                "i": "action_176081905123123",
+                "x": 0,
+                "y": 62,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761179722605",
+                "x": 0,
+                "y": 74,
+                "w": 2,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761187147203",
+                "x": 0,
+                "y": 88,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762443655623_vento_copy_cx611d0z03frocq2rh0tfj",
+                "x": 1,
+                "y": 95,
+                "w": 1,
+                "h": 5,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762518200679",
+                "x": 0,
+                "y": 109,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            }
+        ],
+        "xs": [
+            {
+                "i": "action_1760800582118",
+                "x": 0,
+                "y": 0,
+                "w": 1,
+                "h": 22,
+                "isResizable": true
+            },
+            {
+                "i": "action_176081905123123",
+                "x": 0,
+                "y": 63,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761179722605",
+                "x": 0,
+                "y": 76,
+                "w": 1,
+                "h": 14,
+                "isResizable": true
+            },
+            {
+                "i": "action_1761187147203",
+                "x": 0,
+                "y": 90,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "value_1762443655623_vento_copy_cx611d0z03frocq2rh0tfj",
+                "x": 0,
+                "y": 98,
+                "w": 1,
+                "h": 5,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762518200679",
+                "x": 0,
+                "y": 113,
+                "w": 1,
+                "h": 8,
+                "isResizable": true
+            }
+        ]
+    },
+    "rules": [
+        "do nothing "
+    ],
+    "settings": {
+        "autoplay": false
+    },
+    "icon": "bot",
+    "autopilot": false,
+    "version": 1,
+    "savedAt": 1762956614070,
+    "inputs": {
+        "default": "/api/agents/v1/[object Object]/agent_input"
+    }
+}

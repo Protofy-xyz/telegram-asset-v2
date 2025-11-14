@@ -1,1 +1,0 @@
-Example of chart usage to represent the data in a Storage

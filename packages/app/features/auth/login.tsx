@@ -133,7 +133,7 @@ function SignIn({ darkMode, isClient }: { darkMode: boolean, isClient: boolean }
 
   const logoStyle = {
     marginTop: '2.5rem',
-    width: '460px',
+    width: '120px',
     filter: !isClient
       ? 'none'
       : darkMode

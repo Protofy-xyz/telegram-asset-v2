@@ -73,7 +73,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
     validate = async (value) => {
         return true; // Default validation always passes
     },
-    placeholderValue = "put your key here",
+    placeholderValue = "Enter your key here",
     onAdd = (value) => { },
     onRemove = (value) => { }
 }) => {
@@ -137,7 +137,7 @@ export const KeySetter: React.FC<KeySetterProps> = ({
             currKey && currKey !== "" && currKey != placeholderValue
                 ? <XStack ai="center" jc="space-between" gap="$4" flexWrap='wrap'>
                     <XStack ai="center" gap="$2">
-                        <Text>{nameKey}</Text>
+                        <Text color="$color10" fow="500">{nameKey}</Text>
                         <Check color="$green10" size={14} strokeWidth={4} />
                     </XStack>
                     <XStack gap="$2" ai="center">
@@ -149,22 +149,21 @@ export const KeySetter: React.FC<KeySetterProps> = ({
                 </XStack>
                 : <YStack>
                     <XStack ai="center" jc="space-between" gap="$4" flexWrap='wrap'>
-                        <YStack ai="center">
-                            <Text fos="$3" col="$red9" pos="absolute" top="-20px" l={0}>Required</Text>
-                            <Text >{nameKey}</Text>
+                        <YStack >
+                            <Text fos="$3" col="$red9" l={0}>Required</Text>
+                            <Text color="$color10" fow="500" >{nameKey}</Text>
                         </YStack>
-                        <XStack gap="$2" ai="center" flex={1}>
+                        <XStack gap="$2" flex={1} >
                             <Input
+                                focusStyle={{ outlineWidth: 0 }}
                                 f={1}
                                 placeholder={placeholderValue}
                                 value={value}
-                                bc="$bgContent"
+                                bc="$bgPanel"
                                 secureTextEntry={true}
                                 onChangeText={(text) => setValue(text)}
                             />
-                            <Tinted>
-                                <Button bc="$color7" circular disabled={loading} icon={loading ? <Spinner /> : <Plus />} onPress={() => onEditKey(value)}></Button>
-                            </Tinted>
+                            <Button themeInverse bc="$color7" circular disabled={loading} icon={loading ? <Spinner /> : <Plus />} onPress={() => onEditKey(value)}></Button>
                         </XStack>
                     </XStack>
                 </YStack>

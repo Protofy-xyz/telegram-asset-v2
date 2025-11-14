@@ -1,14 +1,16 @@
-import classNames from "classnames";
-import Avatar from "../Avatar/Avatar";
 import { Check, Clipboard } from "lucide-react";
 import { SyncLoader } from "react-spinners";
 import useClipboard from "../../hooks/useClipboard";
 import useBot from "../../hooks/useBot";
 import { ChatMessageType } from "../../store/store";
 import Markdown from "react-markdown";
+import { API } from "protobase";
 import CodeHighlight from "../CodeHighlight/CodeHighlight";
 import { PromptAtom } from '../../../../context/PromptAtom';
 import { useAtom } from "jotai";
+import { InteractiveIcon } from "../../../InteractiveIcon";
+import { Button, XStack, YStack, Text } from "tamagui";
+import { useEffect, useState } from "react";
 
 type Props = {
   index: number;
@@ -18,6 +20,9 @@ type Props = {
 export default function TextMessage({ index, chat }: Props) {
   const [promptChain] = useAtom(PromptAtom);
   const { copy, copied } = useClipboard();
+  const [applied, setApplied] = useState(false);
+  const [rejected, setRejected] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const prompt: any = promptChain.reduce((total, current) => {
     return total + current.generate();
@@ -30,26 +35,89 @@ export default function TextMessage({ index, chat }: Props) {
     prompt
   });
 
+  // Check approval status from backend (so refresh reflects state)
+  useEffect(() => {
+    if (result && result.startsWith("approval_request")) {
+      try {
+        const approvalData = result.replace("approval_request", "");
+        const parsed = JSON.parse(approvalData);
+        const { boardId, action, id } = parsed || {};
+        if (!boardId || !action || !id) return;
+        (async () => {
+          try {
+            const resp: any = await API.get(`/api/core/v1/boards/${encodeURIComponent(boardId)}/actions/${encodeURIComponent(action)}/approvals/${encodeURIComponent(id)}/status`);
+            const status = resp?.data?.status;
+            if (status && status !== 'offered') {
+              setApplied(true);
+              setRejected(status === 'rejected');
+            }
+          } catch (e) {
+            console.error('Approval status fetch error', e);
+          }
+        })();
+      } catch {}
+    }
+  }, [result]);
+
   // IMPORTANTE: mueve esta condición justo después del hook useBot
   if (isStreamCompleted && !result.trim()) {
     return null;
   }
 
-  return (
-    <div>
-      <div className="flex items-start w-full">
-        {/* Loader solo aparece si todavía está cargando y no hay error */}
+  if (result && result.startsWith("approval_request")) {
+    const approvalData = result.replace("approval_request", "");
+    let parsedData = JSON.parse(approvalData);
+
+    const onAccept = async (e) => {
+      try {
+        if (busy || applied) return;
+        setBusy(true);
+        const { boardId, action, id } = parsedData
+        if (!boardId || !action || !id) return;
+        await API.post(`/api/core/v1/boards/${encodeURIComponent(boardId)}/actions/${encodeURIComponent(action)}/approvals/${encodeURIComponent(id)}/accept`, {});
+        setApplied(true);
+        setRejected(false);
+      } catch (err) {
+        console.error('Approval accept error', err);
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    const onCancel = async (e) => {
+      try {
+        if (busy || applied) return;
+        setBusy(true);
+        const { boardId, action, id } = parsedData
+        if (!boardId || !action || !id) return;
+        await API.post(`/api/core/v1/boards/${encodeURIComponent(boardId)}/actions/${encodeURIComponent(action)}/approvals/${encodeURIComponent(id)}/reject`, {});
+        setApplied(true);
+        setRejected(true);
+      } catch (err) {
+        console.error('Approval cancel error', err);
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    return <YStack gap="$3" py="$3">
+      <Text o={0.6} fow={"600"}>{applied ? (rejected ? '✗ Request rejected' : '✓ Request applied') : parsedData.message}</Text>
+      {!applied && (
+        <XStack gap={"$2"}>
+          <Button themeInverse bc="$bgPanel" size="$3" onPress={onAccept} disabled={busy}>Accept</Button>
+          <Button bc="$bgPanel" size="$3" onPress={onCancel} disabled={busy}>Cancel</Button>
+        </XStack>
+      )}
+    </YStack>
+  } else {
+    return (
+      <YStack jc="flex-start" >
         {!isStreamCompleted && !result && !error ? (
-          <div className="self-center">
+          <YStack py="$3" px="$4" jc="center" >
             <SyncLoader color="gray" size={8} speedMultiplier={0.5} />
-          </div>
+          </YStack>
         ) : (
-          <div
-            className={classNames(
-              "animate-preulse overflow-x-hidden whitespace-pre-wrap",
-              { "text-red-500": error, "dark:text-gray-300": !error }
-            )}
-          >
+          <YStack>
             <Markdown
               children={result}
               components={{
@@ -75,24 +143,22 @@ export default function TextMessage({ index, chat }: Props) {
                 ref={cursorRef}
               ></span>
             )}
-
-            <div className="mt-2 md:mt-5 text-left self-start">
+            <XStack>
               {!copied ? (
-                <button
-                  className="edit text-gray-500 dark:text-gray-200 text-xl"
-                  onClick={() => copy(result)}
-                >
-                  <Clipboard />
-                </button>
+                <InteractiveIcon
+                  Icon={Clipboard}
+                  onPress={() => copy(result)}
+                />
               ) : (
-                <span className="dark:text-gray-200 text-gray-500 text-xl">
-                  <Check />
-                </span>
+                <InteractiveIcon
+                  Icon={Check}
+                  onPress={() => copy(result)}
+                />
               )}
-            </div>
-          </div>
+            </XStack>
+          </YStack>
         )}
-      </div>
-    </div>
-  );
+      </YStack>
+    );
+  }
 }

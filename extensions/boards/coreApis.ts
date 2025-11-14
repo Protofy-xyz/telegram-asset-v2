@@ -8,14 +8,14 @@ import { getServiceToken, requireAdmin } from "protonode";
 import { addAction } from '@extensions/actions/coreContext/addAction';
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
 import { VersionsDir } from '@extensions/versions/versions'
-import fileActions from "@extensions/files/fileActions";
 import { Manager } from "./manager";
 import { dbProvider, getDBOptions } from 'protonode';
 import { acquireLock, releaseLock } from "./system/lock";
 import { registerCards } from "./system/cards";
-import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles } from "./system/boards";
-
-import { getActions, handleBoardAction } from "./system/actions";
+import { BoardsDir, getBoard, getBoards, cleanObsoleteCardFiles, getBoardFilePath } from "./system/boards";
+import { getActions, handleBoardAction, setActionValue, buildActionWrapper, normalizeRulesCode } from "./system/actions";
+import { TypeParser } from "./system/types";
+import fetch from 'node-fetch';
 
 
 const TemplatesDir = (root) => fspath.join(root, "/data/templates/boards/")
@@ -246,33 +246,37 @@ const getDB = (path, req, session, context?) => {
 
             const boards = await getBoards()
             for (const boardId of boards) {
-                const lockKey = BoardsDir(getRoot(req)) + boardId;
+                const lockKey = BoardsDir(getRoot(req)) + boardId + '.json';
                 await acquireLock(lockKey);
+
                 try {
                     const filePath = `${BoardsDir(getRoot(req))}${boardId}.json`;
                     const fileContent = await fs.readFile(filePath, 'utf8');
                     const decodedContent = JSON.parse(fileContent);
 
+                    decodedContent.inputs = {
+                        ...(decodedContent.inputs || {}),
+                        default: `/api/agents/v1/${boardId}/agent_input`
+                    };
+
                     const userType = session?.user?.type;
                     const isAllVisible = req.query.all === 'true';
-                    const isSystem = !!decodedContent?.tags?.includes('system');
                     const usersList = Array.isArray(decodedContent?.users) ? decodedContent.users : null;
 
                     let allowed: boolean;
-
-                    if (isSystem && !isAllVisible) {
-                        // System boards: show ONLY if a whitelist exists and includes this user type
-                        allowed = !!(usersList && userType && usersList.includes(userType));
+                    if (isAllVisible) {
+                        allowed = true;
                     } else {
-                        // Non-system boards: if whitelist exists, enforce it; if not, allow
                         allowed = usersList ? !!(userType && usersList.includes(userType)) : true;
                     }
 
                     if (!allowed) continue;
 
-                    yield [boardId, fileContent];
+                    const enriched = JSON.stringify(decodedContent, null, 4);
+                    yield [boardId, enriched];
+
                 } catch (_e) {
-                    // ignore malformed/unreadable boards to keep behavior consistent
+
                 } finally {
                     releaseLock(lockKey);
                 }
@@ -527,17 +531,13 @@ function Widget({board, state}) {
 
 
         async get(key) {
-            // try to get the board file from the boards folder
-            // console.log("Get function: ",key)
+            //ONLY USED TO CHECK FOR EXISTENCE WHEN SAVING; BUT NOT TO READ CONTENT. READ IS HANDLED IN A CUSTOM WAY LATER IN THIS FILE.
             const filePath = BoardsDir(getRoot(req)) + key + ".json"
             await acquireLock(filePath);
             try {
                 const fileContent = await fs.readFile(filePath, 'utf8')
-                // console.log("fileContent: ", fileContent)
-                // console.log("filePath: ", filePath)
                 return fileContent
             } catch (error) {
-                // console.log("Error reading file: " + filePath)
                 throw new Error("File not found")
             } finally {
                 releaseLock(filePath);
@@ -676,12 +676,21 @@ export default async (app, context) => {
 
     app.post('/api/core/v1/import/board', requireAdmin(), async (req, res) => {
         const token = getServiceToken()
-        const { name, template } = req.body;
+        const { name, template, data } = req.body; //data contains a key-value object with extra data for the template
         console.log("Creating board:", name);
         console.log("Template: ", template);
 
         const boardTemplate = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + template.id + '/' + template.id + '.json', 'utf-8');
-        const boardContent = JSON.parse(boardTemplate.replace(/{{{name}}}/g, name));
+        let boardContent = boardTemplate.replace(/{{{name}}}/g, name);
+        //iterate over the keys in data and replace {{{key}}} with the value in data[key]
+        for (const key in data) {
+            boardContent = boardContent.replace(new RegExp(`{{{${key}}}}`, 'g'), data[key]);
+        }
+
+        boardContent = JSON.parse(boardContent);
+
+        delete boardContent.version;
+        delete boardContent.priority;
 
 
         //first create the board
@@ -700,13 +709,19 @@ export default async (app, context) => {
         res.send({ success: true });
     });
 
-    app.get('/api/core/v2/templates/boards', requireAdmin(), async (req, res) => {
+    const getAgentTemplates = () => {
         const templates = fsSync.readdirSync(TemplatesDir(getRoot())).filter(file => fsSync.statSync(TemplatesDir(getRoot()) + '/' + file).isDirectory()).map(dir => {
             const description = fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/README.md', 'utf-8') || ''
             const json = JSON.parse(fsSync.readFileSync(TemplatesDir(getRoot()) + '/' + dir + '/' + dir + '.json', 'utf-8'));
-            return { id: dir, name: dir, description, icon: json.icon, disabled: json?.disabled };
+            return { id: dir, name: dir, description, icon: json.icon, disabled: json?.disabled, priority: json?.priority || 0 };
         }).filter(tplJson => !tplJson.disabled);
-        res.send(templates);
+        //the templates should appear ordered by priority
+        templates.sort((a, b) => b.priority - a.priority);
+        return templates;
+    }
+
+    app.get('/api/core/v2/templates/boards', requireAdmin(), async (req, res) => {
+        res.send(getAgentTemplates());
     });
 
     app.post('/api/core/v2/templates/boards', requireAdmin(), async (req, res) => {
@@ -745,6 +760,7 @@ export default async (app, context) => {
         }
         fsSync.writeFileSync(TemplatesDir(getRoot()) + '/' + name + '/README.md', description);
         res.send({ board });
+        registerAgentTemplates();
     });
 
     app.post('/api/core/v1/autopilot/getValueCode', requireAdmin(), async (req, res) => {
@@ -893,17 +909,33 @@ export default async (app, context) => {
             }
         })
 
-        const prompt = await context.autopilot.getPromptFromTemplate({
-            templateName: "boardRules",
-            states: JSON.stringify(req.body.states, null, 4),
-            rules: JSON.stringify(req.body.rules, null, 4),
-            previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
-            actions: JSON.stringify(req.body.actions, null, 4)
-        });
-        if (req.query.debug) {
-            console.log("Prompt: ", prompt)
+        try {
+            const { data, error, isError } = await API.post(`/api/agents/v1/board_rules_code_agent/agent_input?token=${getServiceToken()}`, {
+                states: JSON.stringify(req.body.states, null, 4),
+                rules: JSON.stringify(req.body.rules, null, 4),
+                previousRules: req.body.previousRules ? JSON.stringify(req.body.previousRules, null, 4) : undefined,
+                actions: JSON.stringify(req.body.actions, null, 4),
+                board: req.body.boardName
+            });
+
+            if (isError && error) {
+                logger.ui.error({ error }, "Error from AI model");
+                return res.status(500).send({ error: 'Error from AI model', message: error });
+            }
+
+            const jsCode = data?.choices?.[0]?.message?.content;
+            if (!jsCode) {
+                logger.ui.error({ data }, 'No response from AI model or empty content');
+                return res.status(500).send({ error: 'No response from AI model' });
+            }
+
+            console.log("JS CODE: ", jsCode);
+            res.send({ jsCode: cleanCode(jsCode) });
+        } catch (e) {
+            console.error('Error getting board code: ', e);
+            logger.ui.error('Error getting board code', e);
+            res.status(500).send({ error: 'Internal Server Error', message: e.message });
         }
-        await handleCallModel(res, prompt)
     })
 
     app.post('/api/core/v1/autopilot/getComponent', async (req, res) => {
@@ -999,6 +1031,202 @@ export default async (app, context) => {
     // Aceptar POST
     app.post('/api/core/v1/boards/:boardId/actions/:action', requireAdmin(), (req, res) => {
         handleBoardAction(context, Manager, req, req.params.boardId, req.params.action, res, req.body)
+    })
+
+    // Accept approval (non-blocking flow)
+    app.post('/api/core/v1/boards/:boardId/actions/:action/approvals/:id/accept', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const actionName = req.params.action
+            const approvalId = req.params.id
+
+            const snapshot = ProtoMemDB('approvals').get('approvals', boardId, approvalId)
+            if (!snapshot) {
+                return res.status(404).send({ error: 'Approval not found' })
+            }
+
+            const { statesSnapshot, cardSnapshot, paramsSnapshot } = snapshot
+            const states = statesSnapshot || {}
+            const board = (states as any)?.boards?.[boardId] ?? {}
+            const rulesCode = normalizeRulesCode(cardSnapshot?.rulesCode)
+            if (!rulesCode) return res.status(400).send({ error: 'Missing rulesCode in snapshot' })
+
+            const actions = await getActions(context)
+            const wrapper = buildActionWrapper(actions, boardId, states, rulesCode)
+
+            const params = paramsSnapshot || {}
+            let response: any = null
+            let failed = false
+            try {
+                response = await wrapper(req, res, boardId, actionName, states, actions, board, params, params, getServiceToken(), context, API, fetch as any, getLogger({ module: 'boards', board: boardId, card: actionName }), [])
+                response = cardSnapshot?.returnType && typeof (TypeParser as any)?.[cardSnapshot.returnType] === 'function'
+                    ? (TypeParser as any)[cardSnapshot.returnType](response, cardSnapshot.enableReturnCustomFallback, cardSnapshot.fallbackValue)
+                    : response
+            } catch (err) {
+                await generateEvent({
+                    path: `actions/boards/${boardId}/${actionName}/code/error`,
+                    from: 'system',
+                    user: 'system',
+                    ephemeral: true,
+                    payload: {
+                        status: 'code_error',
+                        action: actionName,
+                        boardId,
+                        params,
+                        stack: (err as any)?.stack,
+                        message: (err as any)?.message,
+                        name: (err as any)?.name,
+                        code: (err as any)?.code
+                    },
+                }, getServiceToken())
+                getLogger({ module: 'boards', board: boardId, card: actionName }).error({ err }, 'Error executing approval rules')
+                failed = true
+                return res.status(500).send({ _err: 'e_code', error: 'Error executing approval rules', message: (err as any)?.message })
+            }
+
+            if (!failed) {
+                if (cardSnapshot?.responseKey && response && typeof response === 'object' && cardSnapshot.responseKey in response) {
+                    response = response[cardSnapshot.responseKey]
+                }
+
+                await setActionValue(Manager, context, boardId, { name: actionName, alwaysReportValue: cardSnapshot?.alwaysReportValue, persistValue: cardSnapshot?.persistValue } as any, response)
+
+                await generateEvent({
+                    path: `actions/boards/${boardId}/${actionName}/done`,
+                    from: 'system',
+                    user: 'system',
+                    ephemeral: true,
+                    payload: {
+                        status: 'done',
+                        action: actionName,
+                        boardId,
+                        params,
+                        response
+                    },
+                }, getServiceToken())
+
+                // persist approval result and status
+                try {
+                    const approvals = ProtoMemDB('approvals')
+                    const snap = approvals.get('approvals', boardId, approvalId)
+                    if (snap) {
+                        snap.meta = {
+                            ...(snap.meta || {}),
+                            status: 'accepted',
+                            acceptedAt: new Date().toISOString(),
+                            acceptedBy: (req as any)?.session?.user?.email || (req as any)?.session?.user?.name || 'system'
+                        }
+                        snap.response = response
+                        approvals.set('approvals', boardId, approvalId, snap)
+                    }
+                } catch { /* ignore */ }
+
+                return res.status(200).send({ accepted: true, approvalId, response })
+            }
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error in approval accept endpoint')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
+    })
+
+    // Reject approval (non-blocking flow)
+    app.post('/api/core/v1/boards/:boardId/actions/:action/approvals/:id/reject', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const actionName = req.params.action
+            const approvalId = req.params.id
+
+            const snapshot = ProtoMemDB('approvals').get('approvals', boardId, approvalId)
+            if (!snapshot) {
+                return res.status(404).send({ error: 'Approval not found' })
+            }
+
+            // mark as rejected in approvals store
+            try {
+                const approvals = ProtoMemDB('approvals')
+                const snap = approvals.get('approvals', boardId, approvalId)
+                if (snap) {
+                    snap.meta = {
+                        ...(snap.meta || {}),
+                        status: 'rejected',
+                        rejectedAt: new Date().toISOString(),
+                        rejectedBy: (req as any)?.session?.user?.email || (req as any)?.session?.user?.name || 'system'
+                    }
+                    approvals.set('approvals', boardId, approvalId, snap)
+                }
+            } catch { /* ignore */ }
+
+            await generateEvent({
+                path: `actions/boards/${boardId}/${actionName}/rejected`,
+                from: 'system',
+                user: 'system',
+                ephemeral: true,
+                payload: {
+                    status: 'rejected',
+                    action: actionName,
+                    boardId,
+                },
+            }, getServiceToken())
+
+            return res.status(200).send({ rejected: true, approvalId })
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error in approval reject endpoint')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
+    })
+
+    // Approval status (offered/accepted/rejected)
+    app.get('/api/core/v1/boards/:boardId/actions/:action/approvals/:id/status', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const approvalId = req.params.id
+            const snapshot = ProtoMemDB('approvals').get('approvals', boardId, approvalId)
+            if (!snapshot) {
+                return res.status(200).send({ status: 'applied' })
+            }
+            const st = snapshot?.meta?.status || 'offered'
+            return res.status(200).send({ status: st })
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error in approval status endpoint')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
+    })
+
+    // List approvals for a board/action 
+    app.get('/api/core/v1/boards/:boardId/actions/:action/approvals', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            const actionName = req.params.action
+            const statusFilter = (req.query.status as string | undefined)?.trim()
+
+            const byTag = ProtoMemDB('approvals').getByTag('approvals', boardId) || {}
+            const items = Object.entries(byTag)
+                .map(([id, snap]: any) => ({ id, snap }))
+                .filter(({ snap }) => (snap?.meta?.actionName === actionName))
+                .map(({ id, snap }) => {
+                    const meta = snap?.meta || {}
+                    return {
+                        id,
+                        action: meta.actionName,
+                        status: meta.status || 'offered',
+                        createdAt: meta.createdAt,
+                        requestedBy: meta.requestedBy,
+                        acceptedAt: meta.acceptedAt,
+                        acceptedBy: meta.acceptedBy,
+                        rejectedAt: meta.rejectedAt,
+                        rejectedBy: meta.rejectedBy,
+                        params: snap?.paramsSnapshot,
+                        response: snap?.response,
+                    }
+                })
+                .filter(item => !statusFilter || item.status === statusFilter)
+                .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+
+            return res.status(200).json({ items })
+        } catch (e) {
+            getLogger().error({ err: e }, 'Error listing approvals')
+            return res.status(500).send({ error: 'Internal Server Error' })
+        }
     })
 
     const hasAccessToken = async (tokenType, session, card, token) => {
@@ -1145,6 +1373,10 @@ export default async (app, context) => {
         try {
             const values = ProtoMemDB('states').getByTag('boards', req.params.boardId);
             const board = await getBoard(req.params.boardId);
+            board.inputs = {
+                ...(board.inputs || {}),
+                default: `/api/agents/v1/${board}/agent_input`
+            };
             if (!board.cards || !Array.isArray(board.cards)) {
                 res.send(board);
                 return;
@@ -1232,6 +1464,25 @@ export default async (app, context) => {
             res.send({ result: 'already_stopped', message: "Board already stopped or not running", board: req.params.boardId });
         }
 
+    })
+
+    app.post('/api/core/v1/boards/:boardId/management/add/card', requireAdmin(), async (req, res) => {
+        const boardId = req.params.boardId;
+        const cardData = req.body.card;
+        //read board file using locks
+        
+        const boardData = await API.get('/api/core/v1/boards/' + boardId + '?token=' + getServiceToken());
+        if(boardData.status == 'loaded'){
+            const board = boardData.data;
+            if (!board.cards || !Array.isArray(board.cards)) {
+                board.cards = [];
+            }
+            board.cards.push(cardData);
+            await API.post('/api/core/v1/boards/' + boardId + '?token=' + getServiceToken(), board);
+            res.send({ status: 'done', data: cardData });
+        } else {
+            res.status(500).send({ error: "Error adding card" });
+        }
     })
 
     app.get('/api/core/v1/board/cardresetgroup', requireAdmin(), async (req, res) => {
@@ -1344,6 +1595,24 @@ export default async (app, context) => {
         res.send({ message: "Boards reloaded" })
     })
 
+    app.get('/api/core/v1/boards/:boardId/reload', requireAdmin(), async (req, res) => {
+        try {
+            const boardId = req.params.boardId
+            await reloadBoard(boardId)
+            res.send({ message: `Board ${boardId} reloaded` })
+        } catch (error) {
+            logger.error({ error }, "Error reloading board")
+            res.status(500).send({ error: "Internal Server Error" })
+        }
+    })
+
+    const registerAgentTemplates = async () => {
+        const templates = getAgentTemplates()
+        for (const template of templates) {
+            context.state.set({ group: 'templates', tag: 'agent', name: template.id, value: template, emitEvent: true })
+        }
+    }
+
     const registerActions = async () => {
         //register actions for each board
         const boards = await getBoards()
@@ -1356,4 +1625,5 @@ export default async (app, context) => {
     }
     await registerCards()
     registerActions()
+    registerAgentTemplates()
 }

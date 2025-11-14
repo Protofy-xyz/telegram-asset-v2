@@ -81,8 +81,8 @@ export const OutputEditor = ({ card, setCardData, links, setLinks }: any) => {
         mode={"post"}
         links={links}
         setLinks={setLinks}
-        inputProps={{
-          bc: inputBgColor,
+        selectProps={{
+          backgroundColor: "var(--bgContent)",
           borderColor: borderColor,
           placeholderTextColor: "$gray10",
         }}

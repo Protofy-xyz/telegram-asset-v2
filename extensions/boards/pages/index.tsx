@@ -65,10 +65,10 @@ const FirstSlide = ({ selected, setSelected }) => {
 }
 
 const isNameValid = (text) => {
-  return text == ''? false:/^[a-z_]*$/.test(text)
+  return text == '' ? false : /^[a-z_]*$/.test(text)
 }
 
-const SecondSlide = ({ selected, setName, errorMessage=''}) => {
+const SecondSlide = ({ selected, setName, errorMessage = '' }) => {
   const [error, setError] = useState('')
   useEffect(() => setError(errorMessage), [errorMessage])
   const handleChange = (text: string) => {
@@ -82,11 +82,14 @@ const SecondSlide = ({ selected, setName, errorMessage=''}) => {
 
   return <YStack minHeight={"200px"} jc="center" ai="center">
     <YStack width="400px" gap="$2">
-      <Input f={1} value={selected?.name} onChangeText={handleChange} placeholder="Enter board name" />
+      <Input f={1} value={selected?.name} onChangeText={handleChange} placeholder="Enter agent name" />
       <Text ml="$2" h={"$1"} fos="$2" color="$red8">{error}</Text>
     </YStack>
   </YStack>
 }
+
+const hasSystemTag = (item: any) =>
+  Array.isArray(item?.tags) && item.tags.includes("system");
 
 export default {
   boards: {
@@ -95,7 +98,7 @@ export default {
       const { push, query } = usePageParams({})
       const [addOpen, setAddOpen] = React.useState(false)
 
-      const defaultData = { template: {id:'ai agent'}, name: '' }
+      const defaultData = { template: { id: 'ai agent' }, name: '' }
       const [data, setData] = useState(defaultData)
 
       return (<AdminPage title="Boards" workspace={workspace} pageSession={pageSession}>
@@ -124,13 +127,13 @@ export default {
                 }}
                 slides={[
                   {
-                    name: "Create new Board",
+                    name: "Create new Agent",
                     title: "Select your Template",
-                    component: <FirstSlide selected={data?.template} setSelected={(template) => setData({...data, template})} />
+                    component: <FirstSlide selected={data?.template} setSelected={(template) => setData({ ...data, template })} />
                   },
                   {
-                    name: "Configure your Board",
-                    title: "Board Name",
+                    name: "Configure your Agent",
+                    title: "Agent Name",
                     component: <SecondSlide selected={data} setName={(name) => setData({ ...data, name })} />
                   }
                 ]
@@ -140,7 +143,7 @@ export default {
         </AlertDialog>
 
         <DataView
-          entityName={"boards"}
+          entityName={"agents"}
           itemData={itemData}
           sourceUrl={sourceUrl}
           sourceUrlParams={query}
@@ -149,7 +152,7 @@ export default {
               <DataViewActionButton
                 id="admin-dataview-add-btn"
                 icon={query.all === 'true' ? EyeOff : Eye}
-                description={query.all === 'true' ? `Hide system boards` : `Show hidden boards` }
+                description={query.all === 'true' ? 'Hide internal agents' : 'Show internal agents'}
                 onPress={() => {
                   push('all', query.all === 'true' ? 'false' : 'true')
                 }}
@@ -160,7 +163,7 @@ export default {
           initialItems={initialItems}
           numColumnsForm={1}
           onAdd={(data) => { router.push(`/boards/view?board=${data.name}`); return data }}
-          name="Board"
+          name="Agent"
           disableViews={['raw']}
           onEdit={data => { console.log("DATA (onEdit): ", data); return data }}
           onSelectItem={(item) => router.push(`/boards/view?board=${item.data.name}`)}
@@ -173,16 +176,23 @@ export default {
           model={BoardModel}
           pageState={pageState}
           dataTableGridProps={{
-            getCard: (element, width) => <BoardPreview
-              onDelete={async () => {
-                await API.get(`${sourceUrl}/${element.name}/delete`);
-              }}
-              onPress={(e) => {
-                const dialogContent = e.target.className.includes('DialogPopup')
-                if (dialogContent) return
-                router.push(`/boards/view?board=${element.name}`)
-              }}
-              element={element} width={width} />,
+            getCard: (element, width) => {
+              if (query.all !== 'true' && hasSystemTag(element)) return null;
+
+              return (
+                <BoardPreview
+                  onDelete={async () => {
+                    await API.get(`${sourceUrl}/${element.name}/delete`);
+                  }}
+                  onPress={(e) => {
+                    const dialogContent = e.target.className.includes('DialogPopup');
+                    if (dialogContent) return;
+                  }}
+                  element={element}
+                  width={width}
+                />
+              );
+            },
           }}
           defaultView={"grid"}
         />

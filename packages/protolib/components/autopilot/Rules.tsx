@@ -3,13 +3,14 @@ import { Text, TooltipSimple } from '@my/ui'
 import { XStack, YStack, Button, Spinner } from '@my/ui'
 import { Trash, Plus, ArrowUp, X, Sparkles } from '@tamagui/lucide-icons'
 import dynamic from 'next/dynamic';
+import { isElectron } from 'protolib/lib/isElectron';
 
 const BoardTextArea = dynamic(() =>
   import('@extensions/boards/components/BoardTextArea').then(mod => mod.BoardTextArea),
   { ssr: false }
 );
 
-export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur = (e) => { }, ...props }) => {
+export const RuleItem = ({ value, loading, onDelete, onEdit, availableParams = [], allowParams = false, onBlur = (e) => { }, ...props }) => {
   return (
     <XStack ai="flex-end" gap="$2" mb="$2" width="100%" {...props}>
       <BoardTextArea
@@ -21,6 +22,8 @@ export const RuleItem = ({ value, loading, onDelete, onEdit, onBlur = (e) => { }
         placeholder="Rule Value..."
         enableShortcuts={false}
         style={{ width: '100%' }}
+        availableParams={availableParams}
+        allowParams={allowParams}
       />
       <Button
         disabled={loading}
@@ -54,6 +57,8 @@ export const Rules = ({
   onEditRule,
   loadingIndex,
   disabledConfig = {},
+  availableParams = [],
+  allowParams = false,
   onReloadRules = async (_rules) => { }
 }) => {
   const [draftRules, setDraftRules] = useState(rules ?? [])
@@ -170,10 +175,12 @@ export const Rules = ({
             style={{ width: '100%', paddingBottom: 30 }}
             disabled={isLoadingOrGenerating}
             enableShortcuts={true}
+            availableParams={availableParams}
+            allowParams={allowParams}
             footer={
-              <XStack justifyContent='space-between' w="100%" ai="flex-end">
+              <XStack justifyContent='space-between' f={1} ai="flex-end">
                 <XStack mt="$1" mb="$2" flex={1}>
-                  {(errorMsg || differentRulesCode) && (
+                  {(errorMsg || differentRulesCode) && !isLoadingOrGenerating && (
                     <TooltipSimple label={feedbackMessageText} restMs={0} delay={{ open: 500, close: 0 }}>
                       <Text
                         numberOfLines={2}
@@ -227,7 +234,7 @@ export const Rules = ({
                       disabled={isLoadingOrGenerating || !ruleHasChanged}
                       onMouseDown={(e) => e.stopPropagation()}
                       bg={ruleHasChanged ? '$color' : 'transparent'}
-                      color={ruleHasChanged ? "$gray3" : '$color'}
+                      color={ruleHasChanged ? "$gray3" : !isElectron() ? '$gray7' : '$gray3'}
                       hoverStyle={{ backgroundColor: '$gray11' }}
                       pressStyle={{ backgroundColor: '$gray10' }}
                       circular

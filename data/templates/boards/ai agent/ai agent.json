@@ -7,6 +7,7 @@
             "height": 20,
             "icon": "globe",
             "name": "agent_input",
+            "graphOrder": 1000,
             "description": "A job queue with a list of pending jobs and a current job",
             "type": "action",
             "editorOptions": {},
@@ -129,38 +130,6 @@
             "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
         },
         {
-            "key": "action_1761179722605",
-            "width": 3,
-            "height": 12,
-            "icon": "sparkles",
-            "type": "action",
-            "name": "agent_core",
-            "displayResponse": true,
-            "params": {
-                "prompt": ""
-            },
-            "configParams": {
-                "prompt": {
-                    "visible": true,
-                    "defaultValue": "Obey the request in user_request.\nIf the user request an action or an information not available, tell the user there is no card available to perform this action / get this information and suggest the user to extend the board with more cards.\nReply to the user in the same language as the user used in user_request. Take into consideration the last message and only look into the history inside user_request (previous messages) if necessary.",
-                    "type": "text"
-                }
-            },
-            "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
-            "displayIcon": false,
-            "displayButton": true,
-            "displayButtonIcon": true,
-            "layer": "agent",
-            "links": [
-                {
-                    "name": "reply",
-                    "type": "post"
-                }
-            ],
-            "rulesCode": "let visibleActions = ['*']\nlet invisibleActions = [name, 'reply', 'agent_input']\nlet visibleStates = ['*']\nlet invisibleStates = [name, 'reply', 'agent_input']\n\nfunction objectToXML(obj, rootName = 'root') {\n  function convert(o) {\n    return Object.entries(o).map(([key, value]) => {\n      if (value && typeof value === 'object') {\n        return `<${key}>${convert(value)}</${key}>`;\n      } else {\n        return `<${key}>${escapeXml(String(value))}</${key}>`;\n      }\n    }).join('');\n  }\n\n  function escapeXml(str) {\n    return str.replace(/[<>&'\"]/g, c => ({\n      '<': '&lt;',\n      '>': '&gt;',\n      '&': '&amp;',\n      \"'\": '&apos;',\n      '\"': '&quot;'\n    }[c]));\n  }\n\n  return `<${rootName}>${convert(obj)}</${rootName}>`;\n}\n\n// Filtrar acciones\nconst filteredActions = boardActions.filter(action => {\n  const name = action.name\n  // Si hay un * en visibleActions, muestra todo salvo los invisibles\n  if (visibleActions.includes('*')) {\n    return !invisibleActions.includes(name)\n  }\n  // Si no hay *, muestra solo los visibles y no invisibles\n  return visibleActions.includes(name) && !invisibleActions.includes(name)\n})\n\n// Filtrar estados (board es un objeto)\nconst filteredStates = Object.fromEntries(\n  Object.entries(board).filter(([key, value]) => {\n    if (visibleStates.includes('*')) {\n      return !invisibleStates.includes(key)\n    }\n    return visibleStates.includes(key) && !invisibleStates.includes(key)\n  })\n)\n\nconst response = await context.chatgpt.prompt({\n  message: `\n<instructions>You are integrated into a board system.\nThe board is composed of states and actions.\nYou will receive a user message and your mission is to generate a json response.\nOnly respond with a JSON in the following format:\n\n{\n    \"response\": \"whatever you want to say\",\n    \"actions\": [\n        {\n            \"name\": \"action_1\",\n            \"params\": {\n                \"example_param\": \"example_value\"\n            } \n        }\n    ]\n}\n\nThe key response will be shown to the user as a response to the user prompt.\nThe actions array can be empty if the user prompt requires no actions to be executed.\nWhen executing an action, always use the action name. Never use the action id to execute actions, just the name. \n\n</instructions>\n\n${objectToXML(filteredActions, 'board_actions')}\n${objectToXML(filteredStates, 'board_states')}\n\n<prompt>\n${params.prompt}\n</prompt>\n`,\n  conversation: await context.chatgpt.getSystemPrompt({\n    prompt: `You can analyze images provided in the same user turn. \nDo NOT claim you cannot see images. \nAnswer following the JSON contract only (no code fences).`,\n  }),\n  images: await context.boards.getStatesByType({\n    board: filteredStates,\n    type: \"frame\",\n    key: \"frame\",\n  }),\n  files: await context.boards.getStatesByType({\n    board: filteredStates,\n    type: \"file\",\n    key: \"path\",\n  }),\n});\n\nreturn context.chatgpt.processResponse({\n  response: response,\n  execute_action: execute_action,\n});\n",
-            "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
-        },
-        {
             "key": "action_1761187147203",
             "width": 2,
             "height": 7,
@@ -190,6 +159,88 @@
             ],
             "rulesCode": "return params.input",
             "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        },
+        {
+            "key": "action_1762563635832",
+            "width": 3,
+            "height": 18,
+            "icon": "sparkles",
+            "type": "action",
+            "name": "agent_core",
+            "displayResponse": true,
+            "editRulesInLowCode": false,
+            "editRulesInNaturalLanguage": false,
+            "params": {
+                "prompt": "",
+                "full_board_view": "if enabled, the AI will view all actions and values in the board, not only the ones specified in the actions and values parameters",
+                "actions": "actions visible for the AI to run",
+                "values": "values for the AI to see",
+                "allow_execution": "Allow this AI action to execute other actions",
+                "debug": "returns back the prompt for debugging purposes"
+            },
+            "configParams": {
+                "prompt": {
+                    "visible": true,
+                    "defaultValue": "board.current_request",
+                    "type": "any"
+                },
+                "full_board_view": {
+                    "visible": true,
+                    "defaultValue": "true",
+                    "type": "boolean"
+                },
+                "actions": {
+                    "visible": true,
+                    "defaultValue": "[]",
+                    "type": "array",
+                    "cardSelector": true,
+                    "cardSelectorType": "action",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
+                },
+                "values": {
+                    "visible": true,
+                    "defaultValue": "[]",
+                    "type": "array",
+                    "cardSelector": true,
+                    "cardSelectorType": "value",
+                    "visibility": {
+                        "field": "full_board_view",
+                        "mode": "boolean",
+                        "inverted": true
+                    }
+                },
+                "allow_execution": {
+                    "visible": true,
+                    "defaultValue": "true",
+                    "type": "boolean"
+                },
+                "debug": {
+                    "visible": false,
+                    "defaultValue": "false",
+                    "type": "boolean"
+                }
+            },
+            "description": "Execute actions and answer questions using AI.\n\n   #### Key Features\n  - Run actions based on AI.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            "displayIcon": false,
+            "displayButton": true,
+            "displayButtonIcon": true,
+            "customName": "agent_cc",
+            "layer": "agent",
+            "color": "var(--color7)",
+            "theme": "dark",
+            "cardState": {},
+            "links": [
+                {
+                    "name": "reply",
+                    "type": "post"
+                }
+            ],
+            "rulesCode": "let visibleActions = params.full_board_view ? ['*'] : params.actions\nlet invisibleActions = [name, \"agent_input\", \"reply\"]\nlet visibleStates = params.full_board_view ? ['*'] : params.values\nlet invisibleStates = [name, \"agent_input\", \"reply\"]\n\n\nfunction objectToXML(obj, rootName = 'root', options = {}) {\n  const {\n    indent = '\\t', \n    arrayItemNameOverrides = {\n      board_actions: 'board_action',\n      history: 'message', // ex. <history><message>...</message></history>\n      actions: 'action'\n    },\n    parseJsonStrings = true\n  } = options;\n\n  function escapeXml(str) {\n    return String(str).replace(/[<>&]/g, c => ({\n      '<': '&lt;',\n      '>': '&gt;',\n      '&': '&amp;'\n    }[c]));\n  }\n\n  function maybeParseJson(value) {\n    if (!parseJsonStrings || typeof value !== 'string') return value;\n    const s = value.trim();\n    if ((s.startsWith('{') && s.endsWith('}')) || (s.startsWith('[') && s.endsWith(']'))) {\n      try { return JSON.parse(s); } catch {  }\n    }\n    return value;\n  }\n\n  function itemTagFor(parentKey) {\n    if (arrayItemNameOverrides && arrayItemNameOverrides[parentKey]) {\n      return arrayItemNameOverrides[parentKey];\n    }\n\n    if (typeof parentKey === 'string') {\n      if (parentKey.endsWith('ies')) return parentKey.slice(0, -3) + 'y';\n      if (parentKey.endsWith('s'))   return parentKey.slice(0, -1);\n    }\n    return 'item';\n  }\n\n  function convert(key, value, level) {\n    value = maybeParseJson(value);\n\n    const pad = indent.repeat(level);\n    const padInner = indent.repeat(level + 1);\n\n    if (value === null || value === undefined) {\n      return `${pad}<${key}></${key}>\\n`;\n    }\n\n    if (Array.isArray(value)) {\n      const itemTag = itemTagFor(key);\n      const children = value.map(item => convert(itemTag, item, level + 1)).join('');\n      return `${pad}<${key}>\\n${children}${pad}</${key}>\\n`;\n    }\n\n    if (typeof value === 'object') {\n      const entries = Object.entries(value);\n      const children = entries.map(([k, v]) => convert(k, v, level + 1)).join('');\n      return `${pad}<${key}>\\n${children}${pad}</${key}>\\n`;\n    }\n\n    return `${pad}<${key}>${escapeXml(value)}</${key}>\\n`;\n  }\n\n  const rootWrapped = convert(rootName, obj, 0);\n  return rootWrapped.trim();\n}\n\nconst filteredActions = boardActions.filter(action => {\n  const name = action.name\n  if (visibleActions.includes('*')) {\n    return !invisibleActions.includes(name)\n  }\n  return visibleActions.includes(name) && !invisibleActions.includes(name)\n}).map(action => {\n  let {html, description, ...rest} = action\n  if(description.startsWith('Actions can perform tasks, automate processes, and enhance user interactions')) {\n    description = 'generic action with no description'\n  }\n  return {\n    description,\n    ...rest\n  }\n})\n\nconst filteredStates = Object.fromEntries(\n  Object.entries(board).filter(([key, value]) => {\n    if (visibleStates.includes('*')) {\n      return !invisibleStates.includes(key)\n    }\n    return visibleStates.includes(key) && !invisibleStates.includes(key)\n  })\n)\n\nconst boardActionsXml = objectToXML(\n  filteredActions,\n  'board_actions',\n  {\n    indent: '\\t',\n    arrayItemNameOverrides: { board_actions: 'board_action', history: 'message' },\n    parseJsonStrings: true\n  }\n)\n\nconst boardStatesXml = objectToXML(\n  filteredStates,\n  'board_states',\n  {\n    indent: '\\t',\n    arrayItemNameOverrides: { history: 'message' },\n    parseJsonStrings: true\n  }\n)\n\nconst promptXml = objectToXML(\n  params.prompt,\n  'prompt',\n  {\n    indent: '\\t',\n    parseJsonStrings: true\n  }\n)\nconst message_prompt = params.allow_execution ? `\n<instructions>You are an AI agent inside an AI agent platform called Vento.\nThe agent is managed through a board and the board is composed of states and actions.\nYou will receive a user message and your mission is to generate a json response.\nOnly respond with a JSON in the following format:\n\n{\n    \"response\": \"whatever you want to say\",\n    \"actions\": [\n        {\n            \"name\": \"action_1\",\n            \"params\": {\n                \"example_param\": \"example_value\"\n            } \n        }\n    ]\n}\n\nThe key response will be shown to the user as a response to the user prompt.\nThe actions array can be empty if the user prompt requires no actions to be executed.\nIf the user request an action or an information not available, tell the user there is no card available to perform this action / get this information and suggest the user to extend the board with more cards.\nWhen executing an action, always use the action name. Never use the action id to execute actions, just the name. \nWhen answering questions or providing information, you need to use the board_states to get the relevant information.\nif the user asks what do you see, you can tell the user what board_states do you see and what board_actions do you see. make sure to use the ocrrect names for states and actions.\neach <board_states> entry is a key -> value entry, so: <x>y</x> inside <board_states> means \"the state named x has the value y\"\n\n</instructions>\n\n${boardActionsXml}\n${boardStatesXml}\n\n<prompt>\n${JSON.stringify(params.prompt)}\n</prompt>\n` : `\n<instructions>You are an assistant providing answers related to the state of an agent. \nThe agent is managed through a board.\nWhen answering questions or providing information, you need to use the board_states to get the relevant information.\nAnswer in plain language, in the same language the <prompt> is written.\nIf the user request an information not available, tell the user there is no card available to this information and suggest the user to extend the board with more cards.\nif the user asks what do you see, you can tell the user what board_states do you see. Make sure to use the correct state names.\neach <board_states> entry is a key -> value entry, so: <x>y</x> inside <board_states> means \"the state named x has the value y\"\n</instructions>\n\n${boardStatesXml}\n\n${promptXml}\n`\n\nif(params.debug) return message_prompt\nconst response = await context.chatgpt.prompt({\n  message: message_prompt,\n  conversation: await context.chatgpt.getSystemPrompt({\n    prompt: `You can analyze images provided in the same user turn. \nDo NOT claim you cannot see images. \nAnswer following the JSON contract only (no code fences).`,\n  }),\n  images: await context.boards.getStatesByType({\n    board: filteredStates,\n    type: \"frame\",\n    key: \"frame\",\n  }),\n  files: await context.boards.getStatesByType({\n    board: filteredStates,\n    type: \"file\",\n    key: \"path\",\n  }),\n});\nif(params.allow_execution) {\n  return context.chatgpt.processResponse({\n    response: response,\n    execute_action: execute_action,\n  });\n} \nreturn response\n",
+            "html": "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
         }
     ],
     "layouts": {
@@ -202,7 +253,17 @@
                 "i": "action_1760800582118",
                 "moved": false,
                 "static": false,
-                "isResizable": true
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
             },
             {
                 "w": 18,
@@ -212,17 +273,17 @@
                 "i": "action_176081905123123",
                 "moved": false,
                 "static": false,
-                "isResizable": true
-            },
-            {
-                "w": 20,
-                "h": 20,
-                "x": 18,
-                "y": 7,
-                "i": "action_1761179722605",
-                "moved": false,
-                "static": false,
-                "isResizable": true
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
             },
             {
                 "w": 20,
@@ -232,76 +293,176 @@
                 "i": "action_1761187147203",
                 "moved": false,
                 "static": false,
-                "isResizable": true
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 20,
+                "h": 20,
+                "x": 18,
+                "y": 7,
+                "i": "action_1762563635832",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
             }
         ],
         "md": [
             {
-                "w": 30,
+                "w": 18,
                 "h": 22,
                 "x": 0,
                 "y": 0,
                 "i": "action_1760800582118",
                 "moved": false,
                 "static": false,
-                "isResizable": true
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
             },
             {
-                "i": "action_176081905123123",
+                "w": 18,
+                "h": 5,
                 "x": 0,
-                "y": 33,
-                "w": 15,
+                "y": 22,
+                "i": "action_176081905123123",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "w": 22,
                 "h": 8,
-                "isResizable": true
-            },
-            {
-                "i": "action_1761179722605",
-                "x": 23,
-                "y": 44,
-                "w": 23,
-                "h": 14,
-                "isResizable": true
-            },
-            {
+                "x": 18,
+                "y": 0,
                 "i": "action_1761187147203",
-                "x": 46,
-                "y": 57,
-                "w": 15,
-                "h": 8,
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "i": "action_1762563635832",
+                "x": 18,
+                "y": 26,
+                "w": 23,
+                "h": 20,
                 "isResizable": true
             }
         ],
         "sm": [
             {
-                "i": "action_1760800582118",
-                "x": 0,
-                "y": 0,
                 "w": 2,
                 "h": 22,
-                "isResizable": true
+                "x": 0,
+                "y": 0,
+                "i": "action_1760800582118",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
             },
             {
+                "w": 1,
+                "h": 8,
+                "x": 0,
+                "y": 22,
                 "i": "action_176081905123123",
-                "x": 0,
-                "y": 62,
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
                 "w": 1,
                 "h": 8,
-                "isResizable": true
-            },
-            {
-                "i": "action_1761179722605",
-                "x": 0,
-                "y": 74,
-                "w": 2,
-                "h": 14,
-                "isResizable": true
-            },
-            {
+                "x": 1,
+                "y": 22,
                 "i": "action_1761187147203",
+                "moved": false,
+                "static": false,
+                "isResizable": true,
+                "resizeHandles": [
+                    "n",
+                    "s",
+                    "e",
+                    "w",
+                    "ne",
+                    "nw",
+                    "se",
+                    "sw"
+                ]
+            },
+            {
+                "i": "action_1762563635832",
                 "x": 0,
-                "y": 88,
-                "w": 1,
-                "h": 8,
+                "y": 30,
+                "w": 2,
+                "h": 20,
                 "isResizable": true
             }
         ],
@@ -323,19 +484,19 @@
                 "isResizable": true
             },
             {
-                "i": "action_1761179722605",
-                "x": 0,
-                "y": 76,
-                "w": 1,
-                "h": 14,
-                "isResizable": true
-            },
-            {
                 "i": "action_1761187147203",
                 "x": 0,
                 "y": 90,
                 "w": 1,
                 "h": 8,
+                "isResizable": true
+            },
+            {
+                "i": "action_1762563635832",
+                "x": 0,
+                "y": 98,
+                "w": 1,
+                "h": 20,
                 "isResizable": true
             }
         ]
@@ -347,5 +508,6 @@
         "autoplay": false
     },
     "icon": "bot",
-    "autopilot": false
+    "autopilot": false,
+    "priority": 3
 }

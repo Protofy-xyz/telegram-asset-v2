@@ -18,14 +18,14 @@ type Props = {
 export default function BotMessage({ index, chat }: Props) {
   return (
     <div
-      className={classNames("py-4 px-2 md:px-0")}
+      className={classNames("gap-3 px-3 md:px-0")}
     >
       <motion.div
         variants={variants}
         initial="hidden"
         animate="visible"
         style={{ maxWidth: "900px" }}
-        className="mx-auto md:flex md:items-center group"
+        // className="mx-auto md:flex md:items-center group"
       >
         {chat.type && chat.type === "image_url" ? (
           <ImageMessage index={index} chat={chat}/>

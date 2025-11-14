@@ -25,8 +25,12 @@ export const getBoards = async () => {
     })
 }
 
+export const getBoardFilePath = (boardId) => {
+    return BoardsDir(getRoot()) + boardId + ".json";
+}
+
 export const getBoard = async (boardId) => {
-    const filePath = BoardsDir(getRoot()) + boardId + ".json";
+    const filePath = getBoardFilePath(boardId);
     let fileContent = null;
 
     await acquireLock(filePath);

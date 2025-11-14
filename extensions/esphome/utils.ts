@@ -3,8 +3,24 @@ import { sleep } from "protodevice/src/sleep";
 import { Build, FlashError } from "protodevice/src/const";
 import { manifest } from "protodevice/src/manifest";
 
+import { CompletionsHandler } from "./esphomeEditor/completions-handler";
+import { DefinitionHandler } from "./esphomeEditor/definition-handler";
+import { fromMonacoPosition } from "./esphomeEditor/editor-shims";
+import { ESPHomeDocuments } from "./esphomeEditor/esphome-document";
+import { HoverHandler } from "./esphomeEditor/hover-handler";
+import { TextBuffer } from "./esphomeEditor/utils/text-buffer";
 
 export let port;
+
+let SERIAL_VENDOR_FILTER: number[] = [
+  0x303A, // Espressif (ESP32-S2/S3 native USB)
+  0x10C4, // Silicon Labs CP210x
+  0x1A86, // WCH CH340/CH341
+  0x0403, // FTDI
+  0x067B, // Prolific PL2303
+  0x2341, // Arduino
+  0x2E8A, // Raspberry Pi (RP2040)
+];
 
 export const resetTransport = async (transport: Transport) => {
     await transport.device.setSignals({
@@ -28,17 +44,23 @@ export const closeSerialPort = async () => {
     }
 }
 
-export function downloadLogs(logs) {
+export function downloadLogs(logs: string, deviceName?: string) {
+    const blob = new Blob([logs ?? ""], { type: "text/plain" });
 
-    const blob = new Blob([logs], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'device-logs.txt';
+    // Fallback + sanitize to avoid illegal filename characters
+    const safeName = (deviceName || "device")
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, "_");
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${safeName}-logs.txt`;
     document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+    }, 0);
 }
 
 export const resetDevice = async (): Promise<void> => {
@@ -52,7 +74,10 @@ export const resetDevice = async (): Promise<void> => {
 
 export const connectSerialPort = async (): Promise<{ port: any | null, error?: string }> => {
     try {
-        port = await (navigator as any).serial.requestPort();
+        const filters = (SERIAL_VENDOR_FILTER || []).map(v => ({ usbVendorId: v }));
+        const requestOptions: any = filters.length ? { filters } : undefined;
+
+        port = await (navigator as any).serial.requestPort(requestOptions);
         await port.open({ baudRate: 115200 });
         return { port };
     } catch (err: any) {
@@ -222,6 +247,9 @@ const onlineCompiler = "compile.protofy.xyz";
 export const downloadDeviceFirmwareEndpoint = (targetDevice, compileSessionId) => {
     return (`https://${onlineCompiler}/api/v1/device/download/${targetDevice}?compileSessionId=${compileSessionId}`)
 };
+export const downloadDeviceElfEndpoint = (targetDevice, compileSessionId) => {
+    return (`https://${onlineCompiler}/api/v1/device/downloadElf/${targetDevice}?compileSessionId=${compileSessionId}`)
+};
 
 export const onlineCompilerSecureWebSocketUrl = () => {
     return (`wss://${onlineCompiler}/websocket`)
@@ -237,4 +265,735 @@ export const compileActionUrl = (targetDevice, compileSessionId) => {
 
 export const compileMessagesTopic = (targetDevice) => {
     return (`device/compile/${targetDevice}`);
+}
+
+export const loadEsphomeHelpers = (monaco) => {
+    if (!monaco.languages.getLanguages().some(lang => lang.id === 'esphome')) {
+        monaco.languages.register({ id: 'esphome' });
+        monaco.languages.register({ id: "cpp" });
+
+
+        const documents = new ESPHomeDocuments();
+
+        const hoverHandler = new HoverHandler(documents);
+        monaco.languages.registerHoverProvider("esphome", {
+            provideHover: async function (model, position) {
+                documents.update(model.uri.toString(), new TextBuffer(model));
+                const hover = await hoverHandler.getHover(
+                    model.uri.toString(),
+                    fromMonacoPosition(position),
+                );
+                return hover;
+            },
+        });
+        const completionsHandler = new CompletionsHandler(documents);
+        monaco.languages.registerCompletionItemProvider("esphome", {
+            provideCompletionItems: async function (model, position) {
+                documents.update(model.uri.toString(), new TextBuffer(model));
+                const completions = await completionsHandler.getCompletions(
+                    model.uri.toString(),
+                    fromMonacoPosition(position),
+                );
+                return { suggestions: completions };
+            },
+        });
+        const definitionHandler = new DefinitionHandler(documents);
+        monaco.languages.registerDefinitionProvider("esphome", {
+            provideDefinition: async function (model, position) {
+                documents.update(model.uri.toString(), new TextBuffer(model));
+                const ret = await definitionHandler.getDefinition(
+                    model.uri.toString(),
+                    fromMonacoPosition(position),
+                );
+                if (!ret) return;
+
+                return {
+                    uri: model.uri,
+                    range: {
+                        startLineNumber: ret.range.start.line + 1,
+                        startColumn: ret.range.start.character + 1,
+                        endLineNumber: ret.range.end.line + 1,
+                        endColumn: ret.range.end.character + 1,
+                    },
+                };
+            },
+        });
+
+        monaco.languages.setLanguageConfiguration("esphome", {
+            comments: {
+                lineComment: "#",
+            },
+            brackets: [
+                ["{", "}"],
+                ["[", "]"],
+                ["(", ")"],
+            ],
+            autoClosingPairs: [
+                { open: "{", close: "}" },
+                { open: "[", close: "]" },
+                { open: "(", close: ")" },
+                { open: '"', close: '"' },
+                { open: "'", close: "'" },
+            ],
+            surroundingPairs: [
+                { open: "{", close: "}" },
+                { open: "[", close: "]" },
+                { open: "(", close: ")" },
+                { open: '"', close: '"' },
+                { open: "'", close: "'" },
+            ],
+            folding: {
+                offSide: true,
+            },
+            onEnterRules: [
+                {
+                    beforeText: /:\s*$/,
+                    action: {
+                        indentAction: monaco.languages.IndentAction.Indent,
+                    },
+                },
+            ],
+        });
+
+        monaco.languages.setMonarchTokensProvider("esphome", {
+            tokenPostfix: ".esphome",
+
+            brackets: [
+                { token: "delimiter.bracket", open: "{", close: "}" },
+                { token: "delimiter.square", open: "[", close: "]" },
+            ],
+
+            keywords: [
+                "true",
+                "True",
+                "TRUE",
+                "false",
+                "False",
+                "FALSE",
+                "null",
+                "Null",
+                "Null",
+                "~",
+            ],
+
+            numberInteger: /(?:0|[+-]?[0-9]+)/,
+            numberFloat: /(?:0|[+-]?[0-9]+)(?:\.[0-9]+)?(?:e[-+][1-9][0-9]*)?/,
+            numberOctal: /0o[0-7]+/,
+            numberHex: /0x[0-9a-fA-F]+/,
+            numberInfinity: /[+-]?\.(?:inf|Inf|INF)/,
+            numberNaN: /\.(?:nan|Nan|NAN)/,
+            numberDate:
+                /\d{4}-\d\d-\d\d([Tt ]\d\d:\d\d:\d\d(\.\d+)?(( ?[+-]\d\d?(:\d\d)?)|Z)?)?/,
+
+            escapes: /\\(?:[btnfr\\"']|[0-7][0-7]?|[0-3][0-7]{2})/,
+
+            tokenizer: {
+                root: [
+                    { include: "@whitespace" },
+                    { include: "@comment" },
+
+                    // Directive
+                    [/%[^ ]+.*$/, "meta.directive"],
+
+                    // Document Markers
+                    [/---/, "operators.directivesEnd"],
+                    [/\.{3}/, "operators.documentEnd"],
+
+                    // Block Structure Indicators
+                    [/[-?:](?= )/, "operators"],
+
+                    { include: "@anchor" },
+                    { include: "@tagHandle" },
+                    { include: "@flowCollections" },
+                    { include: "@blockStyle" },
+
+                    // Numbers
+                    [/@numberInteger(?![ \t]*\S+)/, "number"],
+                    [/@numberFloat(?![ \t]*\S+)/, "number.float"],
+                    [/@numberOctal(?![ \t]*\S+)/, "number.octal"],
+                    [/@numberHex(?![ \t]*\S+)/, "number.hex"],
+                    [/@numberInfinity(?![ \t]*\S+)/, "number.infinity"],
+                    [/@numberNaN(?![ \t]*\S+)/, "number.nan"],
+                    [/@numberDate(?![ \t]*\S+)/, "number.date"],
+
+                    // Key:Value pair
+                    [
+                        /(".*?"|'.*?'|[^#'"]*?)([ \t]*)(:)( |$)/,
+                        ["type", "white", "operators", "white"],
+                    ],
+
+                    { include: "@flowScalars" },
+
+                    // String nodes
+                    [
+                        /.+?(?=(\s+#|$))/,
+                        {
+                            cases: {
+                                "@keywords": "keyword",
+                                "@default": "type",
+                            },
+                        },
+                    ],
+                ],
+
+                // Flow Collection: Flow Mapping
+                object: [
+                    { include: "@whitespace" },
+                    { include: "@comment" },
+
+                    // Flow Mapping termination
+                    [/\}/, "@brackets", "@pop"],
+
+                    // Flow Mapping delimiter
+                    [/,/, "delimiter.comma"],
+
+                    // Flow Mapping Key:Value delimiter
+                    [/:(?= )/, "operators"],
+
+                    // Flow Mapping Key:Value key
+                    [/(?:".*?"|'.*?'|[^,\{\[]+?)(?=: )/, "type"],
+
+                    // Start Flow Style
+                    { include: "@flowCollections" },
+                    { include: "@flowScalars" },
+
+                    // Scalar Data types
+                    { include: "@tagHandle" },
+                    { include: "@anchor" },
+                    { include: "@flowNumber" },
+
+                    // Other value (keyword or string)
+                    [
+                        /[^\},]+/,
+                        {
+                            cases: {
+                                "@keywords": "keyword",
+                                "@default": "string",
+                            },
+                        },
+                    ],
+                ],
+
+                // Flow Collection: Flow Sequence
+                array: [
+                    { include: "@whitespace" },
+                    { include: "@comment" },
+
+                    // Flow Sequence termination
+                    [/\]/, "@brackets", "@pop"],
+
+                    // Flow Sequence delimiter
+                    [/,/, "delimiter.comma"],
+
+                    // Start Flow Style
+                    { include: "@flowCollections" },
+                    { include: "@flowScalars" },
+
+                    // Scalar Data types
+                    { include: "@tagHandle" },
+                    { include: "@anchor" },
+                    { include: "@flowNumber" },
+
+                    // Other value (keyword or string)
+                    [
+                        /[^\],]+/,
+                        {
+                            cases: {
+                                "@keywords": "keyword",
+                                "@default": "identifier",
+                            },
+                        },
+                    ],
+                ],
+
+                // First line of a Block Style
+                multiString: [[/^([ \t]+).*?$/, "string", "@multiStringContinued.$1"]],
+
+                // Further lines of a Block Style
+                //   Workaround for indentation detection
+                multiStringContinued: [
+                    [/^(?!$S2).+$/, { token: "@rematch", next: "@popall" }],
+                    [/^.*$/, { token: "string" }],
+                ],
+
+                whitespace: [[/[ \t\r\n]+/, "white"]],
+
+                // Only line comments
+                comment: [[/#.*$/, "comment"]],
+
+                // Start Flow Collections
+                flowCollections: [
+                    [/\[/, "@brackets", "@array"],
+                    [/\{/, "@brackets", "@object"],
+                ],
+
+                // Start Flow Scalars (quoted strings)
+                flowScalars: [
+                    [/"([^"\\]|\\.)*$/, "string.invalid"],
+                    [/'([^'\\]|\\.)*$/, "string.invalid"],
+                    [/'[^']*'/, "string"],
+                    [/"/, "string", "@doubleQuotedString"],
+                ],
+
+                doubleQuotedString: [
+                    [/[^\\"]+/, "string"],
+                    [/@escapes/, "string.escape"],
+                    [/\\./, "string.escape.invalid"],
+                    [/"/, "string", "@pop"],
+                ],
+
+                // Start Block Scalar
+                blockStyle: [[/[>|][0-9]*[+-]?[ \t]*$/, "operators", "@multiString"]],
+
+                // Numbers in Flow Collections (terminate with ,]})
+                flowNumber: [
+                    [/@numberInteger(?=[ \t]*[,\]\}])/, "number"],
+                    [/@numberFloat(?=[ \t]*[,\]\}])/, "number.float"],
+                    [/@numberOctal(?=[ \t]*[,\]\}])/, "number.octal"],
+                    [/@numberHex(?=[ \t]*[,\]\}])/, "number.hex"],
+                    [/@numberInfinity(?=[ \t]*[,\]\}])/, "number.infinity"],
+                    [/@numberNaN(?=[ \t]*[,\]\}])/, "number.nan"],
+                    [/@numberDate(?=[ \t]*[,\]\}])/, "number.date"],
+                ],
+
+                tagHandle: [
+                    [/\!lambda /, "tag", "@lambda"],
+                    [/\![^ ]*/, "tag"],
+                ],
+
+                anchor: [[/[&*][^ ]+/, "namespace"]],
+
+                lambda: [
+                    [
+                        /[ \t]*[>|][0-9]*[+-]?[ \t]*$/,
+                        { token: "operators", switchTo: "@lambdaBlock" },
+                    ],
+                    [
+                        /[ \t]*(['"])/,
+                        { token: "string", switchTo: "@lambdaString.$1", nextEmbedded: "cpp" },
+                    ],
+                    [
+                        /.+$/,
+                        { token: "@rematch", switchTo: "@lambdaLine", nextEmbedded: "cpp" },
+                    ],
+                ],
+
+                lambdaBlock: [
+                    [
+                        /^([ \t]+).*?$/,
+                        {
+                            token: "@rematch",
+                            switchTo: "@lambdaBlockContinued.$1",
+                            nextEmbedded: "cpp",
+                        },
+                    ],
+                ],
+
+                lambdaBlockContinued: [
+                    [
+                        /^(?!$S2).+$/,
+                        { token: "@rematch", next: "@pop", nextEmbedded: "@pop" },
+                    ],
+                    [/^.*$/, { token: "" }],
+                ],
+
+                lambdaString: [
+                    [/$S2/, { token: "string", next: "@pop", nextEmbedded: "@pop" }],
+                    [/./, { token: "" }],
+                ],
+
+                lambdaLine: [
+                    [/$/, { token: "@rematch", next: "@pop", nextEmbedded: "@pop" }],
+                    [/./, { token: "" }],
+                ],
+            },
+        });
+
+        monaco.languages.setMonarchTokensProvider("cpp", {
+            defaultToken: "",
+            tokenPostfix: ".cpp",
+
+            brackets: [
+                { token: "delimiter.curly", open: "{", close: "}" },
+                { token: "delimiter.parenthesis", open: "(", close: ")" },
+                { token: "delimiter.square", open: "[", close: "]" },
+                { token: "delimiter.angle", open: "<", close: ">" },
+            ],
+
+            keywords: [
+                "abstract",
+                "amp",
+                "array",
+                "auto",
+                "bool",
+                "break",
+                "case",
+                "catch",
+                "char",
+                "class",
+                "const",
+                "constexpr",
+                "const_cast",
+                "continue",
+                "cpu",
+                "decltype",
+                "default",
+                "delegate",
+                "delete",
+                "do",
+                "double",
+                "dynamic_cast",
+                "each",
+                "else",
+                "enum",
+                "event",
+                "explicit",
+                "export",
+                "extern",
+                "false",
+                "final",
+                "finally",
+                "float",
+                "for",
+                "friend",
+                "gcnew",
+                "generic",
+                "goto",
+                "if",
+                "in",
+                "initonly",
+                "inline",
+                "int",
+                "interface",
+                "interior_ptr",
+                "internal",
+                "literal",
+                "long",
+                "mutable",
+                "namespace",
+                "new",
+                "noexcept",
+                "nullptr",
+                "__nullptr",
+                "operator",
+                "override",
+                "partial",
+                "pascal",
+                "pin_ptr",
+                "private",
+                "property",
+                "protected",
+                "public",
+                "ref",
+                "register",
+                "reinterpret_cast",
+                "restrict",
+                "return",
+                "safe_cast",
+                "sealed",
+                "short",
+                "signed",
+                "sizeof",
+                "static",
+                "static_assert",
+                "static_cast",
+                "struct",
+                "switch",
+                "template",
+                "this",
+                "thread_local",
+                "throw",
+                "tile_static",
+                "true",
+                "try",
+                "typedef",
+                "typeid",
+                "typename",
+                "union",
+                "unsigned",
+                "using",
+                "virtual",
+                "void",
+                "volatile",
+                "wchar_t",
+                "where",
+                "while",
+
+                "_asm", // reserved word with one underscores
+                "_based",
+                "_cdecl",
+                "_declspec",
+                "_fastcall",
+                "_if_exists",
+                "_if_not_exists",
+                "_inline",
+                "_multiple_inheritance",
+                "_pascal",
+                "_single_inheritance",
+                "_stdcall",
+                "_virtual_inheritance",
+                "_w64",
+
+                "__abstract", // reserved word with two underscores
+                "__alignof",
+                "__asm",
+                "__assume",
+                "__based",
+                "__box",
+                "__builtin_alignof",
+                "__cdecl",
+                "__clrcall",
+                "__declspec",
+                "__delegate",
+                "__event",
+                "__except",
+                "__fastcall",
+                "__finally",
+                "__forceinline",
+                "__gc",
+                "__hook",
+                "__identifier",
+                "__if_exists",
+                "__if_not_exists",
+                "__inline",
+                "__int128",
+                "__int16",
+                "__int32",
+                "__int64",
+                "__int8",
+                "__interface",
+                "__leave",
+                "__m128",
+                "__m128d",
+                "__m128i",
+                "__m256",
+                "__m256d",
+                "__m256i",
+                "__m512",
+                "__m512d",
+                "__m512i",
+                "__m64",
+                "__multiple_inheritance",
+                "__newslot",
+                "__nogc",
+                "__noop",
+                "__nounwind",
+                "__novtordisp",
+                "__pascal",
+                "__pin",
+                "__pragma",
+                "__property",
+                "__ptr32",
+                "__ptr64",
+                "__raise",
+                "__restrict",
+                "__resume",
+                "__sealed",
+                "__single_inheritance",
+                "__stdcall",
+                "__super",
+                "__thiscall",
+                "__try",
+                "__try_cast",
+                "__typeof",
+                "__unaligned",
+                "__unhook",
+                "__uuidof",
+                "__value",
+                "__virtual_inheritance",
+                "__w64",
+                "__wchar_t",
+            ],
+
+            operators: [
+                "=",
+                ">",
+                "<",
+                "!",
+                "~",
+                "?",
+                ":",
+                "==",
+                "<=",
+                ">=",
+                "!=",
+                "&&",
+                "||",
+                "++",
+                "--",
+                "+",
+                "-",
+                "*",
+                "/",
+                "&",
+                "|",
+                "^",
+                "%",
+                "<<",
+                ">>",
+                "+=",
+                "-=",
+                "*=",
+                "/=",
+                "&=",
+                "|=",
+                "^=",
+                "%=",
+                "<<=",
+                ">>=",
+            ],
+
+            // we include these common regular expressions
+            symbols: /[=><!~?:&|+\-*\/\^%]+/,
+            escapes:
+                /\\(?:[0abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
+            integersuffix: /([uU](ll|LL|l|L)|(ll|LL|l|L)?[uU]?)/,
+            floatsuffix: /[fFlL]?/,
+            encoding: /u|u8|U|L/,
+
+            // The main tokenizer for our languages
+            tokenizer: {
+                root: [
+                    // C++ 11 Raw String
+                    [
+                        /@encoding?R\"(?:([^ ()\\\t]*))\(/,
+                        { token: "string.raw.begin", next: "@raw.$1" },
+                    ],
+
+                    // identifiers and keywords
+                    [
+                        /[a-zA-Z_]\w*/,
+                        {
+                            cases: {
+                                "@keywords": { token: "keyword.$0" },
+                                "@default": "identifier",
+                            },
+                        },
+                    ],
+
+                    // The preprocessor checks must be before whitespace as they check /^\s*#/ which
+                    // otherwise fails to match later after other whitespace has been removed.
+
+                    // Inclusion
+                    [
+                        /^\s*#\s*include/,
+                        { token: "keyword.directive.include", next: "@include" },
+                    ],
+
+                    // Preprocessor directive
+                    [/^\s*#\s*\w+/, "keyword.directive"],
+
+                    // whitespace
+                    { include: "@whitespace" },
+
+                    // [[ attributes ]].
+                    [/\[\s*\[/, { token: "annotation", next: "@annotation" }],
+                    // delimiters and operators
+                    [/[{}()<>\[\]]/, "@brackets"],
+                    [
+                        /@symbols/,
+                        {
+                            cases: {
+                                "@operators": "delimiter",
+                                "@default": "",
+                            },
+                        },
+                    ],
+
+                    // numbers
+                    [/\d*\d+[eE]([\-+]?\d+)?(@floatsuffix)/, "number.float"],
+                    [/\d*\.\d+([eE][\-+]?\d+)?(@floatsuffix)/, "number.float"],
+                    [/0[xX][0-9a-fA-F']*[0-9a-fA-F](@integersuffix)/, "number.hex"],
+                    [/0[0-7']*[0-7](@integersuffix)/, "number.octal"],
+                    [/0[bB][0-1']*[0-1](@integersuffix)/, "number.binary"],
+                    [/\d[\d']*\d(@integersuffix)/, "number"],
+                    [/\d(@integersuffix)/, "number"],
+
+                    // delimiter: after number because of .\d floats
+                    [/[;,.]/, "delimiter"],
+
+                    // strings
+                    [/"([^"\\]|\\.)*$/, "string.invalid"], // non-teminated string
+                    [/"/, "string", "@string"],
+
+                    // characters
+                    [/'[^\\']'/, "string"],
+                    [/(')(@escapes)(')/, ["string", "string.escape", "string"]],
+                    [/'/, "string.invalid"],
+                ],
+
+                whitespace: [
+                    [/[ \t\r\n]+/, ""],
+                    [/\/\*\*(?!\/)/, "comment.doc", "@doccomment"],
+                    [/\/\*/, "comment", "@comment"],
+                    [/\/\/.*\\$/, "comment", "@linecomment"],
+                    [/\/\/.*$/, "comment"],
+                ],
+
+                comment: [
+                    [/[^\/*]+/, "comment"],
+                    [/\*\//, "comment", "@pop"],
+                    [/[\/*]/, "comment"],
+                ],
+
+                //For use with continuous line comments
+                linecomment: [
+                    [/.*[^\\]$/, "comment", "@pop"],
+                    [/[^]+/, "comment"],
+                ],
+
+                //Identical copy of comment above, except for the addition of .doc
+                doccomment: [
+                    [/[^\/*]+/, "comment.doc"],
+                    [/\*\//, "comment.doc", "@pop"],
+                    [/[\/*]/, "comment.doc"],
+                ],
+
+                string: [
+                    [/[^\\"]+/, "string"],
+                    [/@escapes/, "string.escape"],
+                    [/\\./, "string.escape.invalid"],
+                    [/"/, "string", "@pop"],
+                ],
+
+                raw: [
+                    [/[^)]+/, "string.raw"],
+                    [/\)$S2\"/, { token: "string.raw.end", next: "@pop" }],
+                    [/\)/, "string.raw"],
+                ],
+
+                annotation: [
+                    { include: "@whitespace" },
+                    [/using|alignas/, "keyword"],
+                    [/[a-zA-Z0-9_]+/, "annotation"],
+                    [/[,:]/, "delimiter"],
+                    [/[()]/, "@brackets"],
+                    [/\]\s*\]/, { token: "annotation", next: "@pop" }],
+                ],
+
+                include: [
+                    [
+                        /(\s*)(<)([^<>]*)(>)/,
+                        [
+                            "",
+                            "keyword.directive.include.begin",
+                            "string.include.identifier",
+                            { token: "keyword.directive.include.end", next: "@pop" },
+                        ],
+                    ],
+                    [
+                        /(\s*)(")([^"]*)(")/,
+                        [
+                            "",
+                            "keyword.directive.include.begin",
+                            "string.include.identifier",
+                            { token: "keyword.directive.include.end", next: "@pop" },
+                        ],
+                    ],
+                ],
+            },
+        });
+
+
+    }
 }

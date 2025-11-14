@@ -1,11 +1,10 @@
 import { API } from "protobase";
 import { DevicesModel } from ".";
 import { AutoAPI, handler, getServiceToken, getDeviceToken,getRoot } from 'protonode'
-import { getDB } from '@my/config/dist/storageProviders';
 import { getLogger, generateEvent } from 'protobase';
-import moment from 'moment';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import { promises as promisesFs } from 'fs';
+import * as fspath from 'path';
 import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
@@ -251,6 +250,17 @@ function Widget(card) {
                 ensureBucket('xs', groupKey).push({ i: key, w: size.xs.w, h: size.xs.h, id, device: deviceName, subsystem });
             }
         }
+
+        const aiTemplatePath = fspath.join(process.cwd(), '..', '..', 'data', 'templates', 'boards', 'ai agent', 'ai agent.json');
+        let aiTemplateJson: any = {};
+        if (fs.existsSync(aiTemplatePath)) {
+            const aiTemplateData = fs.readFileSync(aiTemplatePath, 'utf-8');
+            aiTemplateJson = JSON.parse(aiTemplateData);
+            for (const card of aiTemplateJson.cards || []) {
+                cards.push(card);
+            }
+        }
+
         // --- after you've finished filling `buckets` (lg/md/sm/xs) ---
         const groupWeights = new Map<string, number>();
 
@@ -350,7 +360,10 @@ function Widget(card) {
             layouts: emptyLayouts,
             cards,
             rules: [],
+            network: "core",
+            tags: ["system", "network"],
             autopilot: false,
+            icon: 'router',
             savedAt: Date.now()
         };
 
@@ -418,6 +431,70 @@ const deleteDeviceActions = async (deviceName: string) => {
         logger.error({ deviceName, err }, 'Failed deleting actions/cards for device');
     }
 };
+
+const dataDir = (root) => fspath.join(root, "/data/devices/")
+
+
+const getDB = (path, req, session) => {
+    const db = {
+        async *iterator() {
+            // console.log("Iterator")
+            try {
+                await promisesFs.access(dataDir(getRoot(req)), promisesFs.constants.F_OK)
+            } catch (error) {
+                console.log("Creating deviceDefinitions folder")
+                await promisesFs.mkdir(dataDir(getRoot(req)))
+            }
+            const files = (await promisesFs.readdir(dataDir(getRoot(req)))).filter(f => {
+                const filenameSegments = f.split('.')
+                return !fs.lstatSync(fspath.join(dataDir(getRoot(req)), f)).isDirectory() && (filenameSegments[filenameSegments.length - 1] === "json")
+            })
+            // console.log("Files: ", files)
+            for (const file of files) {
+                //read file content
+                const fileContent = await promisesFs.readFile(dataDir(getRoot(req)) + file, 'utf8')
+                yield [file.name, fileContent];
+            }
+        },
+
+        async del(key, value) {
+            console.log("Deleting key: ", JSON.stringify({key,value}))
+            const filePath = dataDir(getRoot(req)) + key + ".json"
+            try {
+                await promisesFs.unlink(filePath)
+            } catch (error) {
+                console.log("Error deleting file: " + filePath)
+            }
+        },
+
+        async put(key, value) {
+            const filePath = dataDir(getRoot(req)) + key + ".json"
+            const ymlPath = dataDir(getRoot(req)) + key +  "/config.yaml"
+            // if folder does not exist, create it
+            await promisesFs.mkdir(dataDir(getRoot(req)) + key, { recursive: true })
+            try{
+                await promisesFs.writeFile(filePath, value)
+                if (!fs.existsSync(ymlPath)) {
+                    await promisesFs.writeFile(ymlPath, "# Auto-generated config file")
+                }
+            }catch(error){
+                console.error("Error creating file: " + filePath, error)
+            }
+        },
+
+        async get(key) {
+            const filePath = dataDir(getRoot(req)) + key + ".json"
+            try{
+                const fileContent = await promisesFs.readFile(filePath, 'utf8')
+                return fileContent
+            }catch(error){
+                throw new Error("File not found")
+            }                   
+        }
+    };
+
+    return db;
+}
 
 // iterate over all devices and register an action for each subsystem action
 const registerActions = async () => {
@@ -641,10 +718,7 @@ const registerActions = async () => {
                 })
             }
         }
-        if(deviceInfo.data.generateAssociatedBoard !== false){
-            console.log("Generating associated board for device: ", deviceInfo.data.name)
-            await generateDeviceBoard(`${deviceInfo.data.name}_device`, deviceInfo.data.name);
-        }
+        await generateDeviceBoard(`${deviceInfo.data.name}_device`, deviceInfo.data.name);
     }
 }
 
@@ -653,6 +727,7 @@ export const DevicesAutoAPI = AutoAPI({
     modelType: DevicesModel,
     prefix: '/api/core/v1/',
     skipDatabaseIndexes: true,
+    getDB: getDB,
     transformers:{
         generateDeviceCredentials: async (field, e, data) => {
             if(!data.credentials) data.credentials = {}
@@ -673,7 +748,7 @@ export const DevicesAutoAPI = AutoAPI({
         // before deleting a device, remove all actions and cards associated with it
         await deleteDeviceActions(data.name)
         //also delete the folder in data/devices/[deviceName]
-        const devicePath = path.join(process.cwd(), getRoot(req), "data", "devices", data.name)
+        const devicePath = fspath.join(process.cwd(), getRoot(req), "data", "devices", data.name)
         if(fs.existsSync(devicePath)){
             fs.rmSync(devicePath, { recursive: true, force: true });
             // console.log("🤖 ~ Deleted device path:", devicePath)
@@ -721,7 +796,7 @@ export default (app, context) => {
     }))
 
     app.get('/api/core/v1/devices/path', handler(async (req, res, session) => {
-        const devicesPath = path.join(process.cwd(), getRoot(req), "data", "devices")
+        const devicesPath = fspath.join(process.cwd(), getRoot(req), "data", "devices")
         if(!session || !session.user.admin) {
             res.status(401).send({error: "Unauthorized"})
             return

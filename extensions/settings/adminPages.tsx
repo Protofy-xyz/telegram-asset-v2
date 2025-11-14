@@ -24,6 +24,7 @@ const tooltipDelay = { open: 500, close: 150 }
 const configPanels = [
   { name: 'Users', href: '/workspace/users', icon: "users" },
   { name: 'Keys', href: '/workspace/keys', icon: "key" },
+  { name: 'Events', href: '/workspace/events', icon: "activity" },
   { name: 'Services', href: '/workspace/services', icon: "server" },
   { name: 'Databases', href: '/workspace/databases', icon: "database" },
   { name: 'Files', href: '/workspace/files?path=/', icon: "folder" },

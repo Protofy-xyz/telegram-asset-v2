@@ -213,9 +213,18 @@ export default async (app: Application, context: typeof APIContext) => {
     })
 
     app.get('/api/core/v1/vision/frame/get', async (req, res) => {
-        const { id } = req.query;
+        const { id, mode } = req.query;
         if(frames[id as string]) {
-            return res.send(frames[id as string]);
+            if (mode == "image/png") {
+                const imgBuffer = Buffer.from(frames[id as string].split(",")[1], 'base64');
+                res.writeHead(200, {
+                    'Content-Type': 'image/png',
+                    'Content-Length': imgBuffer.length
+                });
+                return res.end(imgBuffer);
+            } else {
+                return res.send(frames[id as string]);
+            }
         }
         return res.status(404).send({ error: "Frame not found" });
     })
@@ -362,8 +371,8 @@ export default async (app: Application, context: typeof APIContext) => {
                     type: "string"
                 }
             },
-            rulesCode: `return await execute_action("/api/core/v1/vision/describe", userParams)`,
-            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card?.value?.response;\n  const readme = `\n  ### 🔑 How to get your OpenAI API key?\n  1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n  2. Log in and click **\"Create new secret key\"**.\n  3. Copy and save your key securely, it won't be shown again.\n  > ⚠️ **Keep it secret!** Your API key is private and usage-based.\n  `;\n  \n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={['OPENAI_API_KEY']} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
+            rulesCode: `const response = await execute_action("/api/core/v1/vision/describe", userParams)\nreturn response?.response`,
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card?.value;\n  const readme = `\n  ### 🔑 How to get your OpenAI API key?\n  1. Go to [OpenAI's API Keys page](https://platform.openai.com/account/api-keys).\n  2. Log in and click **\"Create new secret key\"**.\n  3. Copy and save your key securely, it won't be shown again.\n  > ⚠️ **Keep it secret!** Your API key is private and usage-based.\n  `;\n  \n  const content = <YStack f={1}  mt={\"20px\"} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <KeyGate requiredKeys={['OPENAI_API_KEY']} readme={readme}>\n            <ActionCard data={card}>\n              {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n            </ActionCard>\n          </KeyGate>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
             displayResponse: true
         },
         emitEvent: true,
@@ -385,7 +394,7 @@ export default async (app: Application, context: typeof APIContext) => {
             "type": "action",
             "method": "post",
             "displayButton": true,
-            "rulesCode": "return {\r\n    frame: params.picture,\r\n    type: \"frame\",\r\n    key: Math.random()\r\n}",
+            "rulesCode": "const id =  Math.random()\r\nreturn {\r\n    frame: params.picture,\r\n    type: \"frame\",\r\n    key: id,\r\n    imageUrl: params.picture + \"&mode=image/png&key=\" + id \r\n}",
             "params": {
                 "mode": "manual or auto (auto is experimental)",
                 "fps": "fps to capture"

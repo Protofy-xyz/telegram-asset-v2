@@ -2,11 +2,15 @@ import { MessageSquare, Trash2, Pencil, Check, X } from "lucide-react";
 import useChat, { isChatSelected } from "../../store/store";
 import classNames from "classnames";
 import { useEffect, useState } from "react";
+import { InteractiveIcon } from "../../../InteractiveIcon";
+import { Input, XStack, Text } from "tamagui";
 
 export default function ChatRef({
   chat,
+  onPress = () => { }
 }: {
   chat: { id: string; title: string };
+  onPress?: () => void;
 }) {
   const viewSelectedChat = useChat((state) => state.viewSelectedChat);
   const isSelected = useChat(isChatSelected(chat.id));
@@ -15,6 +19,7 @@ export default function ChatRef({
     state.editChatsTitle,
   ]);
   const [editTitle, setEditTitle] = useState(chat.title);
+  const [isHovering, setIsHovering] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const isTitleEditeble = isSelected && isEditingTitle;
 
@@ -32,68 +37,57 @@ export default function ChatRef({
   }
 
   return (
-    <div
-      className={classNames(
-        "btn-wrap flex items-center w-full p-1 rounded-md text-xl font-bold  hover:bg-[#2f2f2f]",
-        { "bg-[#2f2f2f]": isSelected }
-      )}
+    <XStack
+      onHoverIn={() => setIsHovering(true)}
+      onHoverOut={() => setIsHovering(false)}
+      bc={isSelected ? "$bgContent" : "transparent"}
+      boc="$color6"
+      p="$2"
+      br="$4"
+      ai="center"
+      mb={"$1"}
+      cursor="pointer"
+      hoverStyle={{ bc: "$bgContent" }}
     >
       {!isTitleEditeble && (
-        <button
-          className="py-2 w-3/4 flex items-center flex-grow transition p-2"
-          onClick={() => viewSelectedChat(chat.id)}
-          title={chat.title}
+        <XStack h={"36px"} f={1} ml="$2" gap="$2" ai="center"
+          overflow="hidden"
+          onPress={() => {
+            viewSelectedChat(chat.id);
+            onPress()
+          }}
         >
-          <span className="mr-2 flex">
-            <MessageSquare />
-          </span>
-
-          <span className="text-sm truncate capitalize">
-            {editTitle ? editTitle : chat.title}
-          </span>
-        </button>
+          <XStack> <MessageSquare size={18} /> </XStack>
+          <Text numberOfLines={1} fos={14} fow={"400"}>{editTitle ? editTitle : chat.title}</Text>
+        </XStack>
       )}
       {isTitleEditeble && (
-        <input
-          type="text"
+        < Input
+          bc="transparent"
+          bw={0}
+          h={"$2"}
+          width="100%"
+          borderColor="transparent"
+          focusStyle={{ borderColor: "transparent", outlineColor: "$colorTransparent" }}
+          hoverStyle={{ borderColor: "transparent" }}
+          mr="2px"
           value={editTitle}
-          className="bg-inherit border border-blue-400 w-4/5 ml-2 p-1 outline-none"
+          onChangeText={setEditTitle}
           autoFocus
-          onChange={(e) => setEditTitle(e.target.value)}
         />
       )}
-      {isSelected && !isEditingTitle && (
-        <div className="inline-flex w-1/4 mx-2 items-center justify-between">
-          <button
-            className={classNames("mr-2 flex hover:text-blue-300")}
-            onClick={() => setIsEditingTitle(true)}
-          >
-            <Pencil />
-          </button>
-          <button
-            className={classNames("flex hover:text-red-300")}
-            onClick={() => deleteChat(chat.id)}
-          >
-            <Trash2 />
-          </button>
-        </div>
+      {((isSelected && !isEditingTitle) || isHovering) && (
+        <XStack>
+          <InteractiveIcon Icon={Pencil} onPress={() => setIsEditingTitle(true)} />
+          <InteractiveIcon Icon={Trash2} onPress={() => deleteChat(chat.id)} />
+        </XStack>
       )}
       {isSelected && isEditingTitle && (
-        <div className="inline-flex w-1/5 mx-2 items-center justify-between">
-          <button
-            className={classNames("mr-2 flex hover:text-blue-300")}
-            onClick={() => handleEditTitle(chat.id, editTitle)}
-          >
-            <Check />
-          </button>
-          <button
-            className={classNames("flex hover:text-red-300")}
-            onClick={() => setIsEditingTitle(false)}
-          >
-            <X />
-          </button>
-        </div>
+        <XStack>
+          <InteractiveIcon IconColor="var(--green9)" Icon={Check} onPress={() => handleEditTitle(chat.id, editTitle)} />
+          <InteractiveIcon IconColor="var(--red9)" Icon={X} onPress={() => setIsEditingTitle(false)} />
+        </XStack>
       )}
-    </div>
+    </XStack>
   );
 }

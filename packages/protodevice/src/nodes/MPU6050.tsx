@@ -3,7 +3,6 @@ import { Node, Field, NodeParams } from 'protoflow';
 import { getColor } from ".";
 
 const MPU6050 = ({ node = {}, nodeData = {}, children, color }: any) => {
-    console.log("🤖 ~ MPU6050 ~ nodeData:", nodeData)
     const [name, setName] = React.useState(nodeData['param-1'])
     const nameErrorMsg = 'Reserved name'
     const intervalErrorMsg = 'Add units h/m/s/ms'

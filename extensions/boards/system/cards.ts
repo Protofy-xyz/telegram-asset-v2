@@ -212,6 +212,131 @@ export const registerCards = async () => {
         }
     })
 
+    addCard({
+        group: 'board',
+        tag: "grid",
+        id: 'board_grid_interactive',
+        templateName: "Interactive Grid",
+        name: "interactive_grid",
+        emitEvent: true,
+        defaults: {
+            width: 4,
+            height: 12,
+            icon: "grid-3x3",
+            type: "action",
+            name: "interactive_grid",
+            displayResponse: true,
+            displayIcon: true,
+            params: {
+                grid: "2D array representing the grid state",
+                rows: "number of grid rows",
+                columns: "number of grid columns",
+                action: "create | update"
+            },
+            configParams: {
+                grid: {
+                    visible: false,
+                    defaultValue: "",
+                    type: "array"
+                },
+                rows: {
+                    visible: true,
+                    defaultValue: "8",
+                    type: "number"
+                },
+                columns: {
+                    visible: true,
+                    defaultValue: "8",
+                    type: "number"
+                },
+                action: {
+                    visible: false,
+                    defaultValue: "create",
+                    type: "string"
+                }
+            },
+            description: "Actions can perform tasks, automate processes, and enhance user interactions. It can also trigger other action-type cards on the board.\n\n  #### Key Features\n  - Run actions from rules.\n  - Chain/trigger other action cards.\n  - Parameterized execution.\n  - Customize parameters.\n  - Customize the card view (UI/render).",
+            rulesCode: "if (params.action == \"create\") {\n\n    return Array.from({ length: params.rows }, () =>\n        Array.from({ length: params.columns }, () => ({ value: \"false\" }))\n    )\n\n} else if (params.action == \"update\") {\n    return params.grid\n}",
+            html: "//@card/react\n\nfunction Widget(card) {\n  if (card?.value?.length > 0) {\n    return <InteractiveGrid\n      onChange={(data) => execute_action(card.name, { grid: data })}\n      data={card.value}\n    />\n  } else {\n    return <Tinted>\n      <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n        <ActionCard data={card}>\n          <ParamsForm data={card}>\n            <YStack flex={1} jc=\"center\" ai=\"center\" gap=\"$5\">\n            {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n              <Text maw=\"320px\" textAlign=\"center\">Add the number of rows and columns you want and click \"Create\" to create a grid</Text>\n            </YStack>\n          </ParamsForm>\n        </ActionCard>\n      </ProtoThemeProvider>\n    </Tinted>\n  }\n}\n",
+        }
+    })
+
+    addCard({
+        group: 'board',
+        tag: "blank",
+        id: 'board_blank',
+        templateName: "Blank Card",
+        name: "blank",
+        emitEvent: true,
+        defaults: {
+            width: 2,
+            height: 6,
+            icon: "square-dashed",
+            type: "value",
+            name: "blank",
+            displayResponse: true,
+            displayIcon: false,
+            displayTitle: false,
+            autoResponsive: false,
+            params: {},
+            configParams: {},
+            description: "Blank card for layout purposes.",
+            rulesCode: "",
+            html: "//@card/react\n\nfunction Widget(card) {\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n            <YStack f={1} height=\"100%\" ai=\"center\" jc=\"center\" width=\"100%\">\n           \n            </YStack>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n\n",
+        }
+    })
+
+
+    addCard({
+        group: 'board',
+        tag: "agent",
+        id: 'board_agent_create',
+        templateName: "Create New Agent",
+        name: "create",
+        emitEvent: true,
+        defaults: {
+            width: 3,
+            height: 10,
+            icon: "bot",
+            type: "action",
+            name: "create agent",
+            displayResponse: true,
+            displayIcon: false,
+            params: {
+                url: "http endpoint to call",
+                method: "method for the call: get or post",
+                name: "name of the agent to create",
+                template: "template to use"
+            },
+            configParams: {
+                url: {
+                    visible: false,
+                    defaultValue: "/api/core/v1/import/board",
+                    type: "any"
+                },
+                method: {
+                    visible: false,
+                    defaultValue: "post",
+                    type: "string"
+                },
+                name: {
+                    visible: true,
+                    defaultValue: "",
+                    type: "string"
+                },
+                template: {
+                    visible: true,
+                    defaultValue: "smart ai agent",
+                    type: "string"
+                }
+            },
+            description: "Create a new agent given the agent name and the template",
+            layer: "base",
+            rulesCode: "// return {\r\n//     url: params.url + '?token='+token,\r\n//     name: params.name,\r\n//     template: 'smart ai agent'\r\n// }\r\nreturn await context.apis.fetch(params.method ?? 'get', params.url + '?token='+token, {\r\n    name: params.name,\r\n    template: {id: params.template}\r\n})",
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  const content = <YStack f={1} ai=\"center\" jc=\"center\" width=\"100%\">\n      {card.icon && card.displayIcon !== false && (\n          <Icon name={card.icon} size={48} color={card.color}/>\n      )}\n      {card.displayResponse !== false && (\n          <CardValue mode={card.markdownDisplay ? 'markdown' : card.htmlDisplay ? 'html' : 'normal'} value={value ?? \"N/A\"} />\n      )}\n  </YStack>\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            {card.displayButton !== false ? <ParamsForm data={card}>{content}</ParamsForm> : card.displayResponse !== false && content}\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n"
+        }
+    })
+
 
     addCard({
         group: 'board',
@@ -229,6 +354,7 @@ export const registerCards = async () => {
             type: "action",
             editorOptions: {},
             displayResponse: true,
+            graphOrder: 1000,
             params: {
                 item: "",
                 action: "action to perform in the queue: push, pop, clear",
@@ -615,14 +741,18 @@ return card({
             icon: "image",
             description: "Display an image that scales without distortion",
             type: 'value',
-            rulesCode: 'return `/public/vento-square.png`',
-            html: `
-// data contains: data.value, data.icon and data.color
-return card({
-  content: boardImage({ src: \`\${data.value}\` }),
-  padding: '3px'
-});
-`,
+            rulesCode: "return params.url",
+            params: {
+                "url": "image url"
+            },
+            configParams: {
+                "url": {
+                    "visible": true,
+                    "defaultValue": "/public/vento-logo.png",
+                    "type": "string"
+                }
+            },
+            html: "//@card/react\n\nfunction Widget(card) {\n  const value = card.value;\n\n  return (\n      <Tinted>\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\n          <ActionCard data={card}>\n            <img style={{width: \"100%\", height: \"100%\", objectFit: \"contain\"}} src={value}/>\n          </ActionCard>\n        </ProtoThemeProvider>\n      </Tinted>\n  );\n}\n",
             editorOptions: {
                 // defaultTab: "value"
             },

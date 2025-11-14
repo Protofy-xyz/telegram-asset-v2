@@ -2,7 +2,7 @@ import { XStack, YStack, Text, Stack, Button } from '@my/ui'
 import { useState } from 'react'
 import { Tinted } from './Tinted'
 
-export const Slides = ({ slides, lastButtonCaption, onFinish, id = "pages", styles = {}, hideHeader = false }) => {
+export const Slides = ({ slides, lastButtonCaption, onFinish, id = "pages", styles = {}, hideHeader = false, disabled = false }) => {
   const [step, setStep] = useState(0)
   const totalSlides = slides.length
   const prev_step = step > 1 ? step - 1 : 0
@@ -23,7 +23,7 @@ export const Slides = ({ slides, lastButtonCaption, onFinish, id = "pages", styl
         <Stack flex={1} alignItems="flex-end">
           <Text fontWeight={"500"} fontSize={16} color="$gray9">[{step + 1}/{totalSlides}]</Text>
         </Stack>
-      </XStack> }
+      </XStack>}
 
       <Tinted>
         <Stack>
@@ -37,7 +37,7 @@ export const Slides = ({ slides, lastButtonCaption, onFinish, id = "pages", styl
 
       <XStack gap={40} jc='center' mb={"$1"} alignItems="flex-end">
         {step !== 0 && (
-          <Button w={250} onPress={(e) => {
+          <Button disabled={disabled} w={250} onPress={(e) => {
             e.stopPropagation()
             if (step > 0) {
               setStep(prev_step)
@@ -47,7 +47,7 @@ export const Slides = ({ slides, lastButtonCaption, onFinish, id = "pages", styl
           </Button>
         )}
         <Tinted>
-          <Button id={"admin-" + id + "-add-btn"} w={250} onPress={async (e) => {
+          <Button disabled={disabled} id={"admin-" + id + "-add-btn"} w={250} onPress={async (e) => {
             e.stopPropagation()
             if (post_step) {
               setStep(post_step)

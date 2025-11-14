@@ -8,10 +8,11 @@ const model = params.model
 if (provider === 'chatgpt') {
   reply = await context.chatgpt.chatGPTPrompt({
     message: prompt,
-    model: model ?? "gpt-4o"
+    model: model ?? "gpt-4.1"
   });
 
   let raw = reply
+
   let content = reply?.[0]
 
   if (reply?.isError) {

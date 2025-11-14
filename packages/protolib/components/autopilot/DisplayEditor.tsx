@@ -1,11 +1,21 @@
 import React, { useMemo, useState, useCallback } from 'react'
-import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView, ToggleGroup } from '@my/ui'
+import { YStack, XStack, Label, Input, Checkbox, Text, Paragraph, ScrollView, ToggleGroup, useTheme } from '@my/ui'
 import { Check } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import { IconSelect } from '../IconSelect'
 import { InputColor } from '../InputColor'
 import { Toggle } from '../Toggle'
 import { useBoardLayer } from '@extensions/boards/store/boardStore'
+
+const colors = ["orange", "yellow", "green", "blue", "purple", "pink", "red", "gray"]
+const colorShades = [11, 9, 7, 5]
+const presetColors = [...colorShades.reduce((total, current) => {
+    colors.forEach((val) => {
+        total.push(`var(--${val}${current})`)
+    })
+    return total
+}, []), "default"]
+
 
 export const SettingsTitle = ({ children, error = "", ...props }) => {
     return (
@@ -131,6 +141,7 @@ export const DisplayEditor = ({
         // ----- Paths and Permissions -----
         {
             label: 'API access',
+            description: 'Allow access to this card through the API.',
             key: 'apiAccess',
             type: 'toggle',
             section: 'Paths and Permissions',
@@ -144,8 +155,8 @@ export const DisplayEditor = ({
         { label: 'User access', key: 'userAccess', type: 'toggle', section: 'Paths and Permissions' },
         { label: 'Admin access', key: 'adminAccess', type: 'toggle', section: 'Paths and Permissions' },
 
-        { label: 'Allow public read', key: 'publicRead', type: 'toggle', section: 'Paths and Permissions' },
-        { label: 'Custom read path', key: 'enableCustomPath', type: 'toggle', section: 'Paths and Permissions' },
+        { label: 'Allow public read', description: 'Allow the read of the card content outside board', key: 'publicRead', type: 'toggle', section: 'Paths and Permissions' },
+        { label: 'Card read path', description: 'Path to read the content of the card outside the board. This setting requires <Allow public read> to be enabled.', key: 'enableCustomPath', type: 'toggle', section: 'Paths and Permissions' },
         {
             label: 'Path to card',
             key: 'customPath',
@@ -155,8 +166,7 @@ export const DisplayEditor = ({
             visible: ({ cardData }) => !!cardData.enableCustomPath,
             get: (cd) => cd.customPath ?? `/workspace/cards/${cd.name}`,
         },
-
-        { label: 'Read Card Page Path', key: 'customCardViewPath', type: 'text', placeholder: "Path to card (Ex: /card)", section: 'Paths and Permissions' },
+        { label: 'Card page path', description: 'Path of the card content page. This setting requires <Allow public read> to be enabled.', key: 'customCardViewPath', type: 'text', placeholder: "Path to card (Ex: /card)", section: 'Paths and Permissions' },
         // @ts-ignore
         ...(cardData.type === "action"
             ? [
@@ -172,7 +182,9 @@ export const DisplayEditor = ({
                     get: (cd) => cd.customRunPath ?? `/workspace/cards/${cd.name}/run`,
                 },
 
-                { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', placeholder: "Path to card run (Ex: /card/run)", section: 'Paths and Permissions' }
+                { label: 'Run Card Page Path', key: 'customCardRunViewPath', type: 'text', placeholder: "Path to card run (Ex: /card/run)", section: 'Paths and Permissions' },
+                { label: 'Request approval', description: 'Require user approval before executing this action', key: 'requestApproval', type: 'toggle', section: 'Paths and Permissions', visible: ({ card }) => card.type === 'action' },
+                { label: 'Approval message', description: 'Custom message shown when requesting approval', key: 'approvalMessage', type: 'text', section: 'Paths and Permissions', indent: 1, visible: ({ card, cardData }) => card.type === 'action' && !!(cardData?.requestApproval === true), placeholder: 'Explain what this action will do' },
             ]
             : []
         ),
@@ -224,8 +236,8 @@ export const DisplayEditor = ({
             </XStack>
         } else if (s.type === 'text') {
             const value = s.get ? s.get(cardData, card) : cardData?.[s.key] ?? ''
-            comp = <XStack key={s.key} ai="center" justifyContent="space-between" gap="$2" ml={indentMl}>
-                <YStack gap="0px">
+            comp = <XStack key={s.key} ai="center" justifyContent="space-between" gap="$5" ml={indentMl}>
+                <YStack gap="0px" flex={1}>
                     <Label
                         color={"$text"}
                         fontSize={"$5"}
@@ -236,6 +248,7 @@ export const DisplayEditor = ({
                         lineHeight={"fit-content"}>{s.description}</Label>
                 </YStack>
                 <Input
+                    minWidth={"250px"}
                     value={value}
                     placeholder={s["placeholder"] ?? s.label}
                     onChangeText={(t) => {
@@ -257,8 +270,8 @@ export const DisplayEditor = ({
                 }
             }
 
-            comp = <XStack key={s.key} ai="center" justifyContent="space-between" gap="$2" ml={indentMl}>
-                <YStack gap="0px">
+            comp = <XStack key={s.key} ai="center" justifyContent="space-between" gap="$5" ml={indentMl}>
+                <YStack gap="0px" flex={1}>
                     <Label
                         color={"$text"}
                         fontSize={"$5"}
@@ -290,16 +303,6 @@ export const DisplayEditor = ({
     return (
         <XStack f={1} gap="$6" style={style}>
             <YStack flexWrap="wrap" py="$6" pl="$5" >
-                <YStack w={400} >
-                    <SettingsTitle>Icon</SettingsTitle>
-                    <IconSelect
-                        br={"8px"}
-                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
-                        icons={icons}
-                        onSelect={(icon) => setCardData({ ...cardData, icon })}
-                        selected={cardData.icon}
-                    />
-                </YStack>
                 <YStack maw={400}>
                     <SettingsTitle error={error ?? ''}>
                         Name <Text color={"$color8"}>*</Text>
@@ -319,18 +322,72 @@ export const DisplayEditor = ({
                     />
                 </YStack>
 
+                <YStack w={400} >
+                    <SettingsTitle>Icon</SettingsTitle>
+                    <IconSelect
+                        br={"8px"}
+                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
+                        icons={icons}
+                        onSelect={(icon) => setCardData({ ...cardData, icon })}
+                        selected={cardData.icon}
+                    />
+                </YStack>
+
                 <YStack w={400}>
-                    <SettingsTitle>Color</SettingsTitle>
+                    <SettingsTitle>Main Color</SettingsTitle>
                     <InputColor
                         br={"8px"}
-                        color={cardData.color}
-                        onChange={(e) => setCardData({ ...cardData, color: e.hex })}
-                        inputProps={{ backgroundColor: '$bgPanel', borderColor: error ? '$red9' : '$gray6' }}
+                        color={cardData.color ?? ""}
+                        mode='custom'
+                        presetColors={presetColors}
+                        popoverProps={{ width: "325px" }}
+                        placeholder='#F7B500 or var(--yellow9)'
+                        onChange={(color) => {
+                            if (color === "default") {
+                                delete cardData.color
+                            } else {
+                                cardData.color = color
+                            }
+                            setCardData({ ...cardData })
+                        }}
+                        inputProps={{
+                            backgroundColor: '$bgPanel',
+                            borderColor: error ? '$red9' : '$gray6',
+                            onChange: e => {
+                                setCardData({ ...cardData, color: e.target.value })
+                            }
+                        }}
+                    />
+                </YStack>
+                <YStack w={400} display={cardData.displayFrame == false ? "none" : "block"}>
+                    <SettingsTitle>Background Color</SettingsTitle>
+                    <InputColor
+                        br={"8px"}
+                        color={cardData.bgColor ?? ""}
+                        mode='custom'
+                        placeholder='#F7B500 or var(--yellow9)'
+                        presetColors={presetColors}
+                        popoverProps={{ width: "325px" }}
+                        onChange={(color) => {
+                            if (color === "default") {
+                                delete cardData.bgColor
+                            } else {
+                                cardData.bgColor = color
+                            }
+                            setCardData({ ...cardData })
+                        }}
+                        inputProps={{
+                            backgroundColor: '$bgPanel',
+                            borderColor: error ? '$red9' : '$gray6',
+                            onChange: e => {
+                                setCardData({ ...cardData, bgColor: e.target.value })
+                            }
+                        }}
                     />
                 </YStack>
             </YStack >
 
-            <ScrollView pb="$7" pr="$5">
+            <YStack pb="$7" pr="$5" overflow='auto' overflowBlock='scroll' flex={1}>
                 <YStack
                     pos='sticky' top="0px" left="0px" zIndex={20} pt="$11" px="$3"
                 >
@@ -339,7 +396,6 @@ export const DisplayEditor = ({
                         br={"8px"}
                         value={filter}
                         fontSize={"$5"}
-                        color="$color"
                         placeholderTextColor={"$gray8"}
                         style={{
                             backdropFilter: 'blur(20px)',
@@ -379,7 +435,7 @@ export const DisplayEditor = ({
                         )
                     })}
                 </YStack>
-            </ScrollView>
+            </YStack>
         </XStack >
     )
 }

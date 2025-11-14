@@ -83,8 +83,8 @@ export const RulesSideMenu = ({ leftIcons = <></>, icons = <></>, automationInfo
             onModeChange={(currMode) => setRulesMode(currMode)}
             onApplyRules={async (rules) => {
                 try {
+                    const rulesCode = await API.post(`/api/core/v1/autopilot/getBoardCode`, { rules: rules, previousRules: boardRef.current.rules, states: boardStates, actions: actions.boards ? actions.boards[board.name] : {}, boardName: board.name })
                     boardRef.current.rules = rules
-                    const rulesCode = await API.post(`/api/core/v1/autopilot/getBoardCode`, { rules: rules, previousRules: boardRef.current.rules, states: boardStates, actions: actions.boards ? actions.boards[board.name] : {} })
                     if (rulesCode.error || !rulesCode.data?.jsCode) {
                         toast.show(`Error generating board code: ${rulesCode.error.message}`)
                         return

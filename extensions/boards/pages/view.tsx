@@ -39,6 +39,8 @@ import { itemsAtom, automationInfoAtom, uiCodeInfoAtom, reloadBoard } from '../u
 import { ActionCard } from '../components/ActionCard'
 import { VersionTimeline } from '../VersionTimeline'
 import { useBoardVersions, latestVersion } from '../utils/versions'
+import { GraphView } from './graphView'
+import { useEventEffect } from '@extensions/events/hooks'
 
 const defaultCardMethod: "post" | "get" = 'post'
 
@@ -185,7 +187,7 @@ const BoardStateView = ({ board }) => {
 
 const MAX_BUFFER_MSG = 1000
 const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardRef, actions, states, uicodeInfo, setUICodeInfo, onEditBoard }) => {
-  const { panelSide, setPanelSide } = useBoardControls()
+  const { panelSide, setPanelSide } = useBoardControls() || {};
   const [logs, setLogs] = useState([])
   useLog((log) => {
     setLogs(prev => {
@@ -273,21 +275,34 @@ const FloatingArea = ({ tabVisible, setTabVisible, board, automationInfo, boardR
 
 
 
-const Board = ({ board, icons }) => {
-  const {
+export const Board = ({ board, icons, forceViewMode = undefined }: { board: any, icons: any[], forceViewMode?: 'ui' | 'board' | 'graph' }) => {
+  let {
     addOpened,
     setAddOpened,
-    viewMode,
     tabVisible,
-    setTabVisible
-  } = useBoardControls();
+    setTabVisible,
+    viewMode
+  } = useBoardControls() ?? {};
+
+  const effectiveView: 'ui' | 'board' | 'graph' =
+    (forceViewMode ?? viewMode ?? 'ui') as 'ui' | 'board' | 'graph';
 
   window['board'] = board;
 
   const breakpointCancelRef = useRef(null) as any
   const dedupRef = useRef() as any
   const initialized = useRef(false)
+
   const [items, setItems] = useState(board.cards && board.cards.length ? board.cards : []);
+  const [boardCode, setBoardCode] = useState(JSON.stringify(board))
+
+  useEffect(() => {
+    console.log('board changed, updating items', board)
+    setItems(board.cards && board.cards.length ? board.cards : []);
+    setBoardCode(JSON.stringify(board));
+    window['board'] = board;
+  }, [board])
+
   const [, setLayers] = useLayers();
 
   useEffect(() => {
@@ -317,7 +332,7 @@ const Board = ({ board, icons }) => {
   const [currentCard, setCurrentCard] = useState(null)
   const [editedCard, setEditedCard] = useState(null)
   const [editCode, setEditCode] = useState('')
-  const [boardCode, setBoardCode] = useState(JSON.stringify(board))
+
   const [hasChanges, setHasChanges] = useState(false);
 
   const [errors, setErrors] = useState<string[]>([])
@@ -527,15 +542,21 @@ const Board = ({ board, icons }) => {
   };
 
   const setCardContent = (key, content) => {
-    const newItems = items.map(item => {
-      if (item.key === key || item.name === key) {
-        return { ...item, ...content };
+    setItems(prevItems => {
+      try {
+        const newItems = prevItems.map(item => {
+          if (item.key === key || item.name === key) {
+            return { ...item, ...content };
+          }
+          return item;
+        });
+        boardRef.current.cards = newItems
+        return newItems
+      } catch (err) {
+        return prevItems
       }
-      return item;
-    });
+    })
 
-    setItems(newItems)
-    boardRef.current.cards = newItems
     saveBoard(board.name, boardRef.current, setBoardVersion, refresh);
   }
 
@@ -784,6 +805,8 @@ const Board = ({ board, icons }) => {
       </YStack>
     </AlertDialog>)
 
+  const isGraphView = effectiveView === 'graph'
+
   return (
     <YStack flex={1} backgroundImage={board?.settings?.backgroundImage ? `url(${board.settings.backgroundImage})` : undefined} backgroundSize='cover' backgroundPosition='center'>
 
@@ -921,7 +944,7 @@ const Board = ({ board, icons }) => {
                   formatOnType: true
                 }}
               />
-              : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
+              : isGraphView ? <GraphView cards={cards} /> : <YStack f={1} p={"$6"}>{cards.length > 0 && items !== null ? <DashboardGrid
                 extraScrollSpace={50}
                 items={cards}
                 settings={board.settings}
@@ -943,7 +966,7 @@ const Board = ({ board, icons }) => {
                   }
 
                   console.log('programming layout change: ', breakpointRef.current)
-                  clearInterval(dedupRef.current)
+                  clearTimeout(dedupRef.current)
                   dedupRef.current = setTimeout(() => {
                     console.log('Layout changed: ', breakpointRef.current)
                     console.log('Prev layout: ', boardRef.current.layouts[breakpointRef.current])
@@ -978,10 +1001,18 @@ const Board = ({ board, icons }) => {
               </YStack> : null)}</YStack>
           }
         </YStack>
-        <HTMLView style={{ display: viewMode == 'ui' ? 'block' : 'none', position: 'absolute', width: "100%", height: "100%", backgroundColor: "var(--bgContent)" }}
-          html={uicodeInfo?.code ?? ''} data={{ board, state: states?.boards?.[board.name] }} setData={(data) => {
-            console.log('wtf set data from board', data)
-          }} />
+        <HTMLView
+          style={{
+            display: effectiveView === 'ui' ? 'block' : 'none',
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'var(--bgContent)',
+          }}
+          html={uicodeInfo?.code ?? ''}
+          data={{ board, state: states?.boards?.[board.name] }}
+          setData={(data) => console.log('set data from board', data)}
+        />
         <FloatingArea tabVisible={tabVisible} setTabVisible={setTabVisible} board={board} automationInfo={automationInfo} boardRef={boardRef} actions={actions} states={states} uicodeInfo={uicodeInfo} setUICodeInfo={setUICodeInfo} onEditBoard={onEditBoard} />
         <YStack
           position={"fixed" as any}
@@ -1021,8 +1052,15 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     toggleAutopilot,
     openAdd,
     setTabVisible,
-    tabVisible
+    tabVisible,
+    viewMode,
+    setViewMode
   } = useBoardControls();
+
+  const setModeAndHash = (mode: 'ui' | 'board' | 'graph') => {
+    setViewMode(mode); // el efecto de arriba sincroniza el hash
+  };
+
   const [boardVersionId] = useBoardVersionId();
 
   const onFloatingBarEvent = (event) => {
@@ -1059,21 +1097,38 @@ export const BoardViewAdmin = ({ params, pageSession, workspace, boardData, icon
     if (event.type === 'board-settings') {
       setTabVisible(tabVisible === 'board-settings' ? "" : 'board-settings');
     }
+    if (event.type === 'mode-ui') setModeAndHash('ui');
+    if (event.type === 'mode-board') setModeAndHash('board');
+    if (event.type === 'mode-graph') setModeAndHash('graph');
   }
 
   __currentBoardVersion = boardData?.data?.version
+
+  if (params?.mode === 'ui') {
+    if (boardData.status == 'error') {
+      return <ErrorMessage
+        msg="Error loading board"
+        details={boardData.error.error}
+      />
+    }
+    if (boardData.status == 'loaded') {
+      return <Board forceViewMode={'ui'} key={boardData?.data?.name + '_' + boardVersionId} board={boardData.data} icons={iconsData.data?.icons} />;
+    }
+    return null;
+  }
+
   return <AdminPage
     title={params.board + " board"}
     workspace={workspace}
     pageSession={pageSession}
     onActionBarEvent={onFloatingBarEvent}
-    actionBar={{ visible: tabVisible != 'visualui' }}
+    actionBar={{ visible: tabVisible != 'visualui' && params?.mode !== 'ui' }}
   >
     {boardData.status == 'error' && <ErrorMessage
       msg="Error loading board"
       details={boardData.error.error}
     />}
-    {boardData.status == 'loaded' && <Board key={boardData?.data?.name + '_' + boardVersionId} board={boardData.data} icons={iconsData.data?.icons} />}
+    {boardData.status == 'loaded' && <Board forceViewMode={params.view} key={boardData?.data?.name + '_' + boardVersionId} board={boardData.data} icons={iconsData.data?.icons} />}
   </AdminPage>
 }
 
@@ -1106,6 +1161,15 @@ export const BoardView = ({ workspace, pageState, initialItems, itemData, pageSe
   const [iconsData, setIconsData] = useState(icons ?? getPendingResult('pending'))
   usePendingEffect((s) => { API.get({ url: `/api/core/v1/icons` }, s) }, setIconsData, icons)
   useIsAdmin(() => '/workspace/auth/login?return=' + document?.location?.pathname + (document?.location?.search ?? ''))
+
+  useEventEffect((payload, msg) => {
+    const boardInfo = msg?.parsed?.payload?.data
+    console.log('Received board update event for board: ', boardInfo.name)
+    setBoardData({
+      status: 'loaded',
+      data: boardInfo
+    })
+  }, { path: 'boards/update/'+params.board })
 
   return (
     <BoardViewLoader

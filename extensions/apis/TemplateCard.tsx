@@ -1,17 +1,8 @@
 import { YStack, Text } from '@my/ui'
 import { Tinted } from 'protolib/components/Tinted'
+import { InternalIcon } from 'protolib/components/InternalIcon'
 
 export const TemplateCard = ({ template, isSelected, onPress }) => {
-
-    const InternalIcon = ({ name }) => <div
-        style={{
-            width: 35,
-            height: 35,
-            backgroundColor: 'var(--color8)',
-            WebkitMask: `url('/public/icons/${name}.svg') center / contain no-repeat`,
-            mask: `url('/public/icons/${name}.svg') center / contain no-repeat`,
-        }}
-    />
 
     return (
         <Tinted>
@@ -30,7 +21,7 @@ export const TemplateCard = ({ template, isSelected, onPress }) => {
                 alignItems='center'
                 padding="$4"
             >
-                <InternalIcon name={template.icon ?? "layout-dashboard"} />
+                <InternalIcon size={35} color="var(--color8)" name={template.icon ?? "layout-dashboard"} />
                 <Text ta='center' marginBottom="$2" marginTop="$4">{template.name ?? template.id}</Text>
                 <Text ta='center' fontWeight="300" opacity={0.4}>{template.description}</Text>
             </YStack>

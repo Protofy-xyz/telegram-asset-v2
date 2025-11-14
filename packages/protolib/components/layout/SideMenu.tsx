@@ -41,7 +41,7 @@ export const SideMenu = ({ sideBarColor = '$background', children, themeSwitcher
             }}
             style={{ overflowY: 'auto' }}
         >
-            <YStack px="$5" pt="$8" jc="center" ai={collapsed ? "center" : "flex-start"} height={"fit-content"}>
+            <YStack px="$5" pt="$5" jc="center" ai={collapsed ? "center" : "flex-start"} height={"fit-content"}>
                 {/* do not use ternary, use `display` to have both images loaded and only play 
                 with visibility */}
                 <YStack display={collapsed ? "none" : "flex"}>{logo}</YStack>

@@ -1,7 +1,7 @@
 import { ButtonProps, Button, Text } from "@my/ui"
 import React from 'react'
 
-export const ButtonSimple = React.forwardRef(({textColor = undefined, fontFamily = "$silkscreen", ...props}: ButtonProps & any, ref: any) => (
+export const ButtonSimple = React.forwardRef(({textColor = undefined, fontFamily = undefined, ...props}: ButtonProps & any, ref: any) => (
     <Button
         //@ts-ignore
         ref={ref}

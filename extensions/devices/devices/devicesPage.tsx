@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { BookOpen, Tag, Router } from '@tamagui/lucide-icons';
+import { useRouter } from 'next/router';
+import { BookOpen, Tag, Router, Wrench } from '@tamagui/lucide-icons';
 import { DevicesModel } from './devicesSchemas';
 import { API } from 'protobase';
 import { DataTable2 } from 'protolib/components/DataTable2';
@@ -11,7 +12,6 @@ import { CardBody } from 'protolib/components/CardBody';
 import { ItemMenu } from 'protolib/components/ItemMenu';
 import { Tinted } from 'protolib/components/Tinted';
 import { useSubscription, Connector } from 'protolib/lib/mqtt';
-import { flash, connectSerialPort } from "../devicesUtils";
 import DeviceModal from 'protodevice/src/DeviceModal'
 import * as deviceFunctions from 'protodevice/src/device'
 import { Subsystems } from 'protodevice/src/Subsystem'
@@ -19,7 +19,7 @@ import { Paragraph, TextArea, XStack, YStack, Text, Button } from '@my/ui';
 import { getPendingResult } from "protobase";
 import { Pencil, UploadCloud, Navigation, Bug } from '@tamagui/lucide-icons';
 import { usePageParams } from 'protolib/next';
-import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint } from "../devicesUtils";
+import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint, flash, connectSerialPort, downloadDeviceElfEndpoint  } from "@extensions/esphome/utils";
 import { SSR } from 'protolib/lib/SSR'
 import { withSession } from 'protolib/lib/Session'
 import { SelectList } from 'protolib/components/SelectList';
@@ -159,7 +159,7 @@ export default {
     const [logSourceChooserOpen, setLogSourceChooserOpen] = useState(false);
     const [logSource, setLogSource] = useState<null | 'mqtt' | 'usb'>(null);
     const [currentDeviceHasMqtt, setCurrentDeviceHasMqtt] = useState(false);
-    
+
     const hasMqttSubsystem = (subs: any): boolean => {
       if (!subs) return false;
       if (Array.isArray(subs)) {
@@ -213,7 +213,7 @@ export default {
         setSerialChooser(null);
       }
     };
-    
+
     const handleCancelChooser = () => {
       try {
         (window as any)?.serial?.cancel(serialChooser?.reqId);
@@ -432,7 +432,7 @@ export default {
       if (stage !== 'console') return;
       return () => { stopConsole(); }; // cleanup when stage changes away from console
     }, [stage]);
-    
+
     useEffect(() => {
       const processStage = async () => {
 
@@ -508,7 +508,8 @@ export default {
         text: "Edit config file",
         icon: Pencil,
         action: (element) => { replace('editFile', element.getConfigFile()) },
-        isVisible: (element) => element.isInitialized() && element.getConfigFile()
+        // isVisible: (element) => element.isInitialized() && element.getConfigFile()
+        isVisible: (element) => true
       },
       {
         text: "Upload config file",
@@ -560,7 +561,56 @@ export default {
           }
         },
         isVisible: (element) => true
+      },
+      {
+        text: "Download firmware binary",
+        icon: Wrench,
+        action: async (element) => {
+          try {
+            const response = await fetch(downloadDeviceFirmwareEndpoint(element.data.name, compileSessionId));
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${element.data.name}.bin`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Error downloading firmware binary:', err);
+          }
+        },
+        isVisible: (element) => compileSessionId !== ''
+      },
+      {
+        text: "Download firmware ELF",
+        icon: Wrench,
+        action: async (element) => {
+          try {
+            const response = await fetch(downloadDeviceElfEndpoint(element.data.name, compileSessionId));
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${element.data.name}.elf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Error downloading firmware ELF:', err);
+          }
+        },
+        isVisible: (element) => compileSessionId !== ''
       }
+
 
 
     ]
@@ -613,6 +663,8 @@ export default {
       setLogSource(null);
     }
 
+    const router = useRouter();
+
     return (<AdminPage title="Devices" pageSession={pageSession}>
       <Connector brokerUrl={onlineCompilerSecureWebSocketUrl()}>
         <DeviceModal
@@ -661,14 +713,24 @@ export default {
       </Connector>
       <DataView
         entityName="devices"
-        defaultView={"grid"}
+        title=""
+        // defaultView={"grid"}
         toolBarContent={
-          <XStack mr={"$2"} f={1} jc='flex-end'>
-            <Tinted>
-              <Button icon={BookOpen} mah="30px" onPress={() => document.location.href = '/workspace/deviceDefinitions'}>
-                Definitions
-              </Button>
-            </Tinted>
+          <XStack gap="$6">
+            <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/devices')}>
+              <Paragraph>
+                <Text fontSize="$9" fontWeight="600" color="$color11">
+                  Devices
+                </Text>
+              </Paragraph>
+            </XStack>
+            <XStack cursor="pointer" hoverStyle={{ opacity: 0.8 }} onPress={() => router.push('/deviceDefinitions')}>
+              <Paragraph>
+                <Text fontSize="$9" fontWeight="600" color="$color8">
+                  Definitions
+                </Text>
+              </Paragraph>
+            </XStack>
           </XStack>
         }
         itemData={itemData}
@@ -692,7 +754,7 @@ export default {
                   : <YStack f={1} ai="center" p={"$2"} py={"$6"} gap="$4">
                     <Tinted>
                       <Text fos={14} fow={"600"}>You don't have any definitions yet</Text>
-                      <Button icon={Navigation} onPress={() => document.location.href = '/workspace/deviceDefinitions'} >
+                      <Button icon={Navigation} onPress={() => router.push('/deviceDefinitions')} >
                         Go to definitions
                       </Button>
                     </Tinted>

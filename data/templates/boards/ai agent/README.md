@@ -1,1 +1,1 @@
-Empty board with basic single core AI agent support
+Intelligent agent using AI to answer questions or execute actions

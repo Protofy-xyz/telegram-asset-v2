@@ -10,7 +10,7 @@ export const SideMenu = (props) => {
             style={{ filter: themeName?.startsWith("dark") ? "invert(70%) brightness(10)" : "invert(5%)" }}
             src={"/public/vento-logo.png"}
             alt="Logo"
-            width={180}
+            width={90}
             height={30}
             resizeMode='contain'
         />}
