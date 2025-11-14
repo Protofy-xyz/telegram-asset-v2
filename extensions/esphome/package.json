@@ -1,4 +1,7 @@
 {
   "name": "@extensions/esphome",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "dependencies": {
+    "yaml": "2.8.1"
+  }
 }

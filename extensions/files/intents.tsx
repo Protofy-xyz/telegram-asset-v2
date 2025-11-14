@@ -120,7 +120,7 @@ const SaveButton = ({ checkStatus = () => true, defaultState = 'available', path
   );
 };
 
-const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = undefined }) => {
+export const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = undefined , codeviewProps = {}, monacoProps = {}}) => {
   const [fileContent, setFileContent] = useFileFromAPI(path)
   const searchParams = useSearchParams();
   const query = Object.fromEntries(searchParams.entries());
@@ -150,7 +150,20 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
 
   return <AsyncView ready={loaded}>
     <Tinted>
-      <CodeView disableAIPanels={true} masksPath={masksPath} defaultMode={defaultMode.current} path={path} extraIcons={extraIcons} sourceCode={sourceCode} fileContent={fileContent} isModified={isModified} setIsModified={setIsModified}>
+      <CodeView 
+        disableAIPanels={true} 
+        masksPath={masksPath} 
+        defaultMode={defaultMode.current} 
+        path={path} 
+        extraIcons={extraIcons} 
+        sourceCode={sourceCode} 
+        fileContent={fileContent} 
+        isModified={isModified} 
+        setIsModified={setIsModified}
+        monacoProps={monacoProps}
+        query={query}
+        {...codeviewProps}
+        >
         <SaveButton
           onSave={() => originalSourceCode.current = sourceCode.current}
           checkStatus={() => sourceCode.current != originalSourceCode.current}
@@ -192,6 +205,7 @@ export const CodeView = ({
   masksPath = undefined,
   defaultMode = 'flow',
   rulesProps = {},
+  flowsProps = {},
   monacoOnMount = (editor, monaco) => { },
   monacoInstance = null,
   monacoProps = {},
@@ -339,7 +353,9 @@ export const CodeView = ({
       sourceCode={sourceCode.current}
       path={flowsPath ?? path}
       themeMode={resolvedTheme}
-      primaryColor={resolvedTheme == 'dark' ? theme[tint + '10'].val : theme[tint + '7'].val} />
+      primaryColor={resolvedTheme == 'dark' ? theme[tint + '10'].val : theme[tint + '7'].val} 
+      {...flowsProps}
+      />
   }
 
   const getBody = () => {

@@ -80,6 +80,8 @@ interface FlowProps {
     defaultSelected?: Function,
     autoFitView?: boolean,
     nodeMenu?: any,
+    onBeforePrepare?: any
+    onBeforeSave?: any
 }
 
 const FlowsBase = ({
@@ -122,6 +124,8 @@ const FlowsBase = ({
     metadata = {},
     defaultSelected = () => undefined,
     nodeMenu = null,
+    onBeforePrepare = null,
+    onBeforeSave = null
 }: FlowProps) => {
     const { data, publish } = topics;
     const useFlowsStore = useContext(FlowStoreContext)
@@ -171,6 +175,9 @@ const FlowsBase = ({
     }
 
     const prepare = (sourceCode) => {
+        if (onBeforePrepare) {
+            sourceCode = onBeforePrepare(sourceCode, mode)
+        }
         if (mode == 'json') {
             return '(' + sourceCode + ')'; //ts-morph does not parse files with an object directly, so we put the object between ( and )
         } else {
@@ -339,6 +346,10 @@ const FlowsBase = ({
         try {
             //restore components before dump
             content = saveNodes(tree.nodes, tree.edges, tree.nodeData, _getFirstNode, mode)
+
+            if (onBeforeSave) {
+                content = onBeforeSave(content, mode)
+            }
             console.log('CONTENT: ', content)
             setInitialEdges(tree.edges)
             setInitialNodes(tree.nodes)
@@ -974,17 +985,18 @@ const FlowsWrapper = (props) => {
 
 export default (props) => {
     const FlowsWithTopics = withTopics(FlowsWrapper, { topics: [props.flowId + '/play', props.flowId + '/ui', 'savenodes'] })
+    let extraProps = {}
 
     if (props.path) {
         if (props.path.endsWith('.json')) {
-            props.mode = 'json'
+            extraProps["mode"] = 'json'
         } else if (props.path.endsWith('yml') || props.path.endsWith('yaml')) {
-            props.mode = 'yaml'
+            // extraProps["mode"] = 'yaml'
         }
     }
 
     return <TopicsProvider>
-        <FlowsWithTopics {...props} />
+        <FlowsWithTopics {...props} {...extraProps} />
     </TopicsProvider>
 }
 
