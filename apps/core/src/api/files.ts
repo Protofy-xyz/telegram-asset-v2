@@ -165,7 +165,7 @@ const handleFilesDownloadRequest = async (req, res) => {
             res.status(200).send({ result: "File downloaded successfully" });
         } catch (error) {
             logger.error({ error }, "Error downloading file from URL");
-            res.status(500).send({ error: "Error downloading file from URL" });
+            res.status(500).send({ error: "Error downloading file from URL: " + error });
         }
         return;
     } else {
