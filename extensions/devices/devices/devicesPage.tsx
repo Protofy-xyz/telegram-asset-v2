@@ -25,98 +25,108 @@ import { withSession } from 'protolib/lib/Session'
 import { SelectList } from 'protolib/components/SelectList';
 
 const MqttTest = ({ onSetStage, onSetModalFeedback, compileSessionId, stage }) => {
-  var isDoneCompiling = false
-  const [messages, setMessages] = useState([])
-  const textareaRef = useRef(null);
+  const [messages, setMessages] = React.useState<string[]>([]);
+  const [lastMessage, setLastMessage] = React.useState<string>('');
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const isDoneRef = React.useRef(false);
   const { message } = useSubscription([compileMessagesTopic(compileSessionId)]);
-  //keep a log of messages until success/failure
-  //so we can inform the user of the problems if anything fails.
 
-  useEffect(() => {
+  // auto-scroll logs
+  React.useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (stage == "compile") {
-      console.log("Compile Message: ", message);
-      try {
-        if (message?.message) {
-          const data = JSON.parse(message?.message.toString());
-          let modalMessage
-          if (data.position != "undefined") {
-            if (data.position && !isDoneCompiling) {
-              modalMessage = `Current position in queue: ${data.position}\n Status: ${data.status}`
-            } else {
-              isDoneCompiling = true
-              modalMessage = (
-                <YStack gap="$2">
-                  <Paragraph fontWeight={"600"}>Compiling firmware: </Paragraph>
-                  {
-                    messages.length > 0 && (
-                      <Paragraph height={50} >
-                        {messages
-                          .filter((msg) => Object.keys(msg).length === 1)
-                          .map((msg) => msg.message)
-                          .slice(-1)[0]
-                        }
-                      </Paragraph>
-                    )
-                  }
-                </YStack>
-              )
-            }
-            onSetModalFeedback({ message: modalMessage, details: { error: false } });
-          }
-          if (data.event == 'exit' && data.code == 0) {
-            isDoneCompiling = true
-            setMessages([])
-            console.log("Succesfully compiled");
-            onSetStage('upload')
-          } else if (data.event == 'exit' && data.code != 0) {
-            isDoneCompiling = true
-            console.error('Error compiling', messages)
+  React.useEffect(() => {
+    if (stage !== 'compile') return;
+    if (!message?.message) return;
 
-            onSetModalFeedback({
-              message: (
-                <YStack f={1} jc="flex-start" gap="$2">
-                  <Paragraph color="$red8" mt="$3" textAlign="center">
-                    Error compiling code.
-                  </Paragraph>
-                  <Paragraph color="$red8" textAlign="center">
-                    Please check your flow configuration.
-                  </Paragraph>
+    try {
+      const data = JSON.parse(message.message.toString());
+      const text =
+        typeof data.message === 'string'
+          ? data.message
+          : (data?.message?.toString?.() ?? '');
 
-                  <TextArea
-                    ref={textareaRef}
-                    f={1}
-                    minHeight={150}
-                    maxHeight="100%"
-                    mt="$2"
-                    mb="$4"
-                    overflow="auto"
-                    textAlign="left"
-                    resize="none"
-                    value={messages.map((ele) => ele.message).join('')}
-                  />
-                </YStack>
-              ),
-              details: { error: true }
-            })
-
-          }
-          setMessages([...messages, data])
-        }
-      } catch (err) {
-        console.log(err);
+      if (text) {
+        setMessages((prev) => [...prev, text]);
+        setLastMessage(text.trim());
       }
+
+      // ---- queue / position updates ----
+      if (typeof data.position !== 'undefined') {
+        if (!isDoneRef.current && data.position) {
+          onSetModalFeedback({
+            message: `Current position in queue: ${data.position}\n Status: ${data.status}`,
+            details: { error: false },
+          });
+          return;
+        }
+      }
+
+      // ---- live progress ----
+      if (text && !isDoneRef.current) {
+        onSetModalFeedback({
+          message: (
+            <YStack gap="$2">
+              <Paragraph fontWeight="600">Compiling firmware:</Paragraph>
+              {lastMessage && (
+                <Paragraph height={50} overflow="hidden">
+                  {lastMessage}
+                </Paragraph>
+              )}
+            </YStack>
+          ),
+          details: { error: false },
+        });
+      }
+
+      // ---- exit event ----
+      if (data.event === 'exit' && data.code === 0) {
+        isDoneRef.current = true;
+        setMessages([]);
+        console.log('Successfully compiled');
+        onSetStage('upload');
+      } else if (data.event === 'exit' && data.code !== 0) {
+        isDoneRef.current = true;
+        console.error('Error compiling', messages);
+
+        onSetModalFeedback({
+          message: (
+            <YStack f={1} jc="flex-start" gap="$2">
+              <Paragraph color="$red8" mt="$3" textAlign="center">
+                Error compiling code.
+              </Paragraph>
+              <Paragraph color="$red8" textAlign="center">
+                Please check your flow configuration.
+              </Paragraph>
+
+              <TextArea
+                ref={textareaRef}
+                f={1}
+                minHeight={150}
+                maxHeight="100%"
+                mt="$2"
+                mb="$4"
+                overflow="auto"
+                textAlign="left"
+                resize="none"
+                value={messages.join('')}
+              />
+            </YStack>
+          ),
+          details: { error: true },
+        });
+      }
+    } catch (err) {
+      console.log('Error parsing compile message:', err);
     }
-  }, [message])
+  }, [message, stage, lastMessage]);
 
-  return <></>
+  return null;
+};
 
-}
 
 const DevicesIcons = { name: Tag, deviceDefinition: BookOpen }
 
