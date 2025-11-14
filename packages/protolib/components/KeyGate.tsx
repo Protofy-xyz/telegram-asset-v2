@@ -32,8 +32,8 @@ const KeyGateLoader = ({ requiredKeys, children, readme, validators = {} }: KeyG
     }
 
     return (
-        <YStack gap="$4" p="$4" className="no-drag">
-            {readme && <Markdown data={readme} readOnly={true} />}
+        <YStack f={1} gap="$4" p="$4" className="no-drag" jc="space-between">
+            {readme && <Markdown data={readme} readOnly={true} copyToClipboardEnabled={false} />}
             {requiredKeys.map((key) => (
                 <KeySetter
                     key={key}

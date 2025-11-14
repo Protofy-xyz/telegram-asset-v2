@@ -13,6 +13,37 @@ type AutoActionsParams = {
     html?: Record<string, string>; // additional HTML content for cards
 }
 
+const getListRules = (modelName) => {
+    return `const action = userParams.action;
+delete userParams[\"action\"];
+
+if (action == \"create\") {
+    return execute_action(\"/api/v1/actions/${modelName}/create\", userParams);
+} else if (action == \"update\") {
+    return execute_action(\"/api/v1/actions/${modelName}/update\", userParams);
+} else if (action == \"read\") {
+    return execute_action(\"/api/v1/actions/${modelName}/read\", userParams);
+} else if (action == \"delete\") {
+  return execute_action(\"/api/v1/actions/${modelName}/delete\", userParams);
+} else if (action == \"exists\") {
+  return execute_action(\"/api/v1/actions/${modelName}/exists\", userParams);
+} else if (action == "select") {
+  if (!userParams.selectedItem) {
+    return
+  }
+
+  return {
+    selected: userParams.selectedItem.data, 
+    items: await execute_action("/api/v1/actions/${modelName}/list", {})
+  };
+} else {
+  return {
+    selected: null, 
+    items: await execute_action("/api/v1/actions/${modelName}/list", {})
+  };
+}`
+}
+
 export const AutoActions = ({
     modelName,
     modelType,
@@ -559,7 +590,7 @@ export const AutoActions = ({
             displayResponse: true,
             method: 'post',
             name: `${modelName} storage manager`,
-            html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\"" + (object ?? modelName) + "\" onItemsChange={() => execute_action(card.name, {})}/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
+            html: "//@card/react\r\n\r\nfunction Widget(card) {\r\n  return (\r\n      <Tinted>\r\n        <ProtoThemeProvider forcedTheme={window.TamaguiTheme}>\r\n         <StorageView name=\"" + (object ?? modelName) + "\" onItemsChange={() => execute_action(card.name, {})} onSelectItem={(item) => execute_action(card.name, {action: \"select\", selectedItem: JSON.stringify(item)})}/>\r\n        </ProtoThemeProvider>\r\n      </Tinted>\r\n  );\r\n}\r\n",
             type: 'action',
             description: `Returns a list of ${modelName} objects. You can filter the results by passing itemsPerPage, page, search, orderBy and orderDirection parameters.`,
             params: {
@@ -569,7 +600,14 @@ export const AutoActions = ({
                 orderBy: 'field to order the results by (optional)',
                 orderDirection: 'direction to order the results by (asc or desc) (optional)',
                 action: "action to perform in the storage: list, read, create, update, delete, exists",
-                id: "id (required for actions: read, create, update, delete, exists)"
+                id: "id (required for actions: read, create, update, delete, exists)",
+                selectedItem: "selected item on user click"
+            },
+            configParams: {
+                "selectedItem": {
+                    "defaultValue": "",
+                    "type": "json"
+                }
             },
             presets: {
                 "create": {
@@ -612,6 +650,17 @@ export const AutoActions = ({
                         }
                     }
                 },
+                "select": {
+                    "configParams": {
+                        "action": {
+                            "defaultValue": "action",
+                        },
+                        "selectedItem": {
+                            "defaultValue": "",
+                            "type": "json"
+                        }
+                    },
+                },
                 "exists": {
                     "description": "checks if exists item on the storage",
                     "configParams": {
@@ -621,7 +670,7 @@ export const AutoActions = ({
                     }
                 }
             },
-            rulesCode: `const action = userParams.action;\n\ndelete userParams[\"action\"];\n\nif (action == \"create\") {\n  return execute_action(\"/api/v1/actions/${modelName}/create\", userParams);\n} else if (action == \"update\") {\n  return execute_action(\"/api/v1/actions/${modelName}/update\", userParams);\n} else if (action == \"read\") {\n  return execute_action(\"/api/v1/actions/${modelName}/read\", userParams);\n} else if (action == \"delete\") {\n  return execute_action(\"/api/v1/actions/${modelName}/delete\", userParams);\n} else if (action == \"exists\") {\n  return execute_action(\"/api/v1/actions/${modelName}/exists\", userParams);\n} else {\n  return execute_action(\"/api/v1/actions/${modelName}/list\", userParams);\n}\n`,
+            rulesCode: getListRules(modelName),
         },
         token: getServiceToken(),
         emitEvent: true

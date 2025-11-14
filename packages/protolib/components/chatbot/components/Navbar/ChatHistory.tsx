@@ -2,7 +2,7 @@ import { YStack, Text } from "tamagui";
 import useChat, { priority, selectChatsHistory } from "../../store/store";
 import ChatRef from "./ChatRef";
 
-export default function ChatHistory() {
+export default function ChatHistory({ onPressChat = () => {} }: { onPressChat?: () => void }) {
   const chatsHistory = useChat(selectChatsHistory);
 
   return (
@@ -16,7 +16,7 @@ export default function ChatHistory() {
                 {month}
               </Text>
               {chatsHistory[month].map((chat, i) => (
-                <ChatRef key={`${chat.id}-${i}`} chat={chat} />
+                <ChatRef key={`${chat.id}-${i}`} chat={chat} onPress={onPressChat} />
               ))}
             </YStack>
           ))}

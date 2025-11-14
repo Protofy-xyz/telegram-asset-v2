@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from 'next/router';
-import { BookOpen, Tag, Router } from '@tamagui/lucide-icons';
+import { BookOpen, Tag, Router, Wrench } from '@tamagui/lucide-icons';
 import { DevicesModel } from './devicesSchemas';
 import { API } from 'protobase';
 import { DataTable2 } from 'protolib/components/DataTable2';
@@ -19,104 +19,114 @@ import { Paragraph, TextArea, XStack, YStack, Text, Button } from '@my/ui';
 import { getPendingResult } from "protobase";
 import { Pencil, UploadCloud, Navigation, Bug } from '@tamagui/lucide-icons';
 import { usePageParams } from 'protolib/next';
-import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint, flash, connectSerialPort  } from "@extensions/esphome/utils";
+import { closeSerialPort, onlineCompilerSecureWebSocketUrl, postYamlApiEndpoint, compileActionUrl, compileMessagesTopic, downloadDeviceFirmwareEndpoint, flash, connectSerialPort, downloadDeviceElfEndpoint  } from "@extensions/esphome/utils";
 import { SSR } from 'protolib/lib/SSR'
 import { withSession } from 'protolib/lib/Session'
 import { SelectList } from 'protolib/components/SelectList';
 
 const MqttTest = ({ onSetStage, onSetModalFeedback, compileSessionId, stage }) => {
-  var isDoneCompiling = false
-  const [messages, setMessages] = useState([])
-  const textareaRef = useRef(null);
+  const [messages, setMessages] = React.useState<string[]>([]);
+  const [lastMessage, setLastMessage] = React.useState<string>('');
+  const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const isDoneRef = React.useRef(false);
   const { message } = useSubscription([compileMessagesTopic(compileSessionId)]);
-  //keep a log of messages until success/failure
-  //so we can inform the user of the problems if anything fails.
 
-  useEffect(() => {
+  // auto-scroll logs
+  React.useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (stage == "compile") {
-      console.log("Compile Message: ", message);
-      try {
-        if (message?.message) {
-          const data = JSON.parse(message?.message.toString());
-          let modalMessage
-          if (data.position != "undefined") {
-            if (data.position && !isDoneCompiling) {
-              modalMessage = `Current position in queue: ${data.position}\n Status: ${data.status}`
-            } else {
-              isDoneCompiling = true
-              modalMessage = (
-                <YStack gap="$2">
-                  <Paragraph fontWeight={"600"}>Compiling firmware: </Paragraph>
-                  {
-                    messages.length > 0 && (
-                      <Paragraph height={50} >
-                        {messages
-                          .filter((msg) => Object.keys(msg).length === 1)
-                          .map((msg) => msg.message)
-                          .slice(-1)[0]
-                        }
-                      </Paragraph>
-                    )
-                  }
-                </YStack>
-              )
-            }
-            onSetModalFeedback({ message: modalMessage, details: { error: false } });
-          }
-          if (data.event == 'exit' && data.code == 0) {
-            isDoneCompiling = true
-            setMessages([])
-            console.log("Succesfully compiled");
-            onSetStage('upload')
-          } else if (data.event == 'exit' && data.code != 0) {
-            isDoneCompiling = true
-            console.error('Error compiling', messages)
+  React.useEffect(() => {
+    if (stage !== 'compile') return;
+    if (!message?.message) return;
 
-            onSetModalFeedback({
-              message: (
-                <YStack f={1} jc="flex-start" gap="$2">
-                  <Paragraph color="$red8" mt="$3" textAlign="center">
-                    Error compiling code.
-                  </Paragraph>
-                  <Paragraph color="$red8" textAlign="center">
-                    Please check your flow configuration.
-                  </Paragraph>
+    try {
+      const data = JSON.parse(message.message.toString());
+      const text =
+        typeof data.message === 'string'
+          ? data.message
+          : (data?.message?.toString?.() ?? '');
 
-                  <TextArea
-                    ref={textareaRef}
-                    f={1}
-                    minHeight={150}
-                    maxHeight="100%"
-                    mt="$2"
-                    mb="$4"
-                    overflow="auto"
-                    textAlign="left"
-                    resize="none"
-                    value={messages.map((ele) => ele.message).join('')}
-                  />
-                </YStack>
-              ),
-              details: { error: true }
-            })
-
-          }
-          setMessages([...messages, data])
-        }
-      } catch (err) {
-        console.log(err);
+      if (text) {
+        setMessages((prev) => [...prev, text]);
+        setLastMessage(text.trim());
       }
+
+      // ---- queue / position updates ----
+      if (typeof data.position !== 'undefined') {
+        if (!isDoneRef.current && data.position) {
+          onSetModalFeedback({
+            message: `Current position in queue: ${data.position}\n Status: ${data.status}`,
+            details: { error: false },
+          });
+          return;
+        }
+      }
+
+      // ---- live progress ----
+      if (text && !isDoneRef.current) {
+        onSetModalFeedback({
+          message: (
+            <YStack gap="$2">
+              <Paragraph fontWeight="600">Compiling firmware:</Paragraph>
+              {lastMessage && (
+                <Paragraph height={50} overflow="hidden">
+                  {lastMessage}
+                </Paragraph>
+              )}
+            </YStack>
+          ),
+          details: { error: false },
+        });
+      }
+
+      // ---- exit event ----
+      if (data.event === 'exit' && data.code === 0) {
+        isDoneRef.current = true;
+        setMessages([]);
+        console.log('Successfully compiled');
+        onSetStage('upload');
+      } else if (data.event === 'exit' && data.code !== 0) {
+        isDoneRef.current = true;
+        console.error('Error compiling', messages);
+
+        onSetModalFeedback({
+          message: (
+            <YStack f={1} jc="flex-start" gap="$2">
+              <Paragraph color="$red8" mt="$3" textAlign="center">
+                Error compiling code.
+              </Paragraph>
+              <Paragraph color="$red8" textAlign="center">
+                Please check your flow configuration.
+              </Paragraph>
+
+              <TextArea
+                ref={textareaRef}
+                f={1}
+                minHeight={150}
+                maxHeight="100%"
+                mt="$2"
+                mb="$4"
+                overflow="auto"
+                textAlign="left"
+                resize="none"
+                value={messages.join('')}
+              />
+            </YStack>
+          ),
+          details: { error: true },
+        });
+      }
+    } catch (err) {
+      console.log('Error parsing compile message:', err);
     }
-  }, [message])
+  }, [message, stage, lastMessage]);
 
-  return <></>
+  return null;
+};
 
-}
 
 const DevicesIcons = { name: Tag, deviceDefinition: BookOpen }
 
@@ -561,7 +571,56 @@ export default {
           }
         },
         isVisible: (element) => true
+      },
+      {
+        text: "Download firmware binary",
+        icon: Wrench,
+        action: async (element) => {
+          try {
+            const response = await fetch(downloadDeviceFirmwareEndpoint(element.data.name, compileSessionId));
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${element.data.name}.bin`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Error downloading firmware binary:', err);
+          }
+        },
+        isVisible: (element) => compileSessionId !== ''
+      },
+      {
+        text: "Download firmware ELF",
+        icon: Wrench,
+        action: async (element) => {
+          try {
+            const response = await fetch(downloadDeviceElfEndpoint(element.data.name, compileSessionId));
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${element.data.name}.elf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Error downloading firmware ELF:', err);
+          }
+        },
+        isVisible: (element) => compileSessionId !== ''
       }
+
 
 
     ]

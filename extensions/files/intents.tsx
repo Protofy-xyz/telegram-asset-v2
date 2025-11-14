@@ -32,7 +32,7 @@ import { Rules } from 'protolib/components/autopilot/Rules'
 import { Panel, PanelGroup } from "react-resizable-panels";
 import CustomPanelResizeHandle from 'protolib/components/MainPanel/CustomPanelResizeHandle'
 import { useSettingValue } from '@extensions/settings/hooks';
-import {loadEsphomeHelpers} from '@extensions/esphome/utils'
+import ESPHomeViewer from '@extensions/esphome/viewers'
 
 const GLTFViewer = dynamic(() => import('protolib/adminpanel/features/components/ModelViewer'), {
   loading: () => <Center>
@@ -120,7 +120,7 @@ const SaveButton = ({ checkStatus = () => true, defaultState = 'available', path
   );
 };
 
-const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = undefined }) => {
+export const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = undefined , codeviewProps = {}, monacoProps = {}}) => {
   const [fileContent, setFileContent] = useFileFromAPI(path)
   const searchParams = useSearchParams();
   const query = Object.fromEntries(searchParams.entries());
@@ -150,7 +150,20 @@ const FlowsViewer = ({ extraIcons, path, isModified, setIsModified, masksPath = 
 
   return <AsyncView ready={loaded}>
     <Tinted>
-      <CodeView disableAIPanels={true} masksPath={masksPath} defaultMode={defaultMode.current} path={path} extraIcons={extraIcons} sourceCode={sourceCode} fileContent={fileContent} isModified={isModified} setIsModified={setIsModified}>
+      <CodeView 
+        disableAIPanels={true} 
+        masksPath={masksPath} 
+        defaultMode={defaultMode.current} 
+        path={path} 
+        extraIcons={extraIcons} 
+        sourceCode={sourceCode} 
+        fileContent={fileContent} 
+        isModified={isModified} 
+        setIsModified={setIsModified}
+        monacoProps={monacoProps}
+        query={query}
+        {...codeviewProps}
+        >
         <SaveButton
           onSave={() => originalSourceCode.current = sourceCode.current}
           checkStatus={() => sourceCode.current != originalSourceCode.current}
@@ -192,6 +205,7 @@ export const CodeView = ({
   masksPath = undefined,
   defaultMode = 'flow',
   rulesProps = {},
+  flowsProps = {},
   monacoOnMount = (editor, monaco) => { },
   monacoInstance = null,
   monacoProps = {},
@@ -339,7 +353,9 @@ export const CodeView = ({
       sourceCode={sourceCode.current}
       path={flowsPath ?? path}
       themeMode={resolvedTheme}
-      primaryColor={resolvedTheme == 'dark' ? theme[tint + '10'].val : theme[tint + '7'].val} />
+      primaryColor={resolvedTheme == 'dark' ? theme[tint + '10'].val : theme[tint + '7'].val} 
+      {...flowsProps}
+      />
   }
 
   const getBody = () => {
@@ -436,7 +452,7 @@ export const CodeView = ({
   </AsyncView> : content
 }
 
-const MonacoViewer = ({ path, extraIcons, ...props }) => {
+export const MonacoViewer = ({ path, extraIcons, ...props }) => {
   const [fileContent] = useFileFromAPI(path);
   const sourceCode = useRef('');
   const { resolvedTheme } = useThemeSetting();
@@ -529,9 +545,9 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
     return { component: <JSONViewer {...data} />, supportIcons: true }
   } else if (mime == 'application/javascript' || mime == 'video/mp2t') {
     return { component: <FlowsViewer {...data} />, supportIcons: true }
-  } else if(isESPHomeFile){
+  } else if (isESPHomeFile) {
     return {
-      component: <MonacoViewer {...data} onLoad={loadEsphomeHelpers} defaultLanguage="esphome"/>,
+      component: <ESPHomeViewer {...data} />,
       widget: 'text',
       supportIcons: true
     }
