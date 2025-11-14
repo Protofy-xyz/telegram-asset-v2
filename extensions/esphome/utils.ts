@@ -263,8 +263,8 @@ export const compileActionUrl = (targetDevice, compileSessionId) => {
     return (`https://${onlineCompiler}/api/v1/device/compile/${targetDevice}?compileSessionId=${compileSessionId}`)
 };
 
-export const compileMessagesTopic = (targetDevice) => {
-    return (`device/compile/${targetDevice}`);
+export const compileMessagesTopic = (compileSessionId) => {
+    return (`device/compile/${compileSessionId}`);
 }
 
 export const loadEsphomeHelpers = (monaco) => {
