@@ -91,6 +91,18 @@ const SecondSlide = ({ selected, setName, errorMessage = '' }) => {
 const hasSystemTag = (item: any) =>
   Array.isArray(item?.tags) && item.tags.includes("system");
 
+// 👇 ordena poniendo al final los que tienen tag "system"
+const sortSystemLast = (items: any[] = []) => {
+  const copy = [...items]
+  copy.sort((a, b) => {
+    const aSys = hasSystemTag(a)
+    const bSys = hasSystemTag(b)
+    if (aSys === bSys) return 0
+    return aSys ? 1 : -1 // los system van después
+  })
+  return copy
+}
+
 export default {
   boards: {
     component: ({ workspace, pageState, initialItems, itemData, pageSession, extraData }: any) => {
@@ -148,7 +160,7 @@ export default {
           sourceUrl={sourceUrl}
           sourceUrlParams={query}
           extraActions={[
-            <Tinted>
+            <Tinted key="toggle-internal">
               <DataViewActionButton
                 id="admin-dataview-add-btn"
                 icon={query.all === 'true' ? EyeOff : Eye}
@@ -176,6 +188,8 @@ export default {
           model={BoardModel}
           pageState={pageState}
           dataTableGridProps={{
+            itemsTransform: (items) => sortSystemLast(items),
+            
             getCard: (element, width) => {
               if (query.all !== 'true' && hasSystemTag(element)) return null;
 
