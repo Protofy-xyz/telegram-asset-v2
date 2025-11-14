@@ -19,6 +19,7 @@ export default function ChatRef({
     state.editChatsTitle,
   ]);
   const [editTitle, setEditTitle] = useState(chat.title);
+  const [isHovering, setIsHovering] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const isTitleEditeble = isSelected && isEditingTitle;
 
@@ -36,7 +37,18 @@ export default function ChatRef({
   }
 
   return (
-    <XStack bc={isSelected ? "$bgContent" : "transparent"} boc="$color6" p="$2" br="$4" ai="center" mb={"$1"} hoverStyle={{ bc: "$bgPanel" }}>
+    <XStack
+      onHoverIn={() => setIsHovering(true)}
+      onHoverOut={() => setIsHovering(false)}
+      bc={isSelected ? "$bgContent" : "transparent"}
+      boc="$color6"
+      p="$2"
+      br="$4"
+      ai="center"
+      mb={"$1"}
+      cursor="pointer"
+      hoverStyle={{ bc: "$bgContent" }}
+    >
       {!isTitleEditeble && (
         <XStack h={"36px"} f={1} ml="$2" gap="$2" ai="center"
           overflow="hidden"
@@ -64,7 +76,7 @@ export default function ChatRef({
           autoFocus
         />
       )}
-      {isSelected && !isEditingTitle && (
+      {((isSelected && !isEditingTitle) || isHovering) && (
         <XStack>
           <InteractiveIcon Icon={Pencil} onPress={() => setIsEditingTitle(true)} />
           <InteractiveIcon Icon={Trash2} onPress={() => deleteChat(chat.id)} />
