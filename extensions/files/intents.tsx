@@ -32,7 +32,7 @@ import { Rules } from 'protolib/components/autopilot/Rules'
 import { Panel, PanelGroup } from "react-resizable-panels";
 import CustomPanelResizeHandle from 'protolib/components/MainPanel/CustomPanelResizeHandle'
 import { useSettingValue } from '@extensions/settings/hooks';
-import {loadEsphomeHelpers} from '@extensions/esphome/utils'
+import ESPHomeViewer from '@extensions/esphome/viewers'
 
 const GLTFViewer = dynamic(() => import('protolib/adminpanel/features/components/ModelViewer'), {
   loading: () => <Center>
@@ -436,7 +436,7 @@ export const CodeView = ({
   </AsyncView> : content
 }
 
-const MonacoViewer = ({ path, extraIcons, ...props }) => {
+export const MonacoViewer = ({ path, extraIcons, ...props }) => {
   const [fileContent] = useFileFromAPI(path);
   const sourceCode = useRef('');
   const { resolvedTheme } = useThemeSetting();
@@ -529,9 +529,9 @@ export const processFilesIntent = ({ action, domain, data }: IntentType) => {
     return { component: <JSONViewer {...data} />, supportIcons: true }
   } else if (mime == 'application/javascript' || mime == 'video/mp2t') {
     return { component: <FlowsViewer {...data} />, supportIcons: true }
-  } else if(isESPHomeFile){
+  } else if (isESPHomeFile) {
     return {
-      component: <MonacoViewer {...data} onLoad={loadEsphomeHelpers} defaultLanguage="esphome"/>,
+      component: <ESPHomeViewer {...data} />,
       widget: 'text',
       supportIcons: true
     }
