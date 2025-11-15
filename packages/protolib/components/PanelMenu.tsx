@@ -11,6 +11,7 @@ import { PanelMenuItem } from './PanelMenuItem';
 import { useQueryState } from '../next'
 import { useThemeSetting } from '@tamagui/next-theme'
 import { getIcon } from './InternalIcon';
+import { shouldShowInArea } from '../helpers/Visibility';
 
 const appId = process.env.NEXT_PUBLIC_APP_ID;
 
@@ -49,6 +50,29 @@ const getShortestMatch = (tabs: string[], pathname: string, searchParams): strin
     }
     return null
 }
+
+const findBoardForSubtab = (subtab: any, boards: any[] | undefined | null) => {
+    if (!boards || !boards.length) return null;
+
+    const href = getSubtabHref(subtab) || '';
+
+    // 1) Try query param ?board=name
+    const queryMatch = href.match(/[?&]board=([^&]+)/);
+    if (queryMatch?.[1]) {
+        const byQuery = boards.find(b => b?.name === queryMatch[1]);
+        if (byQuery) return byQuery;
+    }
+
+    // 2) Try path like /boards/view/name or /boards/name
+    const pathMatch = href.match(/boards\/(?:view\/)?([^/?&]+)/);
+    if (pathMatch?.[1]) {
+        const byPath = boards.find(b => b?.name === pathMatch[1]);
+        if (byPath) return byPath;
+    }
+
+    // 3) Fallback: match by subtab.name
+    return boards.find(b => b?.name === subtab.name) ?? null;
+};
 
 const CreateDialog = ({ subtab }) => {
     const [name, setName] = useState('')
@@ -106,7 +130,7 @@ const CreateDialog = ({ subtab }) => {
     </XStack>
 }
 
-const Subtabs = ({ tabs, subtabs, collapsed, shortedMatch }: any) => {
+const Subtabs = ({ subtabs, collapsed, shortedMatch }: any) => {
     return (
         <YStack f={1} gap="$1">
             {subtabs.map((subtab, index) => {
@@ -140,7 +164,7 @@ const Subtabs = ({ tabs, subtabs, collapsed, shortedMatch }: any) => {
     )
 }
 
-const Tabs = ({ tabs, collapsed }: any) => {
+const Tabs = ({ tabs, boards, collapsed }: any) => {
     const { resolvedTheme } = useThemeSetting()
     const searchParams = useSearchParams();
     const pathname = usePathname();
@@ -160,54 +184,75 @@ const Tabs = ({ tabs, collapsed }: any) => {
 
     return (tabs ?
         <YStack f={1}>
-            {Object.keys(tabs)
-                .filter((k) => String(k).trim().toLowerCase() !== 'system')
-                .map((tab, index) => {
-                    if (tabs[tab].length === undefined) {
-                        return <Subtabs tabs={tabs} subtabs={[tabs[tab]]} collapsed={collapsed} shortedMatch={shortedMatch} />
+            {Object.keys(tabs).map((tab, index) => {
+                if (tabs[tab].length === undefined) {
+                    const single = tabs[tab];
+
+                    // Si está asociado a un board, aplicamos visibility del board para 'menu'
+                    if (single.type !== 'create') {
+                        const board = findBoardForSubtab(single, boards);
+                        if (board && !shouldShowInArea(board, 'menu')) {
+                            return <></>;
+                        }
                     }
 
-                    const tabContent = tabs[tab];
-
-                    if (!tabContent.length) return <></>
                     return (
-                        <Accordion value={collapsed ? ("a" + index) : undefined} collapsible={!collapsed} defaultValue={"a" + index} br={"$6"} overflow="hidden" type="single" key={index}>
-                            <Accordion.Item value={"a" + index}>
-                                <Accordion.Trigger
-                                    p={"$2"}
-                                    backgroundColor={"$backgroundTransparent"}
-                                    focusStyle={{ backgroundColor: "$backgroundTransparent" }}
-                                    hoverStyle={{ backgroundColor: '$backgroundTransparent' }}
-                                    bw={0} flexDirection="row" justifyContent="space-between">
-                                    {({ open }) => (
-                                        //@ts-ignore
-                                        <XStack f={1} h="40px" jc="center" p={"$2"} animateOnly={['backgroundColor']} animation="bouncy" br="$4" backgroundColor={isTabSelected(tabContent, shortedMatch) && !open ? (resolvedTheme == "dark" ? '$color2' : '$color4') : '$backgroundTransparent'}>
-                                            {!collapsed && <SizableText f={1} ml={"$2.5"} fontWeight="bold" size={"$5"}>{tab}</SizableText>}
-                                            {/* @ts-ignore */}
-                                            <Square animation="bouncy" rotate={open ? '180deg' : '0deg'}>
-                                                {
-                                                    collapsed
-                                                        ? <Minus color="$gray6" size={20} />
-                                                        : <ChevronDown color={isTabSelected(tabContent, shortedMatch) && !open ? '$color8' : '$gray9'} size={20} />
-                                                }
-                                            </Square>
-                                        </XStack>
-                                    )}
-                                </Accordion.Trigger>
-                                <Accordion.Content position="relative" backgroundColor={"$backgroundTransparent"} pt={'$0'} pb={"$2"} >
-                                    <Subtabs collapsed={collapsed} tabs={tabs} subtabs={tabContent} shortedMatch={shortedMatch} />
-                                </Accordion.Content>
-                            </Accordion.Item>
-                        </Accordion>
-                    )
-                })}
+                        <Subtabs
+                            key={index}
+                            subtabs={[single]}
+                            collapsed={collapsed}
+                            shortedMatch={shortedMatch}
+                        />
+                    );
+                }
+
+                // Caso: array de subtabs → filtramos por visibility de board en 'menu'
+                const tabContent = tabs[tab].filter((subtab) => {
+                    if (subtab.type === 'create') return true; // el botón create siempre se ve
+                    const board = findBoardForSubtab(subtab, boards);
+                    if (!board) return true; // si no está ligado a un board, no filtramos
+                    return shouldShowInArea(board, 'menu');
+                });
+
+                if (!tabContent.length) return <></>
+                return (
+                    <Accordion value={collapsed ? ("a" + index) : undefined} collapsible={!collapsed} defaultValue={"a" + index} br={"$6"} overflow="hidden" type="single" key={index}>
+                        <Accordion.Item value={"a" + index}>
+                            <Accordion.Trigger
+                                p={"$2"}
+                                backgroundColor={"$backgroundTransparent"}
+                                focusStyle={{ backgroundColor: "$backgroundTransparent" }}
+                                hoverStyle={{ backgroundColor: '$backgroundTransparent' }}
+                                bw={0} flexDirection="row" justifyContent="space-between">
+                                {({ open }) => (
+                                    //@ts-ignore
+                                    <XStack f={1} h="40px" jc="center" p={"$2"} animateOnly={['backgroundColor']} animation="bouncy" br="$4" backgroundColor={isTabSelected(tabContent, shortedMatch) && !open ? (resolvedTheme == "dark" ? '$color2' : '$color4') : '$backgroundTransparent'}>
+                                        {!collapsed && <SizableText f={1} ml={"$2.5"} fontWeight="bold" size={"$5"}>{tab}</SizableText>}
+                                        {/* @ts-ignore */}
+                                        <Square animation="bouncy" rotate={open ? '180deg' : '0deg'}>
+                                            {
+                                                collapsed
+                                                    ? <Minus color="$gray6" size={20} />
+                                                    : <ChevronDown color={isTabSelected(tabContent, shortedMatch) && !open ? '$color8' : '$gray9'} size={20} />
+                                            }
+                                        </Square>
+                                    </XStack>
+                                )}
+                            </Accordion.Trigger>
+                            <Accordion.Content position="relative" backgroundColor={"$backgroundTransparent"} pt={'$0'} pb={"$2"} >
+                                <Subtabs collapsed={collapsed} subtabs={tabContent} shortedMatch={shortedMatch} />
+                            </Accordion.Content>
+                        </Accordion.Item>
+                    </Accordion>
+                )
+            })}
         </YStack> : <></>
     );
 };
 
-export const PanelMenu = ({ workspace, collapsed }) => {
+export const PanelMenu = ({ workspace, boards, collapsed }) => {
     const searchParams = useSearchParams();
-
+    
     const query = Object.fromEntries(searchParams.entries());
     const [state, setState] = useState(query)
     useQueryState(setState)
@@ -220,7 +265,7 @@ export const PanelMenu = ({ workspace, collapsed }) => {
                     pl={"$0"}
                     mah="calc( 100vh - 200px )"
                 >
-                    <Tabs tabs={workspace.menu} collapsed={collapsed} />
+                    <Tabs tabs={workspace.menu} boards={boards} collapsed={collapsed} />
                 </ScrollView>
             </Tinted>
         </YStack>

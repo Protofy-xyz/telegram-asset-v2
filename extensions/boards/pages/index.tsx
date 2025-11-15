@@ -20,6 +20,7 @@ import { CardView } from './card'
 import { Eye, EyeOff } from '@tamagui/lucide-icons'
 import { usePageParams } from 'protolib/next'
 import { Tinted } from 'protolib/components/Tinted'
+import { shouldShowInArea } from 'protolib/helpers/Visibility';
 
 const { useParams } = createParam()
 
@@ -88,21 +89,6 @@ const SecondSlide = ({ selected, setName, errorMessage = '' }) => {
   </YStack>
 }
 
-const hasSystemTag = (item: any) =>
-  Array.isArray(item?.tags) && item.tags.includes("system");
-
-// 👇 ordena poniendo al final los que tienen tag "system"
-const sortSystemLast = (items: any[] = []) => {
-  const copy = [...items]
-  copy.sort((a, b) => {
-    const aSys = hasSystemTag(a)
-    const bSys = hasSystemTag(b)
-    if (aSys === bSys) return 0
-    return aSys ? 1 : -1 // los system van después
-  })
-  return copy
-}
-
 export default {
   boards: {
     component: ({ workspace, pageState, initialItems, itemData, pageSession, extraData }: any) => {
@@ -160,11 +146,15 @@ export default {
           sourceUrl={sourceUrl}
           sourceUrlParams={query}
           extraActions={[
-            <Tinted key="toggle-internal">
+            <Tinted key="toggle-visibility-scope">
               <DataViewActionButton
                 id="admin-dataview-add-btn"
                 icon={query.all === 'true' ? EyeOff : Eye}
-                description={query.all === 'true' ? 'Hide internal agents' : 'Show internal agents'}
+                description={
+                  query.all === 'true'
+                    ? 'Show only boards visible in this view'
+                    : 'Show boards from all views'
+                }
                 onPress={() => {
                   push('all', query.all === 'true' ? 'false' : 'true')
                 }}
@@ -182,34 +172,37 @@ export default {
           columns={DataTable2.columns(
             DataTable2.column("name", row => row.name, "name")
           )}
-
           onAddButton={() => setAddOpen(true)}
-
           model={BoardModel}
           pageState={pageState}
           dataTableGridProps={{
-            itemsTransform: (items) => sortSystemLast(items),
-            
-            getCard: (element, width) => {
-              if (query.all !== 'true' && hasSystemTag(element)) return null;
 
-              return (
-                <BoardPreview
-                  onDelete={async () => {
-                    await API.get(`${sourceUrl}/${element.name}/delete`);
-                  }}
-                  onPress={(e) => {
-                    const dialogContent = e.target.className.includes('DialogPopup');
-                    if (dialogContent) return;
-                  }}
-                  element={element}
-                  width={width}
-                />
-              );
+            itemsTransform: (items) => {
+              const list = Array.isArray(items) ? [...items] : [];
+              if (query.all !== 'true') {
+                return list.filter((item) => shouldShowInArea(item, 'agents'));
+              }
+              return list;
             },
+
+            getCard: (element, width) => (
+              <BoardPreview
+                onDelete={async () => {
+                  await API.get(`${sourceUrl}/${element.name}/delete`);
+                }}
+                onPress={(e) => {
+                  const dialogContent = e.target.className.includes('DialogPopup');
+                  if (dialogContent) return;
+                  router.push(`/boards/view?board=${element.name}`)
+                }}
+                element={element}
+                width={width}
+              />
+            ),
           }}
           defaultView={"grid"}
         />
+
       </AdminPage>)
     },
     getServerSideProps: PaginatedData(sourceUrl, ['admin'])

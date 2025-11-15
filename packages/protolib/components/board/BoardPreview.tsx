@@ -1,38 +1,27 @@
-import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button, TooltipSimple, Checkbox, } from '@my/ui';
+import { YStack, Text, XStack, Tooltip, Paragraph, Dialog, Label, Input, Button, TooltipSimple } from '@my/ui';
 import { Tinted } from '../Tinted';
-import { Sparkles, Cog, Type, LayoutTemplate, AlertTriangle, Check } from "@tamagui/lucide-icons";
+import { Sparkles, Cog, Type, LayoutTemplate, AlertTriangle } from "@tamagui/lucide-icons";
 import { BoardModel } from '@extensions/boards/boardsSchemas';
 import { useRouter } from 'solito/navigation';
 import { getIconUrl } from '../IconSelect';
 import { ItemMenu } from '../ItemMenu';
 import { useState } from 'react';
-import { API, set, setErrorMap } from 'protobase';
+import { API } from 'protobase';
 import { Toggle } from '../Toggle';
 import { Workflow, LayoutDashboard, Presentation } from "@tamagui/lucide-icons";
 import { InteractiveIcon } from 'protolib/components/InteractiveIcon'
-
-
-
+import { shouldShowInArea } from 'protolib/helpers/Visibility';
 
 export default ({ element, width, onDelete, ...props }: any) => {
     const board = new BoardModel(element);
     const [editSettingsDialog, seteditSettingsDialog] = useState(false);
     const [createTemplateDialog, setCreateTemplateDialog] = useState(false);
-    const [selectedBoard, setSelectedBoard] = useState(null);
+    const [selectedBoard, setSelectedBoard] = useState<any>(null);
     const [description, setDescription] = useState('');
     const [templateName, setTemplateName] = useState(selectedBoard?.data.name);
 
-    const hasSystemTag = (tags?: string[]) =>
-        Array.isArray(tags) && tags.includes('system')
-
-    const addSystemTag = (tags?: string[]) =>
-        Array.from(new Set([...(tags ?? []), 'system']))
-
-    const removeSystemTag = (tags?: string[]) =>
-        (tags ?? []).filter(t => t !== 'system')
-
-    const [tags, setTags] = useState<string[]>(board.get('tags') ?? [])
-    const [checked, setChecked] = useState<boolean>(hasSystemTag(tags))
+    const initialHidden = !shouldShowInArea(element, 'agents');
+    const [hidden, setHidden] = useState<boolean>(initialHidden);
 
     const router = useRouter();
 
@@ -41,6 +30,7 @@ export default ({ element, width, onDelete, ...props }: any) => {
         { key: 'board' as const, label: 'Dashboard', Icon: LayoutDashboard },
         { key: 'ui' as const, label: 'Presentation', Icon: Presentation },
     ];
+
     const goToView = (key: 'graph' | 'board' | 'ui', e: any) => {
         e.stopPropagation?.();
         e.preventDefault?.();
@@ -48,8 +38,6 @@ export default ({ element, width, onDelete, ...props }: any) => {
         const boardName = board.get('name');
         router.push(`/boards/view?board=${boardName}#${key}`);
     };
-
-
 
     return (
         <YStack
@@ -64,15 +52,25 @@ export default ({ element, width, onDelete, ...props }: any) => {
             p="$4"
             gap="$4"
             pointerEvents={editSettingsDialog || createTemplateDialog ? 'none' : 'auto'}
-            {...props} >
-            {Array.isArray(board?.get('tags')) && board.get('tags').includes('system') && <Tinted>
-                <TooltipSimple label="This is a system agent if you edit or delete it, it may affect core functionality." delay={{ open: 500, close: 0 }} restMs={0}>
-                    <XStack pos='absolute' gap="$2" right="14px" top="-10px" jc="center" ai="center" br="$2" bg="$yellow9" px="$2" py="$1">
-                        <AlertTriangle color={"black"} size={14} />
-                        <Text color={"black"} fow="600" fos="$1">System Agent</Text>
-                    </XStack>
-                </TooltipSimple>
-            </Tinted>}
+            {...props}
+        >
+            {hidden && (
+                <Tinted>
+                    <TooltipSimple
+                        label="This board is hidden from default views. You can still see it when showing boards from all views."
+                        delay={{ open: 500, close: 0 }}
+                        restMs={0}
+                    >
+                        <XStack pos='absolute' gap="$2" right="14px" top="-10px" jc="center" ai="center" br="$2" bg="$yellow9" px="$2" py="$1" >
+                            <AlertTriangle color={"black"} size={14} />
+                            <Text color={"black"} fow="600" fos="$1">
+                                Hidden board
+                            </Text>
+                        </XStack>
+                    </TooltipSimple>
+                </Tinted>
+            )}
+
             <XStack jc={"space-between"} ai={"start"} >
                 <XStack gap="$2" ai={"start"} >
                     <YStack>
@@ -103,11 +101,13 @@ export default ({ element, width, onDelete, ...props }: any) => {
                                 text: "Settings",
                                 icon: Cog,
                                 action: (element) => {
-                                    seteditSettingsDialog(true)
-                                    setSelectedBoard(element)
-                                    const nextTags = element?.data?.tags ?? []
-                                    setTags(nextTags)
-                                    setChecked(hasSystemTag(nextTags))
+                                    seteditSettingsDialog(true);
+                                    setSelectedBoard(element);
+                                    const isHidden = !shouldShowInArea(
+                                        element.data ?? element,
+                                        'agents'
+                                    );
+                                    setHidden(isHidden);
                                 },
                                 isVisible: () => true
                             },
@@ -121,6 +121,7 @@ export default ({ element, width, onDelete, ...props }: any) => {
                     />
                 </XStack>
             </XStack>
+
             <XStack
                 gap="$3"
                 ai="center"
@@ -130,18 +131,18 @@ export default ({ element, width, onDelete, ...props }: any) => {
                 mb="$2"
             >
                 <Tinted>
-                {navIcons.map(({ key, Icon, label }) => (
-                    <InteractiveIcon
-                        key={key}
-                        Icon={Icon}
-                        IconColor="var(--color10)"
-                        hoverStyle={{ bc: "var(--color5)" }}
-                        pressStyle={{ o: 0.8 }}
-                        size={30}
-                        tooltip={label}
-                        onClick={(e) => goToView(key, e)}
-                    />
-                ))}
+                    {navIcons.map(({ key, Icon, label }) => (
+                        <InteractiveIcon
+                            key={key}
+                            Icon={Icon}
+                            IconColor="var(--color10)"
+                            hoverStyle={{ bc: "var(--color5)" }}
+                            pressStyle={{ o: 0.8 }}
+                            size={30}
+                            tooltip={label}
+                            onClick={(e) => goToView(key, e)}
+                        />
+                    ))}
                 </Tinted>
             </XStack>
             <YStack gap="$2">
@@ -271,7 +272,6 @@ export default ({ element, width, onDelete, ...props }: any) => {
                                 br={"8px"}
                                 className='DialogPopup'
                                 value={selectedBoard?.data.displayName}
-                                // color={error ? '$red9' : null}
                                 onChange={(e) => {
                                     setSelectedBoard({
                                         data: {
@@ -279,41 +279,47 @@ export default ({ element, width, onDelete, ...props }: any) => {
                                             displayName: e.target.value
                                         }
                                     })
-                                }
-                                }
+                                }}
                             />
-                            <XStack ai="center" gap="$2" mt="$4"
+
+                            <XStack
+                                ai="center"
+                                gap="$2"
+                                mt="$4"
                                 onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
                                 onMouseDown={(e) => { e.stopPropagation(); }}
-                                onPointerDown={(e) => { e.stopPropagation(); }}>
-                                <Label h={"$3.5"} size={"$5"} >Hide board</Label>
+                                onPointerDown={(e) => { e.stopPropagation(); }}
+                            >
+                                <Label h={"$3.5"} size={"$5"}>Hide board</Label>
                                 <Toggle
-                                    checked={checked}
+                                    checked={hidden}
                                     onChange={(next) => {
-                                        setChecked(next)
-                                        const updatedTags = next ? addSystemTag(tags) : removeSystemTag(tags)
-                                        setTags(updatedTags)
+                                        setHidden(next);
+
                                         setSelectedBoard(prev => {
-                                            if (!prev) return prev
+                                            if (!prev) return prev;
+                                            const updatedVisibility = next ? [] : undefined;
+
                                             return {
                                                 data: {
                                                     ...prev.data,
-                                                    tags: updatedTags,
+                                                    visibility: updatedVisibility,
                                                 },
-                                            }
-                                        })
+                                            };
+                                        });
                                     }}
                                 />
                             </XStack>
+
                             <YStack flex={1} className='DialogPopup' />
                             <Button className='DialogPopup' onPress={async () => {
-                                try {
+                                    try {
                                     await API.post(`/api/core/v1/boards/${selectedBoard?.data?.name}`, selectedBoard.data)
-                                    setSelectedBoard(null);
-                                    seteditSettingsDialog(false);
-                                } catch (e) {
-                                    console.log('e: ', e)
-                                }
+                                        setSelectedBoard(null);
+                                        seteditSettingsDialog(false);
+                                    } catch (e) {
+                                        console.log('e: ', e)
+                                    }
                             }}>Save
                             </Button>
                         </YStack>
