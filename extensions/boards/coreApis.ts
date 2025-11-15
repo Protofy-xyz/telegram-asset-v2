@@ -18,6 +18,8 @@ import { TypeParser } from "./system/types";
 import fetch from 'node-fetch';
 
 
+
+let eventListeners = {};
 const TemplatesDir = (root) => fspath.join(root, "/data/templates/boards/")
 
 const BOARD_REFRESH_INTERVAL = 100 //in miliseconds
@@ -58,7 +60,6 @@ const getMetaCard = (card) => {
 }
 const processCards = async (boardId, cards, context, boardData?, regenerate?) => {
     const proxyDB = ProtoMemDB('proxy');
-
     const cardsMetaValue = cards.filter(c => c.type == 'value').map(card => {
         return getMetaCard(card);
     }).reduce((obj, card) => {
@@ -67,6 +68,14 @@ const processCards = async (boardId, cards, context, boardData?, regenerate?) =>
         delete card.type;
         return obj;
     }, {});
+
+    //find this board in eventListeners and remove it
+    for (const eventPath in eventListeners) {
+        eventListeners[eventPath] = (eventListeners[eventPath] || []).filter(listener => listener.board !== boardId);
+        if (eventListeners[eventPath].length === 0) {
+            delete eventListeners[eventPath];
+        }
+    }
 
     const cardsMetaActions = cards.filter(c => c.type == 'action').map(card => {
         return getMetaCard(card);
@@ -120,6 +129,15 @@ const processCards = async (boardId, cards, context, boardData?, regenerate?) =>
     //iterate over cards
     for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
+        if(card.type == 'action' && card.eventPath){
+            eventListeners[card.eventPath] = eventListeners[card.eventPath] || []
+            eventListeners[card.eventPath].push({
+                board: boardId,
+                card: card.name,
+                defaultInput: card.defaultInput || 'input'
+            })
+        }
+
         if (card.enableCustomPath && card.customPath) {
             const customPath = card.customPath;
             proxyDB.set('boards', boardId, card.name, {
@@ -1623,7 +1641,33 @@ export default async (app, context) => {
             }
         }
     }
+
+    const registerEventListener = async () => {
+        context.events.onEvent(
+            context.mqtt,
+            context,
+            async (event) => {
+                if(event.path in eventListeners){
+                    for(const listener of eventListeners[event.path]){
+                        try {
+                            console.log("Invoking listener for event: ", event.path, listener, `/api/core/v1/boards/${listener.board}/cards/${listener.card}/run/raw?token=${getServiceToken()}`)
+                            const response = await API.post(`/api/core/v1/boards/${listener.board}/cards/${listener.card}/run/raw?token=${getServiceToken()}`, {
+                                [listener.defaultInput]: event.payload,
+                                _event: event
+                            })
+                            console.log("Listener response for event: ", event.path, response)
+                        } catch (error) {
+                            console.error("Error invoking event listener for event: ", event.path, error)
+                        }
+                    }
+                }
+            },
+            "#",
+        )
+    }
+
     await registerCards()
     registerActions()
     registerAgentTemplates()
+    registerEventListener()
 }

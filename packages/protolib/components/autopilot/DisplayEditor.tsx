@@ -170,6 +170,8 @@ export const DisplayEditor = ({
         // @ts-ignore
         ...(cardData.type === "action"
             ? [
+                { label: 'Event Trigger', description: 'event path triggering this action', key: 'eventPath', type: 'text', placeholder: "Event path trigger (Ex: auth/login/done)", section: 'Paths and Permissions' },
+                { label: 'Default Input', description: 'The default input name for this action. Used by Event Trigger and similar triggers to know the name of the input to put the event payload into.', key: 'defaultInput', type: 'text', placeholder: "Default input name", section: 'Paths and Permissions' },
                 { label: 'Allow public run', key: 'publicRun', type: 'toggle', section: 'Paths and Permissions' },
                 { label: 'Custom run path', key: 'enableCustomRunPath', type: 'toggle', section: 'Paths and Permissions' },
                 {
