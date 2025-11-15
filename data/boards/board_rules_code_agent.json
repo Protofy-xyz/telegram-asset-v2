@@ -1,8 +1,7 @@
 {
     "name": "board_rules_code_agent",
-    "tags": [
-        "system"
-    ],
+    "visibility": ["chat"],
+    "tags": [ "vento" ],
     "cards": [
         {
             "key": "action_1760800582118",
