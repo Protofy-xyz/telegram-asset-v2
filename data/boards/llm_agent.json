@@ -1,8 +1,7 @@
 {
     "name": "llm_agent",
-    "tags": [
-        "system"
-    ],
+    "visibility": ["chat"],
+    "tags": [ "vento" ],
     "cards": [
         {
             "key": "action_1760800582118",

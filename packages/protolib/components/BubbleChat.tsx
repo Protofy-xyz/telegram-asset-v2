@@ -1,10 +1,11 @@
-import { useState, useEffect, ComponentType } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, X, Maximize, Minimize, Bot, ChevronDown } from "@tamagui/lucide-icons";
 import { Tinted } from "./Tinted";
 import { Chat } from "./Chat";
 import { YStack, Button, XStack, Paragraph, Spinner, Accordion, SizableText, Square } from "@my/ui";
 import { API } from "protobase";
 import { getIcon } from "./InternalIcon";
+import { shouldShowInArea } from "protolib/helpers/Visibility";
 
 type Agent = {
   name: string;
@@ -29,23 +30,23 @@ export const BubbleChat = () => {
         const response = await API.get("/api/core/v1/boards/");
         if (response.isLoaded) {
           const items = Array.isArray(response.data?.items) ? response.data.items : [];
+
           const parsed = items
             .map((b: any) => {
+              // ✅ solo boards visibles en el área "chat"
+              if (!shouldShowInArea(b, "chat")) return null;
+
               const name = b?.name ?? "";
               const target = b?.inputs?.default ?? null;
               const icon = b?.icon ?? null;
-              const originalTags = Array.isArray(b?.tags) ? b.tags.filter(Boolean) : [];
-              
-              const tagsNoSystem = originalTags.filter((t: string) => t !== "system"); // Quita 'system' del set de tags
-
-              const hasOnlySystem = originalTags.length > 0 && tagsNoSystem.length === 0; // Si el único tag era 'system', no lo mostramos en el menú
-              if (hasOnlySystem) return null;
+              const tags = Array.isArray(b?.tags) ? b.tags.filter(Boolean) : [];
 
               return name && target
-                ? ({ name, target, icon, tags: tagsNoSystem } as Agent)
+                ? ({ name, target, icon, tags } as Agent)
                 : null;
             })
             .filter(Boolean) as Agent[];
+
           setBots(parsed);
           setSelectedBot(parsed[0] || null);
         } else if (response.isError) {
@@ -83,6 +84,7 @@ export const BubbleChat = () => {
     }
     return acc;
   }, {} as Record<string, Agent[]>);
+
   const orderedGroupNames = Object.keys(groups).sort((a, b) => a.localeCompare(b));
 
   return (
@@ -157,7 +159,8 @@ export const BubbleChat = () => {
               No chatbots available
             </Paragraph>
           ) : (
-            <Accordion type="multiple"
+            <Accordion
+              type="multiple"
               defaultValue={orderedGroupNames.map((_, i) => `g${i}`)}
               collapsible
             >
@@ -187,8 +190,7 @@ export const BubbleChat = () => {
                       )}
                     </Accordion.Trigger>
 
-                    <Accordion.Content pt="$1" pb="$2" p="$0" backgroundColor="transparent"
-                    >
+                    <Accordion.Content pt="$1" pb="$2" p="$0" backgroundColor="transparent">
                       <YStack gap="$1">
                         {list.map((bot) => {
                           const isActive = selectedBot?.name === bot.name;

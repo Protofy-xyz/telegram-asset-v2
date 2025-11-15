@@ -96,7 +96,7 @@ export const AdminPanel = ({ children }) => {
     rightPanelVisible={appState.logsPanelOpened}
     rightPanelResizable={true}
     centerPanelContent={workspaceData && <PanelLayout
-      menuContent={<PanelMenu workspace={workspaceData} />}
+      menuContent={<PanelMenu workspace={workspaceData} boards={boards} />}
     >
       <XStack f={1} px={"$0"} flexWrap='wrap'>
         {children}

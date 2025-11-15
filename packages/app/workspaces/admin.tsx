@@ -56,9 +56,7 @@ export default ({ boards, objects }) => {
                 href: '/workspace/boards/view?board=' + board.name,
                 __tags: Array.isArray(board?.tags) ? board.tags : [],
             }
-            if(!board.tags || !board.tags.includes('system')) {
-                menuByGroup[category].push(item)
-            }
+            menuByGroup[category].push(item)
         })
     }
 

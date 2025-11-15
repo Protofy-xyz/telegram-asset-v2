@@ -298,6 +298,22 @@ const DataViewInternal = forwardRef(({
     const [_items, setItems] = useRemoteStateList(initialItems, fetch, 'notifications/' + model.getModelName() + "/#", model, quickRefresh, disableNotifications, 50);
     const items: any = _items
     const [currentItems, setCurrentItems] = useState<PendingResult | undefined>(initialItems ?? getPendingResult('pending'))
+
+    const gridItems = useMemo(() => {
+        const baseItems = items?.data?.items ?? []
+        const transform = (dataTableGridProps as any)?.itemsTransform
+
+        if (typeof transform === 'function') {
+            try {
+                return transform(baseItems)
+            } catch (e) {
+                console.error('Error in dataTableGridProps.itemsTransform', e)
+                return baseItems
+            }
+        }
+        return baseItems
+    }, [items, dataTableGridProps])
+    
     const [createOpen, setCreateOpen] = useState(addOpened ?? false)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const {
@@ -423,7 +439,7 @@ const DataViewInternal = forwardRef(({
             props: {
                 mt: "$8",
                 model,
-                items: items?.data?.items,
+                items: gridItems,
                 sourceUrl,
                 customFields,
                 extraFields,

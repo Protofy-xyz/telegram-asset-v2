@@ -1,10 +1,5 @@
 import { YStack, XStack } from '@my/ui'
-import {
-    Boxes,
-    ChevronDown,
-    Layers,
-    Minus
-} from '@tamagui/lucide-icons'
+import { ChevronDown, Minus } from '@tamagui/lucide-icons'
 import { Accordion, Input, Paragraph, SizableText, Square, ScrollView } from '@my/ui'
 import { usePathname, useSearchParams } from 'solito/navigation';
 import { useState } from 'react';
@@ -13,38 +8,41 @@ import { AlertDialog } from './AlertDialog';
 import { Link } from './Link';
 import { Tinted } from './Tinted';
 import { PanelMenuItem } from './PanelMenuItem';
-import { SelectList } from './SelectList';
 import { useQueryState } from '../next'
 import { useThemeSetting } from '@tamagui/next-theme'
 import { getIcon } from './InternalIcon';
-
-
+import { shouldShowInArea } from '../helpers/Visibility';
 
 const appId = process.env.NEXT_PUBLIC_APP_ID;
 
-const replaceFirstCharIfSlash = (str) => (str.startsWith('/') ? str.replace(/^./, '') : str);
 const healthCheckLinkRoute = (str) => {
     if (appId == 'adminpanel' && str.startsWith('/workspace/')) {
-        //remove /workspace/ from the start of the string
+        // remove /workspace/ from the start of the string
         str = str.replace('/workspace/', '/')
     }
     return str.startsWith('/') ? str : ("/" + str)
 };
 
-const getSubtabHref = (subtab) => subtab.href ?? (subtab.type + subtab.path).replace(/\/+/g, '/')
+const getSubtabHref = (subtab) =>
+    subtab.href ?? (subtab.type + subtab.path).replace(/\/+/g, '/');
+
 const isSubtabMatch = (href: string, pathname: string) => {
     return href.includes(pathname) && pathname != '/'
 };
 
-const isTabSelected = (subtabs, shortedMatch) => subtabs.some((subtab) => {
-    const href = getSubtabHref(subtab)
-    return shortedMatch == href
-})
+const isTabSelected = (subtabs, shortedMatch) =>
+    subtabs.some((subtab) => {
+        const href = getSubtabHref(subtab)
+        return shortedMatch == href
+    });
 
 const getShortestMatch = (tabs: string[], pathname: string, searchParams): string | null => {
     const queryStr = searchParams.toString()
 
-    let filteredTabs = tabs.filter(href => isSubtabMatch(href, pathname)).sort((a, b) => a.length - b.length);;
+    let filteredTabs = tabs
+        .filter(href => isSubtabMatch(href, pathname))
+        .sort((a, b) => a.length - b.length);
+
     if (filteredTabs.length == 1) return filteredTabs[0];
     else if (filteredTabs.length > 1) {
         const filteredQueryTabs = filteredTabs.filter(href => href.includes(queryStr));
@@ -52,6 +50,29 @@ const getShortestMatch = (tabs: string[], pathname: string, searchParams): strin
     }
     return null
 }
+
+const findBoardForSubtab = (subtab: any, boards: any[] | undefined | null) => {
+    if (!boards || !boards.length) return null;
+
+    const href = getSubtabHref(subtab) || '';
+
+    // 1) Try query param ?board=name
+    const queryMatch = href.match(/[?&]board=([^&]+)/);
+    if (queryMatch?.[1]) {
+        const byQuery = boards.find(b => b?.name === queryMatch[1]);
+        if (byQuery) return byQuery;
+    }
+
+    // 2) Try path like /boards/view/name or /boards/name
+    const pathMatch = href.match(/boards\/(?:view\/)?([^/?&]+)/);
+    if (pathMatch?.[1]) {
+        const byPath = boards.find(b => b?.name === pathMatch[1]);
+        if (byPath) return byPath;
+    }
+
+    // 3) Fallback: match by subtab.name
+    return boards.find(b => b?.name === subtab.name) ?? null;
+};
 
 const CreateDialog = ({ subtab }) => {
     const [name, setName] = useState('')
@@ -90,47 +111,63 @@ const CreateDialog = ({ subtab }) => {
             description={template.description ?? ("Use a simple name for your " + subtab.options.templates[0] + ", related to what your " + subtab.options.templates[0] + " does.")}
         >
             <YStack f={1} jc="center" ai="center">
-                {result.isError ? <Paragraph mb={"$5"} color="$red10">Error: {result.error?.error}</Paragraph> : null}
-                <Input value={name} onChangeText={(text) => setName(text)} f={1} mx={"$8"} textAlign='center' id="name" placeholder={template.placeholder ?? 'name...'} />
+                {result.isError ? (
+                    <Paragraph mb={"$5"} color="$red10">
+                        Error: {result.error?.error}
+                    </Paragraph>
+                ) : null}
+                <Input
+                    value={name}
+                    onChangeText={(text) => setName(text)}
+                    f={1}
+                    mx={"$8"}
+                    textAlign='center'
+                    id="name"
+                    placeholder={template.placeholder ?? 'name...'}
+                />
             </YStack>
-
         </AlertDialog>
     </XStack>
 }
 
-const Subtabs = ({ tabs, subtabs, collapsed, shortedMatch }: any) => {
+const Subtabs = ({ subtabs, collapsed, shortedMatch }: any) => {
     return (
         <YStack f={1} gap="$1">
             {subtabs.map((subtab, index) => {
                 if (subtab.type == 'create') return <CreateDialog subtab={subtab} key={index} />
                 let href = getSubtabHref(subtab)
-                const originalHref = href
-                const content = <Tinted>
-                    <PanelMenuItem
-                        collapsed={collapsed}
-                        selected={shortedMatch == href}
-                        // selected={replaceFirstCharIfSlash(pathname).startsWith(replaceFirstCharIfSlash(originalHref.replace(/\/$/, '').replace(/\?.*$/, '')))}
-                        icon={getIcon(subtab.icon)}
-                        text={subtab.name}
-                        extraLabel={subtab.extraLabel}
-                    />
-                </Tinted>
+                const content = (
+                    <Tinted>
+                        <PanelMenuItem
+                            collapsed={collapsed}
+                            selected={shortedMatch == href}
+                            icon={getIcon(subtab.icon)}
+                            text={subtab.name}
+                            extraLabel={subtab.extraLabel}
+                        />
+                    </Tinted>
+                )
                 if (subtab.external || (!subtab.href?.startsWith('/workspace/') && appId == 'adminpanel')) {
-                    return <a href={href} key={index}>
-                        {content}
-                    </a>
+                    return (
+                        <a href={href} key={index}>
+                            {content}
+                        </a>
+                    )
                 }
-                return <Link href={healthCheckLinkRoute(href)} key={index}>
-                    {content}
-                </Link>
-
+                return (
+                    <Link href={healthCheckLinkRoute(href)} key={index}>
+                        {content}
+                    </Link>
+                )
             })}
-        </YStack>)
+        </YStack>
+    )
 }
 
-const Tabs = ({ tabs, environ, collapsed }: any) => {
+const Tabs = ({ tabs, boards, collapsed }: any) => {
     const { resolvedTheme } = useThemeSetting()
     const searchParams = useSearchParams();
+    const pathname = usePathname();
 
     const spreadSubtabs = Object.keys(tabs).reduce((acc, key) => {
         if (Array.isArray(tabs[key])) {
@@ -143,110 +180,94 @@ const Tabs = ({ tabs, environ, collapsed }: any) => {
     }, []);
 
     const hrefList = spreadSubtabs.map(subtab => getSubtabHref(subtab))
-    const shortedMatch = getShortestMatch(hrefList, usePathname(), searchParams);
+    const shortedMatch = getShortestMatch(hrefList, pathname, searchParams);
 
     return (tabs ?
         <YStack f={1}>
-            {Object.keys(tabs)
-                .filter((k) => String(k).trim().toLowerCase() !== 'system')
-                .map((tab, index) => {
-                    if (tabs[tab].length === undefined) {
-                        return <Subtabs tabs={tabs} subtabs={[tabs[tab]]} />
+            {Object.keys(tabs).map((tab, index) => {
+                if (tabs[tab].length === undefined) {
+                    const single = tabs[tab];
+
+                    // Si está asociado a un board, aplicamos visibility del board para 'menu'
+                    if (single.type !== 'create') {
+                        const board = findBoardForSubtab(single, boards);
+                        if (board && !shouldShowInArea(board, 'menu')) {
+                            return <></>;
+                        }
                     }
-                    const tabContent = tabs[tab].filter(t => !t.visibility || t.visibility.includes(environ))
-                    if (!tabContent.length) return <></>
+
                     return (
-                        <Accordion value={collapsed ? ("a" + index) : undefined} collapsible={!collapsed} defaultValue={"a" + index} br={"$6"} overflow="hidden" type="single" key={index}>
-                            <Accordion.Item value={"a" + index}>
-                                <Accordion.Trigger
-                                    p={"$2"}
-                                    backgroundColor={"$backgroundTransparent"}
-                                    focusStyle={{ backgroundColor: "$backgroundTransparent" }}
-                                    hoverStyle={{ backgroundColor: '$backgroundTransparent' }}
-                                    bw={0} flexDirection="row" justifyContent="space-between">
-                                    {({ open }) => (
-                                        //@ts-ignore
-                                        <XStack f={1} h="40px" jc="center" p={"$2"} animateOnly={['backgroundColor']} animation="bouncy" br="$4" backgroundColor={isTabSelected(tabContent, shortedMatch) && !open ? (resolvedTheme == "dark" ? '$color2' : '$color4') : '$backgroundTransparent'}>
-                                            {!collapsed && <SizableText f={1} ml={"$2.5"} fontWeight="bold" size={"$5"}>{tab}</SizableText>}
-                                            {/* @ts-ignore */}
-                                            <Square animation="bouncy" rotate={open ? '180deg' : '0deg'}>
-                                                {
-                                                    collapsed
-                                                        ? <Minus color="$gray6" size={20} />
-                                                        : <ChevronDown color={isTabSelected(tabContent, shortedMatch) && !open ? '$color8' : '$gray9'} size={20} />
-                                                }
-                                            </Square>
-                                        </XStack>
-                                    )}
-                                </Accordion.Trigger>
-                                <Accordion.Content position="relative" backgroundColor={"$backgroundTransparent"} pt={'$0'} pb={"$2"} >
-                                    <Subtabs collapsed={collapsed} tabs={tabs} subtabs={tabContent} shortedMatch={shortedMatch} />
-                                </Accordion.Content>
-                            </Accordion.Item>
-                        </Accordion>
-                    )
-                })}
+                        <Subtabs
+                            key={index}
+                            subtabs={[single]}
+                            collapsed={collapsed}
+                            shortedMatch={shortedMatch}
+                        />
+                    );
+                }
+
+                // Caso: array de subtabs → filtramos por visibility de board en 'menu'
+                const tabContent = tabs[tab].filter((subtab) => {
+                    if (subtab.type === 'create') return true; // el botón create siempre se ve
+                    const board = findBoardForSubtab(subtab, boards);
+                    if (!board) return true; // si no está ligado a un board, no filtramos
+                    return shouldShowInArea(board, 'menu');
+                });
+
+                if (!tabContent.length) return <></>
+                return (
+                    <Accordion value={collapsed ? ("a" + index) : undefined} collapsible={!collapsed} defaultValue={"a" + index} br={"$6"} overflow="hidden" type="single" key={index}>
+                        <Accordion.Item value={"a" + index}>
+                            <Accordion.Trigger
+                                p={"$2"}
+                                backgroundColor={"$backgroundTransparent"}
+                                focusStyle={{ backgroundColor: "$backgroundTransparent" }}
+                                hoverStyle={{ backgroundColor: '$backgroundTransparent' }}
+                                bw={0} flexDirection="row" justifyContent="space-between">
+                                {({ open }) => (
+                                    //@ts-ignore
+                                    <XStack f={1} h="40px" jc="center" p={"$2"} animateOnly={['backgroundColor']} animation="bouncy" br="$4" backgroundColor={isTabSelected(tabContent, shortedMatch) && !open ? (resolvedTheme == "dark" ? '$color2' : '$color4') : '$backgroundTransparent'}>
+                                        {!collapsed && <SizableText f={1} ml={"$2.5"} fontWeight="bold" size={"$5"}>{tab}</SizableText>}
+                                        {/* @ts-ignore */}
+                                        <Square animation="bouncy" rotate={open ? '180deg' : '0deg'}>
+                                            {
+                                                collapsed
+                                                    ? <Minus color="$gray6" size={20} />
+                                                    : <ChevronDown color={isTabSelected(tabContent, shortedMatch) && !open ? '$color8' : '$gray9'} size={20} />
+                                            }
+                                        </Square>
+                                    </XStack>
+                                )}
+                            </Accordion.Trigger>
+                            <Accordion.Content position="relative" backgroundColor={"$backgroundTransparent"} pt={'$0'} pb={"$2"} >
+                                <Subtabs collapsed={collapsed} subtabs={tabContent} shortedMatch={shortedMatch} />
+                            </Accordion.Content>
+                        </Accordion.Item>
+                    </Accordion>
+                )
+            })}
         </YStack> : <></>
     );
 };
 
-const disableEnvSelector = true
-export const PanelMenu = ({ workspace, collapsed }) => {
-    const pathname = usePathname();
+export const PanelMenu = ({ workspace, boards, collapsed }) => {
     const searchParams = useSearchParams();
-    const [environ, setEnviron] = useState()
-
+    
     const query = Object.fromEntries(searchParams.entries());
     const [state, setState] = useState(query)
     useQueryState(setState)
 
-    // useUpdateEffect(() => {
-    //     if(!environ) return
-    //     if(environ == 'development') {
-    //         removePush('env')
-    //         return
-    //     }
-
-    //     push('env', environ)
-
-    // }, [environ])
-
-    return (<YStack pt="$3">
-        <Tinted>
-            <YStack ai="center" mt={"$2"} ml={"$5"} mr={"$5"}>
-                {pathname && searchParams && !disableEnvSelector && <SelectList
-                    value={environ ?? query.env}
-                    setValue={setEnviron}
-                    rawDisplay={true}
-                    triggerProps={{
-                        bc: "transparent",
-                        borderWidth: 0,
-                        outlineWidth: 1,
-                        borderBottomWidth: 2,
-                        borderBottomLeftRadius: 0,
-                        borderBottomRightRadius: 0,
-                        chromeless: false
-                    }}
-                    title="Environment"
-                    elements={[
-                        {
-                            value: "development", caption: <XStack space="$3">
-                                <Boxes opacity={0.7} size={20} />
-                                <SizableText size="$3">Development</SizableText>
-                            </XStack>
-                        }, {
-                            value: "production", caption: <XStack space="$3">
-                                <Layers opacity={0.7} size={20} />
-                                <SizableText size="$3">Production</SizableText>
-                            </XStack>
-                        }]}
-                />}
-            </YStack>
-            {/* <Separator f={1} borderBottomWidth={4} /> */}
-        </Tinted>
-        <Tinted>
-            <ScrollView showsVerticalScrollIndicator={false} pl={"$0"} mah="calc( 100vh - 200px )"><Tabs tabs={workspace.menu} collapsed={collapsed} /></ScrollView>
-        </Tinted>
-
-    </YStack>)
+    return (
+        <YStack pt="$3">
+            <Tinted>
+                <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    pl={"$0"}
+                    mah="calc( 100vh - 200px )"
+                >
+                    <Tabs tabs={workspace.menu} boards={boards} collapsed={collapsed} />
+                </ScrollView>
+            </Tinted>
+        </YStack>
+    )
 }

@@ -9,6 +9,8 @@ import { addAction } from "@extensions/actions/coreContext/addAction";
 import { addCard } from "@extensions/cards/coreContext/addCard";
 import { removeActions } from "@extensions/actions/coreContext/removeActions";
 import { gridSizes as GRID } from 'protolib/lib/gridConfig';
+import { compileMessagesTopic } from "@extensions/esphome/utils";
+import { connect as mqttConnect, IClientOptions } from 'mqtt';
 
 const PER_PARAM_ROWS = 1; // tweak as needed (extra grid rows per visible param)
 const PADDING_ICON = 6; // extra padding for icon
@@ -971,6 +973,82 @@ export default (app, context) => {
     }
 
     topicSub(mqtt, 'devices/#', (message, topic) => processMessage(message, topic))
+
+    const processCompileMessage = async (message: string, topic: string) => {
+        const splitted = topic.split("/");
+        const compileSessionId = splitted[2];
+        let parsedMessage = message;
+        try {
+            parsedMessage = JSON.parse(message);
+            // console.log("🤖 ~ processCompileMessage ~ parsedMessage:", parsedMessage)
+        } catch (err) { }
+        let deviceName = parsedMessage.deviceName;
+
+        if(parsedMessage.event == "exit") {
+            // console.log("Compile session exited: ", compileSessionId, parsedMessage, deviceName)
+            const db = getDB('devices')
+            let deviceInfo = undefined
+            try {
+                deviceInfo = DevicesModel.load(JSON.parse(await db.get(deviceName)))
+                if (!deviceInfo.data.data) {
+                    deviceInfo.data.data = {};
+                }
+                deviceInfo.data.data.lastCompile = {
+                    sessionId: compileSessionId,
+                    timestamp: Date.now(),
+                    code: parsedMessage.code,
+                    success: parsedMessage.code == 0,
+                }
+                await db.put(deviceInfo.getId(), JSON.stringify(deviceInfo.serialize(true)))
+                console.log("Updated device lastCompile info: ", deviceName, deviceInfo.data.data.lastCompile)
+            } catch (err) {
+                //logger.error({ deviceName }, "Device not found to update compile info: " + JSON.stringify({ topic, message }))
+                return
+            }
+        }
+    }
+    const compileBrokerUrl = 'mqtt://bo-compile.protofy.xyz:8883';
+    const compileClientOpts: IClientOptions = {
+        clean: true,
+        reconnectPeriod: 5000
+    };
+
+    const compileClient = mqttConnect(compileBrokerUrl, compileClientOpts);
+    const subscribeTopic = compileMessagesTopic('#');
+
+    compileClient.on('connect', () => {
+        logger.info({ broker: compileBrokerUrl }, 'Connected to compile MQTT broker');
+        compileClient.subscribe(subscribeTopic, { qos: 1 }, (err) => {
+            if (err) {
+                logger.error({ err }, 'Failed subscribing to ' + subscribeTopic);
+            } else {
+                logger.info('Subscribed to ' + subscribeTopic);
+            }
+        });
+    });
+
+    compileClient.on('message', (topic, payload) => {
+        try {
+            const msg = payload?.toString?.() ?? String(payload);
+            processCompileMessage(msg, topic);
+        } catch (err) {
+            logger.error({ err, topic }, 'Error handling compile MQTT message');
+        }
+    });
+
+    compileClient.on('error', (err) => {
+        logger.error({ err }, 'compile MQTT client error');
+    });
+    compileClient.on('reconnect', () => logger.info('Reconnecting to compile MQTT broker'));
+    compileClient.on('close', () => logger.warn('compile MQTT connection closed'));
+
+    process.on('SIGINT', () => {
+        compileClient.end(true, () => logger.info('compile MQTT client closed (SIGINT)'));
+    });
+    process.on('SIGTERM', () => {
+        compileClient.end(true, () => logger.info('compile MQTT client closed (SIGTERM)'));
+    });
+
 
     addCard({
         group: 'devices',

@@ -5,7 +5,7 @@ export const DevicesSchema = Schema.object({
   deviceDefinition: z.string().label("Definition").optional(),
   substitutions: z.record(z.string().optional(), z.any().optional()).optional().hidden(),
   subsystem: z.record(z.string(), z.any()).optional().hidden(),
-  data: z.array(z.record(z.string(), z.any())).optional().hidden(),
+  data: z.record(z.string(), z.any()).optional().hidden(),
   currentSdk: z.string().hidden().generate("esphome"),
   location: z.object({
     lat: z.string(),
